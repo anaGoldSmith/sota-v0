@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ArrowLeft, Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,48 @@ const Admin = () => {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("FIG Code of Points");
   const [file, setFile] = useState<File | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
+  const handleFileSelect = (f: File | null) => {
+    if (!f) return;
+    const isPdf = f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf");
+    if (!isPdf) {
+      toast.error("Please select a PDF file");
+      return;
+    }
+    if (f.size > MAX_FILE_SIZE) {
+      toast.error("File is too large (max 20MB)");
+      return;
+    }
+    setFile(f);
+  };
+
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileSelect(e.target.files?.[0] || null);
+  };
+
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
+
+  const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+
+  const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    const f = e.dataTransfer.files?.[0] || null;
+    handleFileSelect(f);
+  };
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -35,8 +76,7 @@ const Admin = () => {
 
       const { error: uploadError } = await supabase.storage
         .from('rulebooks')
-        .upload(filePath, file);
-
+        .upload(filePath, file, { contentType: 'application/pdf', upsert: false });
       if (uploadError) throw uploadError;
 
       // Insert metadata into database
@@ -94,23 +134,35 @@ const Admin = () => {
         <form onSubmit={handleFileUpload} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="file-input">PDF File</Label>
-            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary transition-colors">
+            <div
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive ? 'border-primary bg-accent/30' : 'border-border hover:border-primary'}`}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              onDrop={onDrop}
+            >
               <Input
                 id="file-input"
+                ref={fileInputRef}
                 type="file"
-                accept=".pdf"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                accept=".pdf,application/pdf"
+                onChange={onInputChange}
                 className="hidden"
               />
-              <label htmlFor="file-input" className="cursor-pointer">
-                <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mb-2">
-                  {file ? file.name : "Click to upload PDF"}
-                </p>
-                <Button type="button" variant="outline" size="sm">
-                  Select File
+              <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground mb-2">
+                {file ? file.name : "Drag & drop a PDF here, or select from your device"}
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                  Select PDF
                 </Button>
-              </label>
+                {file && (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value=''; }}>
+                    Clear
+                  </Button>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">Max 20MB. PDF only.</p>
             </div>
           </div>
 
