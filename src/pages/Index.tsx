@@ -14,7 +14,11 @@ const Index = () => {
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           Sport Space
         </h1>
-        <Button variant="ghost" size="icon">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => navigate("/auth")}
+        >
           <User className="h-6 w-6" />
         </Button>
       </header>
