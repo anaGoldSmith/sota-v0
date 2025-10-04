@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Upload, FileText } from "lucide-react";
+import { ArrowLeft, Upload, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -19,6 +20,8 @@ const Admin = () => {
   const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [rulebooks, setRulebooks] = useState<any[]>([]);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
@@ -43,10 +46,52 @@ const Admin = () => {
 
       setIsAdmin(true);
       setLoading(false);
+      fetchRulebooks();
     };
 
     checkAdminStatus();
   }, [navigate]);
+
+  const fetchRulebooks = async () => {
+    const { data, error } = await supabase
+      .from('rulebooks')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      toast.error("Failed to load rulebooks");
+      return;
+    }
+    
+    setRulebooks(data || []);
+  };
+
+  const handleDelete = async (filePath: string, id: string) => {
+    if (!confirm("Are you sure you want to delete this file?")) return;
+    
+    setDeleting(id);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('delete-rulebook', {
+        body: { file_path: filePath },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success("File deleted successfully!");
+      fetchRulebooks();
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast.error(error.message || "Failed to delete file");
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   const handleFileSelect = (f: File | null) => {
     if (!f) return;
@@ -195,6 +240,9 @@ const Admin = () => {
       const fileInput = document.getElementById('file-input') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
       
+      // Refresh the list
+      fetchRulebooks();
+      
     } catch (error: any) {
       console.error("❌ Upload exception:", {
         message: error.message,
@@ -319,6 +367,42 @@ const Admin = () => {
             {uploading ? "Uploading..." : "Upload File"}
           </Button>
         </form>
+
+        {/* Existing Files Section */}
+        <div className="mt-12">
+          <h2 className="text-xl font-semibold mb-4">Uploaded Files</h2>
+          {rulebooks.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">No files uploaded yet</p>
+          ) : (
+            <div className="space-y-4">
+              {rulebooks.map((book) => (
+                <Card key={book.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{book.title}</CardTitle>
+                        {book.description && (
+                          <CardDescription className="mt-1">{book.description}</CardDescription>
+                        )}
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Category: {book.category} • {new Date(book.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => handleDelete(book.file_path, book.id)}
+                        disabled={deleting === book.id}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
