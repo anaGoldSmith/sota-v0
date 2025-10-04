@@ -105,9 +105,20 @@ const CodeOfPoints = () => {
         </section>
 
         {/* Other COPs Section */}
-        <section className="mb-8">
+        <section>
           <h2 className="text-xl font-semibold mb-4 text-foreground">Other COPs</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+          
+          {/* Search Bar */}
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input 
+              type="text" 
+              placeholder="Search in Code of Points..." 
+              className="pl-10 h-12 text-lg"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {otherCOPs && otherCOPs.length > 0 ? (
               otherCOPs.map((file) => (
                 <div
@@ -135,19 +146,6 @@ const CodeOfPoints = () => {
                 <p className="text-muted-foreground">Other code of points files will be added here</p>
               </div>
             )}
-          </div>
-
-          {/* Search Bar */}
-          <div>
-            <h3 className="text-xl font-semibold mb-4 text-foreground">Search</h3>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input 
-                type="text" 
-                placeholder="Search in Code of Points..." 
-                className="pl-10 h-12 text-lg"
-              />
-            </div>
           </div>
         </section>
 
