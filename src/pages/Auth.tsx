@@ -146,7 +146,7 @@ const Auth = () => {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Welcome to Sport Space</CardTitle>
           <CardDescription className="text-center">
-            Sign in to your account or create a new one
+            Calculate routine D-score, read COP, and more!
           </CardDescription>
         </CardHeader>
         <CardContent>
