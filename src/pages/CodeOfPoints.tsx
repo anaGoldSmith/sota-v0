@@ -45,14 +45,13 @@ const CodeOfPoints = () => {
     const newTab = window.open('about:blank', '_blank');
     
     try {
-      const { data, error } = await supabase.storage
+      const { data } = supabase.storage
         .from("rulebooks")
-        .createSignedUrl(filePath, 3600); // 1 hour expiry
+        .getPublicUrl(filePath);
 
-      if (error) throw error;
-
-      if (newTab && data?.signedUrl) {
-        newTab.location.href = data.signedUrl;
+      const publicUrl = data.publicUrl;
+      if (newTab && publicUrl) {
+        newTab.location.href = publicUrl;
       }
     } catch (error) {
       console.error("Error accessing file:", error);
@@ -66,23 +65,22 @@ const CodeOfPoints = () => {
   };
 
   const handleDownload = async (filePath: string, fileName: string) => {
+    // Force a download in a synchronously opened tab to preserve user gesture
+    const newTab = window.open('about:blank', '_blank');
+
     try {
-      const { data, error } = await supabase.storage
+      const { data } = supabase.storage
         .from("rulebooks")
-        .createSignedUrl(filePath, 60); // 1 minute is enough for download
+        .getPublicUrl(filePath);
 
-      if (error) throw error;
-
-      if (data?.signedUrl) {
-        const link = document.createElement('a');
-        link.href = data.signedUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      const baseUrl = data.publicUrl;
+      if (newTab && baseUrl) {
+        const url = baseUrl + (baseUrl.includes("?") ? "&" : "?") + "download=1";
+        newTab.location.href = url;
       }
     } catch (error) {
       console.error("Error downloading file:", error);
+      if (newTab) newTab.close();
       toast({
         variant: "destructive",
         title: "Error",
