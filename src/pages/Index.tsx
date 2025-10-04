@@ -7,14 +7,14 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border">
-        <Button variant="ghost" size="icon" className="h-14 w-14">
-          <Menu className="h-8 w-8" />
+        <Button variant="ghost" size="icon" className="h-20 w-20">
+          <Menu className="h-12 w-12" strokeWidth={2.5} />
         </Button>
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           Sport Space
         </h1>
-        <Button variant="ghost" size="icon">
-          <User className="h-6 w-6" />
+        <Button variant="ghost" size="icon" className="h-20 w-20">
+          <User className="h-12 w-12" strokeWidth={2.5} />
         </Button>
       </header>
 
