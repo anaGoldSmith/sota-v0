@@ -26,8 +26,9 @@ const CodeOfPoints = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        {/* File PDF Section */}
+        {/* FIG Code of Points Section */}
         <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 text-foreground">FIG Code of Points</h2>
           <div className="p-6 border-2 border-primary rounded-xl hover:bg-accent transition-colors cursor-pointer">
             <div className="flex items-center gap-4">
               <FileText className="h-8 w-8 text-primary" />
