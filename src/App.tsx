@@ -8,6 +8,7 @@ import CodeOfPoints from "./pages/CodeOfPoints";
 import PdfViewer from "./pages/PdfViewer";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
+import Routines from "./pages/Routines";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/viewer" element={<PdfViewer />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/routines" element={<Routines />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

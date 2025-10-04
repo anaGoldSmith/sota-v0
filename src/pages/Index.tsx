@@ -46,7 +46,10 @@ const Index = () => {
           <div>
             <h2 className="text-xl font-semibold mb-4 text-foreground">Tools</h2>
             <div className="space-y-4">
-              <div className="p-6 border-2 border-primary rounded-xl hover:bg-accent transition-colors">
+              <div 
+                className="p-6 border-2 border-primary rounded-xl hover:bg-accent transition-colors cursor-pointer"
+                onClick={() => navigate("/routines")}
+              >
                 <h3 className="text-lg font-semibold mb-2 text-foreground">My Routines</h3>
                 <p className="text-muted-foreground">Create routines with DA & DD calculation</p>
               </div>
