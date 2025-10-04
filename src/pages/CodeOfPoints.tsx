@@ -21,44 +21,11 @@ const openViewerTab = () => {
   return newTab;
 };
 
-// Helper to render a blob in a new tab
-const renderBlobInTab = (tab: Window | null, blob: Blob, title: string) => {
+// Helper to navigate tab to blob URL
+const navigateToBlobUrl = (tab: Window | null, blob: Blob) => {
   if (!tab) return;
   const blobUrl = URL.createObjectURL(blob);
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <title>${title}</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <style>
-          html, body { height: 100%; }
-          body { margin: 0; padding: 0; overflow: hidden; background: #111; }
-          .viewer { position: fixed; inset: 0; }
-          .fallback { position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; color:#eee; font-family:system-ui, -apple-system, Segoe UI, Roboto, sans-serif; text-align:center; padding:24px; }
-          .fallback a { color:#8ab4f8; text-decoration: underline; }
-        </style>
-      </head>
-      <body>
-        <object class="viewer" data="${blobUrl}" type="application/pdf">
-          <div class="fallback">
-            <div>
-              <p>Unable to display the PDF in this tab.</p>
-              <p><a href="${blobUrl}" download="${title}.pdf">Click here to download</a></p>
-            </div>
-          </div>
-        </object>
-        <script>
-          const url = ${JSON.stringify(blobUrl)};
-          window.addEventListener('beforeunload', () => URL.revokeObjectURL(url));
-        </script>
-      </body>
-    </html>
-  `;
-  tab.document.open();
-  tab.document.write(html);
-  tab.document.close();
+  tab.location.href = blobUrl;
 };
 
 // Helper to download a blob
@@ -127,8 +94,8 @@ const CodeOfPoints = () => {
       // Download the file
       downloadBlob(blob, fileName);
       
-      // Open in browser
-      renderBlobInTab(newTab, blob, fileName);
+      // Navigate to PDF in browser
+      navigateToBlobUrl(newTab, blob);
     } catch (error) {
       console.error("Error accessing file via storage:", error);
       
@@ -149,8 +116,8 @@ const CodeOfPoints = () => {
         // Download the file
         downloadBlob(blob, fileName);
         
-        // Open in browser
-        renderBlobInTab(newTab, blob, fileName);
+        // Navigate to PDF in browser
+        navigateToBlobUrl(newTab, blob);
       } catch (fallbackError) {
         console.error("Error accessing file via proxy:", fallbackError);
         if (newTab) newTab.close();
