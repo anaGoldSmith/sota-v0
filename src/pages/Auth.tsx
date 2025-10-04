@@ -24,6 +24,7 @@ const signInSchema = z.object({
 const Auth = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [signUpStep, setSignUpStep] = useState(1); // Track signup step (1 or 2)
   
   // Sign Up form state
   const [signUpData, setSignUpData] = useState({
@@ -31,6 +32,7 @@ const Auth = () => {
     lastName: "",
     email: "",
     password: "",
+    roles: [] as string[],
   });
 
   // Sign In form state
@@ -59,11 +61,31 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const handleSignUpNext = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      // Validate step 1 input
+      signUpSchema.parse(signUpData);
+      setSignUpStep(2); // Move to role selection
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      if (signUpData.roles.length === 0) {
+        toast.error("Please select at least one role");
+        setIsLoading(false);
+        return;
+      }
+
       // Validate input
       const validated = signUpSchema.parse(signUpData);
 
@@ -94,6 +116,18 @@ const Auth = () => {
 
         if (profileError) throw profileError;
 
+        // Insert user roles
+        const roleInserts = signUpData.roles.map(role => ({
+          user_id: authData.user.id,
+          role: role as "gymnast" | "coach" | "judge" | "parent" | "fan",
+        }));
+
+        const { error: rolesError } = await supabase
+          .from("user_roles")
+          .insert(roleInserts);
+
+        if (rolesError) throw rolesError;
+
         toast.success("Account created successfully!");
         navigate("/");
       }
@@ -108,6 +142,15 @@ const Auth = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const toggleRole = (role: string) => {
+    setSignUpData(prev => ({
+      ...prev,
+      roles: prev.roles.includes(role)
+        ? prev.roles.filter(r => r !== role)
+        : [...prev.roles, role]
+    }));
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -189,64 +232,115 @@ const Auth = () => {
             </TabsContent>
 
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
+              {signUpStep === 1 ? (
+                <form onSubmit={handleSignUpNext} className="space-y-4 mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-firstname">First Name</Label>
+                      <Input
+                        id="signup-firstname"
+                        type="text"
+                        placeholder="John"
+                        value={signUpData.firstName}
+                        onChange={(e) => setSignUpData({ ...signUpData, firstName: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-lastname">Last Name</Label>
+                      <Input
+                        id="signup-lastname"
+                        type="text"
+                        placeholder="Doe"
+                        value={signUpData.lastName}
+                        onChange={(e) => setSignUpData({ ...signUpData, lastName: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-firstname">First Name</Label>
+                    <Label htmlFor="signup-email">Email</Label>
                     <Input
-                      id="signup-firstname"
-                      type="text"
-                      placeholder="John"
-                      value={signUpData.firstName}
-                      onChange={(e) => setSignUpData({ ...signUpData, firstName: e.target.value })}
+                      id="signup-email"
+                      type="email"
+                      placeholder="name@example.com"
+                      value={signUpData.email}
+                      onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
                       required
-                      disabled={isLoading}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-lastname">Last Name</Label>
+                    <Label htmlFor="signup-password">Password</Label>
                     <Input
-                      id="signup-lastname"
-                      type="text"
-                      placeholder="Doe"
-                      value={signUpData.lastName}
-                      onChange={(e) => setSignUpData({ ...signUpData, lastName: e.target.value })}
+                      id="signup-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={signUpData.password}
+                      onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
                       required
-                      disabled={isLoading}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Must be at least 8 characters
+                    </p>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="name@example.com"
-                    value={signUpData.email}
-                    onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={signUpData.password}
-                    onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
-                    required
-                    disabled={isLoading}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Must be at least 8 characters
-                  </p>
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating account..." : "Sign Up"}
-                </Button>
-              </form>
+                  <Button type="submit" className="w-full">
+                    Next
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleSignUp} className="space-y-6 mt-4">
+                  <div className="space-y-4">
+                    <div className="text-center space-y-2">
+                      <h3 className="text-xl font-semibold">What do you do in the gym?</h3>
+                      <p className="text-sm text-muted-foreground">Select all that apply!</p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {[
+                        { id: 'gymnast', label: 'Gymnast', description: 'I do the flips', icon: '🤸' },
+                        { id: 'coach', label: 'Coach', description: 'I say: "point those toes!"', icon: '👁️' },
+                        { id: 'judge', label: 'Judge', description: 'I take deductions full-time', icon: '📝' },
+                        { id: 'parent', label: 'Parent', description: 'I pay the bills :)', icon: '✓' },
+                        { id: 'fan', label: 'Fan', description: 'I watch in admiration', icon: '❤️' },
+                      ].map((role) => (
+                        <button
+                          key={role.id}
+                          type="button"
+                          onClick={() => toggleRole(role.id)}
+                          className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                            signUpData.roles.includes(role.id)
+                              ? 'border-primary bg-primary/10'
+                              : 'border-border bg-background hover:bg-accent'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <span className="text-2xl mt-1">{role.icon}</span>
+                            <div className="flex-1">
+                              <div className="font-semibold">{role.label}</div>
+                              <div className="text-sm text-muted-foreground">{role.description}</div>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setSignUpStep(1)}
+                      className="w-full"
+                      disabled={isLoading}
+                    >
+                      Back
+                    </Button>
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? "Creating account..." : "Complete Sign Up"}
+                    </Button>
+                  </div>
+                </form>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>
