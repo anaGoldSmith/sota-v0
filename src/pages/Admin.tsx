@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,9 +17,36 @@ const Admin = () => {
   const [category, setCategory] = useState("FIG Code of Points");
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .rpc('has_role', { _user_id: session.user.id, _role: 'admin' });
+
+      if (error || !data) {
+        toast.error("Access denied. Admin privileges required.");
+        navigate("/");
+        return;
+      }
+
+      setIsAdmin(true);
+      setLoading(false);
+    };
+
+    checkAdminStatus();
+  }, [navigate]);
 
   const handleFileSelect = (f: File | null) => {
     if (!f) return;
@@ -110,6 +137,18 @@ const Admin = () => {
       setUploading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">
