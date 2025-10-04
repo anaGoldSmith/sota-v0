@@ -30,17 +30,37 @@ const Index = () => {
 
         {/* Hero Image Section */}
         <section className="mb-8 rounded-xl overflow-hidden shadow-lg">
-          <img src={heroImage} alt="Rhythmic Gymnastics Performance" className="w-full h-[400px] object-cover" />
+          <img src={heroImage} alt="Rhythmic Gymnastics Performance" className="w-full h-[250px] object-cover" />
         </section>
 
-        {/* Action Buttons */}
-        <section className="flex gap-4 justify-center flex-wrap">
-          <Button variant="outline" size="lg" className="rounded-full px-12 py-6 text-lg font-medium border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-            Tools
-          </Button>
-          <Button variant="outline" size="lg" className="rounded-full px-12 py-6 text-lg font-medium border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-            Events
-          </Button>
+        {/* Tools Section */}
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Tools</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-6 border-2 border-primary rounded-xl hover:bg-accent transition-colors">
+              <h3 className="text-lg font-semibold mb-2 text-foreground">My Routines</h3>
+              <p className="text-muted-foreground">Create routines with DA & DD calculation</p>
+            </div>
+            <div className="p-6 border-2 border-primary rounded-xl hover:bg-accent transition-colors">
+              <h3 className="text-lg font-semibold mb-2 text-foreground">FIG Code of Points</h3>
+              <p className="text-muted-foreground">Search & Access COP 2025-2028</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Events Section */}
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 text-foreground">Events</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-6 border-2 border-muted rounded-xl bg-muted/50">
+              <h3 className="text-lg font-semibold mb-2 text-muted-foreground">Event Placeholder 1</h3>
+              <p className="text-muted-foreground">Event details will be added here</p>
+            </div>
+            <div className="p-6 border-2 border-muted rounded-xl bg-muted/50">
+              <h3 className="text-lg font-semibold mb-2 text-muted-foreground">Event Placeholder 2</h3>
+              <p className="text-muted-foreground">Event details will be added here</p>
+            </div>
+          </div>
         </section>
       </main>
     </div>;
