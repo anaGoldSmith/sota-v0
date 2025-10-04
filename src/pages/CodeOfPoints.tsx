@@ -29,23 +29,36 @@ const renderBlobInTab = (tab: Window | null, blob: Blob, title: string) => {
     <!DOCTYPE html>
     <html>
       <head>
+        <meta charset="utf-8" />
         <title>${title}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style>
-          body { margin: 0; padding: 0; overflow: hidden; }
-          iframe { width: 100vw; height: 100vh; border: none; }
+          html, body { height: 100%; }
+          body { margin: 0; padding: 0; overflow: hidden; background: #111; }
+          .viewer { position: fixed; inset: 0; }
+          .fallback { position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; color:#eee; font-family:system-ui, -apple-system, Segoe UI, Roboto, sans-serif; text-align:center; padding:24px; }
+          .fallback a { color:#8ab4f8; text-decoration: underline; }
         </style>
       </head>
       <body>
-        <iframe src="${blobUrl}" type="application/pdf"></iframe>
+        <object class="viewer" data="${blobUrl}" type="application/pdf">
+          <div class="fallback">
+            <div>
+              <p>Unable to display the PDF in this tab.</p>
+              <p><a href="${blobUrl}" download="${title}.pdf">Click here to download</a></p>
+            </div>
+          </div>
+        </object>
+        <script>
+          const url = ${JSON.stringify(blobUrl)};
+          window.addEventListener('beforeunload', () => URL.revokeObjectURL(url));
+        </script>
       </body>
     </html>
   `;
   tab.document.open();
   tab.document.write(html);
   tab.document.close();
-  
-  // Revoke blob URL after a delay to avoid memory leaks
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
 };
 
 // Helper to download a blob
@@ -59,7 +72,7 @@ const downloadBlob = (blob: Blob, filename: string) => {
   document.body.removeChild(link);
   
   // Revoke blob URL after download
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
 };
 
 const CodeOfPoints = () => {
@@ -107,7 +120,11 @@ const CodeOfPoints = () => {
 
       if (error) throw error;
 
-      renderBlobInTab(newTab, data, fileName);
+      const blob = data.type === 'application/pdf'
+        ? data
+        : new Blob([await data.arrayBuffer()], { type: 'application/pdf' });
+
+      renderBlobInTab(newTab, blob, fileName);
     } catch (error) {
       console.error("Error accessing file via storage:", error);
       
@@ -120,7 +137,10 @@ const CodeOfPoints = () => {
         
         if (!response.ok) throw new Error('Proxy fetch failed');
         
-        const blob = await response.blob();
+        const respBlob = await response.blob();
+        const blob = respBlob.type === 'application/pdf'
+          ? respBlob
+          : new Blob([await respBlob.arrayBuffer()], { type: 'application/pdf' });
         renderBlobInTab(newTab, blob, fileName);
       } catch (fallbackError) {
         console.error("Error accessing file via proxy:", fallbackError);
@@ -128,7 +148,7 @@ const CodeOfPoints = () => {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Unable to access the file. Please try downloading instead.",
+          description: "Unable to display the PDF. Please try Download instead.",
         });
       }
     }
@@ -143,7 +163,11 @@ const CodeOfPoints = () => {
 
       if (error) throw error;
 
-      downloadBlob(data, fileName);
+      const blob = data.type === 'application/pdf'
+        ? data
+        : new Blob([await data.arrayBuffer()], { type: 'application/pdf' });
+
+      downloadBlob(blob, fileName);
     } catch (error) {
       console.error("Error downloading file via storage:", error);
       
@@ -156,7 +180,10 @@ const CodeOfPoints = () => {
         
         if (!response.ok) throw new Error('Proxy fetch failed');
         
-        const blob = await response.blob();
+        const respBlob = await response.blob();
+        const blob = respBlob.type === 'application/pdf'
+          ? respBlob
+          : new Blob([await respBlob.arrayBuffer()], { type: 'application/pdf' });
         downloadBlob(blob, fileName);
       } catch (fallbackError) {
         console.error("Error downloading file via proxy:", fallbackError);
