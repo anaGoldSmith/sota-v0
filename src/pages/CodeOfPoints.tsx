@@ -4,47 +4,9 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-
-// Helper to derive functions URL
-const getFunctionsUrl = () => {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  return supabaseUrl.replace('.supabase.co', '.functions.supabase.co');
-};
-
-// Helper to open a viewer tab with loading message
-const openViewerTab = () => {
-  const newTab = window.open('about:blank', '_blank');
-  if (newTab) {
-    newTab.document.write('<html><body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">Loading PDF...</body></html>');
-  }
-  return newTab;
-};
-
-// Helper to navigate tab to blob URL
-const navigateToBlobUrl = (tab: Window | null, blob: Blob) => {
-  if (!tab) return;
-  const blobUrl = URL.createObjectURL(blob);
-  tab.location.href = blobUrl;
-};
-
-// Helper to download a blob
-const downloadBlob = (blob: Blob, filename: string) => {
-  const blobUrl = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = blobUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  
-  // Revoke blob URL after download
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
-};
 
 const CodeOfPoints = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   // Fetch FIG Code of Points files
   const { data: figCOPFiles } = useQuery({
@@ -76,58 +38,9 @@ const CodeOfPoints = () => {
     },
   });
 
-  const handleFileClick = async (filePath: string, fileName: string) => {
-    const newTab = openViewerTab();
-    
-    try {
-      // First, try direct storage download
-      const { data, error } = await supabase.storage
-        .from("rulebooks")
-        .download(filePath);
-
-      if (error) throw error;
-
-      const blob = data.type === 'application/pdf'
-        ? data
-        : new Blob([await data.arrayBuffer()], { type: 'application/pdf' });
-
-      // Download the file
-      downloadBlob(blob, fileName);
-      
-      // Navigate to PDF in browser
-      navigateToBlobUrl(newTab, blob);
-    } catch (error) {
-      console.error("Error accessing file via storage:", error);
-      
-      // Fallback: use backend proxy
-      try {
-        const functionsUrl = getFunctionsUrl();
-        const response = await fetch(
-          `${functionsUrl}/serve-rulebook?path=${encodeURIComponent(filePath)}&dl=0`
-        );
-        
-        if (!response.ok) throw new Error('Proxy fetch failed');
-        
-        const respBlob = await response.blob();
-        const blob = respBlob.type === 'application/pdf'
-          ? respBlob
-          : new Blob([await respBlob.arrayBuffer()], { type: 'application/pdf' });
-        
-        // Download the file
-        downloadBlob(blob, fileName);
-        
-        // Navigate to PDF in browser
-        navigateToBlobUrl(newTab, blob);
-      } catch (fallbackError) {
-        console.error("Error accessing file via proxy:", fallbackError);
-        if (newTab) newTab.close();
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Unable to access the file.",
-        });
-      }
-    }
+  const handleFileClick = (filePath: string, fileName: string) => {
+    const viewerUrl = `/viewer?path=${encodeURIComponent(filePath)}&name=${encodeURIComponent(fileName)}`;
+    window.open(viewerUrl, "_blank");
   };
 
 
