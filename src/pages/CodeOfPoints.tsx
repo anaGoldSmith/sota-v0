@@ -2,9 +2,46 @@ import { ArrowLeft, FileText, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const CodeOfPoints = () => {
   const navigate = useNavigate();
+
+  // Fetch FIG Code of Points files
+  const { data: figCOPFiles } = useQuery({
+    queryKey: ["rulebooks", "FIG Code of Points"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rulebooks")
+        .select("*")
+        .eq("category", "FIG Code of Points")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch other COPs
+  const { data: otherCOPs } = useQuery({
+    queryKey: ["rulebooks", "other"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rulebooks")
+        .select("*")
+        .neq("category", "FIG Code of Points")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const handleFileClick = (filePath: string) => {
+    const { data } = supabase.storage.from("rulebooks").getPublicUrl(filePath);
+    window.open(data.publicUrl, "_blank");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,14 +66,30 @@ const CodeOfPoints = () => {
         {/* FIG Code of Points Section */}
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4 text-foreground">FIG Code of Points</h2>
-          <div className="p-6 border-2 border-primary rounded-xl hover:bg-accent transition-colors cursor-pointer">
-            <div className="flex items-center gap-4">
-              <FileText className="h-8 w-8 text-primary" />
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">File.pdf</h3>
-                <p className="text-sm text-muted-foreground">FIG Code of Points 2025-2028</p>
+          <div className="space-y-4">
+            {figCOPFiles && figCOPFiles.length > 0 ? (
+              figCOPFiles.map((file) => (
+                <div
+                  key={file.id}
+                  className="p-6 border-2 border-primary rounded-xl hover:bg-accent transition-colors cursor-pointer"
+                  onClick={() => handleFileClick(file.file_path)}
+                >
+                  <div className="flex items-center gap-4">
+                    <FileText className="h-8 w-8 text-primary" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground">{file.title}</h3>
+                      {file.description && (
+                        <p className="text-sm text-muted-foreground">{file.description}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-6 border-2 border-muted rounded-xl bg-muted/50">
+                <p className="text-muted-foreground">No files uploaded yet</p>
               </div>
-            </div>
+            )}
           </div>
         </section>
 
@@ -44,10 +97,30 @@ const CodeOfPoints = () => {
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4 text-foreground">Other COPs</h2>
           <div className="space-y-4">
-            <div className="p-6 border-2 border-muted rounded-xl bg-muted/50">
-              <h3 className="text-lg font-semibold mb-2 text-muted-foreground">Additional Resources</h3>
-              <p className="text-muted-foreground">Other code of points files will be added here</p>
-            </div>
+            {otherCOPs && otherCOPs.length > 0 ? (
+              otherCOPs.map((file) => (
+                <div
+                  key={file.id}
+                  className="p-6 border-2 border-muted rounded-xl bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer"
+                  onClick={() => handleFileClick(file.file_path)}
+                >
+                  <div className="flex items-center gap-4">
+                    <FileText className="h-8 w-8 text-muted-foreground" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground">{file.title}</h3>
+                      {file.description && (
+                        <p className="text-sm text-muted-foreground">{file.description}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-6 border-2 border-muted rounded-xl bg-muted/50">
+                <h3 className="text-lg font-semibold mb-2 text-muted-foreground">Additional Resources</h3>
+                <p className="text-muted-foreground">Other code of points files will be added here</p>
+              </div>
+            )}
           </div>
         </section>
 
