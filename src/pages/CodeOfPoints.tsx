@@ -19,7 +19,7 @@ const CodeOfPoints = () => {
           <ArrowLeft className="h-6 w-6" />
         </Button>
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-          FIG COP
+          Rule Books
         </h1>
         <div className="w-10" /> {/* Spacer for alignment */}
       </header>
