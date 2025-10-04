@@ -6,6 +6,62 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+// Helper to derive functions URL
+const getFunctionsUrl = () => {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  return supabaseUrl.replace('.supabase.co', '.functions.supabase.co');
+};
+
+// Helper to open a viewer tab with loading message
+const openViewerTab = () => {
+  const newTab = window.open('about:blank', '_blank');
+  if (newTab) {
+    newTab.document.write('<html><body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">Loading PDF...</body></html>');
+  }
+  return newTab;
+};
+
+// Helper to render a blob in a new tab
+const renderBlobInTab = (tab: Window | null, blob: Blob, title: string) => {
+  if (!tab) return;
+  const blobUrl = URL.createObjectURL(blob);
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>${title}</title>
+        <style>
+          body { margin: 0; padding: 0; overflow: hidden; }
+          iframe { width: 100vw; height: 100vh; border: none; }
+        </style>
+      </head>
+      <body>
+        <iframe src="${blobUrl}" type="application/pdf"></iframe>
+      </body>
+    </html>
+  `;
+  tab.document.open();
+  tab.document.write(html);
+  tab.document.close();
+  
+  // Revoke blob URL after a delay to avoid memory leaks
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+};
+
+// Helper to download a blob
+const downloadBlob = (blob: Blob, filename: string) => {
+  const blobUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  // Revoke blob URL after download
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+};
+
 const CodeOfPoints = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -40,52 +96,76 @@ const CodeOfPoints = () => {
     },
   });
 
-  const handleFileClick = async (filePath: string) => {
-    // Open blank tab immediately (synchronous) to avoid popup blocker
-    const newTab = window.open('about:blank', '_blank');
+  const handleFileClick = async (filePath: string, fileName: string) => {
+    const newTab = openViewerTab();
     
     try {
-      const { data } = supabase.storage
+      // First, try direct storage download
+      const { data, error } = await supabase.storage
         .from("rulebooks")
-        .getPublicUrl(filePath);
+        .download(filePath);
 
-      const publicUrl = data.publicUrl;
-      if (newTab && publicUrl) {
-        newTab.location.href = publicUrl;
-      }
+      if (error) throw error;
+
+      renderBlobInTab(newTab, data, fileName);
     } catch (error) {
-      console.error("Error accessing file:", error);
-      if (newTab) newTab.close();
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Unable to access the file. Please try downloading instead.",
-      });
+      console.error("Error accessing file via storage:", error);
+      
+      // Fallback: use backend proxy
+      try {
+        const functionsUrl = getFunctionsUrl();
+        const response = await fetch(
+          `${functionsUrl}/serve-rulebook?path=${encodeURIComponent(filePath)}&dl=0`
+        );
+        
+        if (!response.ok) throw new Error('Proxy fetch failed');
+        
+        const blob = await response.blob();
+        renderBlobInTab(newTab, blob, fileName);
+      } catch (fallbackError) {
+        console.error("Error accessing file via proxy:", fallbackError);
+        if (newTab) newTab.close();
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Unable to access the file. Please try downloading instead.",
+        });
+      }
     }
   };
 
   const handleDownload = async (filePath: string, fileName: string) => {
-    // Force a download in a synchronously opened tab to preserve user gesture
-    const newTab = window.open('about:blank', '_blank');
-
     try {
-      const { data } = supabase.storage
+      // First, try direct storage download
+      const { data, error } = await supabase.storage
         .from("rulebooks")
-        .getPublicUrl(filePath);
+        .download(filePath);
 
-      const baseUrl = data.publicUrl;
-      if (newTab && baseUrl) {
-        const url = baseUrl + (baseUrl.includes("?") ? "&" : "?") + "download=1";
-        newTab.location.href = url;
-      }
+      if (error) throw error;
+
+      downloadBlob(data, fileName);
     } catch (error) {
-      console.error("Error downloading file:", error);
-      if (newTab) newTab.close();
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Unable to download the file. Please try again.",
-      });
+      console.error("Error downloading file via storage:", error);
+      
+      // Fallback: use backend proxy
+      try {
+        const functionsUrl = getFunctionsUrl();
+        const response = await fetch(
+          `${functionsUrl}/serve-rulebook?path=${encodeURIComponent(filePath)}&dl=1`
+        );
+        
+        if (!response.ok) throw new Error('Proxy fetch failed');
+        
+        const blob = await response.blob();
+        downloadBlob(blob, fileName);
+      } catch (fallbackError) {
+        console.error("Error downloading file via proxy:", fallbackError);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Unable to download the file. Please try again.",
+        });
+      }
     }
   };
 
@@ -136,7 +216,7 @@ const CodeOfPoints = () => {
                     <Button
                       variant="secondary"
                       className="flex-1"
-                      onClick={() => handleFileClick(file.file_path)}
+                      onClick={() => handleFileClick(file.file_path, file.title)}
                     >
                       Access
                     </Button>
@@ -178,7 +258,7 @@ const CodeOfPoints = () => {
                     <Button
                       variant="outline"
                       className="flex-1"
-                      onClick={() => handleFileClick(file.file_path)}
+                      onClick={() => handleFileClick(file.file_path, file.title)}
                     >
                       Access
                     </Button>
