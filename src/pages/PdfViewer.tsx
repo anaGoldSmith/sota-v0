@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Download } from "lucide-react";
 
 const getFunctionsUrl = () => {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -58,13 +58,6 @@ const PdfViewer = () => {
         // Create blob URL
         const blobUrl = URL.createObjectURL(pdfBlob);
         setPdfUrl(blobUrl);
-
-        // Trigger download
-        const downloadLink = document.createElement("a");
-        downloadLink.href = blobUrl;
-        downloadLink.download = fileName;
-        downloadLink.click();
-
         setLoading(false);
       } catch (err) {
         console.error("Error loading PDF:", err);
@@ -82,6 +75,14 @@ const PdfViewer = () => {
       }
     };
   }, [filePath, fileName]);
+
+  const handleDownload = () => {
+    if (!pdfUrl) return;
+    const downloadLink = document.createElement("a");
+    downloadLink.href = pdfUrl;
+    downloadLink.download = fileName;
+    downloadLink.click();
+  };
 
   if (loading) {
     return (
@@ -114,7 +115,11 @@ const PdfViewer = () => {
         <Button onClick={() => navigate("/code-of-points")} variant="ghost" size="sm">
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-lg font-semibold truncate">{fileName}</h1>
+        <h1 className="text-lg font-semibold truncate flex-1">{fileName}</h1>
+        <Button onClick={handleDownload} variant="outline" size="sm">
+          <Download className="h-4 w-4 mr-2" />
+          Download
+        </Button>
       </div>
       <iframe
         src={pdfUrl}
