@@ -6,7 +6,7 @@ const Index = () => {
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border">
         <Button variant="ghost" size="icon" className="rounded-full text-lg">
-          <Menu className="h-6 w-6" />
+          <Menu className="h-10 w-10" strokeWidth={2.5} />
         </Button>
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           Sport Space
