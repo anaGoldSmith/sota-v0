@@ -38,9 +38,24 @@ const CodeOfPoints = () => {
     },
   });
 
-  const handleFileClick = (filePath: string) => {
-    const { data } = supabase.storage.from("rulebooks").getPublicUrl(filePath);
-    window.open(data.publicUrl, "_blank");
+  const handleFileClick = async (filePath: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("rulebooks")
+        .download(filePath);
+
+      if (error) throw error;
+
+      // Create a blob URL and open it
+      const blob = new Blob([data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      
+      // Clean up the blob URL after a delay
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error("Error accessing file:", error);
+    }
   };
 
   return (
