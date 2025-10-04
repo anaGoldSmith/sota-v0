@@ -7,8 +7,8 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border">
-        <Button variant="ghost" size="icon">
-          <Menu className="h-6 w-6" />
+        <Button variant="ghost" size="icon" className="h-14 w-14">
+          <Menu className="h-8 w-8" />
         </Button>
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           Sport Space
