@@ -1,4 +1,4 @@
-import { ArrowLeft, Search, Upload, Download } from "lucide-react";
+import { ArrowLeft, Search, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
@@ -124,6 +124,10 @@ const CodeOfPoints = () => {
         ? data
         : new Blob([await data.arrayBuffer()], { type: 'application/pdf' });
 
+      // Download the file
+      downloadBlob(blob, fileName);
+      
+      // Open in browser
       renderBlobInTab(newTab, blob, fileName);
     } catch (error) {
       console.error("Error accessing file via storage:", error);
@@ -141,6 +145,11 @@ const CodeOfPoints = () => {
         const blob = respBlob.type === 'application/pdf'
           ? respBlob
           : new Blob([await respBlob.arrayBuffer()], { type: 'application/pdf' });
+        
+        // Download the file
+        downloadBlob(blob, fileName);
+        
+        // Open in browser
         renderBlobInTab(newTab, blob, fileName);
       } catch (fallbackError) {
         console.error("Error accessing file via proxy:", fallbackError);
@@ -148,53 +157,12 @@ const CodeOfPoints = () => {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Unable to display the PDF. Please try Download instead.",
+          description: "Unable to access the file.",
         });
       }
     }
   };
 
-  const handleDownload = async (filePath: string, fileName: string) => {
-    try {
-      // First, try direct storage download
-      const { data, error } = await supabase.storage
-        .from("rulebooks")
-        .download(filePath);
-
-      if (error) throw error;
-
-      const blob = data.type === 'application/pdf'
-        ? data
-        : new Blob([await data.arrayBuffer()], { type: 'application/pdf' });
-
-      downloadBlob(blob, fileName);
-    } catch (error) {
-      console.error("Error downloading file via storage:", error);
-      
-      // Fallback: use backend proxy
-      try {
-        const functionsUrl = getFunctionsUrl();
-        const response = await fetch(
-          `${functionsUrl}/serve-rulebook?path=${encodeURIComponent(filePath)}&dl=1`
-        );
-        
-        if (!response.ok) throw new Error('Proxy fetch failed');
-        
-        const respBlob = await response.blob();
-        const blob = respBlob.type === 'application/pdf'
-          ? respBlob
-          : new Blob([await respBlob.arrayBuffer()], { type: 'application/pdf' });
-        downloadBlob(blob, fileName);
-      } catch (fallbackError) {
-        console.error("Error downloading file via proxy:", fallbackError);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Unable to download the file. Please try again.",
-        });
-      }
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -239,22 +207,13 @@ const CodeOfPoints = () => {
                   {file.description && (
                     <p className="text-sm opacity-80 mb-4">{file.description}</p>
                   )}
-                  <div className="flex gap-2 mt-auto">
-                    <Button
-                      variant="secondary"
-                      className="flex-1"
-                      onClick={() => handleFileClick(file.file_path, file.title)}
-                    >
-                      Access
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      onClick={() => handleDownload(file.file_path, `${file.title}.pdf`)}
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => handleFileClick(file.file_path, file.title)}
+                  >
+                    Access
+                  </Button>
                 </div>
               ))
             ) : (
@@ -281,22 +240,13 @@ const CodeOfPoints = () => {
                   {file.description && (
                     <p className="text-sm opacity-80 mb-4">{file.description}</p>
                   )}
-                  <div className="flex gap-2 mt-auto">
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => handleFileClick(file.file_path, file.title)}
-                    >
-                      Access
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleDownload(file.file_path, `${file.title}.pdf`)}
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => handleFileClick(file.file_path, file.title)}
+                  >
+                    Access
+                  </Button>
                 </div>
               ))
             ) : (
