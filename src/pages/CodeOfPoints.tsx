@@ -1,12 +1,14 @@
-import { ArrowLeft, Search, Upload } from "lucide-react";
+import { ArrowLeft, Search, Upload, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const CodeOfPoints = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Fetch FIG Code of Points files
   const { data: figCOPFiles } = useQuery({
@@ -39,22 +41,53 @@ const CodeOfPoints = () => {
   });
 
   const handleFileClick = async (filePath: string) => {
+    // Open blank tab immediately (synchronous) to avoid popup blocker
+    const newTab = window.open('about:blank', '_blank');
+    
     try {
       const { data, error } = await supabase.storage
         .from("rulebooks")
-        .download(filePath);
+        .createSignedUrl(filePath, 3600); // 1 hour expiry
 
       if (error) throw error;
 
-      // Create a blob URL and open it
-      const blob = new Blob([data], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
-      
-      // Clean up the blob URL after a delay
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      if (newTab && data?.signedUrl) {
+        newTab.location.href = data.signedUrl;
+      }
     } catch (error) {
       console.error("Error accessing file:", error);
+      if (newTab) newTab.close();
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Unable to access the file. Please try downloading instead.",
+      });
+    }
+  };
+
+  const handleDownload = async (filePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("rulebooks")
+        .createSignedUrl(filePath, 60); // 1 minute is enough for download
+
+      if (error) throw error;
+
+      if (data?.signedUrl) {
+        const link = document.createElement('a');
+        link.href = data.signedUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Unable to download the file. Please try again.",
+      });
     }
   };
 
@@ -101,13 +134,22 @@ const CodeOfPoints = () => {
                   {file.description && (
                     <p className="text-sm opacity-80 mb-4">{file.description}</p>
                   )}
-                  <Button
-                    variant="secondary"
-                    className="mt-auto w-full max-w-[150px]"
-                    onClick={() => handleFileClick(file.file_path)}
-                  >
-                    Access
-                  </Button>
+                  <div className="flex gap-2 mt-auto">
+                    <Button
+                      variant="secondary"
+                      className="flex-1"
+                      onClick={() => handleFileClick(file.file_path)}
+                    >
+                      Access
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      onClick={() => handleDownload(file.file_path, `${file.title}.pdf`)}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))
             ) : (
@@ -134,13 +176,22 @@ const CodeOfPoints = () => {
                   {file.description && (
                     <p className="text-sm opacity-80 mb-4">{file.description}</p>
                   )}
-                  <Button
-                    variant="outline"
-                    className="mt-auto w-full max-w-[150px]"
-                    onClick={() => handleFileClick(file.file_path)}
-                  >
-                    Access
-                  </Button>
+                  <div className="flex gap-2 mt-auto">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => handleFileClick(file.file_path)}
+                    >
+                      Access
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleDownload(file.file_path, `${file.title}.pdf`)}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))
             ) : (
