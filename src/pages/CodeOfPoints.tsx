@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText, Search, Upload } from "lucide-react";
+import { ArrowLeft, Search, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
@@ -73,27 +73,30 @@ const CodeOfPoints = () => {
         {/* FIG Code of Points Section */}
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4 text-foreground">FIG Code of Points</h2>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {figCOPFiles && figCOPFiles.length > 0 ? (
               figCOPFiles.map((file) => (
                 <div
                   key={file.id}
-                  className="p-6 border-2 border-primary rounded-xl hover:bg-accent transition-colors cursor-pointer"
-                  onClick={() => handleFileClick(file.file_path)}
+                  className="bg-primary text-primary-foreground rounded-xl p-6 flex flex-col items-center text-center shadow-lg"
                 >
-                  <div className="flex items-center gap-4">
-                    <FileText className="h-8 w-8 text-primary" />
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground">{file.title}</h3>
-                      {file.description && (
-                        <p className="text-sm text-muted-foreground">{file.description}</p>
-                      )}
-                    </div>
-                  </div>
+                  <h3 className="text-sm font-medium mb-2">Rhythmic</h3>
+                  <h4 className="text-lg font-bold mb-1">{file.title}</h4>
+                  <p className="text-sm opacity-90 mb-4">(PDF)</p>
+                  {file.description && (
+                    <p className="text-sm opacity-80 mb-4">{file.description}</p>
+                  )}
+                  <Button
+                    variant="secondary"
+                    className="mt-auto w-full max-w-[150px]"
+                    onClick={() => handleFileClick(file.file_path)}
+                  >
+                    Access
+                  </Button>
                 </div>
               ))
             ) : (
-              <div className="p-6 border-2 border-muted rounded-xl bg-muted/50">
+              <div className="col-span-full p-6 border-2 border-muted rounded-xl bg-muted/50">
                 <p className="text-muted-foreground">No files uploaded yet</p>
               </div>
             )}
@@ -103,27 +106,30 @@ const CodeOfPoints = () => {
         {/* Other COPs Section */}
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4 text-foreground">Other COPs</h2>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {otherCOPs && otherCOPs.length > 0 ? (
               otherCOPs.map((file) => (
                 <div
                   key={file.id}
-                  className="p-6 border-2 border-muted rounded-xl bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer"
-                  onClick={() => handleFileClick(file.file_path)}
+                  className="bg-secondary text-secondary-foreground rounded-xl p-6 flex flex-col items-center text-center shadow-lg"
                 >
-                  <div className="flex items-center gap-4">
-                    <FileText className="h-8 w-8 text-muted-foreground" />
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground">{file.title}</h3>
-                      {file.description && (
-                        <p className="text-sm text-muted-foreground">{file.description}</p>
-                      )}
-                    </div>
-                  </div>
+                  <h3 className="text-sm font-medium mb-2">Code of Points</h3>
+                  <h4 className="text-lg font-bold mb-1">{file.title}</h4>
+                  <p className="text-sm opacity-90 mb-4">(PDF)</p>
+                  {file.description && (
+                    <p className="text-sm opacity-80 mb-4">{file.description}</p>
+                  )}
+                  <Button
+                    variant="outline"
+                    className="mt-auto w-full max-w-[150px]"
+                    onClick={() => handleFileClick(file.file_path)}
+                  >
+                    Access
+                  </Button>
                 </div>
               ))
             ) : (
-              <div className="p-6 border-2 border-muted rounded-xl bg-muted/50">
+              <div className="col-span-full p-6 border-2 border-muted rounded-xl bg-muted/50">
                 <h3 className="text-lg font-semibold mb-2 text-muted-foreground">Additional Resources</h3>
                 <p className="text-muted-foreground">Other code of points files will be added here</p>
               </div>
