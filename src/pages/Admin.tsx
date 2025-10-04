@@ -85,6 +85,39 @@ const Admin = () => {
     const f = e.dataTransfer.files?.[0] || null;
     handleFileSelect(f);
   };
+  const testStoragePermissions = async () => {
+    try {
+      console.log("🧪 Testing storage upload permissions...");
+      const testFile = new Blob(["test"], { type: "text/plain" });
+      const testPath = `test-permissions-${Date.now()}.txt`;
+      
+      const { data, error } = await supabase.storage
+        .from('rulebooks')
+        .upload(testPath, testFile);
+
+      if (error) {
+        console.error("❌ Storage test FAILED:", {
+          message: error.message,
+          name: error.name,
+          status: (error as any).status,
+          statusCode: (error as any).statusCode,
+          fullError: error
+        });
+        toast.error(`Storage test failed: ${error.message}`);
+        return;
+      }
+
+      console.log("✅ Storage test PASSED:", data);
+      toast.success("Storage write permissions OK!");
+      
+      // Clean up test file
+      await supabase.storage.from('rulebooks').remove([testPath]);
+    } catch (error: any) {
+      console.error("❌ Storage test exception:", error);
+      toast.error(`Test exception: ${error.message}`);
+    }
+  };
+
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -101,13 +134,31 @@ const Admin = () => {
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = fileName;
 
-      const { error: uploadError } = await supabase.storage
+      console.log("📤 Starting storage upload:", { filePath, fileSize: file.size, fileType: file.type });
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('rulebooks')
         .upload(filePath, file, { contentType: 'application/pdf', upsert: false });
-      if (uploadError) throw uploadError;
+
+      if (uploadError) {
+        console.error("❌ Storage upload FAILED:", {
+          message: uploadError.message,
+          name: uploadError.name,
+          status: (uploadError as any).status,
+          statusCode: (uploadError as any).statusCode,
+          fullError: uploadError
+        });
+        toast.error(`Storage upload failed: ${uploadError.message}`);
+        setUploading(false);
+        return;
+      }
+
+      console.log("✅ Storage upload SUCCESS:", uploadData);
 
       // Insert metadata into database
-      const { error: dbError } = await supabase
+      console.log("📝 Starting database insert:", { title, category, filePath });
+
+      const { data: dbData, error: dbError } = await supabase
         .from('rulebooks')
         .insert({
           title,
@@ -115,10 +166,23 @@ const Admin = () => {
           file_path: filePath,
           file_size: file.size,
           category,
+        })
+        .select();
+
+      if (dbError) {
+        console.error("❌ Database insert FAILED:", {
+          message: dbError.message,
+          code: dbError.code,
+          details: dbError.details,
+          hint: dbError.hint,
+          fullError: dbError
         });
+        toast.error(`Database insert failed: ${dbError.message}`);
+        setUploading(false);
+        return;
+      }
 
-      if (dbError) throw dbError;
-
+      console.log("✅ Database insert SUCCESS:", dbData);
       toast.success("File uploaded successfully!");
       
       // Reset form
@@ -132,7 +196,13 @@ const Admin = () => {
       if (fileInput) fileInput.value = '';
       
     } catch (error: any) {
-      toast.error(error.message || "Failed to upload file");
+      console.error("❌ Upload exception:", {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+        fullError: error
+      });
+      toast.error(`Upload failed: ${error.message || "Unknown error"}`);
     } finally {
       setUploading(false);
     }
@@ -194,6 +264,9 @@ const Admin = () => {
               <div className="flex items-center justify-center gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                   Select PDF
+                </Button>
+                <Button type="button" variant="secondary" size="sm" onClick={testStoragePermissions}>
+                  Test Upload
                 </Button>
                 {file && (
                   <Button type="button" variant="ghost" size="sm" onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value=''; }}>
