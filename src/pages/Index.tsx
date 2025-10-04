@@ -1,7 +1,10 @@
 import { Menu, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/rhythmic-gymnastics-hero.jpg";
 const Index = () => {
+  const navigate = useNavigate();
+
   return <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border">
@@ -43,7 +46,10 @@ const Index = () => {
                 <h3 className="text-lg font-semibold mb-2 text-foreground">My Routines</h3>
                 <p className="text-muted-foreground">Create routines with DA & DD calculation</p>
               </div>
-              <div className="p-6 border-2 border-primary rounded-xl hover:bg-accent transition-colors">
+              <div 
+                className="p-6 border-2 border-primary rounded-xl hover:bg-accent transition-colors cursor-pointer"
+                onClick={() => navigate("/code-of-points")}
+              >
                 <h3 className="text-lg font-semibold mb-2 text-foreground">FIG Code of Points</h3>
                 <p className="text-muted-foreground">Search & Access COP 2025-2028</p>
               </div>
