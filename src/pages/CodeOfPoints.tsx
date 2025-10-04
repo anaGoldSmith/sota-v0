@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText, Search } from "lucide-react";
+import { ArrowLeft, FileText, Search, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
@@ -58,7 +58,14 @@ const CodeOfPoints = () => {
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           Rule Books
         </h1>
-        <div className="w-10" /> {/* Spacer for alignment */}
+        <Button 
+          variant="default" 
+          size="icon" 
+          className="rounded-full"
+          onClick={() => navigate("/admin")}
+        >
+          <Upload className="h-5 w-5" />
+        </Button>
       </header>
 
       {/* Main Content */}
