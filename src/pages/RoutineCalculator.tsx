@@ -95,7 +95,7 @@ const RoutineCalculator = () => {
                 className="w-full h-14 text-lg justify-start gap-2"
               >
                 <span>Rotations</span>
-                <RotationIcon className="h-28 w-28" />
+                <RotationIcon className="!h-28 !w-28" />
               </Button>
             </div>
           </div>
