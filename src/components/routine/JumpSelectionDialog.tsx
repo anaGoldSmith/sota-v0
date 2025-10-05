@@ -159,13 +159,13 @@ export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSe
                         <img 
                           src={`https://rwbnynjpaimdfxqoqbvt.supabase.co/storage/v1/object/public/jump-symbols/${jump.symbol_image}`}
                           alt={jump.code}
-                          className="w-16 h-auto object-contain"
+                          className="w-12 h-12 object-contain"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                           }}
                         />
                       ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
+                        <span className="text-xs text-muted-foreground">No symbol</span>
                       )}
                     </TableCell>
                     <TableCell className="font-mono font-medium">{jump.code}</TableCell>
