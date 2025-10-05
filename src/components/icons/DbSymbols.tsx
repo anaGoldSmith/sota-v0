@@ -5,30 +5,30 @@ interface IconProps {
 export const RotationIcon = ({ className = "" }: IconProps) => {
   return (
     <svg
-      width="32"
-      height="32"
-      viewBox="0 0 32 32"
+      width="48"
+      height="48"
+      viewBox="0 0 48 48"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
       {/* Vertical line (stem) */}
       <line
-        x1="16"
-        y1="4"
-        x2="16"
-        y2="20"
+        x1="24"
+        y1="6"
+        x2="24"
+        y2="30"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="4"
         strokeLinecap="round"
       />
       {/* Circle at bottom */}
       <circle
-        cx="16"
-        cy="25"
-        r="5.5"
+        cx="24"
+        cy="38"
+        r="8"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="4"
         fill="none"
       />
     </svg>
@@ -53,6 +53,39 @@ export const JumpIcon = ({ className = "" }: IconProps) => {
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
+      />
+    </svg>
+  );
+};
+
+export const BalanceIcon = ({ className = "" }: IconProps) => {
+  return (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      {/* T-shape for balance */}
+      <line
+        x1="4"
+        y1="6"
+        x2="28"
+        y2="6"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <line
+        x1="16"
+        y1="6"
+        x2="16"
+        y2="26"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
       />
     </svg>
   );
