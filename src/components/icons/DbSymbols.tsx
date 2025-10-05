@@ -45,7 +45,7 @@ export const JumpIcon = ({ className = "" }: IconProps) => {
       <path
         d="M 2 22 L 16 2 L 30 22"
         stroke="currentColor"
-        strokeWidth="4"
+        strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
