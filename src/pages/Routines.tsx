@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, FileText, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Routines = () => {
@@ -17,7 +18,7 @@ const Routines = () => {
           >
             <ArrowLeft className="h-6 w-6" />
           </Button>
-          <h1 className="text-2xl font-bold">My Routines</h1>
+          <h1 className="text-2xl font-bold">Routine Calculator</h1>
           <div className="w-10" /> {/* Spacer for alignment */}
         </div>
       </header>
@@ -25,39 +26,28 @@ const Routines = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
-          {/* Action Buttons */}
-          <div className="grid gap-4">
+          {/* My Routines Section */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4 text-foreground">My Routines</h2>
+            
+            {/* Search Bar */}
+            <div className="relative mb-6">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input 
+                type="text"
+                placeholder="Search BAR"
+                className="pl-10 h-12"
+              />
+            </div>
+
+            {/* Add Routine Button */}
             <Button 
               size="lg" 
-              className="h-16 text-lg flex items-center justify-start gap-4"
+              className="w-full h-14 text-lg"
             >
-              <Plus className="h-6 w-6" />
-              Create New Routine
+              <Plus className="h-5 w-5 mr-2" />
+              Add Routine +
             </Button>
-
-            <Button 
-              variant="outline"
-              size="lg" 
-              className="h-16 text-lg flex items-center justify-start gap-4"
-            >
-              <FileText className="h-6 w-6" />
-              View All Routines
-            </Button>
-
-            <Button 
-              variant="outline"
-              size="lg" 
-              className="h-16 text-lg flex items-center justify-start gap-4"
-            >
-              <Trash2 className="h-6 w-6" />
-              Delete Routine
-            </Button>
-          </div>
-
-          {/* Empty State */}
-          <div className="mt-12 text-center text-muted-foreground">
-            <p className="text-lg">No routines yet</p>
-            <p className="text-sm mt-2">Create your first routine to get started</p>
           </div>
         </div>
       </main>
