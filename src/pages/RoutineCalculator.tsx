@@ -82,12 +82,12 @@ const RoutineCalculator = () => {
                 <JumpIcon className="h-8 w-auto" />
               </Button>
 
-              <Button 
+              <Button
                 variant="outline"
-                className="w-full h-14 text-lg justify-start gap-2"
+                className="w-full h-14 text-lg justify-start gap-1"
               >
                 <span>Balances</span>
-                <BalanceIcon className="h-10 w-10" />
+                <BalanceIcon className="!h-7 !w-7" />
               </Button>
 
               <Button 
