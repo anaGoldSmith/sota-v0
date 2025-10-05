@@ -62,7 +62,7 @@ const RoutineCalculator = () => {
               <Input 
                 id="rulebook"
                 type="text"
-                placeholder="Fig CoP"
+                placeholder="E.g. FIG CoP"
               />
             </div>
           </div>
