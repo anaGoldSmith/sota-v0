@@ -68,7 +68,7 @@ const RoutineCalculator = () => {
 
           {/* Difficulty of Body Section */}
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-foreground">Difficulty of Body (DB)</h2>
+            <h2 className="text-xl font-semibold text-foreground">Difficulties of Body (DB)</h2>
             
             <div className="space-y-3">
               <Button 
