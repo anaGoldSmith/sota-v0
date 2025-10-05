@@ -3,8 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { RotationIcon } from "@/components/icons/DbSymbols";
-import jumpSymbol from "@/assets/jump-symbol.png";
+import { RotationIcon, JumpIcon } from "@/components/icons/DbSymbols";
 
 const RoutineCalculator = () => {
   const navigate = useNavigate();
@@ -80,7 +79,7 @@ const RoutineCalculator = () => {
                 className="w-full h-14 text-lg justify-start gap-2"
               >
                 <span>Jumps</span>
-                <img src={jumpSymbol} alt="Jump" className="h-8 w-8 object-contain" />
+                <JumpIcon className="h-8 w-auto" />
               </Button>
 
               <Button 

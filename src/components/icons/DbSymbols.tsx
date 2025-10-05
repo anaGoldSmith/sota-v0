@@ -34,3 +34,26 @@ export const RotationIcon = ({ className = "" }: IconProps) => {
     </svg>
   );
 };
+
+export const JumpIcon = ({ className = "" }: IconProps) => {
+  return (
+    <svg
+      width="32"
+      height="24"
+      viewBox="0 0 32 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      {/* Wide upward arrow - thick lines */}
+      <path
+        d="M 2 22 L 16 2 L 30 22"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </svg>
+  );
+};
