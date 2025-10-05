@@ -92,10 +92,10 @@ const RoutineCalculator = () => {
 
               <Button 
                 variant="outline"
-                className="w-full h-14 text-lg justify-start gap-2"
+                className="w-full h-14 text-lg justify-start gap-1"
               >
                 <span>Rotations</span>
-                <RotationIcon className="!h-8 !w-8" />
+                <RotationIcon className="!h-7 !w-7" />
               </Button>
             </div>
           </div>
