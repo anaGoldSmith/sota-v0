@@ -5,8 +5,6 @@ interface IconProps {
 export const RotationIcon = ({ className = "" }: IconProps) => {
   return (
     <svg
-      width="48"
-      height="48"
       viewBox="0 0 48 48"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -38,8 +36,6 @@ export const RotationIcon = ({ className = "" }: IconProps) => {
 export const JumpIcon = ({ className = "" }: IconProps) => {
   return (
     <svg
-      width="32"
-      height="24"
       viewBox="0 0 32 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -61,8 +57,6 @@ export const JumpIcon = ({ className = "" }: IconProps) => {
 export const BalanceIcon = ({ className = "" }: IconProps) => {
   return (
     <svg
-      width="32"
-      height="32"
       viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
