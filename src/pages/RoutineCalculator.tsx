@@ -74,26 +74,35 @@ const RoutineCalculator = () => {
             <div className="space-y-3">
               <Button 
                 variant="outline"
-                className="w-full h-14 text-lg justify-start gap-1"
+                className="w-full h-14 text-lg justify-between"
               >
-                <span>Jumps</span>
-                <JumpIcon className="!h-7 !w-7" />
+                <div className="flex items-center gap-1">
+                  <span>Jumps</span>
+                  <JumpIcon className="!h-7 !w-7" />
+                </div>
+                <span className="text-sm">+ Add</span>
               </Button>
 
               <Button
                 variant="outline"
-                className="w-full h-14 text-lg justify-start gap-1"
+                className="w-full h-14 text-lg justify-between"
               >
-                <span>Balances</span>
-                <BalanceIcon className="!h-7 !w-7" />
+                <div className="flex items-center gap-1">
+                  <span>Balances</span>
+                  <BalanceIcon className="!h-7 !w-7" />
+                </div>
+                <span className="text-sm">+ Add</span>
               </Button>
 
               <Button 
                 variant="outline"
-                className="w-full h-14 text-lg justify-start gap-1"
+                className="w-full h-14 text-lg justify-between"
               >
-                <span>Rotations</span>
-                <RotationIcon className="!h-8 !w-8" />
+                <div className="flex items-center gap-1">
+                  <span>Rotations</span>
+                  <RotationIcon className="!h-8 !w-8" />
+                </div>
+                <span className="text-sm">+ Add</span>
               </Button>
             </div>
           </div>
