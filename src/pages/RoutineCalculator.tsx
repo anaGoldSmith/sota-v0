@@ -72,8 +72,6 @@ const RoutineCalculator = () => {
             <h2 className="text-xl font-semibold text-foreground">Difficulties of Body (DB)</h2>
             
             <div className="space-y-3">
-              <div className="text-base font-medium text-foreground">Select:</div>
-              
               <Button 
                 variant="outline"
                 className="w-full h-14 text-lg justify-start gap-1"
