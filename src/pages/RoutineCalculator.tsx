@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbols";
@@ -41,11 +42,20 @@ const RoutineCalculator = () => {
 
             <div className="space-y-2">
               <Label htmlFor="apparatus">Apparatus</Label>
-              <Input 
-                id="apparatus"
-                type="text"
-                placeholder="E.g. Hoop"
-              />
+              <Select>
+                <SelectTrigger id="apparatus">
+                  <SelectValue placeholder="Select apparatus" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hoop">Hoop</SelectItem>
+                  <SelectItem value="ball">Ball</SelectItem>
+                  <SelectItem value="clubs">Clubs</SelectItem>
+                  <SelectItem value="ribbon">Ribbon</SelectItem>
+                  <SelectItem value="rope">Rope</SelectItem>
+                  <SelectItem value="wa">WA</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
