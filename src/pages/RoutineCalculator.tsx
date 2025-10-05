@@ -2,12 +2,37 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbols";
+import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+
+interface SelectedJump {
+  id: string;
+  code: string;
+  name: string | null;
+  description: string;
+  value: number;
+  turn_degrees: string | null;
+}
 
 const RoutineCalculator = () => {
   const navigate = useNavigate();
+  const [jumpDialogOpen, setJumpDialogOpen] = useState(false);
+  const [selectedJumps, setSelectedJumps] = useState<SelectedJump[]>([]);
+
+  const handleSelectJump = (jump: SelectedJump) => {
+    setSelectedJumps((prev) => [...prev, jump]);
+  };
+
+  const handleRemoveJump = (index: number) => {
+    setSelectedJumps((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const totalJumpDifficulty = selectedJumps.reduce((sum, jump) => sum + jump.value, 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,6 +116,7 @@ const RoutineCalculator = () => {
               <Button 
                 variant="outline"
                 className="w-full h-14 text-lg justify-between"
+                onClick={() => setJumpDialogOpen(true)}
               >
                 <div className="flex items-center gap-1">
                   <span>Jumps</span>
@@ -98,6 +124,44 @@ const RoutineCalculator = () => {
                 </div>
                 <span className="text-sm">+ Add</span>
               </Button>
+
+              {/* Selected Jumps Display */}
+              {selectedJumps.length > 0 && (
+                <Card className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-sm">Selected Jumps</h3>
+                    <Badge variant="default">Total: {totalJumpDifficulty.toFixed(2)}</Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {selectedJumps.map((jump, index) => (
+                      <div
+                        key={`${jump.id}-${index}`}
+                        className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
+                      >
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <Badge variant="outline" className="font-mono shrink-0">
+                            {jump.code}
+                          </Badge>
+                          <span className="text-sm truncate">
+                            {jump.name || jump.description}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Badge variant="secondary">{jump.value}</Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleRemoveJump(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
 
               <Button
                 variant="outline"
@@ -124,6 +188,13 @@ const RoutineCalculator = () => {
           </div>
         </div>
       </main>
+
+      {/* Jump Selection Dialog */}
+      <JumpSelectionDialog
+        open={jumpDialogOpen}
+        onOpenChange={setJumpDialogOpen}
+        onSelectJump={handleSelectJump}
+      />
     </div>
   );
 };

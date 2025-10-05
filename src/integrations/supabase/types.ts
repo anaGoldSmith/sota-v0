@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      jumps: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          id: string
+          jump_number: number
+          name: string | null
+          symbol_image: string | null
+          turn_degrees: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          jump_number: number
+          name?: string | null
+          symbol_image?: string | null
+          turn_degrees?: string | null
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          jump_number?: number
+          name?: string | null
+          symbol_image?: string | null
+          turn_degrees?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
