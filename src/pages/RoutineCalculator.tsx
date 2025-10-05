@@ -53,6 +53,7 @@ const RoutineCalculator = () => {
                   <SelectItem value="ribbon">Ribbon</SelectItem>
                   <SelectItem value="rope">Rope</SelectItem>
                   <SelectItem value="wa">WA</SelectItem>
+                  <SelectItem value="gala">Gala</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
