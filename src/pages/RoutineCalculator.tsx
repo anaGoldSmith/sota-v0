@@ -77,21 +77,21 @@ const RoutineCalculator = () => {
                 variant="outline"
                 className="w-full h-14 text-lg justify-start"
               >
-                Jumps (/\)
+                Jumps/leaps ↑
               </Button>
 
               <Button 
                 variant="outline"
                 className="w-full h-14 text-lg justify-start"
               >
-                Balances (T)
+                Balances ⊤
               </Button>
 
               <Button 
                 variant="outline"
                 className="w-full h-14 text-lg justify-start"
               >
-                Rotations b
+                Rotations ↻
               </Button>
             </div>
           </div>
