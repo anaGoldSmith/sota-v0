@@ -4,7 +4,6 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RotationIcon } from "@/components/icons/DbSymbols";
-import rotationSymbol from "@/assets/rotation-symbol.jpg";
 
 const RoutineCalculator = () => {
   const navigate = useNavigate();
@@ -94,7 +93,7 @@ const RoutineCalculator = () => {
                 className="w-full h-14 text-lg justify-start gap-2"
               >
                 <span>Rotations</span>
-                <img src={rotationSymbol} alt="Rotation" className="h-8 w-8 object-contain" />
+                <RotationIcon className="h-12 w-12" />
               </Button>
             </div>
           </div>
