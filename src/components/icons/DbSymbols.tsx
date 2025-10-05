@@ -17,7 +17,7 @@ export const RotationIcon = ({ className = "" }: IconProps) => {
         x2="24"
         y2="30"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="4"
         strokeLinecap="round"
       />
       {/* Circle at bottom */}
@@ -26,7 +26,7 @@ export const RotationIcon = ({ className = "" }: IconProps) => {
         cy="38"
         r="8"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="4"
         fill="none"
       />
     </svg>
