@@ -9,6 +9,7 @@ import PdfViewer from "./pages/PdfViewer";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import Routines from "./pages/Routines";
+import RoutineCalculator from "./pages/RoutineCalculator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/admin" element={<Admin />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/routines" element={<Routines />} />
+          <Route path="/routine-calculator" element={<RoutineCalculator />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

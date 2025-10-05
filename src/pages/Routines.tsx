@@ -44,6 +44,7 @@ const Routines = () => {
             <Button 
               size="lg" 
               className="w-full h-14 text-lg"
+              onClick={() => navigate("/routine-calculator")}
             >
               <Plus className="h-5 w-5 mr-2" />
               Add Routine
