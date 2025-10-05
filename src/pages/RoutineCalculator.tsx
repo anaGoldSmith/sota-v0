@@ -91,7 +91,7 @@ const RoutineCalculator = () => {
                 variant="outline"
                 className="w-full h-14 text-lg justify-start"
               >
-                Rotations ↻
+                Rotations ь
               </Button>
             </div>
           </div>
