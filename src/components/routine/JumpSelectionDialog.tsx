@@ -8,6 +8,7 @@ import { JumpIcon } from "@/components/icons/DbSymbols";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { useState as useImageState } from "react";
 
 interface Jump {
   id: string;
@@ -126,6 +127,7 @@ export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSe
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[80px]">Symbol</TableHead>
                 <TableHead className="w-[100px]">Code</TableHead>
                 <TableHead className="w-[80px]">Value</TableHead>
                 <TableHead className="w-[100px]">Turn</TableHead>
@@ -152,6 +154,17 @@ export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSe
                     className="cursor-pointer hover:bg-accent"
                     onClick={() => handleRowClick(jump)}
                   >
+                    <TableCell>
+                      {jump.symbol_image ? (
+                        <img 
+                          src={new URL(`/src/assets/jump-symbols/${jump.symbol_image}`, import.meta.url).href}
+                          alt={jump.code}
+                          className="w-16 h-auto object-contain"
+                        />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="font-mono font-medium">{jump.code}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">{jump.value}</Badge>
