@@ -28,7 +28,7 @@ const Routines = () => {
         <div className="max-w-2xl mx-auto space-y-6">
           {/* My Routines Section */}
           <div>
-            <h2 className="text-xl font-semibold mb-4 text-foreground">My Routines</h2>
+            <h2 className="text-xl font-semibold mb-4 text-foreground">All Routines</h2>
             
             {/* Search Bar */}
             <div className="relative mb-6">
