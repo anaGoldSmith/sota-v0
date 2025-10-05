@@ -76,10 +76,10 @@ const RoutineCalculator = () => {
               
               <Button 
                 variant="outline"
-                className="w-full h-14 text-lg justify-start gap-2"
+                className="w-full h-14 text-lg justify-start gap-1"
               >
                 <span>Jumps</span>
-                <JumpIcon className="h-8 w-auto" />
+                <JumpIcon className="!h-7 !w-7" />
               </Button>
 
               <Button
