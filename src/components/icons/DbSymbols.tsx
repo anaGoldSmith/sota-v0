@@ -69,7 +69,7 @@ export const BalanceIcon = ({ className = "" }: IconProps) => {
         x2="28"
         y2="6"
         stroke="currentColor"
-        strokeWidth="4"
+        strokeWidth="3"
         strokeLinecap="round"
       />
       <line
@@ -78,7 +78,7 @@ export const BalanceIcon = ({ className = "" }: IconProps) => {
         x2="16"
         y2="26"
         stroke="currentColor"
-        strokeWidth="4"
+        strokeWidth="3"
         strokeLinecap="round"
       />
     </svg>
