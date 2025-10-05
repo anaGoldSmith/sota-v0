@@ -127,7 +127,7 @@ export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSe
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[80px]">Symbol</TableHead>
+                <TableHead className="w-[120px]">Symbol</TableHead>
                 <TableHead className="w-[100px]">Code</TableHead>
                 <TableHead className="w-[80px]">Value</TableHead>
                 <TableHead className="w-[100px]">Turn</TableHead>
@@ -159,7 +159,7 @@ export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSe
                         <img 
                           src={`https://rwbnynjpaimdfxqoqbvt.supabase.co/storage/v1/object/public/jump-symbols/${jump.symbol_image}`}
                           alt={jump.code}
-                          className="w-12 h-12 object-contain"
+                          className="max-w-[100px] h-auto object-contain"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                           }}
