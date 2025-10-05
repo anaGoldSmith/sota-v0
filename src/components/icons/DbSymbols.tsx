@@ -5,30 +5,30 @@ interface IconProps {
 export const RotationIcon = ({ className = "" }: IconProps) => {
   return (
     <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
       {/* Vertical line (stem) */}
       <line
-        x1="12"
-        y1="2"
-        x2="12"
-        y2="15"
+        x1="16"
+        y1="4"
+        x2="16"
+        y2="20"
         stroke="currentColor"
-        strokeWidth="2.5"
+        strokeWidth="3"
         strokeLinecap="round"
       />
       {/* Circle at bottom */}
       <circle
-        cx="12"
-        cy="19"
-        r="4"
+        cx="16"
+        cy="25"
+        r="5.5"
         stroke="currentColor"
-        strokeWidth="2.5"
+        strokeWidth="3"
         fill="none"
       />
     </svg>
