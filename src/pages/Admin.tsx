@@ -23,6 +23,12 @@ const Admin = () => {
   const [rulebooks, setRulebooks] = useState<any[]>([]);
   const [deleting, setDeleting] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Jump symbol upload states
+  const [symbolFile, setSymbolFile] = useState<File | null>(null);
+  const [symbolCode, setSymbolCode] = useState("");
+  const [uploadingSymbol, setUploadingSymbol] = useState(false);
+  const symbolInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
@@ -163,6 +169,60 @@ const Admin = () => {
     }
   };
 
+  const handleSymbolUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!symbolFile || !symbolCode) {
+      toast.error("Please provide both an image and jump code");
+      return;
+    }
+
+    setUploadingSymbol(true);
+
+    try {
+      // Upload image to jump-symbols bucket
+      const fileExt = symbolFile.name.split('.').pop();
+      const fileName = `${symbolCode}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('jump-symbols')
+        .upload(fileName, symbolFile, { 
+          contentType: symbolFile.type,
+          upsert: true 
+        });
+
+      if (uploadError) {
+        toast.error(`Upload failed: ${uploadError.message}`);
+        setUploadingSymbol(false);
+        return;
+      }
+
+      // Update jump record with symbol filename
+      const { error: updateError } = await supabase
+        .from('jumps')
+        .update({ symbol_image: fileName })
+        .eq('code', symbolCode);
+
+      if (updateError) {
+        toast.error(`Database update failed: ${updateError.message}`);
+        setUploadingSymbol(false);
+        return;
+      }
+
+      toast.success(`Symbol for ${symbolCode} uploaded successfully!`);
+      
+      // Reset form
+      setSymbolCode("");
+      setSymbolFile(null);
+      if (symbolInputRef.current) symbolInputRef.current.value = '';
+      
+    } catch (error: any) {
+      toast.error(`Upload failed: ${error.message || "Unknown error"}`);
+    } finally {
+      setUploadingSymbol(false);
+    }
+  };
+
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -288,6 +348,54 @@ const Admin = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-2xl">
+        {/* Jump Symbol Upload Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Upload Jump Symbol</CardTitle>
+            <CardDescription>Upload symbol images for jumps and link them to jump codes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSymbolUpload} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="symbol-code">Jump Code</Label>
+                <Input
+                  id="symbol-code"
+                  value={symbolCode}
+                  onChange={(e) => setSymbolCode(e.target.value)}
+                  placeholder="e.g., 1.101"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="symbol-input">Symbol Image (PNG/JPG)</Label>
+                <Input
+                  id="symbol-input"
+                  ref={symbolInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  onChange={(e) => setSymbolFile(e.target.files?.[0] || null)}
+                  required
+                />
+                {symbolFile && (
+                  <p className="text-sm text-muted-foreground">{symbolFile.name}</p>
+                )}
+              </div>
+              
+              <Button type="submit" disabled={uploadingSymbol} className="w-full">
+                {uploadingSymbol ? "Uploading..." : "Upload Symbol"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* PDF Upload Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Upload Rulebook PDF</CardTitle>
+            <CardDescription>Upload PDF rulebooks and documentation</CardDescription>
+          </CardHeader>
+          <CardContent>
         <form onSubmit={handleFileUpload} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="file-input">PDF File</Label>
@@ -367,6 +475,8 @@ const Admin = () => {
             {uploading ? "Uploading..." : "Upload File"}
           </Button>
         </form>
+          </CardContent>
+        </Card>
 
         {/* Existing Files Section */}
         <div className="mt-12">
