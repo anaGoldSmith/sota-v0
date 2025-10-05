@@ -69,11 +69,16 @@ const RoutineCalculator = () => {
 
             <div className="space-y-2">
               <Label htmlFor="rulebook">Rulebook</Label>
-              <Input 
-                id="rulebook"
-                type="text"
-                placeholder="E.g. FIG CoP"
-              />
+              <Select>
+                <SelectTrigger id="rulebook">
+                  <SelectValue placeholder="Select rulebook" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fig-cop-2025-2028">FIG CoP 2025-2028</SelectItem>
+                  <SelectItem value="sky-grace">Sky Grace</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
