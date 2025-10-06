@@ -2,13 +2,11 @@ import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { JumpIcon } from "@/components/icons/DbSymbols";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { useState as useImageState } from "react";
 
 interface Jump {
   id: string;
@@ -28,7 +26,6 @@ interface JumpSelectionDialogProps {
 
 export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
-  const [filterValue, setFilterValue] = useState<string>("all");
 
   // Fetch all jumps
   const { data: jumps, isLoading } = useQuery({
@@ -44,35 +41,79 @@ export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSe
     },
   });
 
-  // Filter jumps based on search text and value filter
-  const filteredJumps = useMemo(() => {
-    if (!jumps) return [];
+  // Parse jump code to extract row number and value
+  const parseJumpCode = (code: string) => {
+    const parts = code.split('.');
+    if (parts.length !== 2 || parts[0] !== '1') return null;
+    
+    const afterDot = parts[1];
+    if (afterDot.length < 3) return null;
+    
+    const rowNumber = parseInt(afterDot.slice(0, -2));
+    const valueCode = afterDot.slice(-2);
+    const value = parseFloat(`0.${valueCode}`);
+    
+    return { rowNumber, value };
+  };
 
-    return jumps.filter((jump) => {
-      const matchesSearch = 
-        searchText === "" ||
+  // Build matrix structure and filter based on search
+  const { matrix, rowNumbers, values } = useMemo(() => {
+    if (!jumps) return { matrix: new Map(), rowNumbers: [], values: [] };
+
+    // Filter jumps based on search text
+    const filtered = jumps.filter((jump) => {
+      if (searchText === "") return true;
+      return (
         jump.code.toLowerCase().includes(searchText.toLowerCase()) ||
         jump.description.toLowerCase().includes(searchText.toLowerCase()) ||
-        (jump.name && jump.name.toLowerCase().includes(searchText.toLowerCase()));
-
-      const matchesValue = 
-        filterValue === "all" || 
-        jump.value.toString() === filterValue;
-
-      return matchesSearch && matchesValue;
+        (jump.name && jump.name.toLowerCase().includes(searchText.toLowerCase()))
+      );
     });
-  }, [jumps, searchText, filterValue]);
 
-  const handleRowClick = (jump: Jump) => {
+    const matrixMap = new Map<number, Map<number, Jump>>();
+    const valueSet = new Set<number>();
+
+    filtered.forEach((jump) => {
+      const parsed = parseJumpCode(jump.code);
+      if (!parsed) return;
+
+      const { rowNumber, value } = parsed;
+      
+      if (!matrixMap.has(rowNumber)) {
+        matrixMap.set(rowNumber, new Map());
+      }
+      matrixMap.get(rowNumber)!.set(value, jump);
+      valueSet.add(value);
+    });
+
+    const sortedRows = Array.from(matrixMap.keys()).sort((a, b) => a - b);
+    const sortedValues = Array.from(valueSet).sort((a, b) => a - b);
+
+    return { 
+      matrix: matrixMap, 
+      rowNumbers: sortedRows, 
+      values: sortedValues 
+    };
+  }, [jumps, searchText]);
+
+  // Get description for a row (from the first jump in that row)
+  const getRowDescription = (rowNumber: number) => {
+    const rowJumps = matrix.get(rowNumber);
+    if (!rowJumps) return "";
+    
+    const firstJump = Array.from(rowJumps.values())[0] as Jump | undefined;
+    return firstJump?.description || "";
+  };
+
+  const handleJumpSelect = (jump: Jump) => {
     onSelectJump(jump);
     onOpenChange(false);
     setSearchText("");
-    setFilterValue("all");
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
+      <DialogContent className="max-w-7xl max-h-[85vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <JumpIcon className="!h-6 !w-6" />
@@ -80,104 +121,87 @@ export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSe
           </DialogTitle>
         </DialogHeader>
 
-        {/* Filter Section */}
-        <div className="grid grid-cols-2 gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="search">Search by Code or Description</Label>
-            <Input
-              id="search"
-              placeholder="Type to search..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="value-filter">Filter by Value</Label>
-            <Select value={filterValue} onValueChange={setFilterValue}>
-              <SelectTrigger id="value-filter">
-                <SelectValue placeholder="All values" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All values</SelectItem>
-                <SelectItem value="0.10">0.10</SelectItem>
-                <SelectItem value="0.20">0.20</SelectItem>
-                <SelectItem value="0.30">0.30</SelectItem>
-                <SelectItem value="0.40">0.40</SelectItem>
-                <SelectItem value="0.50">0.50</SelectItem>
-                <SelectItem value="0.60">0.60</SelectItem>
-                <SelectItem value="0.70">0.70</SelectItem>
-                <SelectItem value="0.80">0.80</SelectItem>
-                <SelectItem value="0.90">0.90</SelectItem>
-                <SelectItem value="1.00">1.00</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Search Section */}
+        <div className="space-y-2">
+          <Label htmlFor="search">Search by Code or Description</Label>
+          <Input
+            id="search"
+            placeholder="Type to search..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
         </div>
 
         {/* Results Count */}
         <div className="text-sm text-muted-foreground">
-          {isLoading ? "Loading..." : `${filteredJumps.length} jump${filteredJumps.length !== 1 ? 's' : ''} found`}
+          {isLoading ? "Loading..." : `${rowNumbers.length} jump type${rowNumbers.length !== 1 ? 's' : ''} found`}
         </div>
 
-        {/* Jumps Table */}
-        <div className="border rounded-md overflow-auto max-h-[400px]">
+        {/* Matrix Table */}
+        <div className="border rounded-md overflow-auto max-h-[500px]">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[200px]">Symbol</TableHead>
-                <TableHead className="w-[100px]">Code</TableHead>
-                <TableHead className="w-[80px]">Value</TableHead>
-                <TableHead className="w-[100px]">Turn</TableHead>
-                <TableHead>Description</TableHead>
+                <TableHead className="sticky left-0 z-10 bg-background min-w-[300px] border-r">
+                  Types of jumps/leaps
+                </TableHead>
+                {values.map((value) => (
+                  <TableHead key={value} className="text-center min-w-[120px]">
+                    {value.toFixed(2)} p.
+                  </TableHead>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8">
+                  <TableCell colSpan={values.length + 1} className="text-center py-8">
                     Loading jumps...
                   </TableCell>
                 </TableRow>
-              ) : filteredJumps.length === 0 ? (
+              ) : rowNumbers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                    No jumps found matching your filters
+                  <TableCell colSpan={values.length + 1} className="text-center py-8 text-muted-foreground">
+                    No jumps found matching your search
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredJumps.map((jump) => (
-                  <TableRow
-                    key={jump.id}
-                    className="cursor-pointer hover:bg-accent"
-                    onClick={() => handleRowClick(jump)}
-                  >
-                    <TableCell>
-                      {jump.symbol_image ? (
-                        <img 
-                          src={`https://rwbnynjpaimdfxqoqbvt.supabase.co/storage/v1/object/public/jump-symbols/${jump.symbol_image}`}
-                          alt={jump.code}
-                          className="max-w-[180px] h-auto object-contain py-2"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <span className="text-xs text-muted-foreground">No symbol</span>
-                      )}
+                rowNumbers.map((rowNumber) => (
+                  <TableRow key={rowNumber}>
+                    <TableCell className="sticky left-0 z-10 bg-background font-medium border-r text-sm">
+                      {getRowDescription(rowNumber)}
                     </TableCell>
-                    <TableCell className="font-mono font-medium">{jump.code}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{jump.value}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {jump.turn_degrees !== "NA" && jump.turn_degrees ? (
-                        <span className="text-sm">{jump.turn_degrees}°</span>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm">{jump.description}</TableCell>
+                    {values.map((value) => {
+                      const jump = matrix.get(rowNumber)?.get(value);
+                      return (
+                        <TableCell
+                          key={`${rowNumber}-${value}`}
+                          className={`text-center p-3 ${
+                            jump 
+                              ? 'cursor-pointer hover:bg-accent/50 transition-colors' 
+                              : 'bg-muted/30'
+                          }`}
+                          onClick={() => jump && handleJumpSelect(jump)}
+                        >
+                          {jump ? (
+                            <div className="flex flex-col items-center gap-1">
+                              {/* Placeholder for symbol image */}
+                              <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1">
+                                Symbol
+                              </div>
+                              <Badge variant="default" className="font-mono text-xs">
+                                {jump.code}
+                              </Badge>
+                              {jump.turn_degrees && jump.turn_degrees !== "NA" && (
+                                <span className="text-xs text-muted-foreground">
+                                  {jump.turn_degrees}°
+                                </span>
+                              )}
+                            </div>
+                          ) : null}
+                        </TableCell>
+                      );
+                    })}
                   </TableRow>
                 ))
               )}
