@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.serve-rulebook]
 verify_jwt = false
+
+[functions.import-jumps-csv]
+verify_jwt = true

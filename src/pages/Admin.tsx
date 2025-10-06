@@ -29,6 +29,11 @@ const Admin = () => {
   const [symbolCode, setSymbolCode] = useState("");
   const [uploadingSymbol, setUploadingSymbol] = useState(false);
   const symbolInputRef = useRef<HTMLInputElement>(null);
+  
+  // CSV import states
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [importingCsv, setImportingCsv] = useState(false);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
@@ -166,6 +171,48 @@ const Admin = () => {
     } catch (error: any) {
       console.error("❌ Storage test exception:", error);
       toast.error(`Test exception: ${error.message}`);
+    }
+  };
+
+  const handleCsvImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!csvFile) {
+      toast.error("Please select a CSV file");
+      return;
+    }
+
+    setImportingCsv(true);
+
+    try {
+      // Read CSV file content
+      const csvContent = await csvFile.text();
+      
+      // Call edge function to import
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('import-jumps-csv', {
+        body: { csvContent },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success(data.message);
+        setCsvFile(null);
+        if (csvInputRef.current) csvInputRef.current.value = '';
+      } else {
+        toast.error(data.error || "Import failed");
+      }
+      
+    } catch (error: any) {
+      console.error('CSV import error:', error);
+      toast.error(`Import failed: ${error.message || "Unknown error"}`);
+    } finally {
+      setImportingCsv(false);
     }
   };
 
@@ -348,6 +395,40 @@ const Admin = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-2xl">
+        {/* CSV Import Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Import Jumps from CSV</CardTitle>
+            <CardDescription>
+              Upload a CSV file to import jump data. This will replace all existing jumps.
+              <br />
+              Required columns: code, name, description, value, turn_degrees, symbol_image
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleCsvImport} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="csv-input">CSV File</Label>
+                <Input
+                  id="csv-input"
+                  ref={csvInputRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                  required
+                />
+                {csvFile && (
+                  <p className="text-sm text-muted-foreground">{csvFile.name}</p>
+                )}
+              </div>
+              
+              <Button type="submit" disabled={importingCsv} className="w-full">
+                {importingCsv ? "Importing..." : "Import CSV"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
         {/* Jump Symbol Upload Section */}
         <Card className="mb-8">
           <CardHeader>
