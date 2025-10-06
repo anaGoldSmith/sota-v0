@@ -18,7 +18,6 @@ interface Jump {
   value: number;
   turn_degrees: string | null;
   symbol_image: string | null;
-  jump_number: number;
 }
 
 interface JumpSelectionDialogProps {
@@ -38,7 +37,6 @@ export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSe
       const { data, error } = await supabase
         .from("jumps")
         .select("*")
-        .order("jump_number", { ascending: true })
         .order("code", { ascending: true });
       
       if (error) throw error;

@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
+import Papa from 'https://esm.sh/papaparse@5.4.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -48,50 +49,48 @@ Deno.serve(async (req) => {
 
     console.log('📥 Parsing CSV content...');
 
-    // Parse CSV
-    const lines = csvContent.trim().split('\n');
-    const headers = lines[0].split(',').map((h: string) => h.trim());
+    // Parse CSV using robust parser
+    const result = Papa.parse(csvContent, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (h: string) => h.trim().toLowerCase(),
+    });
+
+    if ((result as any).errors && (result as any).errors.length > 0) {
+      console.error('CSV parse errors:', (result as any).errors);
+      const firstErr = (result as any).errors[0];
+      throw new Error(`CSV parse error: ${firstErr.message} at row ${firstErr.row}`);
+    }
 
     // Validate headers
     const requiredHeaders = ['code', 'name', 'description', 'value', 'turn_degrees', 'symbol_image'];
+    const headers = Object.keys(((result as any).data?.[0]) || {});
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-    
     if (missingHeaders.length > 0) {
       throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
     }
 
-    // Parse data rows
-    const jumps = [];
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
+    // Build jumps array with proper types
+    const jumps = ((result as any).data as any[]).map((raw: Record<string, unknown>, idx: number) => {
+      const code = (raw.code ?? '').toString().trim() || null;
+      const name = raw.name != null ? raw.name.toString().trim() : null;
+      const description = raw.description != null ? raw.description.toString().trim() : null;
+      const turn_degrees = raw.turn_degrees != null ? raw.turn_degrees.toString().trim() : null;
+      const symbol_image = raw.symbol_image != null ? raw.symbol_image.toString().trim() : null;
+      let valueStr = raw.value != null ? raw.value.toString().trim() : null;
 
-      const values = line.split(',').map((v: string) => v.trim());
-      const row: any = {};
-      
-      headers.forEach((header: string, index: number) => {
-        let value = values[index] || null;
-        
-        // Handle quoted values
-        if (value && value.startsWith('"') && value.endsWith('"')) {
-          value = value.slice(1, -1);
-        }
-        
-        // Convert empty strings to null
-        if (value === '' || value === '""') {
-          value = null;
-        }
-        
-        // Convert value to number
-        if (header === 'value' && value !== null) {
-          value = parseFloat(value);
-        }
-        
-        row[header] = value;
-      });
+      // Support comma decimals like "0,10"
+      if (valueStr && /^[0-9]+,[0-9]+$/.test(valueStr)) {
+        valueStr = valueStr.replace(',', '.');
+      }
+      const value = valueStr !== null ? parseFloat(valueStr) : null;
 
-      jumps.push(row);
-    }
+      if (!code) throw new Error(`Row ${idx + 2}: code is required`);
+      if (!description) throw new Error(`Row ${idx + 2}: description is required`);
+      if (value === null || Number.isNaN(value)) throw new Error(`Row ${idx + 2}: value is required and must be a number`);
+
+      return { code, name, description, value, turn_degrees, symbol_image };
+    });
 
     console.log(`✅ Parsed ${jumps.length} jumps from CSV`);
 
