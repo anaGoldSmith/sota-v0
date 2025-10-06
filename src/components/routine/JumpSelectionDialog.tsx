@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,6 +7,8 @@ import { JumpIcon } from "@/components/icons/DbSymbols";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
 
 interface Jump {
   id: string;
@@ -26,6 +28,7 @@ interface JumpSelectionDialogProps {
 
 export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
+  const [selectedJumps, setSelectedJumps] = useState<Set<string>>(new Set());
 
   // Fetch all jumps
   const { data: jumps, isLoading } = useQuery({
@@ -105,14 +108,39 @@ export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSe
     return firstJump?.description || "";
   };
 
-  const handleJumpSelect = (jump: Jump) => {
-    onSelectJump(jump);
-    onOpenChange(false);
+  const handleJumpToggle = (jump: Jump) => {
+    setSelectedJumps((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(jump.id)) {
+        newSet.delete(jump.id);
+      } else {
+        newSet.add(jump.id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleConfirmSelection = () => {
+    // Add all selected jumps to the routine
+    const selectedJumpObjects = jumps?.filter(j => selectedJumps.has(j.id)) || [];
+    selectedJumpObjects.forEach(jump => onSelectJump(jump));
+    
+    // Reset and close
+    setSelectedJumps(new Set());
     setSearchText("");
+    onOpenChange(false);
+  };
+
+  const handleDialogChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setSelectedJumps(new Set());
+      setSearchText("");
+    }
+    onOpenChange(isOpen);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent className="max-w-7xl max-h-[85vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -133,8 +161,15 @@ export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSe
         </div>
 
         {/* Results Count */}
-        <div className="text-sm text-muted-foreground">
-          {isLoading ? "Loading..." : `${rowNumbers.length} jump type${rowNumbers.length !== 1 ? 's' : ''} found`}
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            {isLoading ? "Loading..." : `${rowNumbers.length} jump type${rowNumbers.length !== 1 ? 's' : ''} found`}
+          </span>
+          {selectedJumps.size > 0 && (
+            <span className="font-medium text-foreground">
+              {selectedJumps.size} jump{selectedJumps.size !== 1 ? 's' : ''} selected
+            </span>
+          )}
         </div>
 
         {/* Matrix Table */}
@@ -173,23 +208,33 @@ export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSe
                     </TableCell>
                     {values.map((value) => {
                       const jump = matrix.get(rowNumber)?.get(value);
+                      const isSelected = jump ? selectedJumps.has(jump.id) : false;
                       return (
                         <TableCell
                           key={`${rowNumber}-${value}`}
-                          className={`text-center p-3 ${
+                          className={`text-center p-3 relative ${
                             jump 
-                              ? 'cursor-pointer hover:bg-accent/50 transition-colors' 
+                              ? `cursor-pointer transition-colors ${
+                                  isSelected 
+                                    ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset' 
+                                    : 'hover:bg-accent/50'
+                                }` 
                               : 'bg-muted/30'
                           }`}
-                          onClick={() => jump && handleJumpSelect(jump)}
+                          onClick={() => jump && handleJumpToggle(jump)}
                         >
                           {jump ? (
                             <div className="flex flex-col items-center gap-1">
                               {/* Placeholder for symbol image */}
-                              <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1">
+                              <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative">
                                 Symbol
+                                {isSelected && (
+                                  <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5">
+                                    <Check className="h-3 w-3" />
+                                  </div>
+                                )}
                               </div>
-                              <Badge variant="default" className="font-mono text-xs">
+                              <Badge variant={isSelected ? "default" : "secondary"} className="font-mono text-xs">
                                 {jump.code}
                               </Badge>
                               {jump.turn_degrees && jump.turn_degrees !== "NA" && (
@@ -208,6 +253,18 @@ export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSe
             </TableBody>
           </Table>
         </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => handleDialogChange(false)}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmSelection}
+            disabled={selectedJumps.size === 0}
+          >
+            Add {selectedJumps.size > 0 ? `${selectedJumps.size} ` : ''}Jump{selectedJumps.size !== 1 ? 's' : ''} to Routine
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
