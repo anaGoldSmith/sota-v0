@@ -20,7 +20,6 @@ export type Database = {
           created_at: string
           description: string
           id: string
-          jump_number: number
           name: string | null
           symbol_image: string | null
           turn_degrees: string | null
@@ -32,7 +31,6 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
-          jump_number: number
           name?: string | null
           symbol_image?: string | null
           turn_degrees?: string | null
@@ -44,7 +42,6 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
-          jump_number?: number
           name?: string | null
           symbol_image?: string | null
           turn_degrees?: string | null
