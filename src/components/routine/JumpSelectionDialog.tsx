@@ -141,7 +141,7 @@ export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSe
 
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogContent className="max-w-7xl max-h-[85vh]">
+      <DialogContent className="max-w-7xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <JumpIcon className="!h-6 !w-6" />
@@ -173,7 +173,7 @@ export const JumpSelectionDialog = ({ open, onOpenChange, onSelectJump }: JumpSe
         </div>
 
         {/* Matrix Table */}
-        <div className="border rounded-md overflow-auto max-h-[500px]">
+        <div className="border rounded-md overflow-auto flex-1 min-h-0">
           <Table>
             <TableHeader>
               <TableRow>
