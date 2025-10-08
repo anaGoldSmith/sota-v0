@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      balances: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          id: string
+          name: string | null
+          symbol_image: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          name?: string | null
+          symbol_image?: string | null
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string | null
+          symbol_image?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
       jumps: {
         Row: {
           code: string
@@ -74,6 +107,42 @@ export type Database = {
           last_name?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      rotations: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          id: string
+          name: string | null
+          symbol_image: string | null
+          turn_degrees: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          name?: string | null
+          symbol_image?: string | null
+          turn_degrees?: string | null
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string | null
+          symbol_image?: string | null
+          turn_degrees?: string | null
+          updated_at?: string
+          value?: number
         }
         Relationships: []
       }

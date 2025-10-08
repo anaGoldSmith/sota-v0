@@ -6,6 +6,8 @@ import { ArrowLeft, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbols";
 import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
+import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDialog";
+import { RotationSelectionDialog } from "@/components/routine/RotationSelectionDialog";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -19,10 +21,32 @@ interface SelectedJump {
   turn_degrees: string | null;
 }
 
+interface SelectedBalance {
+  id: string;
+  code: string;
+  name: string | null;
+  description: string;
+  value: number;
+}
+
+interface SelectedRotation {
+  id: string;
+  code: string;
+  name: string | null;
+  description: string;
+  value: number;
+  turn_degrees: string | null;
+}
+
 const RoutineCalculator = () => {
   const navigate = useNavigate();
   const [jumpDialogOpen, setJumpDialogOpen] = useState(false);
+  const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
+  const [rotationDialogOpen, setRotationDialogOpen] = useState(false);
+  
   const [selectedJumps, setSelectedJumps] = useState<SelectedJump[]>([]);
+  const [selectedBalances, setSelectedBalances] = useState<SelectedBalance[]>([]);
+  const [selectedRotations, setSelectedRotations] = useState<SelectedRotation[]>([]);
 
   const handleSelectJump = (jump: SelectedJump) => {
     setSelectedJumps((prev) => [...prev, jump]);
@@ -32,7 +56,25 @@ const RoutineCalculator = () => {
     setSelectedJumps((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleSelectBalance = (balance: SelectedBalance) => {
+    setSelectedBalances((prev) => [...prev, balance]);
+  };
+
+  const handleRemoveBalance = (index: number) => {
+    setSelectedBalances((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSelectRotation = (rotation: SelectedRotation) => {
+    setSelectedRotations((prev) => [...prev, rotation]);
+  };
+
+  const handleRemoveRotation = (index: number) => {
+    setSelectedRotations((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const totalJumpDifficulty = selectedJumps.reduce((sum, jump) => sum + jump.value, 0);
+  const totalBalanceDifficulty = selectedBalances.reduce((sum, balance) => sum + balance.value, 0);
+  const totalRotationDifficulty = selectedRotations.reduce((sum, rotation) => sum + rotation.value, 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -166,6 +208,7 @@ const RoutineCalculator = () => {
               <Button
                 variant="outline"
                 className="w-full h-14 text-lg justify-between"
+                onClick={() => setBalanceDialogOpen(true)}
               >
                 <div className="flex items-center gap-1">
                   <span>Balances</span>
@@ -174,9 +217,48 @@ const RoutineCalculator = () => {
                 <span className="text-sm">+ Add</span>
               </Button>
 
+              {/* Selected Balances Display */}
+              {selectedBalances.length > 0 && (
+                <Card className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-sm">Selected Balances</h3>
+                    <Badge variant="default">Total: {totalBalanceDifficulty.toFixed(2)}</Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {selectedBalances.map((balance, index) => (
+                      <div
+                        key={`${balance.id}-${index}`}
+                        className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
+                      >
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <Badge variant="outline" className="font-mono shrink-0">
+                            {balance.code}
+                          </Badge>
+                          <span className="text-sm truncate">
+                            {balance.name || balance.description}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Badge variant="secondary">{balance.value}</Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleRemoveBalance(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
               <Button 
                 variant="outline"
                 className="w-full h-14 text-lg justify-between"
+                onClick={() => setRotationDialogOpen(true)}
               >
                 <div className="flex items-center gap-1">
                   <span>Rotations</span>
@@ -184,6 +266,44 @@ const RoutineCalculator = () => {
                 </div>
                 <span className="text-sm">+ Add</span>
               </Button>
+
+              {/* Selected Rotations Display */}
+              {selectedRotations.length > 0 && (
+                <Card className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-sm">Selected Rotations</h3>
+                    <Badge variant="default">Total: {totalRotationDifficulty.toFixed(2)}</Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {selectedRotations.map((rotation, index) => (
+                      <div
+                        key={`${rotation.id}-${index}`}
+                        className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
+                      >
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <Badge variant="outline" className="font-mono shrink-0">
+                            {rotation.code}
+                          </Badge>
+                          <span className="text-sm truncate">
+                            {rotation.name || rotation.description}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Badge variant="secondary">{rotation.value}</Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleRemoveRotation(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
             </div>
           </div>
         </div>
@@ -194,6 +314,20 @@ const RoutineCalculator = () => {
         open={jumpDialogOpen}
         onOpenChange={setJumpDialogOpen}
         onSelectJump={handleSelectJump}
+      />
+
+      {/* Balance Selection Dialog */}
+      <BalanceSelectionDialog
+        open={balanceDialogOpen}
+        onOpenChange={setBalanceDialogOpen}
+        onSelectBalance={handleSelectBalance}
+      />
+
+      {/* Rotation Selection Dialog */}
+      <RotationSelectionDialog
+        open={rotationDialogOpen}
+        onOpenChange={setRotationDialogOpen}
+        onSelectRotation={handleSelectRotation}
       />
     </div>
   );
