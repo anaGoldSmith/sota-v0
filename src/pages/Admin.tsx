@@ -34,6 +34,16 @@ const Admin = () => {
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [importingCsv, setImportingCsv] = useState(false);
   const csvInputRef = useRef<HTMLInputElement>(null);
+  
+  // Balance CSV import states
+  const [balanceCsvFile, setBalanceCsvFile] = useState<File | null>(null);
+  const [importingBalanceCsv, setImportingBalanceCsv] = useState(false);
+  const balanceCsvInputRef = useRef<HTMLInputElement>(null);
+  
+  // Rotation CSV import states
+  const [rotationCsvFile, setRotationCsvFile] = useState<File | null>(null);
+  const [importingRotationCsv, setImportingRotationCsv] = useState(false);
+  const rotationCsvInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
@@ -213,6 +223,84 @@ const Admin = () => {
       toast.error(`Import failed: ${error.message || "Unknown error"}`);
     } finally {
       setImportingCsv(false);
+    }
+  };
+
+  const handleBalanceCsvImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!balanceCsvFile) {
+      toast.error("Please select a CSV file");
+      return;
+    }
+
+    setImportingBalanceCsv(true);
+
+    try {
+      const csvContent = await balanceCsvFile.text();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('import-balances-csv', {
+        body: { csvContent },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success(data.message);
+        setBalanceCsvFile(null);
+        if (balanceCsvInputRef.current) balanceCsvInputRef.current.value = '';
+      } else {
+        toast.error(data.error || "Import failed");
+      }
+      
+    } catch (error: any) {
+      console.error('Balance CSV import error:', error);
+      toast.error(`Import failed: ${error.message || "Unknown error"}`);
+    } finally {
+      setImportingBalanceCsv(false);
+    }
+  };
+
+  const handleRotationCsvImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!rotationCsvFile) {
+      toast.error("Please select a CSV file");
+      return;
+    }
+
+    setImportingRotationCsv(true);
+
+    try {
+      const csvContent = await rotationCsvFile.text();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('import-rotations-csv', {
+        body: { csvContent },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success(data.message);
+        setRotationCsvFile(null);
+        if (rotationCsvInputRef.current) rotationCsvInputRef.current.value = '';
+      } else {
+        toast.error(data.error || "Import failed");
+      }
+      
+    } catch (error: any) {
+      console.error('Rotation CSV import error:', error);
+      toast.error(`Import failed: ${error.message || "Unknown error"}`);
+    } finally {
+      setImportingRotationCsv(false);
     }
   };
 
@@ -424,6 +512,74 @@ const Admin = () => {
               
               <Button type="submit" disabled={importingCsv} className="w-full">
                 {importingCsv ? "Importing..." : "Import CSV"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Balance CSV Import Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Import Balances from CSV</CardTitle>
+            <CardDescription>
+              Upload a CSV file to import balance data. This will replace all existing balances.
+              <br />
+              Required columns: code, name, description, value, symbol_image
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleBalanceCsvImport} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="balance-csv-input">CSV File</Label>
+                <Input
+                  id="balance-csv-input"
+                  ref={balanceCsvInputRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(e) => setBalanceCsvFile(e.target.files?.[0] || null)}
+                  required
+                />
+                {balanceCsvFile && (
+                  <p className="text-sm text-muted-foreground">{balanceCsvFile.name}</p>
+                )}
+              </div>
+              
+              <Button type="submit" disabled={importingBalanceCsv} className="w-full">
+                {importingBalanceCsv ? "Importing..." : "Import CSV"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Rotation CSV Import Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Import Rotations from CSV</CardTitle>
+            <CardDescription>
+              Upload a CSV file to import rotation data. This will replace all existing rotations.
+              <br />
+              Required columns: code, name, description, value, turn_degrees, symbol_image
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleRotationCsvImport} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="rotation-csv-input">CSV File</Label>
+                <Input
+                  id="rotation-csv-input"
+                  ref={rotationCsvInputRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(e) => setRotationCsvFile(e.target.files?.[0] || null)}
+                  required
+                />
+                {rotationCsvFile && (
+                  <p className="text-sm text-muted-foreground">{rotationCsvFile.name}</p>
+                )}
+              </div>
+              
+              <Button type="submit" disabled={importingRotationCsv} className="w-full">
+                {importingRotationCsv ? "Importing..." : "Import CSV"}
               </Button>
             </form>
           </CardContent>
