@@ -44,6 +44,11 @@ const Admin = () => {
   const [rotationCsvFile, setRotationCsvFile] = useState<File | null>(null);
   const [importingRotationCsv, setImportingRotationCsv] = useState(false);
   const rotationCsvInputRef = useRef<HTMLInputElement>(null);
+  
+  // Criteria CSV import states
+  const [criteriaCsvFile, setCriteriaCsvFile] = useState<File | null>(null);
+  const [importingCriteriaCsv, setImportingCriteriaCsv] = useState(false);
+  const criteriaCsvInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
@@ -301,6 +306,45 @@ const Admin = () => {
       toast.error(`Import failed: ${error.message || "Unknown error"}`);
     } finally {
       setImportingRotationCsv(false);
+    }
+  };
+
+  const handleCriteriaCsvImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!criteriaCsvFile) {
+      toast.error("Please select a CSV file");
+      return;
+    }
+
+    setImportingCriteriaCsv(true);
+
+    try {
+      const csvContent = await criteriaCsvFile.text();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('import-criteria-csv', {
+        body: { csvContent },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success(data.message);
+        setCriteriaCsvFile(null);
+        if (criteriaCsvInputRef.current) criteriaCsvInputRef.current.value = '';
+      } else {
+        toast.error(data.error || "Import failed");
+      }
+      
+    } catch (error: any) {
+      console.error('Criteria CSV import error:', error);
+      toast.error(`Import failed: ${error.message || "Unknown error"}`);
+    } finally {
+      setImportingCriteriaCsv(false);
     }
   };
 
@@ -580,6 +624,40 @@ const Admin = () => {
               
               <Button type="submit" disabled={importingRotationCsv} className="w-full">
                 {importingRotationCsv ? "Importing..." : "Import CSV"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Criteria CSV Import Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Import Criteria from CSV</CardTitle>
+            <CardDescription>
+              Upload a CSV file to import criteria symbols. This will replace all existing criteria.
+              <br />
+              Required columns: code, name, description, symbol_image
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleCriteriaCsvImport} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="criteria-csv-input">CSV File</Label>
+                <Input
+                  id="criteria-csv-input"
+                  ref={criteriaCsvInputRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(e) => setCriteriaCsvFile(e.target.files?.[0] || null)}
+                  required
+                />
+                {criteriaCsvFile && (
+                  <p className="text-sm text-muted-foreground">{criteriaCsvFile.name}</p>
+                )}
+              </div>
+              
+              <Button type="submit" disabled={importingCriteriaCsv} className="w-full">
+                {importingCriteriaCsv ? "Importing..." : "Import CSV"}
               </Button>
             </form>
           </CardContent>

@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      criteria: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          id: string
+          name: string
+          symbol_image: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          symbol_image?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          symbol_image?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       jumps: {
         Row: {
           code: string
