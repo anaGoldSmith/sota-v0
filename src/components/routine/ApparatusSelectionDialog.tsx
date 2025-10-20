@@ -218,10 +218,10 @@ export const ApparatusSelectionDialog = ({
       <DialogContent className="max-w-6xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-2xl">
-            Select {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'} Difficulty Elements
+            Select Difficulty of Apparatus for {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'}
           </DialogTitle>
           <DialogDescription>
-            Click on rows to select apparatus difficulty elements for your routine
+            To create a valid DA, choose one base with two criteria by clicking on two "v" cells in the same row. Or, choose the base "Catch from High Throw" with one criterion and another base with the same criterion — in this case, DA value = (highest base value) + 0.1.
           </DialogDescription>
         </DialogHeader>
 
