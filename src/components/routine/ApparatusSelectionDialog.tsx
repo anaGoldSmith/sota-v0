@@ -261,7 +261,7 @@ export const ApparatusSelectionDialog = ({
                       <img 
                         src={getBaseSymbol(element.symbol_image) || ''} 
                         alt={element.code}
-                        className="h-12 w-auto inline-block mr-1"
+                        className="h-12 w-auto inline-block align-middle mr-0.5"
                         onError={(e) => {
                           console.error('Failed to load symbol:', element.symbol_image);
                           e.currentTarget.style.display = 'none';
