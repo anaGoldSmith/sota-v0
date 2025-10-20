@@ -80,6 +80,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ball_control: {
+        Row: {
+          code: string
+          Cr1V: string | null
+          Cr2H: string | null
+          Cr3L: string | null
+          Cr4F: string | null
+          Cr5W: string | null
+          Cr6DB: string | null
+          Cr7R: string | null
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          Cr1V?: string | null
+          Cr2H?: string | null
+          Cr3L?: string | null
+          Cr4F?: string | null
+          Cr5W?: string | null
+          Cr6DB?: string | null
+          Cr7R?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          Cr1V?: string | null
+          Cr2H?: string | null
+          Cr3L?: string | null
+          Cr4F?: string | null
+          Cr5W?: string | null
+          Cr6DB?: string | null
+          Cr7R?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clubs_bases: {
         Row: {
           code: string
@@ -110,6 +152,48 @@ export type Database = {
           symbol_image?: string | null
           updated_at?: string
           value?: number
+        }
+        Relationships: []
+      }
+      clubs_control: {
+        Row: {
+          code: string
+          Cr1V: string | null
+          Cr2H: string | null
+          Cr3L: string | null
+          Cr4F: string | null
+          Cr5W: string | null
+          Cr6DB: string | null
+          Cr7R: string | null
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          Cr1V?: string | null
+          Cr2H?: string | null
+          Cr3L?: string | null
+          Cr4F?: string | null
+          Cr5W?: string | null
+          Cr6DB?: string | null
+          Cr7R?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          Cr1V?: string | null
+          Cr2H?: string | null
+          Cr3L?: string | null
+          Cr4F?: string | null
+          Cr5W?: string | null
+          Cr6DB?: string | null
+          Cr7R?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -173,6 +257,48 @@ export type Database = {
           symbol_image?: string | null
           updated_at?: string
           value?: number
+        }
+        Relationships: []
+      }
+      hoop_control: {
+        Row: {
+          code: string
+          Cr1V: string | null
+          Cr2H: string | null
+          Cr3L: string | null
+          Cr4F: string | null
+          Cr5W: string | null
+          Cr6DB: string | null
+          Cr7R: string | null
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          Cr1V?: string | null
+          Cr2H?: string | null
+          Cr3L?: string | null
+          Cr4F?: string | null
+          Cr5W?: string | null
+          Cr6DB?: string | null
+          Cr7R?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          Cr1V?: string | null
+          Cr2H?: string | null
+          Cr3L?: string | null
+          Cr4F?: string | null
+          Cr5W?: string | null
+          Cr6DB?: string | null
+          Cr7R?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -269,6 +395,48 @@ export type Database = {
           symbol_image?: string | null
           updated_at?: string
           value?: number
+        }
+        Relationships: []
+      }
+      ribbon_control: {
+        Row: {
+          code: string
+          Cr1V: string | null
+          Cr2H: string | null
+          Cr3L: string | null
+          Cr4F: string | null
+          Cr5W: string | null
+          Cr6DB: string | null
+          Cr7R: string | null
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          Cr1V?: string | null
+          Cr2H?: string | null
+          Cr3L?: string | null
+          Cr4F?: string | null
+          Cr5W?: string | null
+          Cr6DB?: string | null
+          Cr7R?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          Cr1V?: string | null
+          Cr2H?: string | null
+          Cr3L?: string | null
+          Cr4F?: string | null
+          Cr5W?: string | null
+          Cr6DB?: string | null
+          Cr7R?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }
