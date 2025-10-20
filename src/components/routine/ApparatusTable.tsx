@@ -1,0 +1,85 @@
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CombinedApparatusData, Criterion, CRITERIA_CODES } from "@/types/apparatus";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface ApparatusTableProps {
+  data: CombinedApparatusData[];
+  criteria: Criterion[];
+  selectedIds: string[];
+  onRowClick: (item: CombinedApparatusData) => void;
+}
+
+const formatCriteriaValue = (value: string | null): string => {
+  if (value === 'Y') return 'v';
+  if (value === 'N') return 'N/A';
+  return '';
+};
+
+export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick }: ApparatusTableProps) => {
+  const getCriterionSymbol = (code: string) => {
+    const criterion = criteria.find((c) => c.code === code);
+    return criterion?.symbol_image || null;
+  };
+
+  return (
+    <ScrollArea className="h-[500px] rounded-md border">
+      <Table>
+        <TableHeader className="sticky top-0 bg-primary z-10">
+          <TableRow className="hover:bg-primary">
+            <TableHead className="text-primary-foreground font-semibold w-[300px]">Base</TableHead>
+            <TableHead className="text-primary-foreground font-semibold text-center w-[100px]">Base symbol</TableHead>
+            <TableHead className="text-primary-foreground font-semibold text-center w-[80px]">Value</TableHead>
+            {CRITERIA_CODES.map((code) => (
+              <TableHead key={code} className="text-primary-foreground font-semibold text-center w-[70px] p-2">
+                <div className="flex flex-col items-center gap-1">
+                  {getCriterionSymbol(code) ? (
+                    <img 
+                      src={getCriterionSymbol(code)!} 
+                      alt={code}
+                      className="h-8 w-8 object-contain invert brightness-0"
+                    />
+                  ) : (
+                    <span className="text-xs">{code}</span>
+                  )}
+                </div>
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.map((item) => {
+            const isSelected = selectedIds.includes(item.id);
+            return (
+              <TableRow
+                key={item.id}
+                onClick={() => onRowClick(item)}
+                className={`cursor-pointer transition-colors ${
+                  isSelected ? 'bg-primary/10 hover:bg-primary/20' : 'hover:bg-muted/50'
+                }`}
+              >
+                <TableCell className="font-medium text-sm">{item.description}</TableCell>
+                <TableCell className="text-center">
+                  {item.symbol_image && (
+                    <div className="flex justify-center">
+                      <img 
+                        src={item.symbol_image} 
+                        alt={item.code}
+                        className="h-8 w-auto object-contain"
+                      />
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell className="text-center font-semibold">{item.value.toFixed(2)}</TableCell>
+                {CRITERIA_CODES.map((code) => (
+                  <TableCell key={code} className="text-center text-sm">
+                    {formatCriteriaValue(item.criteria[code])}
+                  </TableCell>
+                ))}
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </ScrollArea>
+  );
+};

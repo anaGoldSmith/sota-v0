@@ -8,9 +8,12 @@ import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbol
 import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
 import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDialog";
 import { RotationSelectionDialog } from "@/components/routine/RotationSelectionDialog";
+import { ApparatusSelectionDialog } from "@/components/routine/ApparatusSelectionDialog";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { ApparatusType, CombinedApparatusData } from "@/types/apparatus";
+import { useToast } from "@/hooks/use-toast";
 
 interface SelectedJump {
   id: string;
@@ -40,14 +43,18 @@ interface SelectedRotation {
 
 const RoutineCalculator = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [jumpDialogOpen, setJumpDialogOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
   const [rotationDialogOpen, setRotationDialogOpen] = useState(false);
+  const [apparatusDialogOpen, setApparatusDialogOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [selectedApparatus, setSelectedApparatus] = useState<ApparatusType | null>(null);
   
   const [selectedJumps, setSelectedJumps] = useState<SelectedJump[]>([]);
   const [selectedBalances, setSelectedBalances] = useState<SelectedBalance[]>([]);
   const [selectedRotations, setSelectedRotations] = useState<SelectedRotation[]>([]);
+  const [selectedApparatusElements, setSelectedApparatusElements] = useState<CombinedApparatusData[]>([]);
 
   const handleSelectJump = (jump: SelectedJump) => {
     setSelectedJumps((prev) => [...prev, jump]);
@@ -73,9 +80,38 @@ const RoutineCalculator = () => {
     setSelectedRotations((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleSelectApparatusElements = (elements: CombinedApparatusData[]) => {
+    setSelectedApparatusElements((prev) => [...prev, ...elements]);
+  };
+
+  const handleRemoveApparatusElement = (index: number) => {
+    setSelectedApparatusElements((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleApparatusChange = (value: string) => {
+    if (value === 'hoop' || value === 'ball' || value === 'clubs' || value === 'ribbon') {
+      setSelectedApparatus(value);
+    } else {
+      setSelectedApparatus(null);
+    }
+  };
+
+  const handleOpenApparatusDialog = () => {
+    if (!selectedApparatus) {
+      toast({
+        title: "No apparatus selected",
+        description: "Please select an apparatus (Hoop, Ball, Clubs, or Ribbon) first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setApparatusDialogOpen(true);
+  };
+
   const totalJumpDifficulty = selectedJumps.reduce((sum, jump) => sum + jump.value, 0);
   const totalBalanceDifficulty = selectedBalances.reduce((sum, balance) => sum + balance.value, 0);
   const totalRotationDifficulty = selectedRotations.reduce((sum, rotation) => sum + rotation.value, 0);
+  const totalApparatusDifficulty = selectedApparatusElements.reduce((sum, element) => sum + element.value, 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,7 +146,7 @@ const RoutineCalculator = () => {
 
             <div className="space-y-2">
               <Label htmlFor="apparatus">Apparatus</Label>
-              <Select>
+              <Select onValueChange={handleApparatusChange}>
                 <SelectTrigger id="apparatus">
                   <SelectValue placeholder="Select apparatus" />
                 </SelectTrigger>
@@ -167,7 +203,12 @@ const RoutineCalculator = () => {
               <Button 
                 variant={activeCategory === "apparatus" ? "default" : "outline"}
                 className="h-16 text-base hover:scale-[1.02] transition-transform"
-                onClick={() => setActiveCategory(activeCategory === "apparatus" ? null : "apparatus")}
+                onClick={() => {
+                  setActiveCategory(activeCategory === "apparatus" ? null : "apparatus");
+                  if (activeCategory !== "apparatus") {
+                    handleOpenApparatusDialog();
+                  }
+                }}
               >
                 <span className="text-lg font-semibold mr-2">+</span> Apparatus Difficulty (DA)
               </Button>
@@ -344,11 +385,42 @@ const RoutineCalculator = () => {
               </div>
             )}
 
-            {/* Placeholder for other categories */}
-            {activeCategory === "apparatus" && (
-              <div className="pt-4 text-center text-muted-foreground">
-                Apparatus Difficulty configuration coming soon
-              </div>
+            {/* Apparatus Difficulty (DA) */}
+            {activeCategory === "apparatus" && selectedApparatusElements.length > 0 && (
+              <Card className="p-4 space-y-3 mt-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-sm">Selected Apparatus Elements</h3>
+                  <Badge variant="default">Total DA: {totalApparatusDifficulty.toFixed(2)}</Badge>
+                </div>
+                <div className="space-y-2">
+                  {selectedApparatusElements.map((element, index) => (
+                    <div
+                      key={`${element.id}-${index}`}
+                      className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Badge variant="outline" className="font-mono shrink-0">
+                          {element.code}
+                        </Badge>
+                        <span className="text-sm truncate">
+                          {element.description}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge variant="secondary">{element.value.toFixed(2)}</Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => handleRemoveApparatusElement(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
             )}
             
             {activeCategory === "dynamic" && (
@@ -385,6 +457,14 @@ const RoutineCalculator = () => {
         open={rotationDialogOpen}
         onOpenChange={setRotationDialogOpen}
         onSelectRotation={handleSelectRotation}
+      />
+
+      {/* Apparatus Selection Dialog */}
+      <ApparatusSelectionDialog
+        open={apparatusDialogOpen}
+        onOpenChange={setApparatusDialogOpen}
+        apparatus={selectedApparatus}
+        onSelectElements={handleSelectApparatusElements}
       />
     </div>
   );
