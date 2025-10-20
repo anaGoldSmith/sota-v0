@@ -49,13 +49,13 @@ export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, appara
             <TableHead className="text-primary-foreground font-semibold text-center w-[100px]">Base symbol</TableHead>
             <TableHead className="text-primary-foreground font-semibold text-center w-[80px]">Value</TableHead>
             {CRITERIA_CODES.map((code) => (
-              <TableHead key={code} className="text-primary-foreground font-semibold text-center w-[70px] p-2">
+              <TableHead key={code} className="text-primary-foreground font-semibold text-center w-[90px] p-2">
                 <div className="flex flex-col items-center gap-1">
                   {getCriterionSymbol(code) ? (
                     <img 
                       src={getCriterionSymbol(code)!} 
                       alt={code}
-                      className="h-12 w-12 object-contain invert brightness-0"
+                      className="h-20 w-20 object-contain invert brightness-0"
                     />
                   ) : (
                     <span className="text-xs">{code}</span>
