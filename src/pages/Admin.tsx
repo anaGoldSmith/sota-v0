@@ -49,6 +49,12 @@ const Admin = () => {
   const [criteriaCsvFile, setCriteriaCsvFile] = useState<File | null>(null);
   const [importingCriteriaCsv, setImportingCriteriaCsv] = useState(false);
   const criteriaCsvInputRef = useRef<HTMLInputElement>(null);
+  
+  // Criteria symbol upload states
+  const [criteriaSymbolFile, setCriteriaSymbolFile] = useState<File | null>(null);
+  const [criteriaSymbolCode, setCriteriaSymbolCode] = useState("");
+  const [uploadingCriteriaSymbol, setUploadingCriteriaSymbol] = useState(false);
+  const criteriaSymbolInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
@@ -402,6 +408,60 @@ const Admin = () => {
     }
   };
 
+  const handleCriteriaSymbolUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!criteriaSymbolFile || !criteriaSymbolCode) {
+      toast.error("Please provide both an image and criteria code");
+      return;
+    }
+
+    setUploadingCriteriaSymbol(true);
+
+    try {
+      // Upload image to criteria-symbols bucket
+      const fileExt = criteriaSymbolFile.name.split('.').pop();
+      const fileName = `${criteriaSymbolCode}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('criteria-symbols')
+        .upload(fileName, criteriaSymbolFile, { 
+          contentType: criteriaSymbolFile.type,
+          upsert: true 
+        });
+
+      if (uploadError) {
+        toast.error(`Upload failed: ${uploadError.message}`);
+        setUploadingCriteriaSymbol(false);
+        return;
+      }
+
+      // Update criteria record with symbol filename
+      const { error: updateError } = await supabase
+        .from('criteria')
+        .update({ symbol_image: fileName })
+        .eq('code', criteriaSymbolCode);
+
+      if (updateError) {
+        toast.error(`Database update failed: ${updateError.message}`);
+        setUploadingCriteriaSymbol(false);
+        return;
+      }
+
+      toast.success(`Symbol for ${criteriaSymbolCode} uploaded successfully!`);
+      
+      // Reset form
+      setCriteriaSymbolCode("");
+      setCriteriaSymbolFile(null);
+      if (criteriaSymbolInputRef.current) criteriaSymbolInputRef.current.value = '';
+      
+    } catch (error: any) {
+      toast.error(`Upload failed: ${error.message || "Unknown error"}`);
+    } finally {
+      setUploadingCriteriaSymbol(false);
+    }
+  };
+
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -699,6 +759,47 @@ const Admin = () => {
               
               <Button type="submit" disabled={uploadingSymbol} className="w-full">
                 {uploadingSymbol ? "Uploading..." : "Upload Symbol"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Criteria Symbol Upload Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Upload Criteria Symbol</CardTitle>
+            <CardDescription>Upload symbol images for criteria. Image filename must match the criteria code (e.g., Cr1V.png for code Cr1V)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleCriteriaSymbolUpload} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="criteria-symbol-code">Criteria Code</Label>
+                <Input
+                  id="criteria-symbol-code"
+                  value={criteriaSymbolCode}
+                  onChange={(e) => setCriteriaSymbolCode(e.target.value)}
+                  placeholder="e.g., Cr1V"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="criteria-symbol-input">Symbol Image (PNG)</Label>
+                <Input
+                  id="criteria-symbol-input"
+                  ref={criteriaSymbolInputRef}
+                  type="file"
+                  accept="image/png"
+                  onChange={(e) => setCriteriaSymbolFile(e.target.files?.[0] || null)}
+                  required
+                />
+                {criteriaSymbolFile && (
+                  <p className="text-sm text-muted-foreground">{criteriaSymbolFile.name}</p>
+                )}
+              </div>
+              
+              <Button type="submit" disabled={uploadingCriteriaSymbol} className="w-full">
+                {uploadingCriteriaSymbol ? "Uploading..." : "Upload Symbol"}
               </Button>
             </form>
           </CardContent>

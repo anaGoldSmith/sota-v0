@@ -133,14 +133,15 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: errorMessage 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: error.message === 'Unauthorized' || error.message === 'User is not an admin' ? 403 : 500
+        status: errorMessage === 'Unauthorized' || errorMessage === 'User is not an admin' ? 403 : 500
       }
     );
   }
