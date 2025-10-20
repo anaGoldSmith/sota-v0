@@ -140,6 +140,17 @@ const RoutineCalculator = () => {
     return publicUrl;
   };
 
+  const getBaseSymbol = (filename: string | null, apparatus: ApparatusType) => {
+    if (!filename) return null;
+    
+    const bucketName = `${apparatus}-bases-symbols`;
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filename);
+    
+    return publicUrl;
+  };
+
   const getCriteriaSymbolUrl = (criterionCode: string) => {
     const { data: { publicUrl } } = supabase.storage
       .from('criteria-symbols')
@@ -220,23 +231,6 @@ const RoutineCalculator = () => {
       const balanceIndex = selectedBalances.indexOf(originalData as SelectedBalance);
       handleRemoveBalance(balanceIndex);
     }
-  };
-
-  const getCriterionSymbol = (code: string, apparatus: ApparatusType) => {
-    // This would need to fetch from criteria table, but for now we'll use a simplified approach
-    // In a real implementation, you'd want to fetch criteria data
-    return null; // Placeholder
-  };
-
-  const getBaseSymbol = (filename: string | null, apparatus: ApparatusType) => {
-    if (!filename) return null;
-    
-    const bucketName = `${apparatus}-bases-symbols`;
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucketName)
-      .getPublicUrl(filename);
-    
-    return publicUrl;
   };
 
   return (
