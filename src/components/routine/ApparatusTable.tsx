@@ -45,13 +45,7 @@ export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, appara
     return selectedCriteria.some(sc => sc.rowId === rowId && sc.criterionCode === criterionCode);
   };
 
-  const isRowHasSelectedCriterion = (rowId: string) => {
-    return selectedCriteria.some(sc => sc.rowId === rowId);
-  };
-
-  const isCriterionColumnSelected = (criterionCode: string) => {
-    return selectedCriteria.some(sc => sc.criterionCode === criterionCode);
-  };
+  
   const getCriterionSymbol = (code: string) => {
     const criterion = criteria.find((c) => c.code === code);
     if (!criterion?.symbol_image) return null;
@@ -83,9 +77,7 @@ export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, appara
             <TableHead className="text-primary-foreground font-semibold text-lg text-center w-[150px]">Base symbol</TableHead>
             <TableHead className="text-primary-foreground font-semibold text-lg text-center w-[120px]">Value</TableHead>
             {CRITERIA_CODES.map((code) => (
-              <TableHead key={code} className={`text-primary-foreground font-semibold text-center w-[90px] p-2 transition-colors ${
-                isCriterionColumnSelected(code) ? 'bg-primary/80' : ''
-              }`}>
+              <TableHead key={code} className="text-primary-foreground font-semibold text-center w-[90px] p-2">
                 <div className="flex flex-col items-center gap-1">
                   {code === 'Cr5W' ? (
                     <span className="text-3xl font-bold">W</span>
@@ -117,9 +109,7 @@ export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, appara
                 <TableCell className="font-medium text-sm">{item.description}</TableCell>
                 <TableCell className="text-center">
                   {item.symbol_image && (
-                    <div className={`flex justify-center transition-colors ${
-                      isRowHasSelectedCriterion(item.id) ? 'bg-primary/20 rounded' : ''
-                    }`}>
+                    <div className="flex justify-center">
                       <img 
                         src={getBaseSymbol(item.symbol_image) || ''} 
                         alt={item.code}
