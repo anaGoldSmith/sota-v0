@@ -4,7 +4,7 @@ import { useApparatusData } from "@/hooks/useApparatusData";
 import { ApparatusTable, SelectedCriterion } from "./ApparatusTable";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -249,33 +249,35 @@ export const ApparatusSelectionDialog = ({
             Select Difficulty of Apparatus for {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'}
           </DialogTitle>
           <DialogDescription className="space-y-2">
-            <div>
+            <span>
               To create a valid DA, choose one base with two criteria by clicking on two "v" cells in the same row. Or, choose the base "Catch from High Throw" with one criterion and another base with the same criterion — in this case, DA value = (highest base value) + 0.1.
-            </div>
+            </span>
             {specialElements.length > 0 && (
-              <div className="flex items-center gap-2 text-xs">
+              <span className="inline-flex items-center gap-2 text-xs">
                 <span>*For {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'apparatus'} DAs "Catch from High Throw" is valid for</span>
                 {specialElements.map((element, index) => (
-                  <span key={element.id} className="inline-flex items-center">
-                    {element.symbol_image && (
-                      <img 
-                        src={getBaseSymbol(element.symbol_image) || ''} 
-                        alt={element.code}
-                        className="h-12 w-auto inline-block align-middle"
-                        onError={(e) => {
-                          console.error('Failed to load symbol:', element.symbol_image);
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    )}
+                  <React.Fragment key={element.id}>
+                    <span className="inline-flex items-center">
+                      {element.symbol_image && (
+                        <img 
+                          src={getBaseSymbol(element.symbol_image) || ''} 
+                          alt={element.code}
+                          className="h-12 w-auto inline-block align-middle"
+                          onError={(e) => {
+                            console.error('Failed to load symbol:', element.symbol_image);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
+                    </span>
                     {index < specialElements.length - 1 && (
                       index === specialElements.length - 2 ? 
                         <span className="mx-1">and</span> : 
-                        <span>,</span>
+                        <span className="mx-1">,</span>
                     )}
-                  </span>
+                  </React.Fragment>
                 ))}
-              </div>
+              </span>
             )}
           </DialogDescription>
         </DialogHeader>
