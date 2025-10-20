@@ -47,6 +47,66 @@ export type Database = {
         }
         Relationships: []
       }
+      ball_bases: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          id: string
+          name: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      clubs_bases: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          id: string
+          name: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
       criteria: {
         Row: {
           code: string
@@ -74,6 +134,36 @@ export type Database = {
           name?: string
           symbol_image?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      hoop_bases: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          id: string
+          name: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          value?: number
         }
         Relationships: []
       }
@@ -137,6 +227,36 @@ export type Database = {
           last_name?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      ribbon_bases: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          id: string
+          name: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          value?: number
         }
         Relationships: []
       }
