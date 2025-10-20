@@ -25,15 +25,9 @@ const ApparatusConfiguration = () => {
   const criteriaSymbolInputRef = useRef<HTMLInputElement>(null);
 
   // Control tables upload states
-  const [ballControlFile, setBallControlFile] = useState<File | null>(null);
-  const [hoopControlFile, setHoopControlFile] = useState<File | null>(null);
-  const [clubsControlFile, setClubsControlFile] = useState<File | null>(null);
-  const [ribbonControlFile, setRibbonControlFile] = useState<File | null>(null);
-  const [uploadingControl, setUploadingControl] = useState<string | null>(null);
-  const ballControlInputRef = useRef<HTMLInputElement>(null);
-  const hoopControlInputRef = useRef<HTMLInputElement>(null);
-  const clubsControlInputRef = useRef<HTMLInputElement>(null);
-  const ribbonControlInputRef = useRef<HTMLInputElement>(null);
+  const [controlFiles, setControlFiles] = useState<File[]>([]);
+  const [uploadingControl, setUploadingControl] = useState(false);
+  const controlInputRef = useRef<HTMLInputElement>(null);
 
   // Bases CSV upload states
   const [basesFiles, setBasesFiles] = useState<File[]>([]);
@@ -183,34 +177,80 @@ const ApparatusConfiguration = () => {
     }
   };
 
-  const handleControlTableUpload = async (apparatus: 'ball' | 'hoop' | 'clubs' | 'ribbon', file: File | null, inputRef: React.RefObject<HTMLInputElement>) => {
-    if (!file) {
-      toast.error("Please select a file");
+  const handleControlTablesUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (controlFiles.length === 0) {
+      toast.error("Please select at least one CSV file");
       return;
     }
 
-    setUploadingControl(apparatus);
+    setUploadingControl(true);
 
     try {
-      const fileContent = await file.text();
       const { data: { session } } = await supabase.auth.getSession();
-      
-      // TODO: Create edge function to handle control table import
-      toast.success(`${apparatus.charAt(0).toUpperCase() + apparatus.slice(1)} control table uploaded successfully!`);
-      
-      // Reset file input
-      if (apparatus === 'ball') setBallControlFile(null);
-      else if (apparatus === 'hoop') setHoopControlFile(null);
-      else if (apparatus === 'clubs') setClubsControlFile(null);
-      else if (apparatus === 'ribbon') setRibbonControlFile(null);
-      
-      if (inputRef.current) inputRef.current.value = '';
-      
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const file of controlFiles) {
+        const fileName = file.name.toLowerCase().replace('.csv', '');
+        
+        const tableMap: Record<string, string> = {
+          'ball_control': 'ball_control',
+          'hoop_control': 'hoop_control',
+          'clubs_control': 'clubs_control',
+          'ribbon_control': 'ribbon_control',
+        };
+
+        const tableName = tableMap[fileName];
+        
+        if (!tableName) {
+          console.warn(`Skipping ${file.name} - filename must match: ball_control.csv, hoop_control.csv, clubs_control.csv, or ribbon_control.csv`);
+          failCount++;
+          continue;
+        }
+
+        try {
+          const csvContent = await file.text();
+          
+          const { data, error } = await supabase.functions.invoke('import-control-tables-csv', {
+            body: { csvContent, tableName },
+            headers: {
+              Authorization: `Bearer ${session?.access_token}`,
+            }
+          });
+
+          if (error) throw error;
+
+          if (data.success) {
+            successCount++;
+            console.log(`Successfully imported ${file.name}`);
+          } else {
+            failCount++;
+            console.error(`Failed to import ${file.name}:`, data.error);
+          }
+        } catch (error: any) {
+          console.error(`Error importing ${file.name}:`, error);
+          failCount++;
+        }
+      }
+
+      if (successCount > 0 && failCount === 0) {
+        toast.success(`Successfully imported ${successCount} control table${successCount > 1 ? 's' : ''}!`);
+      } else if (successCount > 0 && failCount > 0) {
+        toast.success(`Imported ${successCount} tables, ${failCount} failed`);
+      } else {
+        toast.error("All imports failed");
+      }
+
+      setControlFiles([]);
+      if (controlInputRef.current) controlInputRef.current.value = '';
+
     } catch (error: any) {
-      console.error(`${apparatus} control table upload error:`, error);
+      console.error('Control tables upload error:', error);
       toast.error(`Upload failed: ${error.message || "Unknown error"}`);
     } finally {
-      setUploadingControl(null);
+      setUploadingControl(false);
     }
   };
 
@@ -615,135 +655,45 @@ const ApparatusConfiguration = () => {
                 <AccordionItem value="control-tables" className="border rounded-lg px-4">
                   <AccordionTrigger className="text-lg font-semibold">Control Tables</AccordionTrigger>
                   <AccordionContent className="space-y-4 pt-4">
-                    
-                    {/* Ball Control Table */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Ball Control Table</CardTitle>
-                        <CardDescription>Upload control table for Ball in CSV/Excel format</CardDescription>
+                        <CardTitle>Import Control Tables from CSV</CardTitle>
+                        <CardDescription>
+                          Upload CSV files for ball, hoop, clubs, and ribbon control tables. You can select multiple files at once.
+                          <br />
+                          File names must match: ball_control.csv, hoop_control.csv, clubs_control.csv, ribbon_control.csv
+                          <br />
+                          Required columns: code, Cr1V, Cr2H, Cr3L, Cr7R, Cr4F, Cr5W, Cr6DB (values must be Y or N)
+                        </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-4">
+                        <form onSubmit={handleControlTablesUpload} className="space-y-4">
                           <div className="space-y-2">
-                            <Label htmlFor="ball-control-input">CSV/Excel File</Label>
+                            <Label htmlFor="control-input">CSV Files</Label>
                             <Input
-                              id="ball-control-input"
-                              ref={ballControlInputRef}
+                              id="control-input"
+                              ref={controlInputRef}
                               type="file"
-                              accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-                              onChange={(e) => setBallControlFile(e.target.files?.[0] || null)}
+                              accept=".csv,text/csv"
+                              multiple
+                              onChange={(e) => setControlFiles(Array.from(e.target.files || []))}
                             />
-                            {ballControlFile && (
-                              <p className="text-sm text-muted-foreground">{ballControlFile.name}</p>
+                            {controlFiles.length > 0 && (
+                              <div className="text-sm text-muted-foreground">
+                                {controlFiles.length} file{controlFiles.length > 1 ? 's' : ''} selected:
+                                <ul className="list-disc list-inside mt-1">
+                                  {controlFiles.map((f, i) => <li key={i}>{f.name}</li>)}
+                                </ul>
+                              </div>
                             )}
                           </div>
-                          <Button 
-                            onClick={() => handleControlTableUpload('ball', ballControlFile, ballControlInputRef)} 
-                            disabled={uploadingControl === 'ball' || !ballControlFile} 
-                            className="w-full"
-                          >
-                            {uploadingControl === 'ball' ? "Uploading..." : "Upload Ball Table"}
+                          
+                          <Button type="submit" disabled={uploadingControl} className="w-full">
+                            {uploadingControl ? "Uploading..." : "Upload Control Tables"}
                           </Button>
-                        </div>
+                        </form>
                       </CardContent>
                     </Card>
-
-                    {/* Hoop Control Table */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Hoop Control Table</CardTitle>
-                        <CardDescription>Upload control table for Hoop in CSV/Excel format</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="hoop-control-input">CSV/Excel File</Label>
-                            <Input
-                              id="hoop-control-input"
-                              ref={hoopControlInputRef}
-                              type="file"
-                              accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-                              onChange={(e) => setHoopControlFile(e.target.files?.[0] || null)}
-                            />
-                            {hoopControlFile && (
-                              <p className="text-sm text-muted-foreground">{hoopControlFile.name}</p>
-                            )}
-                          </div>
-                          <Button 
-                            onClick={() => handleControlTableUpload('hoop', hoopControlFile, hoopControlInputRef)} 
-                            disabled={uploadingControl === 'hoop' || !hoopControlFile} 
-                            className="w-full"
-                          >
-                            {uploadingControl === 'hoop' ? "Uploading..." : "Upload Hoop Table"}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Clubs Control Table */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Clubs Control Table</CardTitle>
-                        <CardDescription>Upload control table for Clubs in CSV/Excel format</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="clubs-control-input">CSV/Excel File</Label>
-                            <Input
-                              id="clubs-control-input"
-                              ref={clubsControlInputRef}
-                              type="file"
-                              accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-                              onChange={(e) => setClubsControlFile(e.target.files?.[0] || null)}
-                            />
-                            {clubsControlFile && (
-                              <p className="text-sm text-muted-foreground">{clubsControlFile.name}</p>
-                            )}
-                          </div>
-                          <Button 
-                            onClick={() => handleControlTableUpload('clubs', clubsControlFile, clubsControlInputRef)} 
-                            disabled={uploadingControl === 'clubs' || !clubsControlFile} 
-                            className="w-full"
-                          >
-                            {uploadingControl === 'clubs' ? "Uploading..." : "Upload Clubs Table"}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Ribbon Control Table */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Ribbon Control Table</CardTitle>
-                        <CardDescription>Upload control table for Ribbon in CSV/Excel format</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="ribbon-control-input">CSV/Excel File</Label>
-                            <Input
-                              id="ribbon-control-input"
-                              ref={ribbonControlInputRef}
-                              type="file"
-                              accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-                              onChange={(e) => setRibbonControlFile(e.target.files?.[0] || null)}
-                            />
-                            {ribbonControlFile && (
-                              <p className="text-sm text-muted-foreground">{ribbonControlFile.name}</p>
-                            )}
-                          </div>
-                          <Button 
-                            onClick={() => handleControlTableUpload('ribbon', ribbonControlFile, ribbonControlInputRef)} 
-                            disabled={uploadingControl === 'ribbon' || !ribbonControlFile} 
-                            className="w-full"
-                          >
-                            {uploadingControl === 'ribbon' ? "Uploading..." : "Upload Ribbon Table"}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
