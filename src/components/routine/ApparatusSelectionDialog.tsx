@@ -59,7 +59,7 @@ export const ApparatusSelectionDialog = ({
       
       // Categorize rows based on validation rules
       const validStandaloneRows: string[] = [];
-      const needsPairingRows: { rowId: string, criterion: string, element: CombinedApparatusData }[] = [];
+      const needsPairingRows: { rowId: string, criterion: string, element: CombinedApparatusData, isSpecialCode: boolean }[] = [];
       const invalidRows: string[] = [];
 
       combinationsByRow.forEach((criteriaList, rowId) => {
@@ -71,25 +71,38 @@ export const ApparatusSelectionDialog = ({
         if (criteriaList.length === 2) {
           // Valid standalone (works for all codes)
           validStandaloneRows.push(rowId);
-        } else if (criteriaList.length === 1 && isSpecialCode) {
-          // Special code with 1 criterion - needs pairing
+        } else if (criteriaList.length === 1) {
+          // Any row with 1 criterion - may need pairing
           needsPairingRows.push({
             rowId,
             criterion: criteriaList[0],
-            element
+            element,
+            isSpecialCode
           });
         } else {
-          // Invalid: either wrong number of criteria or non-special code with 1 criterion
+          // Invalid: wrong number of criteria (0 or more than 2)
           invalidRows.push(element.description);
         }
       });
 
       // Validate pairing if there are rows that need pairing
       if (needsPairingRows.length > 0) {
+        // Check if at least one row has a special code
+        const hasSpecialCode = needsPairingRows.some(row => row.isSpecialCode);
+        
+        if (!hasSpecialCode) {
+          toast({
+            title: "Invalid selection",
+            description: "Two criteria should be selected for one apparatus base to create a valid DA, or select a special code (B2, B10, H13, CL13, CL14, CL15, RIB14) with one criterion and pair it with another row with the same criterion.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         if (needsPairingRows.length !== 2) {
           toast({
             title: "Invalid selection",
-            description: "For special codes with one criterion selected, you must select exactly one more row with a special code and the same matching criterion.",
+            description: "For special codes with one criterion selected, you must select exactly one more row with the same matching criterion.",
             variant: "destructive",
           });
           return;
@@ -98,7 +111,7 @@ export const ApparatusSelectionDialog = ({
         if (needsPairingRows[0].criterion !== needsPairingRows[1].criterion) {
           toast({
             title: "Invalid selection",
-            description: "Special code rows with one criterion must have matching criteria to form a valid pair.",
+            description: "Both rows must have the same criterion selected to form a valid pair.",
             variant: "destructive",
           });
           return;
