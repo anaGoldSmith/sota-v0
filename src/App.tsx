@@ -13,7 +13,6 @@ import RoutineCalculator from "./pages/RoutineCalculator";
 import ApparatusConfiguration from "./pages/ApparatusConfiguration";
 import ElementConfiguration from "./pages/ElementConfiguration";
 import GeneralConfigurations from "./pages/GeneralConfigurations";
-import DABases from "./pages/DABases";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,7 +29,6 @@ const App = () => (
           <Route path="/viewer" element={<PdfViewer />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/apparatus-configuration" element={<ApparatusConfiguration />} />
-          <Route path="/admin/apparatus-configuration/da-bases" element={<DABases />} />
           <Route path="/admin/element-configuration" element={<ElementConfiguration />} />
           <Route path="/admin/general-configurations" element={<GeneralConfigurations />} />
           <Route path="/auth" element={<Auth />} />
