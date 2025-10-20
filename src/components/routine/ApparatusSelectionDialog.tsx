@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ApparatusType, CombinedApparatusData } from "@/types/apparatus";
 import { useApparatusData } from "@/hooks/useApparatusData";
 import { ApparatusTable } from "./ApparatusTable";
@@ -67,6 +67,9 @@ export const ApparatusSelectionDialog = ({
           <DialogTitle className="text-2xl">
             Select {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'} Difficulty Elements
           </DialogTitle>
+          <DialogDescription>
+            Click on rows to select apparatus difficulty elements for your routine
+          </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
@@ -84,6 +87,7 @@ export const ApparatusSelectionDialog = ({
               criteria={criteria}
               selectedIds={selectedIds}
               onRowClick={handleRowClick}
+              apparatus={apparatus!}
             />
 
             <div className="flex justify-end gap-3 pt-4">

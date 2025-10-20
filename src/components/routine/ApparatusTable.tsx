@@ -1,12 +1,14 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CombinedApparatusData, Criterion, CRITERIA_CODES } from "@/types/apparatus";
+import { CombinedApparatusData, Criterion, CRITERIA_CODES, ApparatusType } from "@/types/apparatus";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ApparatusTableProps {
   data: CombinedApparatusData[];
   criteria: Criterion[];
   selectedIds: string[];
   onRowClick: (item: CombinedApparatusData) => void;
+  apparatus: ApparatusType;
 }
 
 const formatCriteriaValue = (value: string | null): string => {
@@ -15,10 +17,27 @@ const formatCriteriaValue = (value: string | null): string => {
   return '';
 };
 
-export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick }: ApparatusTableProps) => {
+export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, apparatus }: ApparatusTableProps) => {
   const getCriterionSymbol = (code: string) => {
     const criterion = criteria.find((c) => c.code === code);
-    return criterion?.symbol_image || null;
+    if (!criterion?.symbol_image) return null;
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from('criteria-symbols')
+      .getPublicUrl(criterion.symbol_image);
+    
+    return publicUrl;
+  };
+
+  const getBaseSymbol = (filename: string | null) => {
+    if (!filename) return null;
+    
+    const bucketName = `${apparatus}-bases-symbols`;
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filename);
+    
+    return publicUrl;
   };
 
   return (
@@ -62,9 +81,13 @@ export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick }: Appa
                   {item.symbol_image && (
                     <div className="flex justify-center">
                       <img 
-                        src={item.symbol_image} 
+                        src={getBaseSymbol(item.symbol_image) || ''} 
                         alt={item.code}
                         className="h-8 w-auto object-contain"
+                        onError={(e) => {
+                          console.error('Failed to load base symbol:', item.symbol_image);
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
                     </div>
                   )}
