@@ -52,7 +52,7 @@ export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, appara
               <TableHead key={code} className="text-primary-foreground font-semibold text-center w-[90px] p-2">
                 <div className="flex flex-col items-center gap-1">
                   {code === 'Cr5W' ? (
-                    <span className="text-6xl font-bold">W</span>
+                    <span className="text-3xl font-bold">W</span>
                   ) : getCriterionSymbol(code) ? (
                     <img 
                       src={getCriterionSymbol(code)!} 
