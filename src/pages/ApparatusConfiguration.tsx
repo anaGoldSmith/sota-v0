@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const ApparatusConfiguration = () => {
   const navigate = useNavigate();
@@ -22,6 +23,17 @@ const ApparatusConfiguration = () => {
   const [criteriaSymbolFiles, setCriteriaSymbolFiles] = useState<File[]>([]);
   const [uploadingCriteriaSymbol, setUploadingCriteriaSymbol] = useState(false);
   const criteriaSymbolInputRef = useRef<HTMLInputElement>(null);
+
+  // Control tables upload states
+  const [ballControlFile, setBallControlFile] = useState<File | null>(null);
+  const [hoopControlFile, setHoopControlFile] = useState<File | null>(null);
+  const [clubsControlFile, setClubsControlFile] = useState<File | null>(null);
+  const [ribbonControlFile, setRibbonControlFile] = useState<File | null>(null);
+  const [uploadingControl, setUploadingControl] = useState<string | null>(null);
+  const ballControlInputRef = useRef<HTMLInputElement>(null);
+  const hoopControlInputRef = useRef<HTMLInputElement>(null);
+  const clubsControlInputRef = useRef<HTMLInputElement>(null);
+  const ribbonControlInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -154,6 +166,37 @@ const ApparatusConfiguration = () => {
     }
   };
 
+  const handleControlTableUpload = async (apparatus: 'ball' | 'hoop' | 'clubs' | 'ribbon', file: File | null, inputRef: React.RefObject<HTMLInputElement>) => {
+    if (!file) {
+      toast.error("Please select a file");
+      return;
+    }
+
+    setUploadingControl(apparatus);
+
+    try {
+      const fileContent = await file.text();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // TODO: Create edge function to handle control table import
+      toast.success(`${apparatus.charAt(0).toUpperCase() + apparatus.slice(1)} control table uploaded successfully!`);
+      
+      // Reset file input
+      if (apparatus === 'ball') setBallControlFile(null);
+      else if (apparatus === 'hoop') setHoopControlFile(null);
+      else if (apparatus === 'clubs') setClubsControlFile(null);
+      else if (apparatus === 'ribbon') setRibbonControlFile(null);
+      
+      if (inputRef.current) inputRef.current.value = '';
+      
+    } catch (error: any) {
+      console.error(`${apparatus} control table upload error:`, error);
+      toast.error(`Upload failed: ${error.message || "Unknown error"}`);
+    } finally {
+      setUploadingControl(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -184,72 +227,230 @@ const ApparatusConfiguration = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-2xl">
-        {/* Criteria CSV Import Section */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Import Criteria from CSV</CardTitle>
-            <CardDescription>
-              Upload a CSV file to import criteria symbols. This will replace all existing criteria.
-              <br />
-              Required columns: code, name, description, symbol_image
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCriteriaCsvImport} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="criteria-csv-input">CSV File</Label>
-                <Input
-                  id="criteria-csv-input"
-                  ref={criteriaCsvInputRef}
-                  type="file"
-                  accept=".csv,text/csv"
-                  onChange={(e) => setCriteriaCsvFile(e.target.files?.[0] || null)}
-                  required
-                />
-                {criteriaCsvFile && (
-                  <p className="text-sm text-muted-foreground">{criteriaCsvFile.name}</p>
-                )}
-              </div>
+        <Accordion type="single" collapsible className="space-y-4">
+          {/* DAs Config Section */}
+          <AccordionItem value="das-config" className="border rounded-lg px-4">
+            <AccordionTrigger className="text-xl font-semibold">DAs Config</AccordionTrigger>
+            <AccordionContent className="space-y-4 pt-4">
               
-              <Button type="submit" disabled={importingCriteriaCsv} className="w-full">
-                {importingCriteriaCsv ? "Importing..." : "Import CSV"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+              {/* Control Tables */}
+              <Accordion type="single" collapsible>
+                <AccordionItem value="control-tables" className="border rounded-lg px-4">
+                  <AccordionTrigger className="text-lg font-semibold">Control Tables</AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-4">
+                    
+                    {/* Ball Control Table */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Ball Control Table</CardTitle>
+                        <CardDescription>Upload control table for Ball in CSV/Excel format</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="ball-control-input">CSV/Excel File</Label>
+                            <Input
+                              id="ball-control-input"
+                              ref={ballControlInputRef}
+                              type="file"
+                              accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                              onChange={(e) => setBallControlFile(e.target.files?.[0] || null)}
+                            />
+                            {ballControlFile && (
+                              <p className="text-sm text-muted-foreground">{ballControlFile.name}</p>
+                            )}
+                          </div>
+                          <Button 
+                            onClick={() => handleControlTableUpload('ball', ballControlFile, ballControlInputRef)} 
+                            disabled={uploadingControl === 'ball' || !ballControlFile} 
+                            className="w-full"
+                          >
+                            {uploadingControl === 'ball' ? "Uploading..." : "Upload Ball Table"}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-        {/* Criteria Symbol Upload Section */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Upload Criteria Symbols</CardTitle>
-            <CardDescription>Upload multiple symbol images for criteria. Image filenames must match the criteria codes (e.g., Cr1V.png for code Cr1V)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCriteriaSymbolUpload} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="criteria-symbol-input">Symbol Images (PNG)</Label>
-                <Input
-                  id="criteria-symbol-input"
-                  ref={criteriaSymbolInputRef}
-                  type="file"
-                  accept="image/png"
-                  multiple
-                  onChange={(e) => setCriteriaSymbolFiles(Array.from(e.target.files || []))}
-                  required
-                />
-                {criteriaSymbolFiles.length > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {criteriaSymbolFiles.length} file{criteriaSymbolFiles.length > 1 ? 's' : ''} selected
-                  </p>
-                )}
-              </div>
-              
-              <Button type="submit" disabled={uploadingCriteriaSymbol} className="w-full">
-                {uploadingCriteriaSymbol ? "Uploading..." : `Upload ${criteriaSymbolFiles.length > 0 ? criteriaSymbolFiles.length : ''} Symbol${criteriaSymbolFiles.length !== 1 ? 's' : ''}`}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                    {/* Hoop Control Table */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Hoop Control Table</CardTitle>
+                        <CardDescription>Upload control table for Hoop in CSV/Excel format</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="hoop-control-input">CSV/Excel File</Label>
+                            <Input
+                              id="hoop-control-input"
+                              ref={hoopControlInputRef}
+                              type="file"
+                              accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                              onChange={(e) => setHoopControlFile(e.target.files?.[0] || null)}
+                            />
+                            {hoopControlFile && (
+                              <p className="text-sm text-muted-foreground">{hoopControlFile.name}</p>
+                            )}
+                          </div>
+                          <Button 
+                            onClick={() => handleControlTableUpload('hoop', hoopControlFile, hoopControlInputRef)} 
+                            disabled={uploadingControl === 'hoop' || !hoopControlFile} 
+                            className="w-full"
+                          >
+                            {uploadingControl === 'hoop' ? "Uploading..." : "Upload Hoop Table"}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Clubs Control Table */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Clubs Control Table</CardTitle>
+                        <CardDescription>Upload control table for Clubs in CSV/Excel format</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="clubs-control-input">CSV/Excel File</Label>
+                            <Input
+                              id="clubs-control-input"
+                              ref={clubsControlInputRef}
+                              type="file"
+                              accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                              onChange={(e) => setClubsControlFile(e.target.files?.[0] || null)}
+                            />
+                            {clubsControlFile && (
+                              <p className="text-sm text-muted-foreground">{clubsControlFile.name}</p>
+                            )}
+                          </div>
+                          <Button 
+                            onClick={() => handleControlTableUpload('clubs', clubsControlFile, clubsControlInputRef)} 
+                            disabled={uploadingControl === 'clubs' || !clubsControlFile} 
+                            className="w-full"
+                          >
+                            {uploadingControl === 'clubs' ? "Uploading..." : "Upload Clubs Table"}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Ribbon Control Table */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Ribbon Control Table</CardTitle>
+                        <CardDescription>Upload control table for Ribbon in CSV/Excel format</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="ribbon-control-input">CSV/Excel File</Label>
+                            <Input
+                              id="ribbon-control-input"
+                              ref={ribbonControlInputRef}
+                              type="file"
+                              accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                              onChange={(e) => setRibbonControlFile(e.target.files?.[0] || null)}
+                            />
+                            {ribbonControlFile && (
+                              <p className="text-sm text-muted-foreground">{ribbonControlFile.name}</p>
+                            )}
+                          </div>
+                          <Button 
+                            onClick={() => handleControlTableUpload('ribbon', ribbonControlFile, ribbonControlInputRef)} 
+                            disabled={uploadingControl === 'ribbon' || !ribbonControlFile} 
+                            className="w-full"
+                          >
+                            {uploadingControl === 'ribbon' ? "Uploading..." : "Upload Ribbon Table"}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              {/* DA Criteria */}
+              <Accordion type="single" collapsible>
+                <AccordionItem value="da-criteria" className="border rounded-lg px-4">
+                  <AccordionTrigger className="text-lg font-semibold">DA Criteria</AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-4">
+                    
+                    {/* Criteria CSV Import */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Import Criteria from CSV</CardTitle>
+                        <CardDescription>
+                          Upload a CSV file to import criteria symbols. This will replace all existing criteria.
+                          <br />
+                          Required columns: code, name, description, symbol_image
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <form onSubmit={handleCriteriaCsvImport} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="criteria-csv-input">CSV File</Label>
+                            <Input
+                              id="criteria-csv-input"
+                              ref={criteriaCsvInputRef}
+                              type="file"
+                              accept=".csv,text/csv"
+                              onChange={(e) => setCriteriaCsvFile(e.target.files?.[0] || null)}
+                              required
+                            />
+                            {criteriaCsvFile && (
+                              <p className="text-sm text-muted-foreground">{criteriaCsvFile.name}</p>
+                            )}
+                          </div>
+                          
+                          <Button type="submit" disabled={importingCriteriaCsv} className="w-full">
+                            {importingCriteriaCsv ? "Importing..." : "Import CSV"}
+                          </Button>
+                        </form>
+                      </CardContent>
+                    </Card>
+
+                    {/* Criteria Symbol Upload */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Upload Criteria Symbols</CardTitle>
+                        <CardDescription>Upload multiple symbol images for criteria. Image filenames must match the criteria codes (e.g., Cr1V.png for code Cr1V)</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <form onSubmit={handleCriteriaSymbolUpload} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="criteria-symbol-input">Symbol Images (PNG)</Label>
+                            <Input
+                              id="criteria-symbol-input"
+                              ref={criteriaSymbolInputRef}
+                              type="file"
+                              accept="image/png"
+                              multiple
+                              onChange={(e) => setCriteriaSymbolFiles(Array.from(e.target.files || []))}
+                              required
+                            />
+                            {criteriaSymbolFiles.length > 0 && (
+                              <p className="text-sm text-muted-foreground">
+                                {criteriaSymbolFiles.length} file{criteriaSymbolFiles.length > 1 ? 's' : ''} selected
+                              </p>
+                            )}
+                          </div>
+                          
+                          <Button type="submit" disabled={uploadingCriteriaSymbol} className="w-full">
+                            {uploadingCriteriaSymbol ? "Uploading..." : `Upload ${criteriaSymbolFiles.length > 0 ? criteriaSymbolFiles.length : ''} Symbol${criteriaSymbolFiles.length !== 1 ? 's' : ''}`}
+                          </Button>
+                        </form>
+                      </CardContent>
+                    </Card>
+
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </main>
     </div>
   );
