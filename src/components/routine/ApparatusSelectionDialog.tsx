@@ -54,6 +54,26 @@ export const ApparatusSelectionDialog = ({
         combinationsByRow.get(sc.rowId)!.push(sc.criterionCode);
       });
 
+      // Validate that each row has exactly 2 criteria selected
+      const invalidRows: string[] = [];
+      combinationsByRow.forEach((criteriaList, rowId) => {
+        if (criteriaList.length !== 2) {
+          const element = apparatusData.find(e => e.id === rowId);
+          if (element) {
+            invalidRows.push(element.description);
+          }
+        }
+      });
+
+      if (invalidRows.length > 0) {
+        toast({
+          title: "Invalid selection",
+          description: "Two criteria should be selected for one apparatus base to create a valid DA.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const combinations: ApparatusCombination[] = [];
       combinationsByRow.forEach((criteriaList, rowId) => {
         const element = apparatusData.find(e => e.id === rowId);
