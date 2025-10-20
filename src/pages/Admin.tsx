@@ -51,8 +51,7 @@ const Admin = () => {
   const criteriaCsvInputRef = useRef<HTMLInputElement>(null);
   
   // Criteria symbol upload states
-  const [criteriaSymbolFile, setCriteriaSymbolFile] = useState<File | null>(null);
-  const [criteriaSymbolCode, setCriteriaSymbolCode] = useState("");
+  const [criteriaSymbolFiles, setCriteriaSymbolFiles] = useState<File[]>([]);
   const [uploadingCriteriaSymbol, setUploadingCriteriaSymbol] = useState(false);
   const criteriaSymbolInputRef = useRef<HTMLInputElement>(null);
 
@@ -411,48 +410,66 @@ const Admin = () => {
   const handleCriteriaSymbolUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!criteriaSymbolFile || !criteriaSymbolCode) {
-      toast.error("Please provide both an image and criteria code");
+    if (criteriaSymbolFiles.length === 0) {
+      toast.error("Please select at least one image");
       return;
     }
 
     setUploadingCriteriaSymbol(true);
 
     try {
-      // Upload image to criteria-symbols bucket
-      const fileExt = criteriaSymbolFile.name.split('.').pop();
-      const fileName = `${criteriaSymbolCode}.${fileExt}`;
+      let successCount = 0;
+      let failCount = 0;
+      
+      for (const file of criteriaSymbolFiles) {
+        // Extract code from filename (remove extension)
+        const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+        const code = fileNameWithoutExt;
 
-      const { error: uploadError } = await supabase.storage
-        .from('criteria-symbols')
-        .upload(fileName, criteriaSymbolFile, { 
-          contentType: criteriaSymbolFile.type,
-          upsert: true 
-        });
+        try {
+          // Upload image to criteria-symbols bucket
+          const { error: uploadError } = await supabase.storage
+            .from('criteria-symbols')
+            .upload(file.name, file, { 
+              contentType: file.type,
+              upsert: true 
+            });
 
-      if (uploadError) {
-        toast.error(`Upload failed: ${uploadError.message}`);
-        setUploadingCriteriaSymbol(false);
-        return;
+          if (uploadError) {
+            console.error(`Upload failed for ${file.name}:`, uploadError);
+            failCount++;
+            continue;
+          }
+
+          // Update criteria record with symbol filename
+          const { error: updateError } = await supabase
+            .from('criteria')
+            .update({ symbol_image: file.name })
+            .eq('code', code);
+
+          if (updateError) {
+            console.error(`Database update failed for ${code}:`, updateError);
+            failCount++;
+          } else {
+            successCount++;
+          }
+        } catch (error: any) {
+          console.error(`Error processing ${file.name}:`, error);
+          failCount++;
+        }
       }
-
-      // Update criteria record with symbol filename
-      const { error: updateError } = await supabase
-        .from('criteria')
-        .update({ symbol_image: fileName })
-        .eq('code', criteriaSymbolCode);
-
-      if (updateError) {
-        toast.error(`Database update failed: ${updateError.message}`);
-        setUploadingCriteriaSymbol(false);
-        return;
+      
+      // Show result toast
+      if (successCount > 0 && failCount === 0) {
+        toast.success(`Successfully uploaded ${successCount} symbol${successCount > 1 ? 's' : ''}!`);
+      } else if (successCount > 0 && failCount > 0) {
+        toast.success(`Uploaded ${successCount} symbols, ${failCount} failed`);
+      } else {
+        toast.error("All uploads failed");
       }
-
-      toast.success(`Symbol for ${criteriaSymbolCode} uploaded successfully!`);
       
       // Reset form
-      setCriteriaSymbolCode("");
-      setCriteriaSymbolFile(null);
+      setCriteriaSymbolFiles([]);
       if (criteriaSymbolInputRef.current) criteriaSymbolInputRef.current.value = '';
       
     } catch (error: any) {
@@ -767,39 +784,31 @@ const Admin = () => {
         {/* Criteria Symbol Upload Section */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Upload Criteria Symbol</CardTitle>
-            <CardDescription>Upload symbol images for criteria. Image filename must match the criteria code (e.g., Cr1V.png for code Cr1V)</CardDescription>
+            <CardTitle>Upload Criteria Symbols</CardTitle>
+            <CardDescription>Upload multiple symbol images for criteria. Image filenames must match the criteria codes (e.g., Cr1V.png for code Cr1V)</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCriteriaSymbolUpload} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="criteria-symbol-code">Criteria Code</Label>
-                <Input
-                  id="criteria-symbol-code"
-                  value={criteriaSymbolCode}
-                  onChange={(e) => setCriteriaSymbolCode(e.target.value)}
-                  placeholder="e.g., Cr1V"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="criteria-symbol-input">Symbol Image (PNG)</Label>
+                <Label htmlFor="criteria-symbol-input">Symbol Images (PNG)</Label>
                 <Input
                   id="criteria-symbol-input"
                   ref={criteriaSymbolInputRef}
                   type="file"
                   accept="image/png"
-                  onChange={(e) => setCriteriaSymbolFile(e.target.files?.[0] || null)}
+                  multiple
+                  onChange={(e) => setCriteriaSymbolFiles(Array.from(e.target.files || []))}
                   required
                 />
-                {criteriaSymbolFile && (
-                  <p className="text-sm text-muted-foreground">{criteriaSymbolFile.name}</p>
+                {criteriaSymbolFiles.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {criteriaSymbolFiles.length} file{criteriaSymbolFiles.length > 1 ? 's' : ''} selected
+                  </p>
                 )}
               </div>
               
               <Button type="submit" disabled={uploadingCriteriaSymbol} className="w-full">
-                {uploadingCriteriaSymbol ? "Uploading..." : "Upload Symbol"}
+                {uploadingCriteriaSymbol ? "Uploading..." : `Upload ${criteriaSymbolFiles.length > 0 ? criteriaSymbolFiles.length : ''} Symbol${criteriaSymbolFiles.length !== 1 ? 's' : ''}`}
               </Button>
             </form>
           </CardContent>
