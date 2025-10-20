@@ -54,24 +54,64 @@ export const ApparatusSelectionDialog = ({
         combinationsByRow.get(sc.rowId)!.push(sc.criterionCode);
       });
 
-      // Validate that each row has exactly 2 criteria selected
-      const invalidRows: string[] = [];
-      combinationsByRow.forEach((criteriaList, rowId) => {
-        if (criteriaList.length !== 2) {
-          const element = apparatusData.find(e => e.id === rowId);
-          if (element) {
-            invalidRows.push(element.description);
-          }
-        }
-      });
+      // Special codes that require 2 rows with 1 matching criterion
+      const specialCodes = ['B2', 'B10', 'H13', 'CL13', 'CL14', 'CL15', 'RIB14'];
+      
+      // Check if any selected rows have special codes
+      const selectedRowsWithSpecialCodes = Array.from(combinationsByRow.keys())
+        .map(rowId => apparatusData.find(e => e.id === rowId))
+        .filter(element => element && specialCodes.includes(element.code));
 
-      if (invalidRows.length > 0) {
-        toast({
-          title: "Invalid selection",
-          description: "Two criteria should be selected for one apparatus base to create a valid DA.",
-          variant: "destructive",
+      if (selectedRowsWithSpecialCodes.length > 0) {
+        // Special validation: must have exactly 2 rows with 1 criterion each, and criteria must match
+        if (combinationsByRow.size !== 2) {
+          toast({
+            title: "Invalid selection",
+            description: `For base codes ${specialCodes.join(', ')}: two rows must be selected with one matching criterion each.`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const [criteriaList1, criteriaList2] = Array.from(combinationsByRow.values());
+        
+        if (criteriaList1.length !== 1 || criteriaList2.length !== 1) {
+          toast({
+            title: "Invalid selection",
+            description: `For base codes ${specialCodes.join(', ')}: select exactly one criterion per row.`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (criteriaList1[0] !== criteriaList2[0]) {
+          toast({
+            title: "Invalid selection",
+            description: `For base codes ${specialCodes.join(', ')}: both rows must have the same criterion selected.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      } else {
+        // Standard validation: each row has exactly 2 criteria selected
+        const invalidRows: string[] = [];
+        combinationsByRow.forEach((criteriaList, rowId) => {
+          if (criteriaList.length !== 2) {
+            const element = apparatusData.find(e => e.id === rowId);
+            if (element) {
+              invalidRows.push(element.description);
+            }
+          }
         });
-        return;
+
+        if (invalidRows.length > 0) {
+          toast({
+            title: "Invalid selection",
+            description: "Two criteria should be selected for one apparatus base to create a valid DA.",
+            variant: "destructive",
+          });
+          return;
+        }
       }
 
       const combinations: ApparatusCombination[] = [];
