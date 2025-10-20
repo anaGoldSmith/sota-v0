@@ -43,6 +43,7 @@ const RoutineCalculator = () => {
   const [jumpDialogOpen, setJumpDialogOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
   const [rotationDialogOpen, setRotationDialogOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
   const [selectedJumps, setSelectedJumps] = useState<SelectedJump[]>([]);
   const [selectedBalances, setSelectedBalances] = useState<SelectedBalance[]>([]);
@@ -150,161 +151,217 @@ const RoutineCalculator = () => {
             </div>
           </div>
 
-          {/* Difficulty of Body Section */}
+          {/* Category Buttons */}
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-foreground">Difficulties of Body (DB)</h2>
+            <h2 className="text-xl font-semibold text-foreground">Routine Elements</h2>
             
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               <Button 
-                variant="outline"
-                className="w-full h-14 text-lg justify-between"
-                onClick={() => setJumpDialogOpen(true)}
+                variant={activeCategory === "elements" ? "default" : "outline"}
+                className="h-16 text-base"
+                onClick={() => setActiveCategory(activeCategory === "elements" ? null : "elements")}
               >
-                <div className="flex items-center gap-1">
-                  <span>Jumps</span>
-                  <JumpIcon className="!h-7 !w-7" />
-                </div>
-                <span className="text-sm">+ Add</span>
+                Add Elements (DB)
               </Button>
-
-              {/* Selected Jumps Display */}
-              {selectedJumps.length > 0 && (
-                <Card className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-sm">Selected Jumps</h3>
-                    <Badge variant="default">Total: {totalJumpDifficulty.toFixed(2)}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {selectedJumps.map((jump, index) => (
-                      <div
-                        key={`${jump.id}-${index}`}
-                        className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
-                      >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <Badge variant="outline" className="font-mono shrink-0">
-                            {jump.code}
-                          </Badge>
-                          <span className="text-sm truncate">
-                            {jump.name || jump.description}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <Badge variant="secondary">{jump.value}</Badge>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => handleRemoveJump(index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              )}
-
-              <Button
-                variant="outline"
-                className="w-full h-14 text-lg justify-between"
-                onClick={() => setBalanceDialogOpen(true)}
-              >
-                <div className="flex items-center gap-1">
-                  <span>Balances</span>
-                  <BalanceIcon className="!h-7 !w-7" />
-                </div>
-                <span className="text-sm">+ Add</span>
-              </Button>
-
-              {/* Selected Balances Display */}
-              {selectedBalances.length > 0 && (
-                <Card className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-sm">Selected Balances</h3>
-                    <Badge variant="default">Total: {totalBalanceDifficulty.toFixed(2)}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {selectedBalances.map((balance, index) => (
-                      <div
-                        key={`${balance.id}-${index}`}
-                        className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
-                      >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <Badge variant="outline" className="font-mono shrink-0">
-                            {balance.code}
-                          </Badge>
-                          <span className="text-sm truncate">
-                            {balance.name || balance.description}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <Badge variant="secondary">{balance.value}</Badge>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => handleRemoveBalance(index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              )}
-
+              
               <Button 
-                variant="outline"
-                className="w-full h-14 text-lg justify-between"
-                onClick={() => setRotationDialogOpen(true)}
+                variant={activeCategory === "apparatus" ? "default" : "outline"}
+                className="h-16 text-base"
+                onClick={() => setActiveCategory(activeCategory === "apparatus" ? null : "apparatus")}
               >
-                <div className="flex items-center gap-1">
-                  <span>Rotations</span>
-                  <RotationIcon className="!h-8 !w-8" />
-                </div>
-                <span className="text-sm">+ Add</span>
+                Add Apparatus Difficulty (DA)
               </Button>
-
-              {/* Selected Rotations Display */}
-              {selectedRotations.length > 0 && (
-                <Card className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-sm">Selected Rotations</h3>
-                    <Badge variant="default">Total: {totalRotationDifficulty.toFixed(2)}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {selectedRotations.map((rotation, index) => (
-                      <div
-                        key={`${rotation.id}-${index}`}
-                        className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
-                      >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <Badge variant="outline" className="font-mono shrink-0">
-                            {rotation.code}
-                          </Badge>
-                          <span className="text-sm truncate">
-                            {rotation.name || rotation.description}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <Badge variant="secondary">{rotation.value}</Badge>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => handleRemoveRotation(index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              )}
+              
+              <Button 
+                variant={activeCategory === "dynamic" ? "default" : "outline"}
+                className="h-16 text-base"
+                onClick={() => setActiveCategory(activeCategory === "dynamic" ? null : "dynamic")}
+              >
+                Add Dynamic Element (R)
+              </Button>
+              
+              <Button 
+                variant={activeCategory === "dance" ? "default" : "outline"}
+                className="h-16 text-base"
+                onClick={() => setActiveCategory(activeCategory === "dance" ? null : "dance")}
+              >
+                Add Dance Steps
+              </Button>
             </div>
+
+            {/* Elements (DB) - Jumps, Balances, Rotations */}
+            {activeCategory === "elements" && (
+              <div className="space-y-3 pt-4">
+                <Button 
+                  variant="outline"
+                  className="w-full h-14 text-lg justify-between"
+                  onClick={() => setJumpDialogOpen(true)}
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Jumps</span>
+                    <JumpIcon className="!h-7 !w-7" />
+                  </div>
+                  <span className="text-sm">+ Add</span>
+                </Button>
+
+                {/* Selected Jumps Display */}
+                {selectedJumps.length > 0 && (
+                  <Card className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-sm">Selected Jumps</h3>
+                      <Badge variant="default">Total: {totalJumpDifficulty.toFixed(2)}</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      {selectedJumps.map((jump, index) => (
+                        <div
+                          key={`${jump.id}-${index}`}
+                          className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <Badge variant="outline" className="font-mono shrink-0">
+                              {jump.code}
+                            </Badge>
+                            <span className="text-sm truncate">
+                              {jump.name || jump.description}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="secondary">{jump.value}</Badge>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleRemoveJump(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                <Button
+                  variant="outline"
+                  className="w-full h-14 text-lg justify-between"
+                  onClick={() => setBalanceDialogOpen(true)}
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Balances</span>
+                    <BalanceIcon className="!h-7 !w-7" />
+                  </div>
+                  <span className="text-sm">+ Add</span>
+                </Button>
+
+                {/* Selected Balances Display */}
+                {selectedBalances.length > 0 && (
+                  <Card className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-sm">Selected Balances</h3>
+                      <Badge variant="default">Total: {totalBalanceDifficulty.toFixed(2)}</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      {selectedBalances.map((balance, index) => (
+                        <div
+                          key={`${balance.id}-${index}`}
+                          className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <Badge variant="outline" className="font-mono shrink-0">
+                              {balance.code}
+                            </Badge>
+                            <span className="text-sm truncate">
+                              {balance.name || balance.description}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="secondary">{balance.value}</Badge>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleRemoveBalance(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                <Button 
+                  variant="outline"
+                  className="w-full h-14 text-lg justify-between"
+                  onClick={() => setRotationDialogOpen(true)}
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Rotations</span>
+                    <RotationIcon className="!h-8 !w-8" />
+                  </div>
+                  <span className="text-sm">+ Add</span>
+                </Button>
+
+                {/* Selected Rotations Display */}
+                {selectedRotations.length > 0 && (
+                  <Card className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-sm">Selected Rotations</h3>
+                      <Badge variant="default">Total: {totalRotationDifficulty.toFixed(2)}</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      {selectedRotations.map((rotation, index) => (
+                        <div
+                          key={`${rotation.id}-${index}`}
+                          className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <Badge variant="outline" className="font-mono shrink-0">
+                              {rotation.code}
+                            </Badge>
+                            <span className="text-sm truncate">
+                              {rotation.name || rotation.description}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="secondary">{rotation.value}</Badge>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleRemoveRotation(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+              </div>
+            )}
+
+            {/* Placeholder for other categories */}
+            {activeCategory === "apparatus" && (
+              <div className="pt-4 text-center text-muted-foreground">
+                Apparatus Difficulty configuration coming soon
+              </div>
+            )}
+            
+            {activeCategory === "dynamic" && (
+              <div className="pt-4 text-center text-muted-foreground">
+                Dynamic Element configuration coming soon
+              </div>
+            )}
+            
+            {activeCategory === "dance" && (
+              <div className="pt-4 text-center text-muted-foreground">
+                Dance Steps configuration coming soon
+              </div>
+            )}
           </div>
         </div>
       </main>
