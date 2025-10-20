@@ -389,16 +389,16 @@ const RoutineCalculator = () => {
             
             <div className="grid grid-cols-2 gap-3">
               <Button 
-                variant={activeCategory === "elements" ? "default" : "outline"}
-                className="h-16 text-base hover:scale-[1.02] transition-transform"
+                variant="outline"
+                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
                 onClick={() => setActiveCategory(activeCategory === "elements" ? null : "elements")}
               >
                 <span className="text-lg font-semibold mr-2">+</span> Elements (DB)
               </Button>
               
               <Button 
-                variant={activeCategory === "apparatus" ? "default" : "outline"}
-                className="h-16 text-base hover:scale-[1.02] transition-transform"
+                variant="outline"
+                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
                 onClick={() => {
                   setActiveCategory(activeCategory === "apparatus" ? null : "apparatus");
                   if (activeCategory !== "apparatus") {
@@ -410,16 +410,16 @@ const RoutineCalculator = () => {
               </Button>
               
               <Button 
-                variant={activeCategory === "dynamic" ? "default" : "outline"}
-                className="h-16 text-base hover:scale-[1.02] transition-transform"
+                variant="outline"
+                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
                 onClick={() => setActiveCategory(activeCategory === "dynamic" ? null : "dynamic")}
               >
                 <span className="text-lg font-semibold mr-2">+</span> Dynamic Element (R)
               </Button>
               
               <Button 
-                variant={activeCategory === "dance" ? "default" : "outline"}
-                className="h-16 text-base hover:scale-[1.02] transition-transform"
+                variant="outline"
+                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
                 onClick={() => setActiveCategory(activeCategory === "dance" ? null : "dance")}
               >
                 <span className="text-lg font-semibold mr-2">+</span> Dance Steps
