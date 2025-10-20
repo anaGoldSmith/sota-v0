@@ -256,12 +256,12 @@ export const ApparatusSelectionDialog = ({
               <div className="flex items-center gap-2 text-xs">
                 <span>*For {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'apparatus'} DAs "Catch from High Throw" is valid for</span>
                 {specialElements.map((element, index) => (
-                  <span key={element.id} className="inline-flex items-center gap-1">
+                  <span key={element.id} className="inline-flex items-center">
                     {element.symbol_image && (
                       <img 
                         src={getBaseSymbol(element.symbol_image) || ''} 
                         alt={element.code}
-                        className="h-12 w-auto inline-block"
+                        className="h-12 w-auto inline-block mr-1"
                         onError={(e) => {
                           console.error('Failed to load symbol:', element.symbol_image);
                           e.currentTarget.style.display = 'none';
@@ -270,7 +270,7 @@ export const ApparatusSelectionDialog = ({
                     )}
                     {index < specialElements.length - 1 && (
                       index === specialElements.length - 2 ? 
-                        <span> and</span> : 
+                        <span>and</span> : 
                         <span>,</span>
                     )}
                   </span>
