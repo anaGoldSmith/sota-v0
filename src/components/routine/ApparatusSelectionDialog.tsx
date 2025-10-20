@@ -268,7 +268,11 @@ export const ApparatusSelectionDialog = ({
                         }}
                       />
                     )}
-                    {index < specialElements.length - 1 && <span>,</span>}
+                    {index < specialElements.length - 1 && (
+                      index === specialElements.length - 2 ? 
+                        <span> and</span> : 
+                        <span>,</span>
+                    )}
                   </span>
                 ))}
               </div>
