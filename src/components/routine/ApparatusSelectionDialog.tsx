@@ -261,7 +261,7 @@ export const ApparatusSelectionDialog = ({
                       <img 
                         src={getBaseSymbol(element.symbol_image) || ''} 
                         alt={element.code}
-                        className="h-12 w-auto inline-block align-middle mr-0.5"
+                        className="h-12 w-auto inline-block align-middle"
                         onError={(e) => {
                           console.error('Failed to load symbol:', element.symbol_image);
                           e.currentTarget.style.display = 'none';
@@ -270,7 +270,7 @@ export const ApparatusSelectionDialog = ({
                     )}
                     {index < specialElements.length - 1 && (
                       index === specialElements.length - 2 ? 
-                        <span>and</span> : 
+                        <span className="mx-1">and</span> : 
                         <span>,</span>
                     )}
                   </span>
