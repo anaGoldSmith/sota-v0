@@ -213,6 +213,21 @@ export const ApparatusSelectionDialog = ({
     onOpenChange(false);
   };
 
+  // Get special codes for the current apparatus
+  const getSpecialCodes = () => {
+    if (!apparatus) return [];
+    const specialCodesMap: Record<ApparatusType, string[]> = {
+      hoop: ['H13'],
+      ball: ['B2', 'B10'],
+      clubs: ['CL13', 'CL14', 'CL15'],
+      ribbon: ['RIB14'],
+    };
+    return specialCodesMap[apparatus] || [];
+  };
+
+  const specialCodes = getSpecialCodes();
+  const specialElements = apparatusData.filter(item => specialCodes.includes(item.code));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh]">
@@ -220,8 +235,27 @@ export const ApparatusSelectionDialog = ({
           <DialogTitle className="text-2xl">
             Select Difficulty of Apparatus for {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'}
           </DialogTitle>
-          <DialogDescription>
-            To create a valid DA, choose one base with two criteria by clicking on two "v" cells in the same row. Or, choose the base "Catch from High Throw" with one criterion and another base with the same criterion — in this case, DA value = (highest base value) + 0.1.
+          <DialogDescription className="space-y-2">
+            <div>
+              To create a valid DA, choose one base with two criteria by clicking on two "v" cells in the same row. Or, choose the base "Catch from High Throw" with one criterion and another base with the same criterion — in this case, DA value = (highest base value) + 0.1.
+            </div>
+            {specialElements.length > 0 && (
+              <div className="flex items-center gap-2 text-xs">
+                <span>*For {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'apparatus'} DA "Catch from High Throw" is valid for</span>
+                {specialElements.map((element, index) => (
+                  <span key={element.id} className="inline-flex items-center gap-1">
+                    {element.symbol_image && (
+                      <img 
+                        src={element.symbol_image} 
+                        alt={element.code}
+                        className="h-6 w-auto inline-block"
+                      />
+                    )}
+                    {index < specialElements.length - 1 && <span>,</span>}
+                  </span>
+                ))}
+              </div>
+            )}
           </DialogDescription>
         </DialogHeader>
 
