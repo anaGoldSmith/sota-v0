@@ -8,12 +8,13 @@ import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbol
 import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
 import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDialog";
 import { RotationSelectionDialog } from "@/components/routine/RotationSelectionDialog";
-import { ApparatusSelectionDialog } from "@/components/routine/ApparatusSelectionDialog";
+import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/routine/ApparatusSelectionDialog";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ApparatusType, CombinedApparatusData } from "@/types/apparatus";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SelectedJump {
   id: string;
@@ -55,6 +56,7 @@ const RoutineCalculator = () => {
   const [selectedBalances, setSelectedBalances] = useState<SelectedBalance[]>([]);
   const [selectedRotations, setSelectedRotations] = useState<SelectedRotation[]>([]);
   const [selectedApparatusElements, setSelectedApparatusElements] = useState<CombinedApparatusData[]>([]);
+  const [selectedApparatusCombinations, setSelectedApparatusCombinations] = useState<ApparatusCombination[]>([]);
 
   const handleSelectJump = (jump: SelectedJump) => {
     setSelectedJumps((prev) => [...prev, jump]);
@@ -84,8 +86,16 @@ const RoutineCalculator = () => {
     setSelectedApparatusElements((prev) => [...prev, ...elements]);
   };
 
+  const handleSelectApparatusCombinations = (combinations: ApparatusCombination[]) => {
+    setSelectedApparatusCombinations((prev) => [...prev, ...combinations]);
+  };
+
   const handleRemoveApparatusElement = (index: number) => {
     setSelectedApparatusElements((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveApparatusCombination = (index: number) => {
+    setSelectedApparatusCombinations((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleApparatusChange = (value: string) => {
@@ -112,6 +122,24 @@ const RoutineCalculator = () => {
   const totalBalanceDifficulty = selectedBalances.reduce((sum, balance) => sum + balance.value, 0);
   const totalRotationDifficulty = selectedRotations.reduce((sum, rotation) => sum + rotation.value, 0);
   const totalApparatusDifficulty = selectedApparatusElements.reduce((sum, element) => sum + element.value, 0);
+  const totalCombinationDifficulty = selectedApparatusCombinations.reduce((sum, combo) => sum + combo.element.value, 0);
+
+  const getCriterionSymbol = (code: string, apparatus: ApparatusType) => {
+    // This would need to fetch from criteria table, but for now we'll use a simplified approach
+    // In a real implementation, you'd want to fetch criteria data
+    return null; // Placeholder
+  };
+
+  const getBaseSymbol = (filename: string | null, apparatus: ApparatusType) => {
+    if (!filename) return null;
+    
+    const bucketName = `${apparatus}-bases-symbols`;
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filename);
+    
+    return publicUrl;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -386,33 +414,51 @@ const RoutineCalculator = () => {
             )}
 
             {/* Apparatus Difficulty (DA) */}
-            {activeCategory === "apparatus" && selectedApparatusElements.length > 0 && (
+            {activeCategory === "apparatus" && selectedApparatusCombinations.length > 0 && (
               <Card className="p-4 space-y-3 mt-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm">Selected Apparatus Elements</h3>
-                  <Badge variant="default">Total DA: {totalApparatusDifficulty.toFixed(2)}</Badge>
+                  <h3 className="font-semibold text-sm">Selected Apparatus Combinations</h3>
+                  <Badge variant="default">Total DA: {totalCombinationDifficulty.toFixed(2)}</Badge>
                 </div>
                 <div className="space-y-2">
-                  {selectedApparatusElements.map((element, index) => (
+                  {selectedApparatusCombinations.map((combo, index) => (
                     <div
-                      key={`${element.id}-${index}`}
+                      key={`${combo.element.id}-${index}`}
                       className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
                     >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <Badge variant="outline" className="font-mono shrink-0">
-                          {element.code}
-                        </Badge>
-                        <span className="text-sm truncate">
-                          {element.description}
-                        </span>
+                        {/* Base Symbol */}
+                        {combo.element.symbol_image && (
+                          <div className="shrink-0">
+                            <img 
+                              src={getBaseSymbol(combo.element.symbol_image, combo.apparatus) || ''} 
+                              alt={combo.element.code}
+                              className="h-12 w-auto object-contain"
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Criteria Badges */}
+                        <div className="flex flex-wrap gap-1">
+                          {combo.selectedCriteria.map((criterionCode) => (
+                            <Badge 
+                              key={criterionCode} 
+                              variant="outline" 
+                              className="font-mono text-xs"
+                            >
+                              {criterionCode === 'Cr5W' ? 'W' : criterionCode.replace('Cr', '')}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
+                      
                       <div className="flex items-center gap-2 shrink-0">
-                        <Badge variant="secondary">{element.value.toFixed(2)}</Badge>
+                        <Badge variant="secondary">{combo.element.value.toFixed(2)}</Badge>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6"
-                          onClick={() => handleRemoveApparatusElement(index)}
+                          onClick={() => handleRemoveApparatusCombination(index)}
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -465,6 +511,7 @@ const RoutineCalculator = () => {
         onOpenChange={setApparatusDialogOpen}
         apparatus={selectedApparatus}
         onSelectElements={handleSelectApparatusElements}
+        onSelectCombinations={handleSelectApparatusCombinations}
       />
     </div>
   );

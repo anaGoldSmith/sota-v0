@@ -10,9 +10,11 @@ interface ApparatusTableProps {
   selectedIds: string[];
   onRowClick: (item: CombinedApparatusData) => void;
   apparatus: ApparatusType;
+  selectedCriteria?: SelectedCriterion[];
+  onCriteriaChange?: (criteria: SelectedCriterion[]) => void;
 }
 
-interface SelectedCriterion {
+export interface SelectedCriterion {
   rowId: string;
   criterionCode: string;
 }
@@ -23,13 +25,22 @@ const formatCriteriaValue = (value: string | null): string => {
   return '';
 };
 
-export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, apparatus }: ApparatusTableProps) => {
-  const [selectedCriteria, setSelectedCriteria] = React.useState<SelectedCriterion[]>([]);
+export const ApparatusTable = ({ 
+  data, 
+  criteria, 
+  selectedIds, 
+  onRowClick, 
+  apparatus,
+  selectedCriteria: externalSelectedCriteria,
+  onCriteriaChange 
+}: ApparatusTableProps) => {
+  const [internalSelectedCriteria, setInternalSelectedCriteria] = React.useState<SelectedCriterion[]>([]);
+  const selectedCriteria = externalSelectedCriteria ?? internalSelectedCriteria;
 
   const handleCriterionClick = (rowId: string, criterionCode: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent row click
     
-    setSelectedCriteria(prev => {
+    const updateFn = (prev: SelectedCriterion[]) => {
       const existing = prev.find(sc => sc.rowId === rowId && sc.criterionCode === criterionCode);
       if (existing) {
         // Deselect
@@ -38,7 +49,13 @@ export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, appara
         // Select
         return [...prev, { rowId, criterionCode }];
       }
-    });
+    };
+
+    if (onCriteriaChange) {
+      onCriteriaChange(updateFn(selectedCriteria));
+    } else {
+      setInternalSelectedCriteria(updateFn);
+    }
   };
 
   const isCriterionSelected = (rowId: string, criterionCode: string) => {

@@ -1,17 +1,24 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ApparatusType, CombinedApparatusData } from "@/types/apparatus";
 import { useApparatusData } from "@/hooks/useApparatusData";
-import { ApparatusTable } from "./ApparatusTable";
+import { ApparatusTable, SelectedCriterion } from "./ApparatusTable";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+
+export interface ApparatusCombination {
+  element: CombinedApparatusData;
+  selectedCriteria: string[];
+  apparatus: ApparatusType;
+}
 
 interface ApparatusSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   apparatus: ApparatusType | null;
   onSelectElements: (elements: CombinedApparatusData[]) => void;
+  onSelectCombinations?: (combinations: ApparatusCombination[]) => void;
 }
 
 export const ApparatusSelectionDialog = ({
@@ -19,9 +26,11 @@ export const ApparatusSelectionDialog = ({
   onOpenChange,
   apparatus,
   onSelectElements,
+  onSelectCombinations,
 }: ApparatusSelectionDialogProps) => {
   const { apparatusData, criteria, isLoading } = useApparatusData(apparatus);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedCriteria, setSelectedCriteria] = useState<SelectedCriterion[]>([]);
   const { toast } = useToast();
 
   const handleRowClick = (item: CombinedApparatusData) => {
@@ -34,6 +43,50 @@ export const ApparatusSelectionDialog = ({
   };
 
   const handleAddSelected = () => {
+    // If using criterion-level selection
+    if (onSelectCombinations && selectedCriteria.length > 0) {
+      // Group selected criteria by row
+      const combinationsByRow = new Map<string, string[]>();
+      selectedCriteria.forEach(sc => {
+        if (!combinationsByRow.has(sc.rowId)) {
+          combinationsByRow.set(sc.rowId, []);
+        }
+        combinationsByRow.get(sc.rowId)!.push(sc.criterionCode);
+      });
+
+      const combinations: ApparatusCombination[] = [];
+      combinationsByRow.forEach((criteriaList, rowId) => {
+        const element = apparatusData.find(e => e.id === rowId);
+        if (element && apparatus) {
+          combinations.push({
+            element,
+            selectedCriteria: criteriaList,
+            apparatus
+          });
+        }
+      });
+
+      if (combinations.length === 0) {
+        toast({
+          title: "No criteria selected",
+          description: "Please select at least one criterion (v) to add.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      onSelectCombinations(combinations);
+      setSelectedCriteria([]);
+      onOpenChange(false);
+      
+      toast({
+        title: "Combinations added",
+        description: `Added ${combinations.length} apparatus combination${combinations.length > 1 ? 's' : ''} to routine.`,
+      });
+      return;
+    }
+
+    // Legacy: whole element selection
     const selectedElements = apparatusData.filter((item) => selectedIds.includes(item.id));
     
     if (selectedElements.length === 0) {
@@ -57,6 +110,7 @@ export const ApparatusSelectionDialog = ({
 
   const handleCancel = () => {
     setSelectedIds([]);
+    setSelectedCriteria([]);
     onOpenChange(false);
   };
 
@@ -79,7 +133,7 @@ export const ApparatusSelectionDialog = ({
         ) : (
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              Click on rows to select elements. Selected: {selectedIds.length}
+              Click on "v" cells to select difficulty criteria combinations. Selected: {selectedCriteria.length}
             </div>
 
             <ApparatusTable
@@ -88,14 +142,16 @@ export const ApparatusSelectionDialog = ({
               selectedIds={selectedIds}
               onRowClick={handleRowClick}
               apparatus={apparatus!}
+              selectedCriteria={selectedCriteria}
+              onCriteriaChange={setSelectedCriteria}
             />
 
             <div className="flex justify-end gap-3 pt-4">
               <Button variant="outline" onClick={handleCancel}>
                 Cancel
               </Button>
-              <Button onClick={handleAddSelected} disabled={selectedIds.length === 0}>
-                Add Selected ({selectedIds.length})
+              <Button onClick={handleAddSelected} disabled={selectedCriteria.length === 0}>
+                Add Selected ({selectedCriteria.length})
               </Button>
             </div>
           </div>
