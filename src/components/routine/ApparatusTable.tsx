@@ -55,7 +55,7 @@ export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, appara
                     <img 
                       src={getCriterionSymbol(code)!} 
                       alt={code}
-                      className="h-8 w-8 object-contain invert brightness-0"
+                      className="h-12 w-12 object-contain invert brightness-0"
                     />
                   ) : (
                     <span className="text-xs">{code}</span>
@@ -83,7 +83,7 @@ export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, appara
                       <img 
                         src={getBaseSymbol(item.symbol_image) || ''} 
                         alt={item.code}
-                        className="h-8 w-auto object-contain"
+                        className="h-16 w-auto object-contain"
                         onError={(e) => {
                           console.error('Failed to load base symbol:', item.symbol_image);
                           e.currentTarget.style.display = 'none';
