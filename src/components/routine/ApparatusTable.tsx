@@ -46,8 +46,8 @@ export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, appara
         <TableHeader className="sticky top-0 bg-primary z-10">
           <TableRow className="hover:bg-primary">
             <TableHead className="text-primary-foreground font-semibold w-[300px]">Base</TableHead>
-            <TableHead className="text-primary-foreground font-semibold text-center w-[100px]">Base symbol</TableHead>
-            <TableHead className="text-primary-foreground font-semibold text-center w-[80px]">Value</TableHead>
+            <TableHead className="text-primary-foreground font-semibold text-center w-[150px]">Base symbol</TableHead>
+            <TableHead className="text-primary-foreground font-semibold text-center w-[120px]">Value</TableHead>
             {CRITERIA_CODES.map((code) => (
               <TableHead key={code} className="text-primary-foreground font-semibold text-center w-[90px] p-2">
                 <div className="flex flex-col items-center gap-1">
