@@ -11,6 +11,7 @@ export interface ApparatusCombination {
   element: CombinedApparatusData;
   selectedCriteria: string[];
   apparatus: ApparatusType;
+  calculatedValue?: number; // Used for special pairing rule (max value + 0.1)
 }
 
 interface ApparatusSelectionDialogProps {
@@ -129,16 +130,40 @@ export const ApparatusSelectionDialog = ({
       }
 
       const combinations: ApparatusCombination[] = [];
-      combinationsByRow.forEach((criteriaList, rowId) => {
-        const element = apparatusData.find(e => e.id === rowId);
-        if (element && apparatus) {
-          combinations.push({
-            element,
-            selectedCriteria: criteriaList,
-            apparatus
-          });
-        }
-      });
+      
+      // Check if this is a special pairing (2 rows with 1 criterion each)
+      const isSpecialPairing = needsPairingRows.length === 2;
+      
+      if (isSpecialPairing) {
+        // Calculate special value: max(value1, value2) + 0.1
+        const value1 = needsPairingRows[0].element.value;
+        const value2 = needsPairingRows[1].element.value;
+        const calculatedValue = Math.max(value1, value2) + 0.1;
+        
+        // Create combinations with the calculated value
+        needsPairingRows.forEach(({ rowId, criterion, element }) => {
+          if (apparatus) {
+            combinations.push({
+              element,
+              selectedCriteria: [criterion],
+              apparatus,
+              calculatedValue
+            });
+          }
+        });
+      } else {
+        // Standard rule: each row has 2 criteria
+        combinationsByRow.forEach((criteriaList, rowId) => {
+          const element = apparatusData.find(e => e.id === rowId);
+          if (element && apparatus) {
+            combinations.push({
+              element,
+              selectedCriteria: criteriaList,
+              apparatus
+            });
+          }
+        });
+      }
 
       if (combinations.length === 0) {
         toast({
