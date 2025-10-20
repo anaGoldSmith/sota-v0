@@ -2,6 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { CombinedApparatusData, Criterion, CRITERIA_CODES, ApparatusType } from "@/types/apparatus";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
+import React from "react";
 
 interface ApparatusTableProps {
   data: CombinedApparatusData[];
@@ -11,6 +12,11 @@ interface ApparatusTableProps {
   apparatus: ApparatusType;
 }
 
+interface SelectedCriterion {
+  rowId: string;
+  criterionCode: string;
+}
+
 const formatCriteriaValue = (value: string | null): string => {
   if (value === 'Y') return 'v';
   if (value === 'N') return 'N/A';
@@ -18,6 +24,34 @@ const formatCriteriaValue = (value: string | null): string => {
 };
 
 export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, apparatus }: ApparatusTableProps) => {
+  const [selectedCriteria, setSelectedCriteria] = React.useState<SelectedCriterion[]>([]);
+
+  const handleCriterionClick = (rowId: string, criterionCode: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click
+    
+    setSelectedCriteria(prev => {
+      const existing = prev.find(sc => sc.rowId === rowId && sc.criterionCode === criterionCode);
+      if (existing) {
+        // Deselect
+        return prev.filter(sc => !(sc.rowId === rowId && sc.criterionCode === criterionCode));
+      } else {
+        // Select
+        return [...prev, { rowId, criterionCode }];
+      }
+    });
+  };
+
+  const isCriterionSelected = (rowId: string, criterionCode: string) => {
+    return selectedCriteria.some(sc => sc.rowId === rowId && sc.criterionCode === criterionCode);
+  };
+
+  const isRowHasSelectedCriterion = (rowId: string) => {
+    return selectedCriteria.some(sc => sc.rowId === rowId);
+  };
+
+  const isCriterionColumnSelected = (criterionCode: string) => {
+    return selectedCriteria.some(sc => sc.criterionCode === criterionCode);
+  };
   const getCriterionSymbol = (code: string) => {
     const criterion = criteria.find((c) => c.code === code);
     if (!criterion?.symbol_image) return null;
@@ -49,7 +83,9 @@ export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, appara
             <TableHead className="text-primary-foreground font-semibold text-lg text-center w-[150px]">Base symbol</TableHead>
             <TableHead className="text-primary-foreground font-semibold text-lg text-center w-[120px]">Value</TableHead>
             {CRITERIA_CODES.map((code) => (
-              <TableHead key={code} className="text-primary-foreground font-semibold text-center w-[90px] p-2">
+              <TableHead key={code} className={`text-primary-foreground font-semibold text-center w-[90px] p-2 transition-colors ${
+                isCriterionColumnSelected(code) ? 'bg-primary/80' : ''
+              }`}>
                 <div className="flex flex-col items-center gap-1">
                   {code === 'Cr5W' ? (
                     <span className="text-3xl font-bold">W</span>
@@ -81,7 +117,9 @@ export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, appara
                 <TableCell className="font-medium text-sm">{item.description}</TableCell>
                 <TableCell className="text-center">
                   {item.symbol_image && (
-                    <div className="flex justify-center">
+                    <div className={`flex justify-center transition-colors ${
+                      isRowHasSelectedCriterion(item.id) ? 'bg-primary/20 rounded' : ''
+                    }`}>
                       <img 
                         src={getBaseSymbol(item.symbol_image) || ''} 
                         alt={item.code}
@@ -95,11 +133,25 @@ export const ApparatusTable = ({ data, criteria, selectedIds, onRowClick, appara
                   )}
                 </TableCell>
                 <TableCell className="text-center font-semibold">{item.value.toFixed(2)}</TableCell>
-                {CRITERIA_CODES.map((code) => (
-                  <TableCell key={code} className="text-center text-sm">
-                    {formatCriteriaValue(item.criteria[code])}
-                  </TableCell>
-                ))}
+                {CRITERIA_CODES.map((code) => {
+                  const value = item.criteria[code];
+                  const isSelected = isCriterionSelected(item.id, code);
+                  const isClickable = formatCriteriaValue(value) === 'v';
+                  
+                  return (
+                    <TableCell 
+                      key={code} 
+                      className={`text-center text-sm transition-colors ${
+                        isClickable ? 'cursor-pointer hover:bg-primary/10' : ''
+                      } ${
+                        isSelected ? 'bg-primary/30 font-bold' : ''
+                      }`}
+                      onClick={isClickable ? (e) => handleCriterionClick(item.id, code, e) : undefined}
+                    >
+                      {formatCriteriaValue(value)}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             );
           })}
