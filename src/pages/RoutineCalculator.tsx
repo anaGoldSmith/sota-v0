@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, X, Calculator } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbols";
 import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
@@ -15,6 +15,7 @@ import { Card } from "@/components/ui/card";
 import { ApparatusType, CombinedApparatusData } from "@/types/apparatus";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface SelectedJump {
   id: string;
@@ -23,6 +24,7 @@ interface SelectedJump {
   description: string;
   value: number;
   turn_degrees: string | null;
+  symbol_image: string | null;
 }
 
 interface SelectedBalance {
@@ -31,6 +33,7 @@ interface SelectedBalance {
   name: string | null;
   description: string;
   value: number;
+  symbol_image: string | null;
 }
 
 interface SelectedRotation {
@@ -40,6 +43,17 @@ interface SelectedRotation {
   description: string;
   value: number;
   turn_degrees: string | null;
+  symbol_image: string | null;
+}
+
+type RoutineElementType = 'DB' | 'DA' | 'R' | 'Steps';
+
+interface RoutineElement {
+  id: string;
+  type: RoutineElementType;
+  symbolImages: string[];
+  value: number;
+  originalData: SelectedJump | SelectedBalance | SelectedRotation | ApparatusCombination;
 }
 
 const RoutineCalculator = () => {
@@ -118,11 +132,95 @@ const RoutineCalculator = () => {
     setApparatusDialogOpen(true);
   };
 
-  const totalJumpDifficulty = selectedJumps.reduce((sum, jump) => sum + jump.value, 0);
-  const totalBalanceDifficulty = selectedBalances.reduce((sum, balance) => sum + balance.value, 0);
-  const totalRotationDifficulty = selectedRotations.reduce((sum, rotation) => sum + rotation.value, 0);
-  const totalApparatusDifficulty = selectedApparatusElements.reduce((sum, element) => sum + element.value, 0);
-  const totalCombinationDifficulty = selectedApparatusCombinations.reduce((sum, combo) => sum + combo.element.value, 0);
+  const getSymbolUrl = (symbolImage: string | null, bucketName: string) => {
+    if (!symbolImage) return null;
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(symbolImage);
+    return publicUrl;
+  };
+
+  const getCriteriaSymbolUrl = (criterionCode: string) => {
+    const { data: { publicUrl } } = supabase.storage
+      .from('criteria-symbols')
+      .getPublicUrl(`${criterionCode}.png`);
+    return publicUrl;
+  };
+
+  // Combine all elements into unified routine elements
+  const routineElements: RoutineElement[] = [
+    ...selectedJumps.map((jump, index) => ({
+      id: `jump-${jump.id}-${index}`,
+      type: 'DB' as RoutineElementType,
+      symbolImages: jump.symbol_image ? [getSymbolUrl(jump.symbol_image, 'jump-symbols') || ''] : [],
+      value: jump.value,
+      originalData: jump,
+    })),
+    ...selectedBalances.map((balance, index) => ({
+      id: `balance-${balance.id}-${index}`,
+      type: 'DB' as RoutineElementType,
+      symbolImages: balance.symbol_image ? [getSymbolUrl(balance.symbol_image, 'jump-symbols') || ''] : [],
+      value: balance.value,
+      originalData: balance,
+    })),
+    ...selectedRotations.map((rotation, index) => ({
+      id: `rotation-${rotation.id}-${index}`,
+      type: 'DB' as RoutineElementType,
+      symbolImages: rotation.symbol_image ? [getSymbolUrl(rotation.symbol_image, 'jump-symbols') || ''] : [],
+      value: rotation.value,
+      originalData: rotation,
+    })),
+    ...selectedApparatusCombinations.map((combo, index) => {
+      const symbolImages = [];
+      if (combo.element.symbol_image && selectedApparatus) {
+        symbolImages.push(getBaseSymbol(combo.element.symbol_image, selectedApparatus) || '');
+      }
+      combo.selectedCriteria.forEach(criterionCode => {
+        symbolImages.push(getCriteriaSymbolUrl(criterionCode));
+      });
+      return {
+        id: `apparatus-${combo.element.id}-${index}`,
+        type: 'DA' as RoutineElementType,
+        symbolImages,
+        value: combo.element.value,
+        originalData: combo,
+      };
+    }),
+  ];
+
+  const totalDB = routineElements
+    .filter(el => el.type === 'DB')
+    .reduce((sum, el) => sum + el.value, 0);
+  
+  const totalDA = routineElements
+    .filter(el => el.type === 'DA' || el.type === 'R')
+    .reduce((sum, el) => sum + el.value, 0);
+
+  const totalScore = totalDB + totalDA;
+
+  const handleRemoveRoutineElement = (index: number) => {
+    const element = routineElements[index];
+    const originalData = element.originalData;
+
+    if ('turn_degrees' in originalData && 'description' in originalData && originalData.description) {
+      // It's a Jump or Rotation
+      if (selectedJumps.includes(originalData as SelectedJump)) {
+        const jumpIndex = selectedJumps.indexOf(originalData as SelectedJump);
+        handleRemoveJump(jumpIndex);
+      } else {
+        const rotationIndex = selectedRotations.indexOf(originalData as SelectedRotation);
+        handleRemoveRotation(rotationIndex);
+      }
+    } else if ('element' in originalData) {
+      // It's an ApparatusCombination
+      const comboIndex = selectedApparatusCombinations.indexOf(originalData as ApparatusCombination);
+      handleRemoveApparatusCombination(comboIndex);
+    } else {
+      // It's a Balance
+      const balanceIndex = selectedBalances.indexOf(originalData as SelectedBalance);
+      handleRemoveBalance(balanceIndex);
+    }
+  };
 
   const getCriterionSymbol = (code: string, apparatus: ApparatusType) => {
     // This would need to fetch from criteria table, but for now we'll use a simplified approach
@@ -215,6 +313,82 @@ const RoutineCalculator = () => {
             </div>
           </div>
 
+          {/* Routine Elements Table */}
+          {routineElements.length > 0 && (
+            <Card className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">Routine Elements</h2>
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Total DB:</span>
+                        <Badge variant="secondary" className="font-mono">{totalDB.toFixed(2)}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Total DA:</span>
+                        <Badge variant="secondary" className="font-mono">{totalDA.toFixed(2)}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">Total:</span>
+                        <Badge variant="default" className="font-mono">{totalScore.toFixed(2)}</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-20">Item</TableHead>
+                      <TableHead>Routine Elements</TableHead>
+                      <TableHead className="w-24 text-right">Value</TableHead>
+                      <TableHead className="w-16"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {routineElements.map((element, index) => (
+                      <TableRow key={element.id}>
+                        <TableCell>
+                          <Badge variant="outline" className="font-mono">
+                            {element.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {element.symbolImages.map((url, imgIndex) => (
+                              url && (
+                                <img
+                                  key={`${element.id}-symbol-${imgIndex}`}
+                                  src={url}
+                                  alt="Symbol"
+                                  className="h-12 w-auto object-contain"
+                                />
+                              )
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-mono">
+                          {element.value.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleRemoveRoutineElement(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          )}
+
           {/* Category Buttons */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-foreground">Construct Routine</h2>
@@ -273,44 +447,6 @@ const RoutineCalculator = () => {
                   <span className="text-sm">+ Add</span>
                 </Button>
 
-                {/* Selected Jumps Display */}
-                {selectedJumps.length > 0 && (
-                  <Card className="p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-sm">Selected Jumps</h3>
-                      <Badge variant="default">Total: {totalJumpDifficulty.toFixed(2)}</Badge>
-                    </div>
-                    <div className="space-y-2">
-                      {selectedJumps.map((jump, index) => (
-                        <div
-                          key={`${jump.id}-${index}`}
-                          className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
-                        >
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <Badge variant="outline" className="font-mono shrink-0">
-                              {jump.code}
-                            </Badge>
-                            <span className="text-sm truncate">
-                              {jump.name || jump.description}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <Badge variant="secondary">{jump.value}</Badge>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => handleRemoveJump(index)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                )}
-
                 <Button
                   variant="outline"
                   className="w-full h-14 text-lg justify-between"
@@ -323,44 +459,6 @@ const RoutineCalculator = () => {
                   <span className="text-sm">+ Add</span>
                 </Button>
 
-                {/* Selected Balances Display */}
-                {selectedBalances.length > 0 && (
-                  <Card className="p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-sm">Selected Balances</h3>
-                      <Badge variant="default">Total: {totalBalanceDifficulty.toFixed(2)}</Badge>
-                    </div>
-                    <div className="space-y-2">
-                      {selectedBalances.map((balance, index) => (
-                        <div
-                          key={`${balance.id}-${index}`}
-                          className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
-                        >
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <Badge variant="outline" className="font-mono shrink-0">
-                              {balance.code}
-                            </Badge>
-                            <span className="text-sm truncate">
-                              {balance.name || balance.description}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <Badge variant="secondary">{balance.value}</Badge>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => handleRemoveBalance(index)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                )}
-
                 <Button 
                   variant="outline"
                   className="w-full h-14 text-lg justify-between"
@@ -372,101 +470,7 @@ const RoutineCalculator = () => {
                   </div>
                   <span className="text-sm">+ Add</span>
                 </Button>
-
-                {/* Selected Rotations Display */}
-                {selectedRotations.length > 0 && (
-                  <Card className="p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-sm">Selected Rotations</h3>
-                      <Badge variant="default">Total: {totalRotationDifficulty.toFixed(2)}</Badge>
-                    </div>
-                    <div className="space-y-2">
-                      {selectedRotations.map((rotation, index) => (
-                        <div
-                          key={`${rotation.id}-${index}`}
-                          className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
-                        >
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <Badge variant="outline" className="font-mono shrink-0">
-                              {rotation.code}
-                            </Badge>
-                            <span className="text-sm truncate">
-                              {rotation.name || rotation.description}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <Badge variant="secondary">{rotation.value}</Badge>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => handleRemoveRotation(index)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                )}
               </div>
-            )}
-
-            {/* Apparatus Difficulty (DA) */}
-            {activeCategory === "apparatus" && selectedApparatusCombinations.length > 0 && (
-              <Card className="p-4 space-y-3 mt-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm">Selected Apparatus Combinations</h3>
-                  <Badge variant="default">Total DA: {totalCombinationDifficulty.toFixed(2)}</Badge>
-                </div>
-                <div className="space-y-2">
-                  {selectedApparatusCombinations.map((combo, index) => (
-                    <div
-                      key={`${combo.element.id}-${index}`}
-                      className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
-                    >
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        {/* Base Symbol */}
-                        {combo.element.symbol_image && (
-                          <div className="shrink-0">
-                            <img 
-                              src={getBaseSymbol(combo.element.symbol_image, combo.apparatus) || ''} 
-                              alt={combo.element.code}
-                              className="h-12 w-auto object-contain"
-                            />
-                          </div>
-                        )}
-                        
-                        {/* Criteria Badges */}
-                        <div className="flex flex-wrap gap-1">
-                          {combo.selectedCriteria.map((criterionCode) => (
-                            <Badge 
-                              key={criterionCode} 
-                              variant="outline" 
-                              className="font-mono text-xs"
-                            >
-                              {criterionCode === 'Cr5W' ? 'W' : criterionCode.replace('Cr', '')}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Badge variant="secondary">{combo.element.value.toFixed(2)}</Badge>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => handleRemoveApparatusCombination(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
             )}
             
             {activeCategory === "dynamic" && (
