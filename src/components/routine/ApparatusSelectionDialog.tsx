@@ -54,64 +54,65 @@ export const ApparatusSelectionDialog = ({
         combinationsByRow.get(sc.rowId)!.push(sc.criterionCode);
       });
 
-      // Special codes that require 2 rows with 1 matching criterion
+      // Special codes that can be paired with 1 matching criterion
       const specialCodes = ['B2', 'B10', 'H13', 'CL13', 'CL14', 'CL15', 'RIB14'];
       
-      // Check if any selected rows have special codes
-      const selectedRowsWithSpecialCodes = Array.from(combinationsByRow.keys())
-        .map(rowId => apparatusData.find(e => e.id === rowId))
-        .filter(element => element && specialCodes.includes(element.code));
+      // Categorize rows based on validation rules
+      const validStandaloneRows: string[] = [];
+      const needsPairingRows: { rowId: string, criterion: string, element: CombinedApparatusData }[] = [];
+      const invalidRows: string[] = [];
 
-      if (selectedRowsWithSpecialCodes.length > 0) {
-        // Special validation: must have exactly 2 rows with 1 criterion each, and criteria must match
-        if (combinationsByRow.size !== 2) {
-          toast({
-            title: "Invalid selection",
-            description: `For base codes ${specialCodes.join(', ')}: two rows must be selected with one matching criterion each.`,
-            variant: "destructive",
-          });
-          return;
-        }
-
-        const [criteriaList1, criteriaList2] = Array.from(combinationsByRow.values());
+      combinationsByRow.forEach((criteriaList, rowId) => {
+        const element = apparatusData.find(e => e.id === rowId);
+        if (!element) return;
         
-        if (criteriaList1.length !== 1 || criteriaList2.length !== 1) {
-          toast({
-            title: "Invalid selection",
-            description: `For base codes ${specialCodes.join(', ')}: select exactly one criterion per row.`,
-            variant: "destructive",
+        const isSpecialCode = specialCodes.includes(element.code);
+        
+        if (criteriaList.length === 2) {
+          // Valid standalone (works for all codes)
+          validStandaloneRows.push(rowId);
+        } else if (criteriaList.length === 1 && isSpecialCode) {
+          // Special code with 1 criterion - needs pairing
+          needsPairingRows.push({
+            rowId,
+            criterion: criteriaList[0],
+            element
           });
-          return;
+        } else {
+          // Invalid: either wrong number of criteria or non-special code with 1 criterion
+          invalidRows.push(element.description);
         }
+      });
 
-        if (criteriaList1[0] !== criteriaList2[0]) {
+      // Validate pairing if there are rows that need pairing
+      if (needsPairingRows.length > 0) {
+        if (needsPairingRows.length !== 2) {
           toast({
             title: "Invalid selection",
-            description: `For base codes ${specialCodes.join(', ')}: both rows must have the same criterion selected.`,
+            description: "For special codes with one criterion selected, you must select exactly one more row with a special code and the same matching criterion.",
             variant: "destructive",
           });
           return;
         }
-      } else {
-        // Standard validation: each row has exactly 2 criteria selected
-        const invalidRows: string[] = [];
-        combinationsByRow.forEach((criteriaList, rowId) => {
-          if (criteriaList.length !== 2) {
-            const element = apparatusData.find(e => e.id === rowId);
-            if (element) {
-              invalidRows.push(element.description);
-            }
-          }
+        
+        if (needsPairingRows[0].criterion !== needsPairingRows[1].criterion) {
+          toast({
+            title: "Invalid selection",
+            description: "Special code rows with one criterion must have matching criteria to form a valid pair.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Check for any invalid rows
+      if (invalidRows.length > 0) {
+        toast({
+          title: "Invalid selection",
+          description: "Two criteria should be selected for one apparatus base to create a valid DA.",
+          variant: "destructive",
         });
-
-        if (invalidRows.length > 0) {
-          toast({
-            title: "Invalid selection",
-            description: "Two criteria should be selected for one apparatus base to create a valid DA.",
-            variant: "destructive",
-          });
-          return;
-        }
+        return;
       }
 
       const combinations: ApparatusCombination[] = [];
