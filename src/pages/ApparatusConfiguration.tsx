@@ -40,6 +40,17 @@ const ApparatusConfiguration = () => {
   const [uploadingBases, setUploadingBases] = useState(false);
   const basesInputRef = useRef<HTMLInputElement>(null);
 
+  // Base symbols upload states
+  const [ballBasesSymbolFiles, setBallBasesSymbolFiles] = useState<File[]>([]);
+  const [hoopBasesSymbolFiles, setHoopBasesSymbolFiles] = useState<File[]>([]);
+  const [clubsBasesSymbolFiles, setClubsBasesSymbolFiles] = useState<File[]>([]);
+  const [ribbonBasesSymbolFiles, setRibbonBasesSymbolFiles] = useState<File[]>([]);
+  const [uploadingBaseSymbol, setUploadingBaseSymbol] = useState<string | null>(null);
+  const ballBasesSymbolInputRef = useRef<HTMLInputElement>(null);
+  const hoopBasesSymbolInputRef = useRef<HTMLInputElement>(null);
+  const clubsBasesSymbolInputRef = useRef<HTMLInputElement>(null);
+  const ribbonBasesSymbolInputRef = useRef<HTMLInputElement>(null);
+
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -280,6 +291,92 @@ const ApparatusConfiguration = () => {
     }
   };
 
+  const handleBaseSymbolUpload = async (
+    apparatus: 'ball' | 'hoop' | 'clubs' | 'ribbon',
+    files: File[],
+    inputRef: React.RefObject<HTMLInputElement>,
+    setFiles: React.Dispatch<React.SetStateAction<File[]>>
+  ) => {
+    if (files.length === 0) {
+      toast.error("Please select at least one image");
+      return;
+    }
+
+    setUploadingBaseSymbol(apparatus);
+
+    try {
+      const bucketMap = {
+        ball: 'ball-bases-symbols',
+        hoop: 'hoop-bases-symbols',
+        clubs: 'clubs-bases-symbols',
+        ribbon: 'ribbon-bases-symbols'
+      };
+
+      const tableMap: Record<string, 'ball_bases' | 'hoop_bases' | 'clubs_bases' | 'ribbon_bases'> = {
+        ball: 'ball_bases',
+        hoop: 'hoop_bases',
+        clubs: 'clubs_bases',
+        ribbon: 'ribbon_bases'
+      };
+
+      const bucket = bucketMap[apparatus];
+      const table = tableMap[apparatus] as 'ball_bases' | 'hoop_bases' | 'clubs_bases' | 'ribbon_bases';
+      let successCount = 0;
+      let failCount = 0;
+      
+      for (const file of files) {
+        const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+        const code = fileNameWithoutExt;
+
+        try {
+          const { error: uploadError } = await supabase.storage
+            .from(bucket)
+            .upload(file.name, file, { 
+              contentType: file.type,
+              upsert: true 
+            });
+
+          if (uploadError) {
+            console.error(`Upload failed for ${file.name}:`, uploadError);
+            failCount++;
+            continue;
+          }
+
+          const { error: updateError } = await supabase
+            .from(table)
+            .update({ symbol_image: file.name })
+            .eq('code', code);
+
+          if (updateError) {
+            console.error(`Database update failed for ${code}:`, updateError);
+            failCount++;
+          } else {
+            successCount++;
+          }
+        } catch (error: any) {
+          console.error(`Error processing ${file.name}:`, error);
+          failCount++;
+        }
+      }
+      
+      if (successCount > 0 && failCount === 0) {
+        toast.success(`Successfully uploaded ${successCount} ${apparatus} symbol${successCount > 1 ? 's' : ''}!`);
+      } else if (successCount > 0 && failCount > 0) {
+        toast.success(`Uploaded ${successCount} symbols, ${failCount} failed`);
+      } else {
+        toast.error("All uploads failed");
+      }
+      
+      setFiles([]);
+      if (inputRef.current) inputRef.current.value = '';
+      
+    } catch (error: any) {
+      toast.error(`Upload failed: ${error.message || "Unknown error"}`);
+    } finally {
+      setUploadingBaseSymbol(null);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -359,6 +456,154 @@ const ApparatusConfiguration = () => {
                             {uploadingBases ? "Uploading..." : "Upload Bases CSV"}
                           </Button>
                         </form>
+                      </CardContent>
+                    </Card>
+
+                    {/* Ball Bases Symbols */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Ball Bases Symbols</CardTitle>
+                        <CardDescription>
+                          Upload PNG symbol images for ball bases. File names must match the code column (e.g., B01.png for code B01)
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="ball-bases-symbol-input">PNG Images</Label>
+                            <Input
+                              id="ball-bases-symbol-input"
+                              ref={ballBasesSymbolInputRef}
+                              type="file"
+                              accept=".png,image/png"
+                              multiple
+                              onChange={(e) => setBallBasesSymbolFiles(Array.from(e.target.files || []))}
+                            />
+                            {ballBasesSymbolFiles.length > 0 && (
+                              <p className="text-sm text-muted-foreground">
+                                {ballBasesSymbolFiles.length} file{ballBasesSymbolFiles.length > 1 ? 's' : ''} selected
+                              </p>
+                            )}
+                          </div>
+                          <Button 
+                            onClick={() => handleBaseSymbolUpload('ball', ballBasesSymbolFiles, ballBasesSymbolInputRef, setBallBasesSymbolFiles)} 
+                            disabled={uploadingBaseSymbol === 'ball'} 
+                            className="w-full"
+                          >
+                            {uploadingBaseSymbol === 'ball' ? "Uploading..." : "Upload Ball Symbols"}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Hoop Bases Symbols */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Hoop Bases Symbols</CardTitle>
+                        <CardDescription>
+                          Upload PNG symbol images for hoop bases. File names must match the code column (e.g., H01.png for code H01)
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="hoop-bases-symbol-input">PNG Images</Label>
+                            <Input
+                              id="hoop-bases-symbol-input"
+                              ref={hoopBasesSymbolInputRef}
+                              type="file"
+                              accept=".png,image/png"
+                              multiple
+                              onChange={(e) => setHoopBasesSymbolFiles(Array.from(e.target.files || []))}
+                            />
+                            {hoopBasesSymbolFiles.length > 0 && (
+                              <p className="text-sm text-muted-foreground">
+                                {hoopBasesSymbolFiles.length} file{hoopBasesSymbolFiles.length > 1 ? 's' : ''} selected
+                              </p>
+                            )}
+                          </div>
+                          <Button 
+                            onClick={() => handleBaseSymbolUpload('hoop', hoopBasesSymbolFiles, hoopBasesSymbolInputRef, setHoopBasesSymbolFiles)} 
+                            disabled={uploadingBaseSymbol === 'hoop'} 
+                            className="w-full"
+                          >
+                            {uploadingBaseSymbol === 'hoop' ? "Uploading..." : "Upload Hoop Symbols"}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Clubs Bases Symbols */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Clubs Bases Symbols</CardTitle>
+                        <CardDescription>
+                          Upload PNG symbol images for clubs bases. File names must match the code column (e.g., C01.png for code C01)
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="clubs-bases-symbol-input">PNG Images</Label>
+                            <Input
+                              id="clubs-bases-symbol-input"
+                              ref={clubsBasesSymbolInputRef}
+                              type="file"
+                              accept=".png,image/png"
+                              multiple
+                              onChange={(e) => setClubsBasesSymbolFiles(Array.from(e.target.files || []))}
+                            />
+                            {clubsBasesSymbolFiles.length > 0 && (
+                              <p className="text-sm text-muted-foreground">
+                                {clubsBasesSymbolFiles.length} file{clubsBasesSymbolFiles.length > 1 ? 's' : ''} selected
+                              </p>
+                            )}
+                          </div>
+                          <Button 
+                            onClick={() => handleBaseSymbolUpload('clubs', clubsBasesSymbolFiles, clubsBasesSymbolInputRef, setClubsBasesSymbolFiles)} 
+                            disabled={uploadingBaseSymbol === 'clubs'} 
+                            className="w-full"
+                          >
+                            {uploadingBaseSymbol === 'clubs' ? "Uploading..." : "Upload Clubs Symbols"}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Ribbon Bases Symbols */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Ribbon Bases Symbols</CardTitle>
+                        <CardDescription>
+                          Upload PNG symbol images for ribbon bases. File names must match the code column (e.g., R01.png for code R01)
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="ribbon-bases-symbol-input">PNG Images</Label>
+                            <Input
+                              id="ribbon-bases-symbol-input"
+                              ref={ribbonBasesSymbolInputRef}
+                              type="file"
+                              accept=".png,image/png"
+                              multiple
+                              onChange={(e) => setRibbonBasesSymbolFiles(Array.from(e.target.files || []))}
+                            />
+                            {ribbonBasesSymbolFiles.length > 0 && (
+                              <p className="text-sm text-muted-foreground">
+                                {ribbonBasesSymbolFiles.length} file{ribbonBasesSymbolFiles.length > 1 ? 's' : ''} selected
+                              </p>
+                            )}
+                          </div>
+                          <Button 
+                            onClick={() => handleBaseSymbolUpload('ribbon', ribbonBasesSymbolFiles, ribbonBasesSymbolInputRef, setRibbonBasesSymbolFiles)} 
+                            disabled={uploadingBaseSymbol === 'ribbon'} 
+                            className="w-full"
+                          >
+                            {uploadingBaseSymbol === 'ribbon' ? "Uploading..." : "Upload Ribbon Symbols"}
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   </AccordionContent>
