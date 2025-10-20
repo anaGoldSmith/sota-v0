@@ -231,10 +231,6 @@ export const ApparatusSelectionDialog = ({
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-              Click on "v" cells to select difficulty criteria combinations. Selected rows: {new Set(selectedCriteria.map(sc => sc.rowId)).size}
-            </div>
-
             <ApparatusTable
               data={apparatusData}
               criteria={criteria}
