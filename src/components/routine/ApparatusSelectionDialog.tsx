@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ApparatusCombination {
   element: CombinedApparatusData;
@@ -213,6 +214,18 @@ export const ApparatusSelectionDialog = ({
     onOpenChange(false);
   };
 
+  // Get the proper storage URL for base symbols
+  const getBaseSymbol = (filename: string | null) => {
+    if (!filename || !apparatus) return null;
+    
+    const bucketName = `${apparatus}-bases-symbols`;
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filename);
+    
+    return publicUrl;
+  };
+
   // Get special codes for the current apparatus
   const getSpecialCodes = () => {
     if (!apparatus) return [];
@@ -241,14 +254,18 @@ export const ApparatusSelectionDialog = ({
             </div>
             {specialElements.length > 0 && (
               <div className="flex items-center gap-2 text-xs">
-                <span>*For {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'apparatus'} DA "Catch from High Throw" is valid for</span>
+                <span>*For {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'apparatus'} DAs "Catch from High Throw" is valid for</span>
                 {specialElements.map((element, index) => (
                   <span key={element.id} className="inline-flex items-center gap-1">
                     {element.symbol_image && (
                       <img 
-                        src={element.symbol_image} 
+                        src={getBaseSymbol(element.symbol_image) || ''} 
                         alt={element.code}
                         className="h-6 w-auto inline-block"
+                        onError={(e) => {
+                          console.error('Failed to load symbol:', element.symbol_image);
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
                     )}
                     {index < specialElements.length - 1 && <span>,</span>}
