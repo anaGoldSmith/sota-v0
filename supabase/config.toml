@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.import-jumps-csv]
 verify_jwt = true
+
+[functions.import-criteria-csv]
+verify_jwt = true
+
+[functions.import-balances-csv]
+verify_jwt = true
+
+[functions.import-rotations-csv]
+verify_jwt = true

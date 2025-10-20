@@ -54,18 +54,26 @@ serve(async (req) => {
     }
 
     console.log('📥 Parsing CSV content...');
-    const csvContent = await req.text();
+    const body = await req.json();
+    const { csvContent } = body;
+    
+    if (!csvContent) {
+      throw new Error('No CSV content provided in request body');
+    }
+
     const parsed = Papa.parse(csvContent, {
       header: true,
       skipEmptyLines: true,
+      transformHeader: (h) => h.trim().toLowerCase(),
     });
 
     if (parsed.errors.length > 0) {
       console.error('❌ CSV parsing errors:', parsed.errors);
-      throw new Error(`CSV parsing failed: ${parsed.errors[0].message}`);
+      const firstError = parsed.errors[0];
+      throw new Error(`CSV parsing failed at row ${firstError.row || 0}: ${firstError.message}`);
     }
 
-    // Validate headers
+    // Validate headers (normalized to lowercase)
     const requiredHeaders = ['code', 'name', 'description', 'symbol_image'];
     const headers = Object.keys(parsed.data[0] || {});
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
