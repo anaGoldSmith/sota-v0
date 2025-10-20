@@ -53,7 +53,11 @@ interface RoutineElement {
   type: RoutineElementType;
   symbolImages: string[];
   value: number;
-  originalData: SelectedJump | SelectedBalance | SelectedRotation | ApparatusCombination;
+  originalData: SelectedJump | SelectedBalance | SelectedRotation | ApparatusCombination | {
+    isPaired: true;
+    combo1: ApparatusCombination;
+    combo2: ApparatusCombination;
+  };
 }
 
 const RoutineCalculator = () => {
@@ -158,6 +162,70 @@ const RoutineCalculator = () => {
     return publicUrl;
   };
 
+  // Process apparatus combinations with grouping logic for special pairings
+  const processApparatusCombinations = (): RoutineElement[] => {
+    const processedElements: RoutineElement[] = [];
+    let i = 0;
+
+    while (i < selectedApparatusCombinations.length) {
+      const combo = selectedApparatusCombinations[i];
+      
+      // Check if this is part of a special pairing (has calculatedValue and next combo has same value)
+      if (combo.calculatedValue !== undefined && 
+          i + 1 < selectedApparatusCombinations.length &&
+          selectedApparatusCombinations[i + 1].calculatedValue === combo.calculatedValue) {
+        
+        // This is a special pairing - combine both combinations into one element
+        const combo2 = selectedApparatusCombinations[i + 1];
+        const symbolImages = [];
+        
+        // Add both base symbols
+        if (combo.element.symbol_image && selectedApparatus) {
+          symbolImages.push(getBaseSymbol(combo.element.symbol_image, selectedApparatus) || '');
+        }
+        if (combo2.element.symbol_image && selectedApparatus) {
+          symbolImages.push(getBaseSymbol(combo2.element.symbol_image, selectedApparatus) || '');
+        }
+        
+        // Add only one criterion symbol (they're the same)
+        if (combo.selectedCriteria.length > 0) {
+          symbolImages.push(getCriteriaSymbolUrl(combo.selectedCriteria[0]));
+        }
+        
+        processedElements.push({
+          id: `apparatus-paired-${combo.element.id}-${combo2.element.id}`,
+          type: 'DA' as RoutineElementType,
+          symbolImages,
+          value: combo.calculatedValue,
+          originalData: { isPaired: true, combo1: combo, combo2: combo2 },
+        });
+        
+        i += 2; // Skip next combination as it's already processed
+      } else {
+        // Standard combination - process normally
+        const symbolImages = [];
+        if (combo.element.symbol_image && selectedApparatus) {
+          symbolImages.push(getBaseSymbol(combo.element.symbol_image, selectedApparatus) || '');
+        }
+        combo.selectedCriteria.forEach(criterionCode => {
+          symbolImages.push(getCriteriaSymbolUrl(criterionCode));
+        });
+        
+        processedElements.push({
+          id: `apparatus-${combo.element.id}-${i}`,
+          type: 'DA' as RoutineElementType,
+          symbolImages,
+          value: combo.calculatedValue || combo.element.value,
+          originalData: combo,
+        });
+        
+        i += 1;
+      }
+    }
+
+    return processedElements;
+  };
+
   // Combine all elements into unified routine elements
   const routineElements: RoutineElement[] = [
     ...selectedJumps.map((jump, index) => ({
@@ -181,22 +249,7 @@ const RoutineCalculator = () => {
       value: rotation.value,
       originalData: rotation,
     })),
-    ...selectedApparatusCombinations.map((combo, index) => {
-      const symbolImages = [];
-      if (combo.element.symbol_image && selectedApparatus) {
-        symbolImages.push(getBaseSymbol(combo.element.symbol_image, selectedApparatus) || '');
-      }
-      combo.selectedCriteria.forEach(criterionCode => {
-        symbolImages.push(getCriteriaSymbolUrl(criterionCode));
-      });
-      return {
-        id: `apparatus-${combo.element.id}-${index}`,
-        type: 'DA' as RoutineElementType,
-        symbolImages,
-        value: combo.element.value,
-        originalData: combo,
-      };
-    }),
+    ...processApparatusCombinations(),
   ];
 
   const totalDB = routineElements
@@ -213,7 +266,16 @@ const RoutineCalculator = () => {
     const element = routineElements[index];
     const originalData = element.originalData;
 
-    if ('turn_degrees' in originalData && 'description' in originalData && originalData.description) {
+    // Check if this is a paired special DA
+    if (originalData && typeof originalData === 'object' && 'isPaired' in originalData) {
+      // Remove both combinations from the array
+      const combo1Index = selectedApparatusCombinations.indexOf(originalData.combo1);
+      const combo2Index = selectedApparatusCombinations.indexOf(originalData.combo2);
+      
+      setSelectedApparatusCombinations(prev => 
+        prev.filter((_, idx) => idx !== combo1Index && idx !== combo2Index)
+      );
+    } else if ('turn_degrees' in originalData && 'description' in originalData && originalData.description) {
       // It's a Jump or Rotation
       if (selectedJumps.includes(originalData as SelectedJump)) {
         const jumpIndex = selectedJumps.indexOf(originalData as SelectedJump);
