@@ -10,6 +10,9 @@ import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import Routines from "./pages/Routines";
 import RoutineCalculator from "./pages/RoutineCalculator";
+import ApparatusConfiguration from "./pages/ApparatusConfiguration";
+import ElementConfiguration from "./pages/ElementConfiguration";
+import GeneralConfigurations from "./pages/GeneralConfigurations";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +28,9 @@ const App = () => (
           <Route path="/code-of-points" element={<CodeOfPoints />} />
           <Route path="/viewer" element={<PdfViewer />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/apparatus-configuration" element={<ApparatusConfiguration />} />
+          <Route path="/admin/element-configuration" element={<ElementConfiguration />} />
+          <Route path="/admin/general-configurations" element={<GeneralConfigurations />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/routines" element={<Routines />} />
           <Route path="/routine-calculator" element={<RoutineCalculator />} />
