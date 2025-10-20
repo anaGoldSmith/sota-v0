@@ -153,7 +153,7 @@ export const ApparatusSelectionDialog = ({
         ) : (
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              Click on "v" cells to select difficulty criteria combinations. Selected: {selectedCriteria.length}
+              Click on "v" cells to select difficulty criteria combinations. Selected rows: {new Set(selectedCriteria.map(sc => sc.rowId)).size}
             </div>
 
             <ApparatusTable
@@ -171,7 +171,7 @@ export const ApparatusSelectionDialog = ({
                 Cancel
               </Button>
               <Button onClick={handleAddSelected} disabled={selectedCriteria.length === 0}>
-                Add Selected ({selectedCriteria.length})
+                Add Selected ({new Set(selectedCriteria.map(sc => sc.rowId)).size})
               </Button>
             </div>
           </div>
