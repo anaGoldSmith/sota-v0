@@ -17,3 +17,15 @@ verify_jwt = true
 
 [functions.import-rotations-csv]
 verify_jwt = true
+
+[functions.import-hoop-bases-csv]
+verify_jwt = true
+
+[functions.import-ball-bases-csv]
+verify_jwt = true
+
+[functions.import-clubs-bases-csv]
+verify_jwt = true
+
+[functions.import-ribbon-bases-csv]
+verify_jwt = true
