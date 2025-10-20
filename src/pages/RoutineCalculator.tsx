@@ -153,39 +153,39 @@ const RoutineCalculator = () => {
 
           {/* Category Buttons */}
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-foreground">Routine Elements</h2>
+            <h2 className="text-xl font-semibold text-foreground">Construct Routine</h2>
             
             <div className="grid grid-cols-2 gap-3">
               <Button 
                 variant={activeCategory === "elements" ? "default" : "outline"}
-                className="h-16 text-base"
+                className="h-16 text-base hover:scale-[1.02] transition-transform"
                 onClick={() => setActiveCategory(activeCategory === "elements" ? null : "elements")}
               >
-                Add Elements (DB)
+                <span className="text-lg font-semibold mr-2">+</span> Elements (DB)
               </Button>
               
               <Button 
                 variant={activeCategory === "apparatus" ? "default" : "outline"}
-                className="h-16 text-base"
+                className="h-16 text-base hover:scale-[1.02] transition-transform"
                 onClick={() => setActiveCategory(activeCategory === "apparatus" ? null : "apparatus")}
               >
-                Add Apparatus Difficulty (DA)
+                <span className="text-lg font-semibold mr-2">+</span> Apparatus Difficulty (DA)
               </Button>
               
               <Button 
                 variant={activeCategory === "dynamic" ? "default" : "outline"}
-                className="h-16 text-base"
+                className="h-16 text-base hover:scale-[1.02] transition-transform"
                 onClick={() => setActiveCategory(activeCategory === "dynamic" ? null : "dynamic")}
               >
-                Add Dynamic Element (R)
+                <span className="text-lg font-semibold mr-2">+</span> Dynamic Element (R)
               </Button>
               
               <Button 
                 variant={activeCategory === "dance" ? "default" : "outline"}
-                className="h-16 text-base"
+                className="h-16 text-base hover:scale-[1.02] transition-transform"
                 onClick={() => setActiveCategory(activeCategory === "dance" ? null : "dance")}
               >
-                Add Dance Steps
+                <span className="text-lg font-semibold mr-2">+</span> Dance Steps
               </Button>
             </div>
 
