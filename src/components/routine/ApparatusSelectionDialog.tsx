@@ -49,152 +49,69 @@ export const ApparatusSelectionDialog = ({
   const handleAddSelected = () => {
     // If using criterion-level selection
     if (onSelectCombinations && selectedCriteria.length > 0) {
-      // Group selected criteria by row
-      const combinationsByRow = new Map<string, string[]>();
-      selectedCriteria.forEach(sc => {
-        if (!combinationsByRow.has(sc.rowId)) {
-          combinationsByRow.set(sc.rowId, []);
-        }
-        combinationsByRow.get(sc.rowId)!.push(sc.criterionCode);
-      });
-
-      // Special codes that can be paired with 1 matching criterion
-      const specialCodes = ['B2', 'B10', 'H13', 'CL13', 'CL14', 'CL15', 'RIB14'];
+      // Use analyzeDaGroups to find all valid DAs (including overlapping ones)
+      const validDaGroups = analyzeDaGroups();
       
-      // Categorize rows based on validation rules
-      const validPairs: { rowId: string, criteria: string[] }[] = [];
-      const needsPairingRows: { rowId: string, criterion: string, element: CombinedApparatusData, isSpecialCode: boolean }[] = [];
-      const invalidRows: string[] = [];
-
-      combinationsByRow.forEach((criteriaList, rowId) => {
-        const element = apparatusData.find(e => e.id === rowId);
-        if (!element) return;
-        
-        const isSpecialCode = specialCodes.includes(element.code);
-        
-        // Group criteria into pairs - each pair forms one DA
-        const numCompletePairs = Math.floor(criteriaList.length / 2);
-        
-        if (numCompletePairs > 0) {
-          // Create pairs of criteria
-          for (let i = 0; i < numCompletePairs; i++) {
-            const pairCriteria = [criteriaList[i * 2], criteriaList[i * 2 + 1]];
-            validPairs.push({ rowId, criteria: pairCriteria });
-          }
-        }
-        
-        // If there's an odd criterion left, it may need pairing
-        if (criteriaList.length % 2 === 1) {
-          needsPairingRows.push({
-            rowId,
-            criterion: criteriaList[criteriaList.length - 1],
-            element,
-            isSpecialCode
-          });
-        }
-      });
-
-      // Validate pairing if there are rows that need pairing
-      if (needsPairingRows.length > 0) {
-        // Group by criterion to find matching pairs
-        const criterionGroups = new Map<string, typeof needsPairingRows>();
-        needsPairingRows.forEach(row => {
-          if (!criterionGroups.has(row.criterion)) {
-            criterionGroups.set(row.criterion, []);
-          }
-          criterionGroups.get(row.criterion)!.push(row);
+      if (validDaGroups.length === 0) {
+        toast({
+          title: "Invalid selection",
+          description: "Please select criteria that form valid DAs.",
+          variant: "destructive",
         });
-        
-        // Validate each criterion group
-        let hasInvalidGroup = false;
-        criterionGroups.forEach((group, criterion) => {
-          if (group.length === 1) {
-            // Single unpaired criterion
-            toast({
-              title: "Invalid selection",
-              description: `Single criterion ${criterion} needs to be paired. Either select another criterion for the same row, or select a special code (B2, B10, H13, CL13, CL14, CL15, RIB14) with one criterion and pair it with another row with the same criterion.`,
-              variant: "destructive",
-            });
-            hasInvalidGroup = true;
-          } else if (group.length === 2) {
-            // Check if at least one has special code
-            const hasSpecialCode = group.some(row => row.isSpecialCode);
-            if (!hasSpecialCode) {
-              toast({
-                title: "Invalid selection",
-                description: `Two rows with criterion ${criterion} selected, but neither has a special code. You need a special code (B2, B10, H13, CL13, CL14, CL15, RIB14) to pair with another row.`,
-                variant: "destructive",
-              });
-              hasInvalidGroup = true;
-            }
-          } else {
-            // More than 2 rows with same criterion
-            toast({
-              title: "Invalid selection",
-              description: `Too many rows (${group.length}) selected with criterion ${criterion}. Maximum is 2 rows for special code pairing.`,
-              variant: "destructive",
-            });
-            hasInvalidGroup = true;
-          }
-        });
-        
-        if (hasInvalidGroup) {
-          return;
-        }
+        return;
       }
 
       const combinations: ApparatusCombination[] = [];
       
-      // First, process all standard DAs (pairs of criteria in same row)
-      validPairs.forEach(({ rowId, criteria }) => {
-        const element = apparatusData.find(e => e.id === rowId);
-        if (element && apparatus) {
-          combinations.push({
-            element,
-            selectedCriteria: criteria,
-            apparatus
-          });
-        }
-      });
-      
-      // Then, process special pairing (pairs of rows with matching criterion)
-      if (needsPairingRows.length > 0) {
-        // Group by criterion to find matching pairs
-        const criterionGroups = new Map<string, typeof needsPairingRows>();
-        needsPairingRows.forEach(row => {
-          if (!criterionGroups.has(row.criterion)) {
-            criterionGroups.set(row.criterion, []);
-          }
-          criterionGroups.get(row.criterion)!.push(row);
-        });
+      // Create combinations from each DA group
+      validDaGroups.forEach(daGroup => {
+        const { cells } = daGroup;
         
-        // Process each valid pair
-        criterionGroups.forEach((group) => {
-          if (group.length === 2) {
-            // Calculate special value: max(value1, value2) + 0.1
-            const value1 = group[0].element.value;
-            const value2 = group[1].element.value;
-            const calculatedValue = Math.max(value1, value2) + 0.1;
-            
-            // Create combinations with the calculated value
-            group.forEach(({ element }) => {
-              if (apparatus) {
-                combinations.push({
-                  element,
-                  selectedCriteria: [group[0].criterion],
-                  apparatus,
-                  calculatedValue
-                });
-              }
+        // Check if this is a Type 1 DA (same row) or Type 2 DA (different rows)
+        const uniqueRows = new Set(cells.map(c => c.rowId));
+        
+        if (uniqueRows.size === 1) {
+          // Type 1 DA: 2 criteria in same row
+          const rowId = cells[0].rowId;
+          const element = apparatusData.find(e => e.id === rowId);
+          if (element && apparatus) {
+            combinations.push({
+              element,
+              selectedCriteria: cells.map(c => c.criterionCode),
+              apparatus
             });
           }
-        });
-      }
+        } else if (uniqueRows.size === 2) {
+          // Type 2 DA: same criterion across 2 rows (special code pairing)
+          // Calculate special value: max(value1, value2) + 0.1
+          const element1 = apparatusData.find(e => e.id === cells[0].rowId);
+          const element2 = apparatusData.find(e => e.id === cells[1].rowId);
+          
+          if (element1 && element2 && apparatus) {
+            const calculatedValue = Math.max(element1.value, element2.value) + 0.1;
+            const criterion = cells[0].criterionCode; // Same criterion for both
+            
+            // Create one combination for each row
+            combinations.push({
+              element: element1,
+              selectedCriteria: [criterion],
+              apparatus,
+              calculatedValue
+            });
+            combinations.push({
+              element: element2,
+              selectedCriteria: [criterion],
+              apparatus,
+              calculatedValue
+            });
+          }
+        }
+      });
 
       if (combinations.length === 0) {
         toast({
-          title: "No criteria selected",
-          description: "Please select at least one criterion (v) to add.",
+          title: "No valid combinations",
+          description: "Please select valid criteria to form DAs.",
           variant: "destructive",
         });
         return;
@@ -300,13 +217,8 @@ export const ApparatusSelectionDialog = ({
       combinationsByRow.get(sc.rowId)!.push(sc);
     });
 
-    // Track which criteria have been assigned to DAs
-    const assignedCriteria = new Set<string>();
-    const getCriteriaKey = (rowId: string, criterion: string) => `${rowId}:${criterion}`;
-
-    // Find rows with 2+ criteria (Type 1 DAs) and rows with 1 criterion (potential Type 2 DAs)
-    const needsPairingRows: { rowId: string, criterion: string, criterionObj: SelectedCriterion }[] = [];
-    
+    // PHASE 1: Find all Type 1 DAs (2+ criteria in same row)
+    // These can use any combination of criteria in the row
     combinationsByRow.forEach((criteriaObjs, rowId) => {
       const element = apparatusData.find(e => e.id === rowId);
       if (!element) return;
@@ -314,66 +226,61 @@ export const ApparatusSelectionDialog = ({
       const criteriaList = criteriaObjs.map(c => c.criterionCode);
       
       if (criteriaList.length >= 2) {
-        // Create multiple DAs from this row, grouping criteria into pairs
-        const numCompleteDAs = Math.floor(criteriaList.length / 2);
-        
-        for (let i = 0; i < numCompleteDAs; i++) {
-          const pairCriteria = [criteriaList[i * 2], criteriaList[i * 2 + 1]];
-          const cells = pairCriteria.map(criterion => ({ rowId, criterionCode: criterion }));
-          const colorIndex = daGroups.length % DA_COLORS.length;
-          daGroups.push({ cells, color: DA_COLORS[colorIndex] });
-          
-          // Mark these criteria as assigned
-          pairCriteria.forEach(c => assignedCriteria.add(getCriteriaKey(rowId, c)));
-        }
-        
-        // If there's an odd criterion left, add it to needsPairingRows
-        if (criteriaList.length % 2 === 1) {
-          const lastCriterion = criteriaList[criteriaList.length - 1];
-          needsPairingRows.push({ 
-            rowId, 
-            criterion: lastCriterion,
-            criterionObj: criteriaObjs[criteriaList.length - 1]
-          });
-        }
-      } else if (criteriaList.length === 1) {
-        needsPairingRows.push({ 
-          rowId, 
-          criterion: criteriaList[0],
-          criterionObj: criteriaObjs[0]
-        });
-      }
-    });
-
-    // Find criterion-based pairs (Type 2 DAs)
-    if (needsPairingRows.length > 0) {
-      // Group by criterion
-      const criterionGroups = new Map<string, typeof needsPairingRows>();
-      needsPairingRows.forEach(row => {
-        if (!criterionGroups.has(row.criterion)) {
-          criterionGroups.set(row.criterion, []);
-        }
-        criterionGroups.get(row.criterion)!.push(row);
-      });
-      
-      // Create DA groups for valid pairs
-      criterionGroups.forEach((group) => {
-        if (group.length === 2) {
-          // Check if at least one has special code
-          const hasSpecialCode = group.some(row => {
-            const element = apparatusData.find(e => e.id === row.rowId);
-            return element && specialCodes.includes(element.code);
-          });
-          
-          if (hasSpecialCode) {
-            // Add these paired cells as a DA group with unique color
-            const cells = group.map(row => ({ rowId: row.rowId, criterionCode: row.criterion }));
+        // Generate all possible pairs from this row
+        for (let i = 0; i < criteriaList.length - 1; i++) {
+          for (let j = i + 1; j < criteriaList.length; j++) {
+            const pairCriteria = [criteriaList[i], criteriaList[j]];
+            const cells = pairCriteria.map(criterion => ({ rowId, criterionCode: criterion }));
             const colorIndex = daGroups.length % DA_COLORS.length;
             daGroups.push({ cells, color: DA_COLORS[colorIndex] });
           }
         }
+      }
+    });
+
+    // PHASE 2: Find all Type 2 DAs (same criterion across different rows with special code)
+    // Group all selected criteria by their criterion code
+    const byCriterion = new Map<string, { rowId: string, criterionObj: SelectedCriterion }[]>();
+    selectedCriteria.forEach(sc => {
+      if (!byCriterion.has(sc.criterionCode)) {
+        byCriterion.set(sc.criterionCode, []);
+      }
+      byCriterion.get(sc.criterionCode)!.push({ 
+        rowId: sc.rowId, 
+        criterionObj: sc 
       });
-    }
+    });
+    
+    // For each criterion, check all possible pairs of rows
+    byCriterion.forEach((rows, criterion) => {
+      if (rows.length >= 2) {
+        // Generate all possible pairs of rows with this criterion
+        for (let i = 0; i < rows.length - 1; i++) {
+          for (let j = i + 1; j < rows.length; j++) {
+            const row1 = rows[i];
+            const row2 = rows[j];
+            
+            // Check if at least one has special code
+            const element1 = apparatusData.find(e => e.id === row1.rowId);
+            const element2 = apparatusData.find(e => e.id === row2.rowId);
+            
+            const hasSpecialCode = 
+              (element1 && specialCodes.includes(element1.code)) ||
+              (element2 && specialCodes.includes(element2.code));
+            
+            if (hasSpecialCode) {
+              // This is a valid Type 2 DA
+              const cells = [
+                { rowId: row1.rowId, criterionCode: criterion },
+                { rowId: row2.rowId, criterionCode: criterion }
+              ];
+              const colorIndex = daGroups.length % DA_COLORS.length;
+              daGroups.push({ cells, color: DA_COLORS[colorIndex] });
+            }
+          }
+        }
+      }
+    });
 
     return daGroups;
   };
