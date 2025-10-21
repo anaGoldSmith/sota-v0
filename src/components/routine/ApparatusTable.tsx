@@ -91,11 +91,11 @@ export const ApparatusTable = ({
         <Table>
           <TableHeader className="sticky top-0 bg-primary z-20 shadow-md">
             <TableRow className="hover:bg-primary border-b-2 border-primary-foreground/20">
-            <TableHead className="text-primary-foreground font-semibold text-lg w-[300px]">Base</TableHead>
-            <TableHead className="text-primary-foreground font-semibold text-lg text-center w-[150px]">Base symbol</TableHead>
-            <TableHead className="text-primary-foreground font-semibold text-lg text-center w-[120px]">Value</TableHead>
+            <TableHead className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-lg w-[300px]">Base</TableHead>
+            <TableHead className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-lg text-center w-[150px]">Base symbol</TableHead>
+            <TableHead className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-lg text-center w-[120px]">Value</TableHead>
             {CRITERIA_CODES.map((code) => (
-              <TableHead key={code} className="text-primary-foreground font-semibold text-center w-[90px] p-2">
+              <TableHead key={code} className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-center w-[90px] p-2">
                 <div className="flex flex-col items-center gap-1">
                   {code === 'Cr5W' ? (
                     <span className="text-3xl font-bold">W</span>
