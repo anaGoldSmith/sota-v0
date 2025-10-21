@@ -290,6 +290,16 @@ export const ApparatusSelectionDialog = ({
 
   const daGroups = analyzeDaGroups();
   const daCount = daGroups.length;
+  
+  // Debug logging
+  React.useEffect(() => {
+    if (daGroups.length > 0) {
+      console.log('DA Groups:', daGroups.map((g, i) => ({
+        index: i,
+        cells: g.cells.map(c => `${c.rowId}:${c.criterionCode}`)
+      })));
+    }
+  }, [daGroups.length]);
 
   // Validate selections and auto-remove invalid ones
   useEffect(() => {
