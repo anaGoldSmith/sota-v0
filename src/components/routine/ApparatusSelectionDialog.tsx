@@ -243,8 +243,8 @@ export const ApparatusSelectionDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh]">
-        <DialogHeader>
+      <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-2xl">
             Select Difficulty of Apparatus for {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'}
           </DialogTitle>
@@ -283,11 +283,11 @@ export const ApparatusSelectionDialog = ({
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center py-12 flex-1">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4 flex-1 min-h-0">
             <ApparatusTable
               data={apparatusData}
               criteria={criteria}
@@ -298,7 +298,7 @@ export const ApparatusSelectionDialog = ({
               onCriteriaChange={setSelectedCriteria}
             />
 
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex justify-end gap-3 pt-4 flex-shrink-0">
               <Button variant="outline" onClick={handleCancel}>
                 Cancel
               </Button>
