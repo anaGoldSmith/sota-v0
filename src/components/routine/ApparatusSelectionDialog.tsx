@@ -33,6 +33,7 @@ export const ApparatusSelectionDialog = ({
   const { apparatusData, criteria, isLoading } = useApparatusData(apparatus);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedCriteria, setSelectedCriteria] = useState<SelectedCriterion[]>([]);
+  const [lastCompletedDaCount, setLastCompletedDaCount] = useState(0);
   const { toast } = useToast();
 
   const handleRowClick = (item: CombinedApparatusData) => {
@@ -201,6 +202,7 @@ export const ApparatusSelectionDialog = ({
 
       onSelectCombinations(combinations);
       setSelectedCriteria([]);
+      setLastCompletedDaCount(0);
       onOpenChange(false);
       
       toast({
@@ -235,6 +237,7 @@ export const ApparatusSelectionDialog = ({
   const handleCancel = () => {
     setSelectedIds([]);
     setSelectedCriteria([]);
+    setLastCompletedDaCount(0);
     onOpenChange(false);
   };
 
@@ -378,84 +381,102 @@ export const ApparatusSelectionDialog = ({
   const daGroups = analyzeDaGroups();
   const daCount = daGroups.length;
 
-  // Validate only when user has made enough selections to check for invalid patterns
+  // Track completed DAs and validate only new selections
   useEffect(() => {
-    // Only validate if there are at least 2 criteria selected (enough to form or fail to form a DA)
-    if (selectedCriteria.length >= 2) {
-      const timeoutId = setTimeout(() => {
-        // Check if all selected criteria can form valid DAs
-        const currentDaGroups = analyzeDaGroups();
-        const cellsInDaGroups = new Set<string>();
-        currentDaGroups.forEach(group => {
-          group.cells.forEach(cell => {
-            cellsInDaGroups.add(`${cell.rowId}:${cell.criterionCode}`);
-          });
-        });
+    const currentDaCount = daGroups.length;
+    
+    // Check if a new DA was just completed
+    if (currentDaCount > lastCompletedDaCount) {
+      setLastCompletedDaCount(currentDaCount);
+      return; // Don't validate, DA was successfully formed
+    }
+    
+    // Calculate how many criteria are "in progress" (not part of completed DAs)
+    const cellsInCompletedDas = new Set<string>();
+    daGroups.forEach(group => {
+      group.cells.forEach(cell => {
+        cellsInCompletedDas.add(`${cell.rowId}:${cell.criterionCode}`);
+      });
+    });
+    
+    const incompleteCriteria = selectedCriteria.filter(sc => 
+      !cellsInCompletedDas.has(`${sc.rowId}:${sc.criterionCode}`)
+    );
+    
+    const incompleteCount = incompleteCriteria.length;
+    
+    // Validation rules:
+    // - 0 incomplete = all good, no validation needed
+    // - 1 incomplete = user is selecting first criterion of new DA, wait for second
+    // - 2+ incomplete = user has selected criteria that don't form valid DA, validate after pause
+    if (incompleteCount === 0 || incompleteCount === 1) {
+      return; // No validation needed
+    }
+    
+    // Wait for user to pause before validating incomplete selections
+    const timeoutId = setTimeout(() => {
+      // Group incomplete criteria by row and by criterion
+      const incompleteByRow = new Map<string, string[]>();
+      const incompleteByCriterion = new Map<string, string[]>();
+      
+      incompleteCriteria.forEach(sc => {
+        if (!incompleteByRow.has(sc.rowId)) {
+          incompleteByRow.set(sc.rowId, []);
+        }
+        incompleteByRow.get(sc.rowId)!.push(sc.criterionCode);
         
-        // Find any selected criteria that are NOT in any DA group
-        const orphanedCriteria = selectedCriteria.filter(sc => 
-          !cellsInDaGroups.has(`${sc.rowId}:${sc.criterionCode}`)
-        );
-        
-        // Only show warning if there are orphaned criteria that clearly can't form valid DAs
-        if (orphanedCriteria.length > 0) {
-          // Group orphaned criteria by row and criterion
-          const orphanedByRow = new Map<string, string[]>();
-          orphanedCriteria.forEach(sc => {
-            if (!orphanedByRow.has(sc.rowId)) {
-              orphanedByRow.set(sc.rowId, []);
-            }
-            orphanedByRow.get(sc.rowId)!.push(sc.criterionCode);
+        if (!incompleteByCriterion.has(sc.criterionCode)) {
+          incompleteByCriterion.set(sc.criterionCode, []);
+        }
+        incompleteByCriterion.get(sc.criterionCode)!.push(sc.rowId);
+      });
+      
+      // Check if incomplete criteria can form valid DAs
+      let isInvalid = false;
+      
+      // Check Type 1 DA possibility: 2 criteria in same row
+      let hasPotentialType1DA = false;
+      incompleteByRow.forEach((criteriaList) => {
+        if (criteriaList.length >= 2) {
+          hasPotentialType1DA = true;
+        }
+      });
+      
+      // Check Type 2 DA possibility: matching criteria across special code rows
+      let hasPotentialType2DA = false;
+      incompleteByCriterion.forEach((rowIds, criterion) => {
+        if (rowIds.length === 2) {
+          const hasSpecialCode = rowIds.some(rowId => {
+            const element = apparatusData.find(e => e.id === rowId);
+            return element && specialCodes.includes(element.code);
           });
-          
-          const orphanedByCriterion = new Map<string, string[]>();
-          orphanedCriteria.forEach(sc => {
-            if (!orphanedByCriterion.has(sc.criterionCode)) {
-              orphanedByCriterion.set(sc.criterionCode, []);
-            }
-            orphanedByCriterion.get(sc.criterionCode)!.push(sc.rowId);
-          });
-          
-          // Check if any orphaned criterion is truly invalid
-          let hasInvalidOrphan = false;
-          orphanedByCriterion.forEach((rowIds, criterion) => {
-            if (rowIds.length === 1) {
-              const rowId = rowIds[0];
-              const element = apparatusData.find(e => e.id === rowId);
-              const rowCriteriaCount = orphanedByRow.get(rowId)?.length || 0;
-              
-              // Invalid if: single criterion in non-special-code row
-              if (element && !specialCodes.includes(element.code) && rowCriteriaCount === 1) {
-                hasInvalidOrphan = true;
-              }
-            } else if (rowIds.length === 2) {
-              // Check if at least one is a special code
-              const hasSpecialCode = rowIds.some(rowId => {
-                const element = apparatusData.find(e => e.id === rowId);
-                return element && specialCodes.includes(element.code);
-              });
-              
-              if (!hasSpecialCode) {
-                hasInvalidOrphan = true;
-              }
-            } else if (rowIds.length > 2) {
-              hasInvalidOrphan = true;
-            }
-          });
-          
-          if (hasInvalidOrphan) {
-            toast({
-              title: "Invalid DA criteria",
-              description: "Please select two criteria for one base. Or, choose the base \"Catch from High Throw\" with one criterion and another base with the same criterion.",
-              variant: "destructive",
-            });
+          if (hasSpecialCode) {
+            hasPotentialType2DA = true;
           }
         }
-      }, 800); // Wait 800ms after last selection change
+      });
       
-      return () => clearTimeout(timeoutId);
-    }
-  }, [selectedCriteria]);
+      // If no potential valid DA formations, it's invalid
+      if (!hasPotentialType1DA && !hasPotentialType2DA) {
+        isInvalid = true;
+      }
+      
+      // Additional check: if there are 3+ incomplete criteria and they can't form valid pairs
+      if (incompleteCount >= 3 && !hasPotentialType1DA && !hasPotentialType2DA) {
+        isInvalid = true;
+      }
+      
+      if (isInvalid) {
+        toast({
+          title: "Invalid DA criteria",
+          description: "Please select two criteria for one base. Or, choose the base \"Catch from High Throw\" with one criterion and another base with the same criterion.",
+          variant: "destructive",
+        });
+      }
+    }, 1500); // Wait 1.5 seconds after last selection change
+    
+    return () => clearTimeout(timeoutId);
+  }, [selectedCriteria, daGroups.length, lastCompletedDaCount]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
