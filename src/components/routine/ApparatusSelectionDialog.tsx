@@ -44,77 +44,6 @@ export const ApparatusSelectionDialog = ({
     });
   };
 
-  // Validate selections and show warnings for invalid DAs
-  const validateSelection = (criteria: SelectedCriterion[]) => {
-    if (criteria.length === 0) return;
-
-    // Group selected criteria by row
-    const combinationsByRow = new Map<string, string[]>();
-    criteria.forEach(sc => {
-      if (!combinationsByRow.has(sc.rowId)) {
-        combinationsByRow.set(sc.rowId, []);
-      }
-      combinationsByRow.get(sc.rowId)!.push(sc.criterionCode);
-    });
-
-    // Find rows with single criteria (potential invalid selections)
-    const singleCriteriaRows: { rowId: string, criterion: string }[] = [];
-    combinationsByRow.forEach((criteriaList, rowId) => {
-      if (criteriaList.length % 2 === 1) {
-        singleCriteriaRows.push({ rowId, criterion: criteriaList[criteriaList.length - 1] });
-      }
-    });
-
-    // Only show warnings for clearly invalid patterns
-    // Check for unpaired single criteria that cannot form valid DAs
-    if (singleCriteriaRows.length > 0) {
-      // Group by criterion to see if they can be paired
-      const criterionGroups = new Map<string, typeof singleCriteriaRows>();
-      singleCriteriaRows.forEach(row => {
-        if (!criterionGroups.has(row.criterion)) {
-          criterionGroups.set(row.criterion, []);
-        }
-        criterionGroups.get(row.criterion)!.push(row);
-      });
-      
-      // Check each criterion group
-      criterionGroups.forEach((group, criterion) => {
-        if (group.length === 1) {
-          // Single unpaired criterion - check if it's a special code
-          const element = apparatusData.find(e => e.id === group[0].rowId);
-          if (element && !specialCodes.includes(element.code)) {
-            // Not a special code, cannot be paired with another row
-            toast({
-              title: "Invalid DA criteria",
-              description: "Please select two criteria for one base. Or, choose the base \"Catch from High Throw\" with one criterion and another base with the same criterion.",
-              variant: "destructive",
-            });
-          }
-        } else if (group.length === 2) {
-          // Two rows with same criterion - check if at least one is a special code
-          const hasSpecialCode = group.some(row => {
-            const element = apparatusData.find(e => e.id === row.rowId);
-            return element && specialCodes.includes(element.code);
-          });
-          
-          if (!hasSpecialCode) {
-            toast({
-              title: "Invalid DA criteria",
-              description: "Please select two criteria for one base. Or, choose the base \"Catch from High Throw\" with one criterion and another base with the same criterion.",
-              variant: "destructive",
-            });
-          }
-        } else if (group.length > 2) {
-          // Too many rows with same single criterion
-          toast({
-            title: "Invalid DA criteria",
-            description: "Too many rows selected with the same single criterion. Please select two criteria for one base, or pair special codes properly.",
-            variant: "destructive",
-          });
-        }
-      });
-    }
-  };
 
   const handleAddSelected = () => {
     // If using criterion-level selection
@@ -449,12 +378,80 @@ export const ApparatusSelectionDialog = ({
   const daGroups = analyzeDaGroups();
   const daCount = daGroups.length;
 
-  // Validate selections whenever criteria change (with debounce to avoid toast spam)
+  // Validate only when user has made enough selections to check for invalid patterns
   useEffect(() => {
-    if (selectedCriteria.length > 0) {
+    // Only validate if there are at least 2 criteria selected (enough to form or fail to form a DA)
+    if (selectedCriteria.length >= 2) {
       const timeoutId = setTimeout(() => {
-        validateSelection(selectedCriteria);
-      }, 500); // Wait 500ms after last selection change
+        // Check if all selected criteria can form valid DAs
+        const currentDaGroups = analyzeDaGroups();
+        const cellsInDaGroups = new Set<string>();
+        currentDaGroups.forEach(group => {
+          group.cells.forEach(cell => {
+            cellsInDaGroups.add(`${cell.rowId}:${cell.criterionCode}`);
+          });
+        });
+        
+        // Find any selected criteria that are NOT in any DA group
+        const orphanedCriteria = selectedCriteria.filter(sc => 
+          !cellsInDaGroups.has(`${sc.rowId}:${sc.criterionCode}`)
+        );
+        
+        // Only show warning if there are orphaned criteria that clearly can't form valid DAs
+        if (orphanedCriteria.length > 0) {
+          // Group orphaned criteria by row and criterion
+          const orphanedByRow = new Map<string, string[]>();
+          orphanedCriteria.forEach(sc => {
+            if (!orphanedByRow.has(sc.rowId)) {
+              orphanedByRow.set(sc.rowId, []);
+            }
+            orphanedByRow.get(sc.rowId)!.push(sc.criterionCode);
+          });
+          
+          const orphanedByCriterion = new Map<string, string[]>();
+          orphanedCriteria.forEach(sc => {
+            if (!orphanedByCriterion.has(sc.criterionCode)) {
+              orphanedByCriterion.set(sc.criterionCode, []);
+            }
+            orphanedByCriterion.get(sc.criterionCode)!.push(sc.rowId);
+          });
+          
+          // Check if any orphaned criterion is truly invalid
+          let hasInvalidOrphan = false;
+          orphanedByCriterion.forEach((rowIds, criterion) => {
+            if (rowIds.length === 1) {
+              const rowId = rowIds[0];
+              const element = apparatusData.find(e => e.id === rowId);
+              const rowCriteriaCount = orphanedByRow.get(rowId)?.length || 0;
+              
+              // Invalid if: single criterion in non-special-code row
+              if (element && !specialCodes.includes(element.code) && rowCriteriaCount === 1) {
+                hasInvalidOrphan = true;
+              }
+            } else if (rowIds.length === 2) {
+              // Check if at least one is a special code
+              const hasSpecialCode = rowIds.some(rowId => {
+                const element = apparatusData.find(e => e.id === rowId);
+                return element && specialCodes.includes(element.code);
+              });
+              
+              if (!hasSpecialCode) {
+                hasInvalidOrphan = true;
+              }
+            } else if (rowIds.length > 2) {
+              hasInvalidOrphan = true;
+            }
+          });
+          
+          if (hasInvalidOrphan) {
+            toast({
+              title: "Invalid DA criteria",
+              description: "Please select two criteria for one base. Or, choose the base \"Catch from High Throw\" with one criterion and another base with the same criterion.",
+              variant: "destructive",
+            });
+          }
+        }
+      }, 800); // Wait 800ms after last selection change
       
       return () => clearTimeout(timeoutId);
     }
