@@ -132,7 +132,20 @@ export const ApparatusSelectionDialog = ({
 
       const combinations: ApparatusCombination[] = [];
       
-      // Check if this is a special pairing (2 rows with 1 criterion each)
+      // First, process all standard DAs (rows with 2+ criteria)
+      validStandaloneRows.forEach((rowId) => {
+        const criteriaList = combinationsByRow.get(rowId);
+        const element = apparatusData.find(e => e.id === rowId);
+        if (element && apparatus && criteriaList) {
+          combinations.push({
+            element,
+            selectedCriteria: criteriaList,
+            apparatus
+          });
+        }
+      });
+      
+      // Then, process special pairing if exists (2 rows with 1 criterion each)
       const isSpecialPairing = needsPairingRows.length === 2;
       
       if (isSpecialPairing) {
@@ -149,18 +162,6 @@ export const ApparatusSelectionDialog = ({
               selectedCriteria: [criterion],
               apparatus,
               calculatedValue
-            });
-          }
-        });
-      } else {
-        // Standard rule: each row has 2 criteria
-        combinationsByRow.forEach((criteriaList, rowId) => {
-          const element = apparatusData.find(e => e.id === rowId);
-          if (element && apparatus) {
-            combinations.push({
-              element,
-              selectedCriteria: criteriaList,
-              apparatus
             });
           }
         });
