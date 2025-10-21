@@ -13,6 +13,7 @@ interface ApparatusTableProps {
   selectedCriteria?: SelectedCriterion[];
   onCriteriaChange?: (criteria: SelectedCriterion[]) => void;
   daGroups?: { cells: SelectedCriterion[], color: string }[];
+  currentColorIndex?: number;
 }
 
 export interface SelectedCriterion {
@@ -26,6 +27,25 @@ const formatCriteriaValue = (value: string | null): string => {
   return '';
 };
 
+// Color palette for DA groups (15 distinct colors)
+const DA_COLORS = [
+  'border-purple-500',
+  'border-blue-500',
+  'border-rose-500',
+  'border-green-500',
+  'border-orange-500',
+  'border-cyan-500',
+  'border-pink-500',
+  'border-indigo-500',
+  'border-yellow-500',
+  'border-teal-500',
+  'border-red-500',
+  'border-lime-500',
+  'border-violet-500',
+  'border-amber-500',
+  'border-emerald-500',
+];
+
 export const ApparatusTable = ({ 
   data, 
   criteria, 
@@ -34,7 +54,8 @@ export const ApparatusTable = ({
   apparatus,
   selectedCriteria: externalSelectedCriteria,
   onCriteriaChange,
-  daGroups = []
+  daGroups = [],
+  currentColorIndex = 0
 }: ApparatusTableProps) => {
   const [internalSelectedCriteria, setInternalSelectedCriteria] = React.useState<SelectedCriterion[]>([]);
   const selectedCriteria = externalSelectedCriteria ?? internalSelectedCriteria;
@@ -64,14 +85,23 @@ export const ApparatusTable = ({
     return selectedCriteria.some(sc => sc.rowId === rowId && sc.criterionCode === criterionCode);
   };
 
-  const getCellDaColors = (rowId: string, criterionCode: string): string[] => {
-    const colors: string[] = [];
-    for (const group of daGroups) {
-      if (group.cells.some(cell => cell.rowId === rowId && cell.criterionCode === criterionCode)) {
-        colors.push(group.color);
-      }
+  const getCellBorderColor = (rowId: string, criterionCode: string): string | null => {
+    const isSelected = isCriterionSelected(rowId, criterionCode);
+    if (!isSelected) return null;
+    
+    // Find which DA groups this cell belongs to
+    const belongsToGroups = daGroups.filter(group => 
+      group.cells.some(cell => cell.rowId === rowId && cell.criterionCode === criterionCode)
+    );
+    
+    if (belongsToGroups.length > 0) {
+      // Cell is part of completed DA(s), use the first DA's color
+      return belongsToGroups[0].color;
     }
-    return colors;
+    
+    // Cell is selected but not yet part of a completed DA, use current color
+    const colorIndex = currentColorIndex % DA_COLORS.length;
+    return DA_COLORS[colorIndex];
   };
 
   
@@ -156,44 +186,7 @@ export const ApparatusTable = ({
                   const value = item.criteria[code];
                   const isSelected = isCriterionSelected(item.id, code);
                   const isClickable = formatCriteriaValue(value) === 'v';
-                  const daBorderColors = getCellDaColors(item.id, code);
-                  
-                  // Create layered border effect for multiple DAs
-                  const getBorderClasses = () => {
-                    if (daBorderColors.length === 0) return '';
-                    if (daBorderColors.length === 1) return `border-4 ${daBorderColors[0]}`;
-                    // For multiple colors, we'll use the first as border and show others via box-shadow
-                    return `border-4 ${daBorderColors[0]}`;
-                  };
-                  
-                  const getBoxShadow = () => {
-                    if (daBorderColors.length <= 1) return {};
-                    // Create layered box-shadows for additional colors
-                    const shadows = daBorderColors.slice(1).map((color, index) => {
-                      const offset = (index + 1) * 4;
-                      // Map Tailwind color classes to CSS variables
-                      const colorMap: Record<string, string> = {
-                        'border-purple-500': 'rgb(168, 85, 247)',
-                        'border-blue-500': 'rgb(59, 130, 246)',
-                        'border-rose-500': 'rgb(244, 63, 94)',
-                        'border-green-500': 'rgb(34, 197, 94)',
-                        'border-orange-500': 'rgb(249, 115, 22)',
-                        'border-cyan-500': 'rgb(6, 182, 212)',
-                        'border-pink-500': 'rgb(236, 72, 153)',
-                        'border-indigo-500': 'rgb(99, 102, 241)',
-                        'border-yellow-500': 'rgb(234, 179, 8)',
-                        'border-teal-500': 'rgb(20, 184, 166)',
-                        'border-red-500': 'rgb(239, 68, 68)',
-                        'border-lime-500': 'rgb(132, 204, 22)',
-                        'border-violet-500': 'rgb(139, 92, 246)',
-                        'border-amber-500': 'rgb(245, 158, 11)',
-                        'border-emerald-500': 'rgb(16, 185, 129)',
-                      };
-                      const cssColor = colorMap[color] || 'rgb(168, 85, 247)';
-                      return `inset 0 0 0 ${offset}px ${cssColor}`;
-                    }).join(', ');
-                    return { boxShadow: shadows };
-                  };
+                  const borderColor = getCellBorderColor(item.id, code);
                   
                   return (
                     <TableCell 
@@ -202,8 +195,9 @@ export const ApparatusTable = ({
                         isClickable ? 'cursor-pointer hover:bg-primary/10' : ''
                       } ${
                         isSelected ? 'bg-primary/30 font-bold' : ''
-                      } ${getBorderClasses()}`}
-                      style={getBoxShadow()}
+                      } ${
+                        borderColor ? `border-4 ${borderColor}` : ''
+                      }`}
                       onClick={isClickable ? (e) => handleCriterionClick(item.id, code, e) : undefined}
                     >
                       {formatCriteriaValue(value)}

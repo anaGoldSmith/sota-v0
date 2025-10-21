@@ -34,6 +34,7 @@ export const ApparatusSelectionDialog = ({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedCriteria, setSelectedCriteria] = useState<SelectedCriterion[]>([]);
   const [lastCompletedDaCount, setLastCompletedDaCount] = useState(0);
+  const [colorIndex, setColorIndex] = useState(0);
   const { toast } = useToast();
 
   const handleRowClick = (item: CombinedApparatusData) => {
@@ -120,6 +121,7 @@ export const ApparatusSelectionDialog = ({
       onSelectCombinations(combinations);
       setSelectedCriteria([]);
       setLastCompletedDaCount(0);
+      setColorIndex(0);
       onOpenChange(false);
       
       toast({
@@ -155,6 +157,7 @@ export const ApparatusSelectionDialog = ({
     setSelectedIds([]);
     setSelectedCriteria([]);
     setLastCompletedDaCount(0);
+    setColorIndex(0);
     onOpenChange(false);
   };
 
@@ -288,17 +291,20 @@ export const ApparatusSelectionDialog = ({
   const daGroups = analyzeDaGroups();
   const daCount = daGroups.length;
 
-  // Track completed DAs and validate only new selections
+  // Validate selections and auto-remove invalid ones
   useEffect(() => {
+    if (selectedCriteria.length === 0) return;
+    
     const currentDaCount = daGroups.length;
     
     // Check if a new DA was just completed
     if (currentDaCount > lastCompletedDaCount) {
       setLastCompletedDaCount(currentDaCount);
-      return; // Don't validate, DA was successfully formed
+      setColorIndex(currentDaCount); // Move to next color for new DA
+      return;
     }
     
-    // Calculate how many criteria are "in progress" (not part of completed DAs)
+    // Calculate incomplete criteria (not part of completed DAs)
     const cellsInCompletedDas = new Set<string>();
     daGroups.forEach(group => {
       group.cells.forEach(cell => {
@@ -312,17 +318,12 @@ export const ApparatusSelectionDialog = ({
     
     const incompleteCount = incompleteCriteria.length;
     
-    // Validation rules:
-    // - 0 incomplete = all good, no validation needed
-    // - 1 incomplete = user is selecting first criterion of new DA, wait for second
-    // - 2+ incomplete = user has selected criteria that don't form valid DA, validate after pause
-    if (incompleteCount === 0 || incompleteCount === 1) {
-      return; // No validation needed
-    }
+    // Only validate when we have 2+ incomplete criteria
+    if (incompleteCount < 2) return;
     
-    // Wait for user to pause before validating incomplete selections
+    // Validate after a short pause
     const timeoutId = setTimeout(() => {
-      // Group incomplete criteria by row and by criterion
+      // Group incomplete criteria
       const incompleteByRow = new Map<string, string[]>();
       const incompleteByCriterion = new Map<string, string[]>();
       
@@ -338,10 +339,7 @@ export const ApparatusSelectionDialog = ({
         incompleteByCriterion.get(sc.criterionCode)!.push(sc.rowId);
       });
       
-      // Check if incomplete criteria can form valid DAs
-      let isInvalid = false;
-      
-      // Check Type 1 DA possibility: 2 criteria in same row
+      // Check Type 1: 2 criteria in same row
       let hasPotentialType1DA = false;
       incompleteByRow.forEach((criteriaList) => {
         if (criteriaList.length >= 2) {
@@ -349,10 +347,10 @@ export const ApparatusSelectionDialog = ({
         }
       });
       
-      // Check Type 2 DA possibility: matching criteria across special code rows
+      // Check Type 2: matching criteria across special code rows
       let hasPotentialType2DA = false;
-      incompleteByCriterion.forEach((rowIds, criterion) => {
-        if (rowIds.length === 2) {
+      incompleteByCriterion.forEach((rowIds) => {
+        if (rowIds.length >= 2) {
           const hasSpecialCode = rowIds.some(rowId => {
             const element = apparatusData.find(e => e.id === rowId);
             return element && specialCodes.includes(element.code);
@@ -363,27 +361,21 @@ export const ApparatusSelectionDialog = ({
         }
       });
       
-      // If no potential valid DA formations, it's invalid
+      // If invalid, remove last selected criterion
       if (!hasPotentialType1DA && !hasPotentialType2DA) {
-        isInvalid = true;
-      }
-      
-      // Additional check: if there are 3+ incomplete criteria and they can't form valid pairs
-      if (incompleteCount >= 3 && !hasPotentialType1DA && !hasPotentialType2DA) {
-        isInvalid = true;
-      }
-      
-      if (isInvalid) {
+        const lastCriterion = selectedCriteria[selectedCriteria.length - 1];
+        setSelectedCriteria(prev => prev.slice(0, -1));
+        
         toast({
-          title: "Invalid DA criteria",
+          title: "Invalid DA selection",
           description: "Please select two criteria for one base. Or, choose the base \"Catch from High Throw\" with one criterion and another base with the same criterion.",
           variant: "destructive",
         });
       }
-    }, 1500); // Wait 1.5 seconds after last selection change
+    }, 800);
     
     return () => clearTimeout(timeoutId);
-  }, [selectedCriteria, daGroups.length, lastCompletedDaCount]);
+  }, [selectedCriteria, daGroups.length, lastCompletedDaCount, apparatusData, specialCodes, toast]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -441,6 +433,7 @@ export const ApparatusSelectionDialog = ({
               selectedCriteria={selectedCriteria}
               onCriteriaChange={setSelectedCriteria}
               daGroups={daGroups}
+              currentColorIndex={colorIndex}
             />
 
             <div className="flex justify-end gap-3 pt-4 flex-shrink-0">
