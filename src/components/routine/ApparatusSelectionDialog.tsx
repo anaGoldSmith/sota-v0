@@ -241,6 +241,25 @@ export const ApparatusSelectionDialog = ({
   const specialCodes = getSpecialCodes();
   const specialElements = apparatusData.filter(item => specialCodes.includes(item.code));
 
+  // Color palette for DA groups (15 distinct colors)
+  const DA_COLORS = [
+    'border-purple-500',
+    'border-blue-500',
+    'border-rose-500',
+    'border-green-500',
+    'border-orange-500',
+    'border-cyan-500',
+    'border-pink-500',
+    'border-indigo-500',
+    'border-yellow-500',
+    'border-teal-500',
+    'border-red-500',
+    'border-lime-500',
+    'border-violet-500',
+    'border-amber-500',
+    'border-emerald-500',
+  ];
+
   // Analyze selected criteria to identify DA groups
   const analyzeDaGroups = () => {
     const daGroups: { cells: SelectedCriterion[], color: string }[] = [];
@@ -264,9 +283,10 @@ export const ApparatusSelectionDialog = ({
       
       if (criteriaList.length >= 2) {
         validStandaloneRows.push(rowId);
-        // Add this row's cells as a DA group
+        // Add this row's cells as a DA group with unique color
         const cells = criteriaList.map(criterion => ({ rowId, criterionCode: criterion }));
-        daGroups.push({ cells, color: 'border-purple-500' });
+        const colorIndex = daGroups.length % DA_COLORS.length;
+        daGroups.push({ cells, color: DA_COLORS[colorIndex] });
       } else if (criteriaList.length === 1) {
         needsPairingRows.push({ rowId, criterion: criteriaList[0] });
       }
@@ -280,9 +300,10 @@ export const ApparatusSelectionDialog = ({
       });
       
       if (hasSpecialCode) {
-        // Add these paired cells as a DA group
+        // Add these paired cells as a DA group with unique color
         const cells = needsPairingRows.map(row => ({ rowId: row.rowId, criterionCode: row.criterion }));
-        daGroups.push({ cells, color: 'border-green-500' });
+        const colorIndex = daGroups.length % DA_COLORS.length;
+        daGroups.push({ cells, color: DA_COLORS[colorIndex] });
       }
     }
 
