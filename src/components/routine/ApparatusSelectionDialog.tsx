@@ -207,85 +207,62 @@ export const ApparatusSelectionDialog = ({
     'border-emerald-500',
   ];
 
-  // Analyze selected criteria to identify DA groups with support for overlapping selections
+  // Analyze selected criteria in order to form discrete DA pairs (no combinatorial overcount)
   const analyzeDaGroups = () => {
-    const daGroups: { cells: SelectedCriterion[], color: string }[] = [];
-    
-    // Group selected criteria by row
-    const combinationsByRow = new Map<string, SelectedCriterion[]>();
-    selectedCriteria.forEach(sc => {
-      if (!combinationsByRow.has(sc.rowId)) {
-        combinationsByRow.set(sc.rowId, []);
-      }
-      combinationsByRow.get(sc.rowId)!.push(sc);
-    });
+    const groups: { cells: SelectedCriterion[]; color: string }[] = [];
+    const used = new Set<string>(); // key: `${rowId}:${criterionCode}`
 
-    // PHASE 1: Find all Type 1 DAs (2+ criteria in same row)
-    // These can use any combination of criteria in the row
-    combinationsByRow.forEach((criteriaObjs, rowId) => {
-      const element = apparatusData.find(e => e.id === rowId);
-      if (!element) return;
-      
-      const criteriaList = criteriaObjs.map(c => c.criterionCode);
-      
-      if (criteriaList.length >= 2) {
-        // Generate all possible pairs from this row
-        for (let i = 0; i < criteriaList.length - 1; i++) {
-          for (let j = i + 1; j < criteriaList.length; j++) {
-            const pairCriteria = [criteriaList[i], criteriaList[j]];
-            const cells = pairCriteria.map(criterion => ({ rowId, criterionCode: criterion }));
-            const colorIndex = daGroups.length % DA_COLORS.length;
-            daGroups.push({ cells, color: DA_COLORS[colorIndex] });
-          }
+    const getKey = (c: SelectedCriterion) => `${c.rowId}:${c.criterionCode}`;
+
+    for (let i = 0; i < selectedCriteria.length; i++) {
+      const a = selectedCriteria[i];
+      const aKey = getKey(a);
+      if (used.has(aKey)) continue;
+
+      // Find best partner after 'a' respecting validity rules
+      let partnerIndex = -1;
+      let type: 'type1' | 'type2' | null = null;
+
+      // Type 1: same row, different criterion
+      for (let j = i + 1; j < selectedCriteria.length; j++) {
+        const b = selectedCriteria[j];
+        if (used.has(getKey(b))) continue;
+        if (b.rowId === a.rowId && b.criterionCode !== a.criterionCode) {
+          partnerIndex = j;
+          type = 'type1';
+          break;
         }
       }
-    });
 
-    // PHASE 2: Find all Type 2 DAs (same criterion across different rows with special code)
-    // Group all selected criteria by their criterion code
-    const byCriterion = new Map<string, { rowId: string, criterionObj: SelectedCriterion }[]>();
-    selectedCriteria.forEach(sc => {
-      if (!byCriterion.has(sc.criterionCode)) {
-        byCriterion.set(sc.criterionCode, []);
-      }
-      byCriterion.get(sc.criterionCode)!.push({ 
-        rowId: sc.rowId, 
-        criterionObj: sc 
-      });
-    });
-    
-    // For each criterion, check all possible pairs of rows
-    byCriterion.forEach((rows, criterion) => {
-      if (rows.length >= 2) {
-        // Generate all possible pairs of rows with this criterion
-        for (let i = 0; i < rows.length - 1; i++) {
-          for (let j = i + 1; j < rows.length; j++) {
-            const row1 = rows[i];
-            const row2 = rows[j];
-            
-            // Check if at least one has special code
-            const element1 = apparatusData.find(e => e.id === row1.rowId);
-            const element2 = apparatusData.find(e => e.id === row2.rowId);
-            
-            const hasSpecialCode = 
-              (element1 && specialCodes.includes(element1.code)) ||
-              (element2 && specialCodes.includes(element2.code));
-            
-            if (hasSpecialCode) {
-              // This is a valid Type 2 DA
-              const cells = [
-                { rowId: row1.rowId, criterionCode: criterion },
-                { rowId: row2.rowId, criterionCode: criterion }
-              ];
-              const colorIndex = daGroups.length % DA_COLORS.length;
-              daGroups.push({ cells, color: DA_COLORS[colorIndex] });
+      // Type 2: same criterion across rows where at least one row is a special code base
+      if (partnerIndex === -1) {
+        for (let j = i + 1; j < selectedCriteria.length; j++) {
+          const b = selectedCriteria[j];
+          if (used.has(getKey(b))) continue;
+          if (b.rowId !== a.rowId && b.criterionCode === a.criterionCode) {
+            const elementA = apparatusData.find(e => e.id === a.rowId);
+            const elementB = apparatusData.find(e => e.id === b.rowId);
+            const hasSpecial = (elementA && specialCodes.includes(elementA.code)) || (elementB && specialCodes.includes(elementB.code));
+            if (hasSpecial) {
+              partnerIndex = j;
+              type = 'type2';
+              break;
             }
           }
         }
       }
-    });
 
-    return daGroups;
+      if (partnerIndex !== -1 && type) {
+        const b = selectedCriteria[partnerIndex];
+        const cells: SelectedCriterion[] = [a, b];
+        used.add(aKey);
+        used.add(getKey(b));
+        const color = DA_COLORS[groups.length % DA_COLORS.length];
+        groups.push({ cells, color });
+      }
+    }
+
+    return groups;
   };
 
   const daGroups = analyzeDaGroups();

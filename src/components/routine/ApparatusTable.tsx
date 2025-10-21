@@ -196,7 +196,7 @@ export const ApparatusTable = ({
                       } ${
                         isSelected ? 'bg-primary/30 font-bold' : ''
                       } ${
-                        borderColor ? `border-4 ${borderColor}` : ''
+                        borderColor ? `border-4 border-solid ${borderColor}` : ''
                       }`}
                       onClick={isClickable ? (e) => handleCriterionClick(item.id, code, e) : undefined}
                     >
