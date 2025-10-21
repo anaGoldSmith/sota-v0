@@ -1,6 +1,6 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableContainer } from "@/components/ui/table";
 import { CombinedApparatusData, Criterion, CRITERIA_CODES, ApparatusType } from "@/types/apparatus";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { supabase } from "@/integrations/supabase/client";
 import React from "react";
 
@@ -86,11 +86,10 @@ export const ApparatusTable = ({
   };
 
   return (
-    <div className="relative h-[500px] rounded-md border overflow-hidden">
-      <ScrollArea className="h-full">
+    <TableContainer className="h-[500px] rounded-md border">
         <Table>
-          <TableHeader className="sticky top-0 bg-primary z-20 shadow-md">
-            <TableRow className="hover:bg-primary border-b-2 border-primary-foreground/20">
+          <TableHeader>
+            <TableRow className="border-b-2 border-primary-foreground/20">
             <TableHead className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-lg w-[300px]">Base</TableHead>
             <TableHead className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-lg text-center w-[150px]">Base symbol</TableHead>
             <TableHead className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-lg text-center w-[120px]">Value</TableHead>
@@ -165,7 +164,6 @@ export const ApparatusTable = ({
           })}
         </TableBody>
       </Table>
-      </ScrollArea>
-    </div>
+      </TableContainer>
   );
 };
