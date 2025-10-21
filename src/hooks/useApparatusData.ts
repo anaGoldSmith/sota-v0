@@ -2,6 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ApparatusBase, ApparatusControl, Criterion, CombinedApparatusData, ApparatusType } from "@/types/apparatus";
 
+// Natural sort comparator for alphanumeric codes (H1, H2, H10, H11, etc.)
+const naturalSort = (a: string, b: string): number => {
+  const extractNumber = (str: string): number => {
+    const match = str.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 0;
+  };
+  return extractNumber(a) - extractNumber(b);
+};
+
 export const useApparatusData = (apparatus: ApparatusType | null) => {
   // Fetch criteria (static across all apparatus types)
   const { data: criteria = [] } = useQuery({
@@ -28,41 +37,47 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
 
       // Fetch bases based on apparatus type
       if (apparatus === 'hoop') {
-        const { data, error } = await supabase.from('hoop_bases').select('*').order('code');
+        const { data, error } = await supabase.from('hoop_bases').select('*');
         if (error) throw error;
         bases = data as ApparatusBase[];
       } else if (apparatus === 'ball') {
-        const { data, error } = await supabase.from('ball_bases').select('*').order('code');
+        const { data, error } = await supabase.from('ball_bases').select('*');
         if (error) throw error;
         bases = data as ApparatusBase[];
       } else if (apparatus === 'clubs') {
-        const { data, error } = await supabase.from('clubs_bases').select('*').order('code');
+        const { data, error } = await supabase.from('clubs_bases').select('*');
         if (error) throw error;
         bases = data as ApparatusBase[];
       } else if (apparatus === 'ribbon') {
-        const { data, error } = await supabase.from('ribbon_bases').select('*').order('code');
+        const { data, error } = await supabase.from('ribbon_bases').select('*');
         if (error) throw error;
         bases = data as ApparatusBase[];
       }
 
+      // Apply natural sort to bases
+      bases.sort((a, b) => naturalSort(a.code, b.code));
+
       // Fetch control data based on apparatus type
       if (apparatus === 'hoop') {
-        const { data, error } = await supabase.from('hoop_control').select('*').order('code');
+        const { data, error } = await supabase.from('hoop_control').select('*');
         if (error) throw error;
         controls = data as ApparatusControl[];
       } else if (apparatus === 'ball') {
-        const { data, error } = await supabase.from('ball_control').select('*').order('code');
+        const { data, error } = await supabase.from('ball_control').select('*');
         if (error) throw error;
         controls = data as ApparatusControl[];
       } else if (apparatus === 'clubs') {
-        const { data, error } = await supabase.from('clubs_control').select('*').order('code');
+        const { data, error } = await supabase.from('clubs_control').select('*');
         if (error) throw error;
         controls = data as ApparatusControl[];
       } else if (apparatus === 'ribbon') {
-        const { data, error } = await supabase.from('ribbon_control').select('*').order('code');
+        const { data, error } = await supabase.from('ribbon_control').select('*');
         if (error) throw error;
         controls = data as ApparatusControl[];
       }
+
+      // Apply natural sort to controls
+      controls.sort((a, b) => naturalSort(a.code, b.code));
 
       // Combine the data
       const combined: CombinedApparatusData[] = bases.map((base) => {
