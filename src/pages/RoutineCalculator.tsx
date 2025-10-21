@@ -411,14 +411,14 @@ const RoutineCalculator = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-1 flex-wrap">
                             {element.symbolImages.map((url, imgIndex) => (
                               url && (
                                 <img
                                   key={`${element.id}-symbol-${imgIndex}`}
                                   src={url}
                                   alt="Symbol"
-                                  className="h-12 w-auto object-contain"
+                                  className="h-10 w-10 object-contain"
                                 />
                               )
                             ))}
