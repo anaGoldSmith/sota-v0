@@ -86,10 +86,11 @@ export const ApparatusTable = ({
   };
 
   return (
-    <ScrollArea className="h-[500px] rounded-md border">
-      <Table>
-        <TableHeader className="sticky top-0 bg-primary z-10">
-          <TableRow className="hover:bg-primary">
+    <div className="relative h-[500px] rounded-md border overflow-hidden">
+      <ScrollArea className="h-full">
+        <Table>
+          <TableHeader className="sticky top-0 bg-primary z-20 shadow-md">
+            <TableRow className="hover:bg-primary border-b-2 border-primary-foreground/20">
             <TableHead className="text-primary-foreground font-semibold text-lg w-[300px]">Base</TableHead>
             <TableHead className="text-primary-foreground font-semibold text-lg text-center w-[150px]">Base symbol</TableHead>
             <TableHead className="text-primary-foreground font-semibold text-lg text-center w-[120px]">Value</TableHead>
@@ -164,6 +165,7 @@ export const ApparatusTable = ({
           })}
         </TableBody>
       </Table>
-    </ScrollArea>
+      </ScrollArea>
+    </div>
   );
 };
