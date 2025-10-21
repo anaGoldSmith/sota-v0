@@ -412,16 +412,28 @@ const RoutineCalculator = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1 flex-wrap">
-                            {element.symbolImages.map((url, imgIndex) => (
-                              url && (
-                                <img
-                                  key={`${element.id}-symbol-${imgIndex}`}
-                                  src={url}
-                                  alt="Symbol"
-                                  className="h-10 w-10 object-contain"
-                                />
-                              )
-                            ))}
+                            {element.symbolImages.map((url, imgIndex) => {
+                              // Check if this is the W criterion symbol
+                              const isWSymbol = url && url.includes('Cr5W.png');
+                              
+                              return url && (
+                                isWSymbol ? (
+                                  <div 
+                                    key={`${element.id}-symbol-${imgIndex}`}
+                                    className="h-10 w-10 flex items-center justify-center"
+                                  >
+                                    <span className="text-3xl font-bold">W</span>
+                                  </div>
+                                ) : (
+                                  <img
+                                    key={`${element.id}-symbol-${imgIndex}`}
+                                    src={url}
+                                    alt="Symbol"
+                                    className="h-10 w-10 object-contain"
+                                  />
+                                )
+                              );
+                            })}
                           </div>
                         </TableCell>
                         <TableCell className="text-right font-mono">
