@@ -12,6 +12,7 @@ interface ApparatusTableProps {
   apparatus: ApparatusType;
   selectedCriteria?: SelectedCriterion[];
   onCriteriaChange?: (criteria: SelectedCriterion[]) => void;
+  daGroups?: { cells: SelectedCriterion[], color: string }[];
 }
 
 export interface SelectedCriterion {
@@ -32,7 +33,8 @@ export const ApparatusTable = ({
   onRowClick, 
   apparatus,
   selectedCriteria: externalSelectedCriteria,
-  onCriteriaChange 
+  onCriteriaChange,
+  daGroups = []
 }: ApparatusTableProps) => {
   const [internalSelectedCriteria, setInternalSelectedCriteria] = React.useState<SelectedCriterion[]>([]);
   const selectedCriteria = externalSelectedCriteria ?? internalSelectedCriteria;
@@ -60,6 +62,15 @@ export const ApparatusTable = ({
 
   const isCriterionSelected = (rowId: string, criterionCode: string) => {
     return selectedCriteria.some(sc => sc.rowId === rowId && sc.criterionCode === criterionCode);
+  };
+
+  const getCellDaColor = (rowId: string, criterionCode: string) => {
+    for (const group of daGroups) {
+      if (group.cells.some(cell => cell.rowId === rowId && cell.criterionCode === criterionCode)) {
+        return group.color;
+      }
+    }
+    return '';
   };
 
   
@@ -144,6 +155,7 @@ export const ApparatusTable = ({
                   const value = item.criteria[code];
                   const isSelected = isCriterionSelected(item.id, code);
                   const isClickable = formatCriteriaValue(value) === 'v';
+                  const daBorderColor = getCellDaColor(item.id, code);
                   
                   return (
                     <TableCell 
@@ -152,6 +164,8 @@ export const ApparatusTable = ({
                         isClickable ? 'cursor-pointer hover:bg-primary/10' : ''
                       } ${
                         isSelected ? 'bg-primary/30 font-bold' : ''
+                      } ${
+                        daBorderColor ? `border-4 ${daBorderColor}` : ''
                       }`}
                       onClick={isClickable ? (e) => handleCriterionClick(item.id, code, e) : undefined}
                     >

@@ -241,6 +241,57 @@ export const ApparatusSelectionDialog = ({
   const specialCodes = getSpecialCodes();
   const specialElements = apparatusData.filter(item => specialCodes.includes(item.code));
 
+  // Analyze selected criteria to identify DA groups
+  const analyzeDaGroups = () => {
+    const daGroups: { cells: SelectedCriterion[], color: string }[] = [];
+    
+    // Group selected criteria by row
+    const combinationsByRow = new Map<string, string[]>();
+    selectedCriteria.forEach(sc => {
+      if (!combinationsByRow.has(sc.rowId)) {
+        combinationsByRow.set(sc.rowId, []);
+      }
+      combinationsByRow.get(sc.rowId)!.push(sc.criterionCode);
+    });
+
+    // Find rows with 2+ criteria (Type 1 DAs)
+    const validStandaloneRows: string[] = [];
+    const needsPairingRows: { rowId: string, criterion: string }[] = [];
+    
+    combinationsByRow.forEach((criteriaList, rowId) => {
+      const element = apparatusData.find(e => e.id === rowId);
+      if (!element) return;
+      
+      if (criteriaList.length >= 2) {
+        validStandaloneRows.push(rowId);
+        // Add this row's cells as a DA group
+        const cells = criteriaList.map(criterion => ({ rowId, criterionCode: criterion }));
+        daGroups.push({ cells, color: 'border-purple-500' });
+      } else if (criteriaList.length === 1) {
+        needsPairingRows.push({ rowId, criterion: criteriaList[0] });
+      }
+    });
+
+    // Find criterion-based pairs (Type 2 DAs)
+    if (needsPairingRows.length === 2 && needsPairingRows[0].criterion === needsPairingRows[1].criterion) {
+      const hasSpecialCode = needsPairingRows.some(row => {
+        const element = apparatusData.find(e => e.id === row.rowId);
+        return element && specialCodes.includes(element.code);
+      });
+      
+      if (hasSpecialCode) {
+        // Add these paired cells as a DA group
+        const cells = needsPairingRows.map(row => ({ rowId: row.rowId, criterionCode: row.criterion }));
+        daGroups.push({ cells, color: 'border-green-500' });
+      }
+    }
+
+    return daGroups;
+  };
+
+  const daGroups = analyzeDaGroups();
+  const daCount = daGroups.length;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
@@ -296,6 +347,7 @@ export const ApparatusSelectionDialog = ({
               apparatus={apparatus!}
               selectedCriteria={selectedCriteria}
               onCriteriaChange={setSelectedCriteria}
+              daGroups={daGroups}
             />
 
             <div className="flex justify-end gap-3 pt-4 flex-shrink-0">
@@ -303,7 +355,7 @@ export const ApparatusSelectionDialog = ({
                 Cancel
               </Button>
               <Button onClick={handleAddSelected} disabled={selectedCriteria.length === 0}>
-                Add Selected ({new Set(selectedCriteria.map(sc => sc.rowId)).size})
+                Add Selected {daCount > 0 && `(${daCount} DA${daCount > 1 ? 's' : ''})`}
               </Button>
             </div>
           </div>
