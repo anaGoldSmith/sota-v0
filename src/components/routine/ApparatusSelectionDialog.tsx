@@ -94,33 +94,49 @@ export const ApparatusSelectionDialog = ({
 
       // Validate pairing if there are rows that need pairing
       if (needsPairingRows.length > 0) {
-        // Check if at least one row has a special code
-        const hasSpecialCode = needsPairingRows.some(row => row.isSpecialCode);
+        // Group by criterion to find matching pairs
+        const criterionGroups = new Map<string, typeof needsPairingRows>();
+        needsPairingRows.forEach(row => {
+          if (!criterionGroups.has(row.criterion)) {
+            criterionGroups.set(row.criterion, []);
+          }
+          criterionGroups.get(row.criterion)!.push(row);
+        });
         
-        if (!hasSpecialCode) {
-          toast({
-            title: "Invalid selection",
-            description: "Two criteria should be selected for one apparatus base to create a valid DA, or select a special code (B2, B10, H13, CL13, CL14, CL15, RIB14) with one criterion and pair it with another row with the same criterion.",
-            variant: "destructive",
-          });
-          return;
-        }
+        // Validate each criterion group
+        let hasInvalidGroup = false;
+        criterionGroups.forEach((group, criterion) => {
+          if (group.length === 1) {
+            // Single unpaired criterion
+            toast({
+              title: "Invalid selection",
+              description: `Single criterion ${criterion} needs to be paired. Either select another criterion for the same row, or select a special code (B2, B10, H13, CL13, CL14, CL15, RIB14) with one criterion and pair it with another row with the same criterion.`,
+              variant: "destructive",
+            });
+            hasInvalidGroup = true;
+          } else if (group.length === 2) {
+            // Check if at least one has special code
+            const hasSpecialCode = group.some(row => row.isSpecialCode);
+            if (!hasSpecialCode) {
+              toast({
+                title: "Invalid selection",
+                description: `Two rows with criterion ${criterion} selected, but neither has a special code. You need a special code (B2, B10, H13, CL13, CL14, CL15, RIB14) to pair with another row.`,
+                variant: "destructive",
+              });
+              hasInvalidGroup = true;
+            }
+          } else {
+            // More than 2 rows with same criterion
+            toast({
+              title: "Invalid selection",
+              description: `Too many rows (${group.length}) selected with criterion ${criterion}. Maximum is 2 rows for special code pairing.`,
+              variant: "destructive",
+            });
+            hasInvalidGroup = true;
+          }
+        });
         
-        if (needsPairingRows.length !== 2) {
-          toast({
-            title: "Invalid selection",
-            description: "For special codes with one criterion selected, you must select exactly one more row with the same matching criterion.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        if (needsPairingRows[0].criterion !== needsPairingRows[1].criterion) {
-          toast({
-            title: "Invalid selection",
-            description: "Both rows must have the same criterion selected to form a valid pair.",
-            variant: "destructive",
-          });
+        if (hasInvalidGroup) {
           return;
         }
       }
@@ -139,23 +155,35 @@ export const ApparatusSelectionDialog = ({
         }
       });
       
-      // Then, process special pairing if exists (2 rows with 1 criterion each)
-      const isSpecialPairing = needsPairingRows.length === 2;
-      
-      if (isSpecialPairing) {
-        // Calculate special value: max(value1, value2) + 0.1
-        const value1 = needsPairingRows[0].element.value;
-        const value2 = needsPairingRows[1].element.value;
-        const calculatedValue = Math.max(value1, value2) + 0.1;
+      // Then, process special pairing (pairs of rows with matching criterion)
+      if (needsPairingRows.length > 0) {
+        // Group by criterion to find matching pairs
+        const criterionGroups = new Map<string, typeof needsPairingRows>();
+        needsPairingRows.forEach(row => {
+          if (!criterionGroups.has(row.criterion)) {
+            criterionGroups.set(row.criterion, []);
+          }
+          criterionGroups.get(row.criterion)!.push(row);
+        });
         
-        // Create combinations with the calculated value
-        needsPairingRows.forEach(({ rowId, criterion, element }) => {
-          if (apparatus) {
-            combinations.push({
-              element,
-              selectedCriteria: [criterion],
-              apparatus,
-              calculatedValue
+        // Process each valid pair
+        criterionGroups.forEach((group) => {
+          if (group.length === 2) {
+            // Calculate special value: max(value1, value2) + 0.1
+            const value1 = group[0].element.value;
+            const value2 = group[1].element.value;
+            const calculatedValue = Math.max(value1, value2) + 0.1;
+            
+            // Create combinations with the calculated value
+            group.forEach(({ element }) => {
+              if (apparatus) {
+                combinations.push({
+                  element,
+                  selectedCriteria: [group[0].criterion],
+                  apparatus,
+                  calculatedValue
+                });
+              }
             });
           }
         });
@@ -297,18 +325,33 @@ export const ApparatusSelectionDialog = ({
     });
 
     // Find criterion-based pairs (Type 2 DAs)
-    if (needsPairingRows.length === 2 && needsPairingRows[0].criterion === needsPairingRows[1].criterion) {
-      const hasSpecialCode = needsPairingRows.some(row => {
-        const element = apparatusData.find(e => e.id === row.rowId);
-        return element && specialCodes.includes(element.code);
+    if (needsPairingRows.length > 0) {
+      // Group by criterion
+      const criterionGroups = new Map<string, typeof needsPairingRows>();
+      needsPairingRows.forEach(row => {
+        if (!criterionGroups.has(row.criterion)) {
+          criterionGroups.set(row.criterion, []);
+        }
+        criterionGroups.get(row.criterion)!.push(row);
       });
       
-      if (hasSpecialCode) {
-        // Add these paired cells as a DA group with unique color
-        const cells = needsPairingRows.map(row => ({ rowId: row.rowId, criterionCode: row.criterion }));
-        const colorIndex = daGroups.length % DA_COLORS.length;
-        daGroups.push({ cells, color: DA_COLORS[colorIndex] });
-      }
+      // Create DA groups for valid pairs
+      criterionGroups.forEach((group) => {
+        if (group.length === 2) {
+          // Check if at least one has special code
+          const hasSpecialCode = group.some(row => {
+            const element = apparatusData.find(e => e.id === row.rowId);
+            return element && specialCodes.includes(element.code);
+          });
+          
+          if (hasSpecialCode) {
+            // Add these paired cells as a DA group with unique color
+            const cells = group.map(row => ({ rowId: row.rowId, criterionCode: row.criterion }));
+            const colorIndex = daGroups.length % DA_COLORS.length;
+            daGroups.push({ cells, color: DA_COLORS[colorIndex] });
+          }
+        }
+      });
     }
 
     return daGroups;
