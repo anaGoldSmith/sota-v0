@@ -4,7 +4,7 @@ import { useApparatusData } from "@/hooks/useApparatusData";
 import { ApparatusTable, SelectedCriterion } from "./ApparatusTable";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -42,6 +42,78 @@ export const ApparatusSelectionDialog = ({
       }
       return [...prev, item.id];
     });
+  };
+
+  // Validate selections and show warnings for invalid DAs
+  const validateSelection = (criteria: SelectedCriterion[]) => {
+    if (criteria.length === 0) return;
+
+    // Group selected criteria by row
+    const combinationsByRow = new Map<string, string[]>();
+    criteria.forEach(sc => {
+      if (!combinationsByRow.has(sc.rowId)) {
+        combinationsByRow.set(sc.rowId, []);
+      }
+      combinationsByRow.get(sc.rowId)!.push(sc.criterionCode);
+    });
+
+    // Find rows with single criteria (potential invalid selections)
+    const singleCriteriaRows: { rowId: string, criterion: string }[] = [];
+    combinationsByRow.forEach((criteriaList, rowId) => {
+      if (criteriaList.length % 2 === 1) {
+        singleCriteriaRows.push({ rowId, criterion: criteriaList[criteriaList.length - 1] });
+      }
+    });
+
+    // Only show warnings for clearly invalid patterns
+    // Check for unpaired single criteria that cannot form valid DAs
+    if (singleCriteriaRows.length > 0) {
+      // Group by criterion to see if they can be paired
+      const criterionGroups = new Map<string, typeof singleCriteriaRows>();
+      singleCriteriaRows.forEach(row => {
+        if (!criterionGroups.has(row.criterion)) {
+          criterionGroups.set(row.criterion, []);
+        }
+        criterionGroups.get(row.criterion)!.push(row);
+      });
+      
+      // Check each criterion group
+      criterionGroups.forEach((group, criterion) => {
+        if (group.length === 1) {
+          // Single unpaired criterion - check if it's a special code
+          const element = apparatusData.find(e => e.id === group[0].rowId);
+          if (element && !specialCodes.includes(element.code)) {
+            // Not a special code, cannot be paired with another row
+            toast({
+              title: "Invalid DA criteria",
+              description: "Please select two criteria for one base. Or, choose the base \"Catch from High Throw\" with one criterion and another base with the same criterion.",
+              variant: "destructive",
+            });
+          }
+        } else if (group.length === 2) {
+          // Two rows with same criterion - check if at least one is a special code
+          const hasSpecialCode = group.some(row => {
+            const element = apparatusData.find(e => e.id === row.rowId);
+            return element && specialCodes.includes(element.code);
+          });
+          
+          if (!hasSpecialCode) {
+            toast({
+              title: "Invalid DA criteria",
+              description: "Please select two criteria for one base. Or, choose the base \"Catch from High Throw\" with one criterion and another base with the same criterion.",
+              variant: "destructive",
+            });
+          }
+        } else if (group.length > 2) {
+          // Too many rows with same single criterion
+          toast({
+            title: "Invalid DA criteria",
+            description: "Too many rows selected with the same single criterion. Please select two criteria for one base, or pair special codes properly.",
+            variant: "destructive",
+          });
+        }
+      });
+    }
   };
 
   const handleAddSelected = () => {
@@ -283,29 +355,34 @@ export const ApparatusSelectionDialog = ({
     'border-emerald-500',
   ];
 
-  // Analyze selected criteria to identify DA groups
+  // Analyze selected criteria to identify DA groups with support for overlapping selections
   const analyzeDaGroups = () => {
     const daGroups: { cells: SelectedCriterion[], color: string }[] = [];
     
     // Group selected criteria by row
-    const combinationsByRow = new Map<string, string[]>();
+    const combinationsByRow = new Map<string, SelectedCriterion[]>();
     selectedCriteria.forEach(sc => {
       if (!combinationsByRow.has(sc.rowId)) {
         combinationsByRow.set(sc.rowId, []);
       }
-      combinationsByRow.get(sc.rowId)!.push(sc.criterionCode);
+      combinationsByRow.get(sc.rowId)!.push(sc);
     });
 
+    // Track which criteria have been assigned to DAs
+    const assignedCriteria = new Set<string>();
+    const getCriteriaKey = (rowId: string, criterion: string) => `${rowId}:${criterion}`;
+
     // Find rows with 2+ criteria (Type 1 DAs) and rows with 1 criterion (potential Type 2 DAs)
-    const needsPairingRows: { rowId: string, criterion: string }[] = [];
+    const needsPairingRows: { rowId: string, criterion: string, criterionObj: SelectedCriterion }[] = [];
     
-    combinationsByRow.forEach((criteriaList, rowId) => {
+    combinationsByRow.forEach((criteriaObjs, rowId) => {
       const element = apparatusData.find(e => e.id === rowId);
       if (!element) return;
       
+      const criteriaList = criteriaObjs.map(c => c.criterionCode);
+      
       if (criteriaList.length >= 2) {
         // Create multiple DAs from this row, grouping criteria into pairs
-        // Each pair of criteria forms one DA
         const numCompleteDAs = Math.floor(criteriaList.length / 2);
         
         for (let i = 0; i < numCompleteDAs; i++) {
@@ -313,14 +390,26 @@ export const ApparatusSelectionDialog = ({
           const cells = pairCriteria.map(criterion => ({ rowId, criterionCode: criterion }));
           const colorIndex = daGroups.length % DA_COLORS.length;
           daGroups.push({ cells, color: DA_COLORS[colorIndex] });
+          
+          // Mark these criteria as assigned
+          pairCriteria.forEach(c => assignedCriteria.add(getCriteriaKey(rowId, c)));
         }
         
         // If there's an odd criterion left, add it to needsPairingRows
         if (criteriaList.length % 2 === 1) {
-          needsPairingRows.push({ rowId, criterion: criteriaList[criteriaList.length - 1] });
+          const lastCriterion = criteriaList[criteriaList.length - 1];
+          needsPairingRows.push({ 
+            rowId, 
+            criterion: lastCriterion,
+            criterionObj: criteriaObjs[criteriaList.length - 1]
+          });
         }
       } else if (criteriaList.length === 1) {
-        needsPairingRows.push({ rowId, criterion: criteriaList[0] });
+        needsPairingRows.push({ 
+          rowId, 
+          criterion: criteriaList[0],
+          criterionObj: criteriaObjs[0]
+        });
       }
     });
 
@@ -359,6 +448,17 @@ export const ApparatusSelectionDialog = ({
 
   const daGroups = analyzeDaGroups();
   const daCount = daGroups.length;
+
+  // Validate selections whenever criteria change (with debounce to avoid toast spam)
+  useEffect(() => {
+    if (selectedCriteria.length > 0) {
+      const timeoutId = setTimeout(() => {
+        validateSelection(selectedCriteria);
+      }, 500); // Wait 500ms after last selection change
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [selectedCriteria]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

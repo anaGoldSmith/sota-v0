@@ -64,13 +64,14 @@ export const ApparatusTable = ({
     return selectedCriteria.some(sc => sc.rowId === rowId && sc.criterionCode === criterionCode);
   };
 
-  const getCellDaColor = (rowId: string, criterionCode: string) => {
+  const getCellDaColors = (rowId: string, criterionCode: string): string[] => {
+    const colors: string[] = [];
     for (const group of daGroups) {
       if (group.cells.some(cell => cell.rowId === rowId && cell.criterionCode === criterionCode)) {
-        return group.color;
+        colors.push(group.color);
       }
     }
-    return '';
+    return colors;
   };
 
   
@@ -155,18 +156,54 @@ export const ApparatusTable = ({
                   const value = item.criteria[code];
                   const isSelected = isCriterionSelected(item.id, code);
                   const isClickable = formatCriteriaValue(value) === 'v';
-                  const daBorderColor = getCellDaColor(item.id, code);
+                  const daBorderColors = getCellDaColors(item.id, code);
+                  
+                  // Create layered border effect for multiple DAs
+                  const getBorderClasses = () => {
+                    if (daBorderColors.length === 0) return '';
+                    if (daBorderColors.length === 1) return `border-4 ${daBorderColors[0]}`;
+                    // For multiple colors, we'll use the first as border and show others via box-shadow
+                    return `border-4 ${daBorderColors[0]}`;
+                  };
+                  
+                  const getBoxShadow = () => {
+                    if (daBorderColors.length <= 1) return {};
+                    // Create layered box-shadows for additional colors
+                    const shadows = daBorderColors.slice(1).map((color, index) => {
+                      const offset = (index + 1) * 4;
+                      // Map Tailwind color classes to CSS variables
+                      const colorMap: Record<string, string> = {
+                        'border-purple-500': 'rgb(168, 85, 247)',
+                        'border-blue-500': 'rgb(59, 130, 246)',
+                        'border-rose-500': 'rgb(244, 63, 94)',
+                        'border-green-500': 'rgb(34, 197, 94)',
+                        'border-orange-500': 'rgb(249, 115, 22)',
+                        'border-cyan-500': 'rgb(6, 182, 212)',
+                        'border-pink-500': 'rgb(236, 72, 153)',
+                        'border-indigo-500': 'rgb(99, 102, 241)',
+                        'border-yellow-500': 'rgb(234, 179, 8)',
+                        'border-teal-500': 'rgb(20, 184, 166)',
+                        'border-red-500': 'rgb(239, 68, 68)',
+                        'border-lime-500': 'rgb(132, 204, 22)',
+                        'border-violet-500': 'rgb(139, 92, 246)',
+                        'border-amber-500': 'rgb(245, 158, 11)',
+                        'border-emerald-500': 'rgb(16, 185, 129)',
+                      };
+                      const cssColor = colorMap[color] || 'rgb(168, 85, 247)';
+                      return `inset 0 0 0 ${offset}px ${cssColor}`;
+                    }).join(', ');
+                    return { boxShadow: shadows };
+                  };
                   
                   return (
                     <TableCell 
                       key={code} 
-                      className={`text-center text-sm transition-colors ${
+                      className={`text-center text-sm transition-colors relative ${
                         isClickable ? 'cursor-pointer hover:bg-primary/10' : ''
                       } ${
                         isSelected ? 'bg-primary/30 font-bold' : ''
-                      } ${
-                        daBorderColor ? `border-4 ${daBorderColor}` : ''
-                      }`}
+                      } ${getBorderClasses()}`}
+                      style={getBoxShadow()}
                       onClick={isClickable ? (e) => handleCriterionClick(item.id, code, e) : undefined}
                     >
                       {formatCriteriaValue(value)}
