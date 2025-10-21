@@ -60,7 +60,7 @@ export const ApparatusSelectionDialog = ({
       const specialCodes = ['B2', 'B10', 'H13', 'CL13', 'CL14', 'CL15', 'RIB14'];
       
       // Categorize rows based on validation rules
-      const validStandaloneRows: string[] = [];
+      const validPairs: { rowId: string, criteria: string[] }[] = [];
       const needsPairingRows: { rowId: string, criterion: string, element: CombinedApparatusData, isSpecialCode: boolean }[] = [];
       const invalidRows: string[] = [];
 
@@ -70,20 +70,25 @@ export const ApparatusSelectionDialog = ({
         
         const isSpecialCode = specialCodes.includes(element.code);
         
-        if (criteriaList.length === 2) {
-          // Valid standalone (works for all codes)
-          validStandaloneRows.push(rowId);
-        } else if (criteriaList.length === 1) {
-          // Any row with 1 criterion - may need pairing
+        // Group criteria into pairs - each pair forms one DA
+        const numCompletePairs = Math.floor(criteriaList.length / 2);
+        
+        if (numCompletePairs > 0) {
+          // Create pairs of criteria
+          for (let i = 0; i < numCompletePairs; i++) {
+            const pairCriteria = [criteriaList[i * 2], criteriaList[i * 2 + 1]];
+            validPairs.push({ rowId, criteria: pairCriteria });
+          }
+        }
+        
+        // If there's an odd criterion left, it may need pairing
+        if (criteriaList.length % 2 === 1) {
           needsPairingRows.push({
             rowId,
-            criterion: criteriaList[0],
+            criterion: criteriaList[criteriaList.length - 1],
             element,
             isSpecialCode
           });
-        } else {
-          // Invalid: wrong number of criteria (0 or more than 2)
-          invalidRows.push(element.description);
         }
       });
 
@@ -120,26 +125,15 @@ export const ApparatusSelectionDialog = ({
         }
       }
 
-      // Check for any invalid rows
-      if (invalidRows.length > 0) {
-        toast({
-          title: "Invalid selection",
-          description: "Two criteria should be selected for one apparatus base to create a valid DA.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const combinations: ApparatusCombination[] = [];
       
-      // First, process all standard DAs (rows with 2+ criteria)
-      validStandaloneRows.forEach((rowId) => {
-        const criteriaList = combinationsByRow.get(rowId);
+      // First, process all standard DAs (pairs of criteria in same row)
+      validPairs.forEach(({ rowId, criteria }) => {
         const element = apparatusData.find(e => e.id === rowId);
-        if (element && apparatus && criteriaList) {
+        if (element && apparatus) {
           combinations.push({
             element,
-            selectedCriteria: criteriaList,
+            selectedCriteria: criteria,
             apparatus
           });
         }
@@ -274,8 +268,7 @@ export const ApparatusSelectionDialog = ({
       combinationsByRow.get(sc.rowId)!.push(sc.criterionCode);
     });
 
-    // Find rows with 2+ criteria (Type 1 DAs)
-    const validStandaloneRows: string[] = [];
+    // Find rows with 2+ criteria (Type 1 DAs) and rows with 1 criterion (potential Type 2 DAs)
     const needsPairingRows: { rowId: string, criterion: string }[] = [];
     
     combinationsByRow.forEach((criteriaList, rowId) => {
@@ -283,11 +276,21 @@ export const ApparatusSelectionDialog = ({
       if (!element) return;
       
       if (criteriaList.length >= 2) {
-        validStandaloneRows.push(rowId);
-        // Add this row's cells as a DA group with unique color
-        const cells = criteriaList.map(criterion => ({ rowId, criterionCode: criterion }));
-        const colorIndex = daGroups.length % DA_COLORS.length;
-        daGroups.push({ cells, color: DA_COLORS[colorIndex] });
+        // Create multiple DAs from this row, grouping criteria into pairs
+        // Each pair of criteria forms one DA
+        const numCompleteDAs = Math.floor(criteriaList.length / 2);
+        
+        for (let i = 0; i < numCompleteDAs; i++) {
+          const pairCriteria = [criteriaList[i * 2], criteriaList[i * 2 + 1]];
+          const cells = pairCriteria.map(criterion => ({ rowId, criterionCode: criterion }));
+          const colorIndex = daGroups.length % DA_COLORS.length;
+          daGroups.push({ cells, color: DA_COLORS[colorIndex] });
+        }
+        
+        // If there's an odd criterion left, add it to needsPairingRows
+        if (criteriaList.length % 2 === 1) {
+          needsPairingRows.push({ rowId, criterion: criteriaList[criteriaList.length - 1] });
+        }
       } else if (criteriaList.length === 1) {
         needsPairingRows.push({ rowId, criterion: criteriaList[0] });
       }
