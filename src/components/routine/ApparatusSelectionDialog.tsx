@@ -191,19 +191,19 @@ export const ApparatusSelectionDialog = ({
   // Color palette for DA groups (15 distinct colors optimized for visibility on light backgrounds)
   const DA_COLORS = [
     'border-red-700',        // Deep Red
-    'border-pink-600',       // Bright Pink
-    'border-purple-700',     // Deep Purple
     'border-blue-700',       // Royal Blue
-    'border-sky-500',        // Sky Blue
-    'border-teal-600',       // Teal
     'border-green-700',      // Forest Green
-    'border-lime-600',       // Lime Green
-    'border-yellow-500',     // Golden Yellow
     'border-orange-700',     // Deep Orange
-    'border-amber-800',      // Brown/Rust
-    'border-fuchsia-600',    // Magenta
-    'border-indigo-800',     // Navy
+    'border-purple-700',     // Deep Purple
+    'border-lime-600',       // Lime Green
+    'border-pink-600',       // Bright Pink
+    'border-sky-500',        // Sky Blue
+    'border-yellow-500',     // Golden Yellow
     'border-emerald-800',    // Olive/Dark Green
+    'border-fuchsia-600',    // Magenta
+    'border-teal-600',       // Teal
+    'border-indigo-800',     // Navy
+    'border-amber-800',      // Brown/Rust
     'border-rose-500',       // Coral
   ];
 
