@@ -328,6 +328,16 @@ export const ApparatusSelectionDialog = ({
           setCompletedDaGroups(prev => prev.filter((_, idx) => idx !== affectedDaIndex));
         }
       }
+    } else if (newCriteria.length > selectedCriteria.length) {
+      // User is selecting - check if we've reached the limit
+      if (completedDaGroups.length >= 15) {
+        toast({
+          title: "DA Limit Reached",
+          description: "You've reached the limit for DAs creation. Save your current selections to add more later.",
+          variant: "destructive",
+        });
+        return; // Don't allow new selection
+      }
     }
     
     setSelectedCriteria(newCriteria);

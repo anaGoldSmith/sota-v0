@@ -89,19 +89,18 @@ export const ApparatusTable = ({
     const isSelected = isCriterionSelected(rowId, criterionCode);
     if (!isSelected) return null;
     
-    // Find which DA groups this cell belongs to
-    const belongsToGroups = daGroups.filter(group => 
+    // Find which DA group this cell belongs to
+    const belongsToGroup = daGroups.find(group => 
       group.cells.some(cell => cell.rowId === rowId && cell.criterionCode === criterionCode)
     );
     
-    if (belongsToGroups.length > 0) {
-      // Cell is part of completed DA(s), use the first DA's color
-      return belongsToGroups[0].color;
+    if (belongsToGroup) {
+      // Cell is part of a DA, use its assigned color
+      return belongsToGroup.color;
     }
     
-    // Cell is selected but not yet part of a completed DA, use current color
-    const colorIndex = currentColorIndex % DA_COLORS.length;
-    return DA_COLORS[colorIndex];
+    // Cell is selected but not yet part of a DA
+    return null;
   };
 
   
