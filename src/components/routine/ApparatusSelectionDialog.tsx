@@ -34,8 +34,8 @@ export const ApparatusSelectionDialog = ({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedCriteria, setSelectedCriteria] = useState<SelectedCriterion[]>([]);
   const [completedDaGroups, setCompletedDaGroups] = useState<{ cells: SelectedCriterion[]; color: string }[]>([]);
-  const [colorIndex, setColorIndex] = useState(0);
-  const [daColorMap, setDaColorMap] = useState<Record<string, string>>({});
+  const [daColorMap, setDaColorMap] = useState<Record<string, number>>({});
+  const [freeColorIndices, setFreeColorIndices] = useState<number[]>([]);
   const { toast } = useToast();
 
   const handleRowClick = (item: CombinedApparatusData) => {
@@ -122,8 +122,8 @@ export const ApparatusSelectionDialog = ({
       onSelectCombinations(combinations);
       setSelectedCriteria([]);
       setCompletedDaGroups([]);
-      setColorIndex(0);
       setDaColorMap({});
+      setFreeColorIndices([]);
       onOpenChange(false);
       
       toast({
@@ -159,8 +159,8 @@ export const ApparatusSelectionDialog = ({
     setSelectedIds([]);
     setSelectedCriteria([]);
     setCompletedDaGroups([]);
-    setColorIndex(0);
     setDaColorMap({});
+    setFreeColorIndices([]);
     onOpenChange(false);
   };
 
@@ -306,33 +306,61 @@ export const ApparatusSelectionDialog = ({
   const daGroups = analyzeDaGroups();
   const daCount = daGroups.length;
   
-  // Track when new DAs are completed
+  // Track when new DAs are completed and manage color assignments
   React.useEffect(() => {
-    const newDaCount = daGroups.length;
-    const completedCount = completedDaGroups.length;
-
-    if (newDaCount > completedCount) {
-      let assigned = 0;
-      const newMap = { ...daColorMap };
-
-      const updatedGroups = daGroups.map(group => {
-        const key = getDaKey(group.cells);
-        let color = newMap[key];
-        if (!color) {
-          color = DA_COLORS[(colorIndex + assigned) % DA_COLORS.length];
-          newMap[key] = color;
-          assigned += 1;
-        }
-        return { cells: group.cells, color };
-      });
-
-      setDaColorMap(newMap);
-      setCompletedDaGroups(updatedGroups);
-      if (assigned > 0) {
-        setColorIndex(prev => prev + assigned);
+    const currentKeys = new Set(daGroups.map(group => getDaKey(group.cells)));
+    const previousKeys = new Set(completedDaGroups.map(group => getDaKey(group.cells)));
+    
+    // Find removed DAs and reclaim their colors
+    const removedKeys: string[] = [];
+    previousKeys.forEach(key => {
+      if (!currentKeys.has(key)) {
+        removedKeys.push(key);
       }
-    }
-  }, [daGroups.length, completedDaGroups, colorIndex, daColorMap]);
+    });
+    
+    // Update color map and free indices
+    const newMap = { ...daColorMap };
+    const newFreeIndices = [...freeColorIndices];
+    
+    // Reclaim colors from removed DAs
+    removedKeys.forEach(key => {
+      if (newMap[key] !== undefined) {
+        newFreeIndices.push(newMap[key]);
+        delete newMap[key];
+      }
+    });
+    
+    // Sort free indices to reuse lowest colors first
+    newFreeIndices.sort((a, b) => a - b);
+    
+    // Assign colors to DAs
+    const updatedGroups = daGroups.map(group => {
+      const key = getDaKey(group.cells);
+      let colorIndex = newMap[key];
+      
+      if (colorIndex === undefined) {
+        // Assign new color - use free index if available, otherwise use next available
+        if (newFreeIndices.length > 0) {
+          colorIndex = newFreeIndices.shift()!;
+        } else {
+          // Find the next available color index
+          const usedIndices = new Set(Object.values(newMap));
+          colorIndex = 0;
+          while (usedIndices.has(colorIndex)) {
+            colorIndex++;
+          }
+        }
+        newMap[key] = colorIndex;
+      }
+      
+      return { cells: group.cells, color: DA_COLORS[colorIndex % DA_COLORS.length] };
+    });
+    
+    setDaColorMap(newMap);
+    setFreeColorIndices(newFreeIndices);
+    setCompletedDaGroups(updatedGroups);
+  }, [daGroups.length, JSON.stringify(daGroups.map(g => getDaKey(g.cells)))]);
 
   // Handle cell deselection - unlock DA if any cell from completed DA is deselected
   const handleCriteriaChange = (newCriteria: SelectedCriterion[]) => {
@@ -502,7 +530,6 @@ export const ApparatusSelectionDialog = ({
               selectedCriteria={selectedCriteria}
               onCriteriaChange={handleCriteriaChange}
               daGroups={completedDaGroups}
-              currentColorIndex={colorIndex}
             />
 
             <div className="flex justify-end gap-3 pt-4 flex-shrink-0">
