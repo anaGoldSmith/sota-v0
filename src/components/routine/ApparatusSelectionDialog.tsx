@@ -190,21 +190,21 @@ export const ApparatusSelectionDialog = ({
 
   // Color palette for DA groups (15 distinct colors optimized for visibility on light backgrounds)
   const DA_COLORS = [
-    'border-red-600',
-    'border-pink-500',
-    'border-fuchsia-600',
-    'border-purple-600',
-    'border-indigo-600',
-    'border-blue-600',
-    'border-cyan-600',
-    'border-teal-600',
-    'border-emerald-600',
-    'border-green-600',
-    'border-lime-500',
-    'border-yellow-500',
-    'border-amber-600',
-    'border-orange-600',
-    'border-rose-600',
+    'border-red-700',        // Deep Red
+    'border-pink-600',       // Bright Pink
+    'border-purple-700',     // Deep Purple
+    'border-blue-700',       // Royal Blue
+    'border-sky-500',        // Sky Blue
+    'border-teal-600',       // Teal
+    'border-green-700',      // Forest Green
+    'border-lime-600',       // Lime Green
+    'border-yellow-500',     // Golden Yellow
+    'border-orange-700',     // Deep Orange
+    'border-amber-800',      // Brown/Rust
+    'border-fuchsia-600',    // Magenta
+    'border-indigo-800',     // Navy
+    'border-emerald-800',    // Olive/Dark Green
+    'border-rose-500',       // Coral
   ];
 
   // Helper to generate a stable key for a DA group (order-independent)
