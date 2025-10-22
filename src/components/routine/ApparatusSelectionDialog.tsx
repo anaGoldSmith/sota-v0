@@ -308,7 +308,7 @@ export const ApparatusSelectionDialog = ({
     }
   }, [daGroups.length]);
 
-  // Handle cell deselection - remove entire DA if any cell from completed DA is deselected
+  // Handle cell deselection - unlock DA if any cell from completed DA is deselected
   const handleCriteriaChange = (newCriteria: SelectedCriterion[]) => {
     if (newCriteria.length < selectedCriteria.length) {
       // User is deselecting - find which cell was removed
@@ -323,16 +323,9 @@ export const ApparatusSelectionDialog = ({
         );
         
         if (affectedDaIndex !== -1) {
-          // Remove all cells from this DA
-          const affectedDa = completedDaGroups[affectedDaIndex];
-          const filteredCriteria = newCriteria.filter(nc =>
-            !affectedDa.cells.some(cell => cell.rowId === nc.rowId && cell.criterionCode === nc.criterionCode)
-          );
-          
-          // Remove this DA from completed groups
+          // Just unlock this DA by removing it from completed groups
+          // Keep the remaining cell(s) selected
           setCompletedDaGroups(prev => prev.filter((_, idx) => idx !== affectedDaIndex));
-          setSelectedCriteria(filteredCriteria);
-          return;
         }
       }
     }
