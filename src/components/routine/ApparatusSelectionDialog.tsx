@@ -306,61 +306,100 @@ export const ApparatusSelectionDialog = ({
   const daGroups = analyzeDaGroups();
   const daCount = daGroups.length;
   
-  // Track when new DAs are completed and manage color assignments
+  // Track when new DAs are completed and manage color assignments with color migration
   React.useEffect(() => {
-    const currentKeys = new Set(daGroups.map(group => getDaKey(group.cells)));
-    const previousKeys = new Set(completedDaGroups.map(group => getDaKey(group.cells)));
-    
-    // Find removed DAs and reclaim their colors
+    // Build lookup maps for previous and current groups
+    const prevLookup = new Map(
+      completedDaGroups.map(g => [getDaKey(g.cells), g as { cells: SelectedCriterion[]; color: string }])
+    );
+    const currLookup = new Map(
+      daGroups.map(g => [getDaKey(g.cells), g as { cells: SelectedCriterion[]; color: string }])
+    );
+
+    const previousKeys = new Set(prevLookup.keys());
+    const currentKeys = new Set(currLookup.keys());
+
     const removedKeys: string[] = [];
-    previousKeys.forEach(key => {
-      if (!currentKeys.has(key)) {
-        removedKeys.push(key);
-      }
-    });
-    
-    // Update color map and free indices
-    const newMap = { ...daColorMap };
-    const newFreeIndices = [...freeColorIndices];
-    
-    // Reclaim colors from removed DAs
-    removedKeys.forEach(key => {
-      if (newMap[key] !== undefined) {
-        newFreeIndices.push(newMap[key]);
-        delete newMap[key];
-      }
-    });
-    
-    // Sort free indices to reuse lowest colors first
-    newFreeIndices.sort((a, b) => a - b);
-    
-    // Assign colors to DAs
-    const updatedGroups = daGroups.map(group => {
-      const key = getDaKey(group.cells);
-      let colorIndex = newMap[key];
-      
-      if (colorIndex === undefined) {
-        // Assign new color - use free index if available, otherwise use next available
-        if (newFreeIndices.length > 0) {
-          colorIndex = newFreeIndices.shift()!;
-        } else {
-          // Find the next available color index
-          const usedIndices = new Set(Object.values(newMap));
-          colorIndex = 0;
-          while (usedIndices.has(colorIndex)) {
-            colorIndex++;
+    const addedKeys: string[] = [];
+
+    previousKeys.forEach(k => { if (!currentKeys.has(k)) removedKeys.push(k); });
+    currentKeys.forEach(k => { if (!previousKeys.has(k)) addedKeys.push(k); });
+
+    // Nothing changed
+    if (removedKeys.length === 0 && addedKeys.length === 0 && prevLookup.size === currLookup.size) {
+      return;
+    }
+
+    // Helper to turn cells into a comparable set
+    const cellsSet = (cells: SelectedCriterion[]) => new Set(cells.map(c => `${c.rowId}:${c.criterionCode}`));
+
+    const newMap: Record<string, number> = { ...daColorMap };
+    let newFree = [...freeColorIndices];
+
+    // Try to migrate colors from removed -> added when they share at least one cell
+    const usedRemoved = new Set<string>();
+    addedKeys.forEach(addedKey => {
+      const addedCells = cellsSet(currLookup.get(addedKey)!.cells);
+      let migratedFrom: string | null = null;
+      for (const rk of removedKeys) {
+        if (usedRemoved.has(rk)) continue;
+        const removedCells = cellsSet(prevLookup.get(rk)!.cells);
+        // Overlap if any common cell
+        for (const cell of addedCells) {
+          if (removedCells.has(cell)) {
+            migratedFrom = rk;
+            break;
           }
         }
-        newMap[key] = colorIndex;
+        if (migratedFrom) break;
       }
-      
-      return { cells: group.cells, color: DA_COLORS[colorIndex % DA_COLORS.length] };
+      if (migratedFrom && newMap[migratedFrom] !== undefined) {
+        newMap[addedKey] = newMap[migratedFrom];
+        delete newMap[migratedFrom];
+        usedRemoved.add(migratedFrom);
+      }
     });
-    
+
+    // Reclaim colors from any remaining removed keys (not migrated)
+    removedKeys.forEach(rk => {
+      if (usedRemoved.has(rk)) return;
+      if (newMap[rk] !== undefined) {
+        newFree.push(newMap[rk]);
+        delete newMap[rk];
+      }
+    });
+
+    // Sort free indices to reuse lowest first
+    newFree.sort((a, b) => a - b);
+
+    // Assign colors to any added keys that still don't have a color
+    addedKeys.forEach(ak => {
+      if (newMap[ak] === undefined) {
+        if (newFree.length > 0) {
+          newMap[ak] = newFree.shift()!;
+        } else {
+          const used = new Set(Object.values(newMap));
+          let idx = 0;
+          while (used.has(idx)) idx++;
+          newMap[ak] = idx;
+        }
+      }
+    });
+
+    // Build updated groups with resolved colors
+    const updatedGroups = daGroups.map(g => {
+      const key = getDaKey(g.cells);
+      const idx = newMap[key] ?? 0;
+      return { cells: g.cells, color: DA_COLORS[idx % DA_COLORS.length] };
+    });
+
     setDaColorMap(newMap);
-    setFreeColorIndices(newFreeIndices);
+    setFreeColorIndices(newFree);
     setCompletedDaGroups(updatedGroups);
-  }, [daGroups.length, JSON.stringify(daGroups.map(g => getDaKey(g.cells)))]);
+  }, [
+    JSON.stringify(completedDaGroups.map(g => getDaKey(g.cells)).sort()),
+    JSON.stringify(daGroups.map(g => getDaKey(g.cells)).sort())
+  ]);
 
   // Handle cell deselection - unlock DA if any cell from completed DA is deselected
   const handleCriteriaChange = (newCriteria: SelectedCriterion[]) => {
