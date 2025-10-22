@@ -207,7 +207,7 @@ export const ApparatusSelectionDialog = ({
     'border-emerald-500',
   ];
 
-  // Analyze selected criteria in order to form discrete DA pairs (no combinatorial overcount)
+  // Analyze selected criteria in order to form discrete DA pairs (respecting selection order)
   const analyzeDaGroups = () => {
     const groups: { cells: SelectedCriterion[]; color: string }[] = [];
     const used = new Set<string>(); // key: `${rowId}:${criterionCode}`
@@ -219,22 +219,46 @@ export const ApparatusSelectionDialog = ({
       const aKey = getKey(a);
       if (used.has(aKey)) continue;
 
-      // Find best partner after 'a' respecting validity rules
+      // Find the NEAREST valid partner after 'a' to respect selection order
       let partnerIndex = -1;
       let type: 'type1' | 'type2' | null = null;
 
-      // Type 1: same row, different criterion
-      for (let j = i + 1; j < selectedCriteria.length; j++) {
-        const b = selectedCriteria[j];
-        if (used.has(getKey(b))) continue;
-        if (b.rowId === a.rowId && b.criterionCode !== a.criterionCode) {
-          partnerIndex = j;
-          type = 'type1';
-          break;
+      // Check the very next cell first to respect user's selection order
+      if (i + 1 < selectedCriteria.length) {
+        const b = selectedCriteria[i + 1];
+        if (!used.has(getKey(b))) {
+          // Check if next cell forms valid Type 1 DA
+          if (b.rowId === a.rowId && b.criterionCode !== a.criterionCode) {
+            partnerIndex = i + 1;
+            type = 'type1';
+          }
+          // Check if next cell forms valid Type 2 DA
+          else if (b.rowId !== a.rowId && b.criterionCode === a.criterionCode) {
+            const elementA = apparatusData.find(e => e.id === a.rowId);
+            const elementB = apparatusData.find(e => e.id === b.rowId);
+            const hasSpecial = (elementA && specialCodes.includes(elementA.code)) || (elementB && specialCodes.includes(elementB.code));
+            if (hasSpecial) {
+              partnerIndex = i + 1;
+              type = 'type2';
+            }
+          }
         }
       }
 
-      // Type 2: same criterion across rows where at least one row is a special code base
+      // If immediate next doesn't work, search further for Type 1 (same row priority)
+      if (partnerIndex === -1) {
+        for (let j = i + 1; j < selectedCriteria.length; j++) {
+          const b = selectedCriteria[j];
+          if (used.has(getKey(b))) continue;
+          if (b.rowId === a.rowId && b.criterionCode !== a.criterionCode) {
+            partnerIndex = j;
+            type = 'type1';
+            break;
+          }
+        }
+      }
+
+      // If still no match, look for Type 2 (same criterion across special code rows)
       if (partnerIndex === -1) {
         for (let j = i + 1; j < selectedCriteria.length; j++) {
           const b = selectedCriteria[j];
