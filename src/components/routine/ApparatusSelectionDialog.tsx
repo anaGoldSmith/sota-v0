@@ -33,7 +33,7 @@ export const ApparatusSelectionDialog = ({
   const { apparatusData, criteria, isLoading } = useApparatusData(apparatus);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedCriteria, setSelectedCriteria] = useState<SelectedCriterion[]>([]);
-  const [lastCompletedDaCount, setLastCompletedDaCount] = useState(0);
+  const [completedDaGroups, setCompletedDaGroups] = useState<{ cells: SelectedCriterion[]; color: string }[]>([]);
   const [colorIndex, setColorIndex] = useState(0);
   const { toast } = useToast();
 
@@ -120,7 +120,7 @@ export const ApparatusSelectionDialog = ({
 
       onSelectCombinations(combinations);
       setSelectedCriteria([]);
-      setLastCompletedDaCount(0);
+      setCompletedDaGroups([]);
       setColorIndex(0);
       onOpenChange(false);
       
@@ -156,7 +156,7 @@ export const ApparatusSelectionDialog = ({
   const handleCancel = () => {
     setSelectedIds([]);
     setSelectedCriteria([]);
-    setLastCompletedDaCount(0);
+    setCompletedDaGroups([]);
     setColorIndex(0);
     onOpenChange(false);
   };
@@ -209,10 +209,15 @@ export const ApparatusSelectionDialog = ({
 
   // Analyze selected criteria in order to form discrete DA pairs (respecting selection order)
   const analyzeDaGroups = () => {
-    const groups: { cells: SelectedCriterion[]; color: string }[] = [];
+    const groups: { cells: SelectedCriterion[]; color: string }[] = [...completedDaGroups];
     const used = new Set<string>(); // key: `${rowId}:${criterionCode}`
 
     const getKey = (c: SelectedCriterion) => `${c.rowId}:${c.criterionCode}`;
+
+    // Mark all completed DA cells as used
+    completedDaGroups.forEach(group => {
+      group.cells.forEach(cell => used.add(getKey(cell)));
+    });
 
     for (let i = 0; i < selectedCriteria.length; i++) {
       const a = selectedCriteria[i];
@@ -292,32 +297,56 @@ export const ApparatusSelectionDialog = ({
   const daGroups = analyzeDaGroups();
   const daCount = daGroups.length;
   
-  // Debug logging
+  // Track when new DAs are completed
   React.useEffect(() => {
-    if (daGroups.length > 0) {
-      console.log('DA Groups:', daGroups.map((g, i) => ({
-        index: i,
-        cells: g.cells.map(c => `${c.rowId}:${c.criterionCode}`)
-      })));
+    const newDaCount = daGroups.length;
+    const completedCount = completedDaGroups.length;
+    
+    if (newDaCount > completedCount) {
+      // New DA(s) completed - lock them
+      setCompletedDaGroups(daGroups);
     }
   }, [daGroups.length]);
+
+  // Handle cell deselection - remove entire DA if any cell from completed DA is deselected
+  const handleCriteriaChange = (newCriteria: SelectedCriterion[]) => {
+    if (newCriteria.length < selectedCriteria.length) {
+      // User is deselecting - find which cell was removed
+      const removed = selectedCriteria.find(sc => 
+        !newCriteria.some(nc => nc.rowId === sc.rowId && nc.criterionCode === sc.criterionCode)
+      );
+      
+      if (removed) {
+        // Check if this cell belongs to a completed DA
+        const affectedDaIndex = completedDaGroups.findIndex(group =>
+          group.cells.some(cell => cell.rowId === removed.rowId && cell.criterionCode === removed.criterionCode)
+        );
+        
+        if (affectedDaIndex !== -1) {
+          // Remove all cells from this DA
+          const affectedDa = completedDaGroups[affectedDaIndex];
+          const filteredCriteria = newCriteria.filter(nc =>
+            !affectedDa.cells.some(cell => cell.rowId === nc.rowId && cell.criterionCode === nc.criterionCode)
+          );
+          
+          // Remove this DA from completed groups
+          setCompletedDaGroups(prev => prev.filter((_, idx) => idx !== affectedDaIndex));
+          setSelectedCriteria(filteredCriteria);
+          return;
+        }
+      }
+    }
+    
+    setSelectedCriteria(newCriteria);
+  };
 
   // Validate selections and auto-remove invalid ones
   useEffect(() => {
     if (selectedCriteria.length === 0) return;
     
-    const currentDaCount = daGroups.length;
-    
-    // Check if a new DA was just completed
-    if (currentDaCount > lastCompletedDaCount) {
-      setLastCompletedDaCount(currentDaCount);
-      setColorIndex(currentDaCount); // Move to next color for new DA
-      return;
-    }
-    
     // Calculate incomplete criteria (not part of completed DAs)
     const cellsInCompletedDas = new Set<string>();
-    daGroups.forEach(group => {
+    completedDaGroups.forEach(group => {
       group.cells.forEach(cell => {
         cellsInCompletedDas.add(`${cell.rowId}:${cell.criterionCode}`);
       });
@@ -386,7 +415,7 @@ export const ApparatusSelectionDialog = ({
     }, 800);
     
     return () => clearTimeout(timeoutId);
-  }, [selectedCriteria, daGroups.length, lastCompletedDaCount, apparatusData, specialCodes, toast]);
+  }, [selectedCriteria, completedDaGroups, apparatusData, specialCodes, toast]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -442,7 +471,7 @@ export const ApparatusSelectionDialog = ({
               onRowClick={handleRowClick}
               apparatus={apparatus!}
               selectedCriteria={selectedCriteria}
-              onCriteriaChange={setSelectedCriteria}
+              onCriteriaChange={handleCriteriaChange}
               daGroups={daGroups}
               currentColorIndex={colorIndex}
             />
