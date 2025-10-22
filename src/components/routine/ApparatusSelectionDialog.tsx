@@ -286,9 +286,8 @@ export const ApparatusSelectionDialog = ({
         const cells: SelectedCriterion[] = [a, b];
         used.add(aKey);
         used.add(getKey(b));
-        const color = DA_COLORS[colorIndex % DA_COLORS.length];
-        groups.push({ cells, color });
-        setColorIndex(prev => prev + 1);
+        // Don't assign color here - will be assigned when DA is completed
+        groups.push({ cells, color: '' });
       }
     }
 
@@ -304,10 +303,23 @@ export const ApparatusSelectionDialog = ({
     const completedCount = completedDaGroups.length;
     
     if (newDaCount > completedCount) {
-      // New DA(s) completed - lock them
-      setCompletedDaGroups(daGroups);
+      // New DA(s) completed - assign colors and lock them
+      const updatedGroups = daGroups.map((group, index) => {
+        if (index < completedCount) {
+          // Keep existing color for already completed DAs
+          return completedDaGroups[index];
+        } else {
+          // Assign new color for newly completed DA
+          return {
+            ...group,
+            color: DA_COLORS[colorIndex % DA_COLORS.length]
+          };
+        }
+      });
+      setCompletedDaGroups(updatedGroups);
+      setColorIndex(prev => prev + (newDaCount - completedCount));
     }
-  }, [daGroups.length]);
+  }, [daGroups.length, completedDaGroups, colorIndex]);
 
   // Handle cell deselection - unlock DA if any cell from completed DA is deselected
   const handleCriteriaChange = (newCriteria: SelectedCriterion[]) => {
