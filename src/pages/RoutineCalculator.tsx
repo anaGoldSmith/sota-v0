@@ -252,13 +252,13 @@ const RoutineCalculator = () => {
     ...processApparatusCombinations(),
   ];
 
-  const totalDB = routineElements
-    .filter(el => el.type === 'DB')
-    .reduce((sum, el) => sum + el.value, 0);
+  const dbElements = routineElements.filter(el => el.type === 'DB');
+  const totalDB = dbElements.reduce((sum, el) => sum + el.value, 0);
+  const countDB = dbElements.length;
   
-  const totalDA = routineElements
-    .filter(el => el.type === 'DA' || el.type === 'R')
-    .reduce((sum, el) => sum + el.value, 0);
+  const daElements = routineElements.filter(el => el.type === 'DA' || el.type === 'R');
+  const totalDA = daElements.reduce((sum, el) => sum + el.value, 0);
+  const countDA = daElements.length;
 
   const totalScore = totalDB + totalDA;
 
@@ -373,20 +373,24 @@ const RoutineCalculator = () => {
           {routineElements.length > 0 && (
             <Card className="p-6">
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold">Routine Elements</h2>
                   <div className="flex items-center gap-4">
                     <div className="text-sm space-y-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <span className="text-muted-foreground">Total DB:</span>
+                        <Badge variant="secondary" className="font-mono">{countDB}</Badge>
+                        <span className="text-muted-foreground">Total DB Value:</span>
                         <Badge variant="secondary" className="font-mono">{totalDB.toFixed(2)}</Badge>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <span className="text-muted-foreground">Total DA:</span>
+                        <Badge variant="secondary" className="font-mono">{countDA}</Badge>
+                        <span className="text-muted-foreground">Total DA Value:</span>
                         <Badge variant="secondary" className="font-mono">{totalDA.toFixed(2)}</Badge>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">Total:</span>
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold">Total D-score:</span>
                         <Badge variant="default" className="font-mono">{totalScore.toFixed(2)}</Badge>
                       </div>
                     </div>
