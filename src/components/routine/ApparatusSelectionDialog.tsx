@@ -286,8 +286,9 @@ export const ApparatusSelectionDialog = ({
         const cells: SelectedCriterion[] = [a, b];
         used.add(aKey);
         used.add(getKey(b));
-        const color = DA_COLORS[groups.length % DA_COLORS.length];
+        const color = DA_COLORS[colorIndex % DA_COLORS.length];
         groups.push({ cells, color });
+        setColorIndex(prev => prev + 1);
       }
     }
 
