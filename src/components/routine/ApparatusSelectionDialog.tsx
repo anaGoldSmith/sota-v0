@@ -34,8 +34,7 @@ export const ApparatusSelectionDialog = ({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedCriteria, setSelectedCriteria] = useState<SelectedCriterion[]>([]);
   const [completedDaGroups, setCompletedDaGroups] = useState<{ cells: SelectedCriterion[]; color: string }[]>([]);
-  const [daColorMap, setDaColorMap] = useState<Record<string, number>>({});
-  const [freeColorIndices, setFreeColorIndices] = useState<number[]>([]);
+  const [availableSlot, setAvailableSlot] = useState<number | null>(null);
   const { toast } = useToast();
 
   const handleRowClick = (item: CombinedApparatusData) => {
@@ -122,8 +121,7 @@ export const ApparatusSelectionDialog = ({
       onSelectCombinations(combinations);
       setSelectedCriteria([]);
       setCompletedDaGroups([]);
-      setDaColorMap({});
-      setFreeColorIndices([]);
+      setAvailableSlot(null);
       onOpenChange(false);
       
       toast({
@@ -159,8 +157,7 @@ export const ApparatusSelectionDialog = ({
     setSelectedIds([]);
     setSelectedCriteria([]);
     setCompletedDaGroups([]);
-    setDaColorMap({});
-    setFreeColorIndices([]);
+    setAvailableSlot(null);
     onOpenChange(false);
   };
 
@@ -306,7 +303,7 @@ export const ApparatusSelectionDialog = ({
   const daGroups = analyzeDaGroups();
   const daCount = daGroups.length;
   
-  // Track when new DAs are completed and manage color assignments with color migration
+  // Position-based color assignment: each DA's position determines its color
   React.useEffect(() => {
     // Build lookup maps for previous and current groups
     const prevLookup = new Map(
@@ -330,75 +327,87 @@ export const ApparatusSelectionDialog = ({
       return;
     }
 
-    // Helper to turn cells into a comparable set
+    // Helper to check if two DAs share at least one cell
     const cellsSet = (cells: SelectedCriterion[]) => new Set(cells.map(c => `${c.rowId}:${c.criterionCode}`));
+    
+    const sharesCell = (cells1: SelectedCriterion[], cells2: SelectedCriterion[]) => {
+      const set1 = cellsSet(cells1);
+      const set2 = cellsSet(cells2);
+      for (const cell of set1) {
+        if (set2.has(cell)) return true;
+      }
+      return false;
+    };
 
-    const newMap: Record<string, number> = { ...daColorMap };
-    let newFree = [...freeColorIndices];
+    // Build new completed groups list maintaining position-based coloring
+    const newGroups: { cells: SelectedCriterion[]; color: string }[] = [];
+    const processedAddedKeys = new Set<string>();
 
-    // Try to migrate colors from removed -> added when they share at least one cell
-    const usedRemoved = new Set<string>();
-    addedKeys.forEach(addedKey => {
-      const addedCells = cellsSet(currLookup.get(addedKey)!.cells);
-      let migratedFrom: string | null = null;
-      for (const rk of removedKeys) {
-        if (usedRemoved.has(rk)) continue;
-        const removedCells = cellsSet(prevLookup.get(rk)!.cells);
-        // Overlap if any common cell
-        for (const cell of addedCells) {
-          if (removedCells.has(cell)) {
-            migratedFrom = rk;
+    // Step 1: For each existing DA position, either keep it or replace with modified version
+    completedDaGroups.forEach((prevGroup, index) => {
+      const prevKey = getDaKey(prevGroup.cells);
+      
+      if (currentKeys.has(prevKey)) {
+        // DA still exists at this position
+        newGroups.push({ cells: prevGroup.cells, color: DA_COLORS[index % DA_COLORS.length] });
+      } else if (removedKeys.includes(prevKey)) {
+        // This DA was removed - check if there's a new DA that shares cells (modification)
+        let replacementKey: string | null = null;
+        for (const addedKey of addedKeys) {
+          if (processedAddedKeys.has(addedKey)) continue;
+          const addedDA = currLookup.get(addedKey)!;
+          if (sharesCell(prevGroup.cells, addedDA.cells)) {
+            replacementKey = addedKey;
             break;
           }
         }
-        if (migratedFrom) break;
-      }
-      if (migratedFrom && newMap[migratedFrom] !== undefined) {
-        newMap[addedKey] = newMap[migratedFrom];
-        delete newMap[migratedFrom];
-        usedRemoved.add(migratedFrom);
-      }
-    });
-
-    // Reclaim colors from any remaining removed keys (not migrated)
-    removedKeys.forEach(rk => {
-      if (usedRemoved.has(rk)) return;
-      if (newMap[rk] !== undefined) {
-        newFree.push(newMap[rk]);
-        delete newMap[rk];
-      }
-    });
-
-    // Sort free indices to reuse lowest first
-    newFree.sort((a, b) => a - b);
-
-    // Assign colors to any added keys that still don't have a color
-    addedKeys.forEach(ak => {
-      if (newMap[ak] === undefined) {
-        if (newFree.length > 0) {
-          newMap[ak] = newFree.shift()!;
-        } else {
-          const used = new Set(Object.values(newMap));
-          let idx = 0;
-          while (used.has(idx)) idx++;
-          newMap[ak] = idx;
+        
+        if (replacementKey && availableSlot === index) {
+          // Insert modified DA at the same position
+          const addedDA = currLookup.get(replacementKey)!;
+          newGroups.push({ cells: addedDA.cells, color: DA_COLORS[index % DA_COLORS.length] });
+          processedAddedKeys.add(replacementKey);
+          setAvailableSlot(null); // Clear the slot
         }
+        // If no replacement, leave this slot empty (DA was deleted)
       }
     });
 
-    // Build updated groups with resolved colors
-    const updatedGroups = daGroups.map(g => {
-      const key = getDaKey(g.cells);
-      const idx = newMap[key] ?? 0;
-      return { cells: g.cells, color: DA_COLORS[idx % DA_COLORS.length] };
+    // Step 2: Add any remaining new DAs that weren't replacements
+    addedKeys.forEach(addedKey => {
+      if (processedAddedKeys.has(addedKey)) return;
+      
+      const addedDA = currLookup.get(addedKey)!;
+      
+      // Use availableSlot if set, otherwise append to end
+      if (availableSlot !== null && newGroups.length <= availableSlot) {
+        // Insert at the available slot
+        while (newGroups.length < availableSlot) {
+          newGroups.push({ cells: [], color: '' }); // Placeholder
+        }
+        newGroups.splice(availableSlot, 0, { 
+          cells: addedDA.cells, 
+          color: DA_COLORS[availableSlot % DA_COLORS.length] 
+        });
+        setAvailableSlot(null);
+      } else {
+        // Append to end
+        const nextIndex = newGroups.length;
+        newGroups.push({ 
+          cells: addedDA.cells, 
+          color: DA_COLORS[nextIndex % DA_COLORS.length] 
+        });
+      }
     });
 
-    setDaColorMap(newMap);
-    setFreeColorIndices(newFree);
-    setCompletedDaGroups(updatedGroups);
+    // Filter out any empty placeholders
+    const filteredGroups = newGroups.filter(g => g.cells.length > 0);
+
+    setCompletedDaGroups(filteredGroups);
   }, [
     JSON.stringify(completedDaGroups.map(g => getDaKey(g.cells)).sort()),
-    JSON.stringify(daGroups.map(g => getDaKey(g.cells)).sort())
+    JSON.stringify(daGroups.map(g => getDaKey(g.cells)).sort()),
+    availableSlot
   ]);
 
   // Handle cell deselection - unlock DA if any cell from completed DA is deselected
@@ -416,8 +425,9 @@ export const ApparatusSelectionDialog = ({
         );
         
         if (affectedDaIndex !== -1) {
-          // Just unlock this DA by removing it from completed groups
-          // Keep the remaining cell(s) selected
+          // Store the position of the DA being modified so new DA can reuse this position
+          setAvailableSlot(affectedDaIndex);
+          // Unlock this DA by removing it from completed groups
           setCompletedDaGroups(prev => prev.filter((_, idx) => idx !== affectedDaIndex));
         }
       }
