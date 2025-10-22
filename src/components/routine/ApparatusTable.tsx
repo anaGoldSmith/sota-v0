@@ -27,23 +27,23 @@ const formatCriteriaValue = (value: string | null): string => {
   return '';
 };
 
-// Color palette for DA groups (15 distinct colors)
+// Color palette for DA groups (15 distinct colors optimized for visibility on light backgrounds)
 const DA_COLORS = [
-  'border-purple-500',
-  'border-blue-500',
-  'border-rose-500',
-  'border-green-500',
-  'border-orange-500',
-  'border-cyan-500',
+  'border-red-600',
   'border-pink-500',
-  'border-indigo-500',
-  'border-yellow-500',
-  'border-teal-500',
-  'border-red-500',
+  'border-fuchsia-600',
+  'border-purple-600',
+  'border-indigo-600',
+  'border-blue-600',
+  'border-cyan-600',
+  'border-teal-600',
+  'border-emerald-600',
+  'border-green-600',
   'border-lime-500',
-  'border-violet-500',
-  'border-amber-500',
-  'border-emerald-500',
+  'border-yellow-500',
+  'border-amber-600',
+  'border-orange-600',
+  'border-rose-600',
 ];
 
 export const ApparatusTable = ({ 
