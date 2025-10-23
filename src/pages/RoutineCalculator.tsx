@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, X, Calculator, GripVertical } from "lucide-react";
+import { ArrowLeft, X, Calculator } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbols";
 import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
@@ -99,18 +99,13 @@ function SortableRow({ element, index, onRemove }: {
   };
 
   return (
-    <TableRow ref={setNodeRef} style={style}>
-      <TableCell className="text-center">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 cursor-grab active:cursor-grabbing"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
-        </Button>
-      </TableCell>
+    <TableRow 
+      ref={setNodeRef} 
+      style={style}
+      className="cursor-grab active:cursor-grabbing"
+      {...attributes}
+      {...listeners}
+    >
       <TableCell className="text-center font-mono">
         {index + 1}
       </TableCell>
@@ -538,7 +533,6 @@ const RoutineCalculator = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-12"></TableHead>
                         <TableHead className="w-16">Item No.</TableHead>
                         <TableHead className="w-20">Item Type</TableHead>
                         <TableHead>Routine Elements</TableHead>
