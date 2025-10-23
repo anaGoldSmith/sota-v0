@@ -385,6 +385,18 @@ export const ApparatusSelectionDialog = ({
   useEffect(() => {
     if (selectedCriteria.length !== 2) return;
     
+    // Check if we've reached the limit of 15 staged DAs
+    if (stagedDAs.length >= 15) {
+      setSelectedCriteria(prev => prev.slice(0, -1));
+      
+      toast({
+        title: "Maximum DAs reached",
+        description: "You have staged 15 DAs. Please add them to your routine before creating more. Please note that maximum 15 DAs will be evaluated in chronological order in line with FIG CoP.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const timeoutId = setTimeout(() => {
       // Check if these 2 cells form a valid DA
       const [a, b] = selectedCriteria;
