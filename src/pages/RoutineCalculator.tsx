@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, X, Calculator } from "lucide-react";
+import { ArrowLeft, X, Calculator, GripVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbols";
 import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
@@ -16,6 +16,23 @@ import { ApparatusType, CombinedApparatusData } from "@/types/apparatus";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface SelectedJump {
   id: string;
@@ -60,6 +77,90 @@ interface RoutineElement {
   };
 }
 
+// Sortable Row Component
+function SortableRow({ element, index, onRemove }: { 
+  element: RoutineElement; 
+  index: number; 
+  onRemove: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: element.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style}>
+      <TableCell className="text-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 cursor-grab active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </Button>
+      </TableCell>
+      <TableCell className="text-center font-mono">
+        {index + 1}
+      </TableCell>
+      <TableCell>
+        <Badge variant="outline" className="font-mono">
+          {element.type}
+        </Badge>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1 flex-wrap">
+          {element.symbolImages.map((url, imgIndex) => {
+            const isWSymbol = url && url.includes('Cr5W.png');
+            
+            return url && (
+              isWSymbol ? (
+                <div 
+                  key={`${element.id}-symbol-${imgIndex}`}
+                  className="h-10 w-10 flex items-center justify-center"
+                >
+                  <span className="text-3xl font-bold">W</span>
+                </div>
+              ) : (
+                <img
+                  key={`${element.id}-symbol-${imgIndex}`}
+                  src={url}
+                  alt="Symbol"
+                  className="h-10 w-10 object-contain"
+                />
+              )
+            );
+          })}
+        </div>
+      </TableCell>
+      <TableCell className="text-right font-mono">
+        {element.value.toFixed(2)}
+      </TableCell>
+      <TableCell>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={onRemove}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 const RoutineCalculator = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -69,6 +170,7 @@ const RoutineCalculator = () => {
   const [apparatusDialogOpen, setApparatusDialogOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedApparatus, setSelectedApparatus] = useState<ApparatusType | null>(null);
+  const [routineElements, setRoutineElements] = useState<RoutineElement[]>([]);
   
   const [selectedJumps, setSelectedJumps] = useState<SelectedJump[]>([]);
   const [selectedBalances, setSelectedBalances] = useState<SelectedBalance[]>([]);
@@ -76,8 +178,38 @@ const RoutineCalculator = () => {
   const [selectedApparatusElements, setSelectedApparatusElements] = useState<CombinedApparatusData[]>([]);
   const [selectedApparatusCombinations, setSelectedApparatusCombinations] = useState<ApparatusCombination[]>([]);
 
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setRoutineElements((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
   const handleSelectJump = (jump: SelectedJump) => {
     setSelectedJumps((prev) => [...prev, jump]);
+    // Add to routine elements
+    const newElement: RoutineElement = {
+      id: `jump-${jump.id}-${Date.now()}`,
+      type: 'DB',
+      symbolImages: jump.symbol_image ? [getSymbolUrl(jump.symbol_image, 'jump-symbols') || ''] : [],
+      value: jump.value,
+      originalData: jump,
+    };
+    setRoutineElements((prev) => [...prev, newElement]);
   };
 
   const handleRemoveJump = (index: number) => {
@@ -86,6 +218,15 @@ const RoutineCalculator = () => {
 
   const handleSelectBalance = (balance: SelectedBalance) => {
     setSelectedBalances((prev) => [...prev, balance]);
+    // Add to routine elements
+    const newElement: RoutineElement = {
+      id: `balance-${balance.id}-${Date.now()}`,
+      type: 'DB',
+      symbolImages: balance.symbol_image ? [getSymbolUrl(balance.symbol_image, 'jump-symbols') || ''] : [],
+      value: balance.value,
+      originalData: balance,
+    };
+    setRoutineElements((prev) => [...prev, newElement]);
   };
 
   const handleRemoveBalance = (index: number) => {
@@ -94,6 +235,15 @@ const RoutineCalculator = () => {
 
   const handleSelectRotation = (rotation: SelectedRotation) => {
     setSelectedRotations((prev) => [...prev, rotation]);
+    // Add to routine elements
+    const newElement: RoutineElement = {
+      id: `rotation-${rotation.id}-${Date.now()}`,
+      type: 'DB',
+      symbolImages: rotation.symbol_image ? [getSymbolUrl(rotation.symbol_image, 'jump-symbols') || ''] : [],
+      value: rotation.value,
+      originalData: rotation,
+    };
+    setRoutineElements((prev) => [...prev, newElement]);
   };
 
   const handleRemoveRotation = (index: number) => {
@@ -106,6 +256,10 @@ const RoutineCalculator = () => {
 
   const handleSelectApparatusCombinations = (combinations: ApparatusCombination[]) => {
     setSelectedApparatusCombinations((prev) => [...prev, ...combinations]);
+    
+    // Process and add to routine elements
+    const newElements = processApparatusCombinationsToElements(combinations);
+    setRoutineElements((prev) => [...prev, ...newElements]);
   };
 
   const handleRemoveApparatusElement = (index: number) => {
@@ -163,20 +317,20 @@ const RoutineCalculator = () => {
   };
 
   // Process apparatus combinations with grouping logic for special pairings
-  const processApparatusCombinations = (): RoutineElement[] => {
+  const processApparatusCombinationsToElements = (combinations: ApparatusCombination[]): RoutineElement[] => {
     const processedElements: RoutineElement[] = [];
     let i = 0;
 
-    while (i < selectedApparatusCombinations.length) {
-      const combo = selectedApparatusCombinations[i];
+    while (i < combinations.length) {
+      const combo = combinations[i];
       
       // Check if this is part of a special pairing (has calculatedValue and next combo has same value)
       if (combo.calculatedValue !== undefined && 
-          i + 1 < selectedApparatusCombinations.length &&
-          selectedApparatusCombinations[i + 1].calculatedValue === combo.calculatedValue) {
+          i + 1 < combinations.length &&
+          combinations[i + 1].calculatedValue === combo.calculatedValue) {
         
         // This is a special pairing - combine both combinations into one element
-        const combo2 = selectedApparatusCombinations[i + 1];
+        const combo2 = combinations[i + 1];
         const symbolImages = [];
         
         // Add both base symbols
@@ -193,7 +347,7 @@ const RoutineCalculator = () => {
         }
         
         processedElements.push({
-          id: `apparatus-paired-${combo.element.id}-${combo2.element.id}`,
+          id: `apparatus-paired-${combo.element.id}-${combo2.element.id}-${Date.now()}`,
           type: 'DA' as RoutineElementType,
           symbolImages,
           value: combo.calculatedValue,
@@ -212,7 +366,7 @@ const RoutineCalculator = () => {
         });
         
         processedElements.push({
-          id: `apparatus-${combo.element.id}-${i}`,
+          id: `apparatus-${combo.element.id}-${Date.now()}-${i}`,
           type: 'DA' as RoutineElementType,
           symbolImages,
           value: combo.calculatedValue || combo.element.value,
@@ -226,32 +380,7 @@ const RoutineCalculator = () => {
     return processedElements;
   };
 
-  // Combine all elements into unified routine elements
-  const routineElements: RoutineElement[] = [
-    ...selectedJumps.map((jump, index) => ({
-      id: `jump-${jump.id}-${index}`,
-      type: 'DB' as RoutineElementType,
-      symbolImages: jump.symbol_image ? [getSymbolUrl(jump.symbol_image, 'jump-symbols') || ''] : [],
-      value: jump.value,
-      originalData: jump,
-    })),
-    ...selectedBalances.map((balance, index) => ({
-      id: `balance-${balance.id}-${index}`,
-      type: 'DB' as RoutineElementType,
-      symbolImages: balance.symbol_image ? [getSymbolUrl(balance.symbol_image, 'jump-symbols') || ''] : [],
-      value: balance.value,
-      originalData: balance,
-    })),
-    ...selectedRotations.map((rotation, index) => ({
-      id: `rotation-${rotation.id}-${index}`,
-      type: 'DB' as RoutineElementType,
-      symbolImages: rotation.symbol_image ? [getSymbolUrl(rotation.symbol_image, 'jump-symbols') || ''] : [],
-      value: rotation.value,
-      originalData: rotation,
-    })),
-    ...processApparatusCombinations(),
-  ];
-
+  // Calculate scores from routine elements
   const dbElements = routineElements.filter(el => el.type === 'DB');
   const totalDB = dbElements.reduce((sum, el) => sum + el.value, 0);
   const countDB = dbElements.length;
@@ -266,6 +395,10 @@ const RoutineCalculator = () => {
     const element = routineElements[index];
     const originalData = element.originalData;
 
+    // Remove from routine elements state
+    setRoutineElements(prev => prev.filter((_, idx) => idx !== index));
+
+    // Also remove from source arrays to keep them in sync
     // Check if this is a paired special DA
     if (originalData && typeof originalData === 'object' && 'isPaired' in originalData) {
       // Remove both combinations from the array
@@ -397,70 +530,39 @@ const RoutineCalculator = () => {
                   </div>
                 </div>
 
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-16">Item No.</TableHead>
-                      <TableHead className="w-20">Item Type</TableHead>
-                      <TableHead>Routine Elements</TableHead>
-                      <TableHead className="w-24 text-right">Value</TableHead>
-                      <TableHead className="w-16"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {routineElements.map((element, index) => (
-                      <TableRow key={element.id}>
-                        <TableCell className="text-center font-mono">
-                          {index + 1}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="font-mono">
-                            {element.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 flex-wrap">
-                            {element.symbolImages.map((url, imgIndex) => {
-                              // Check if this is the W criterion symbol
-                              const isWSymbol = url && url.includes('Cr5W.png');
-                              
-                              return url && (
-                                isWSymbol ? (
-                                  <div 
-                                    key={`${element.id}-symbol-${imgIndex}`}
-                                    className="h-10 w-10 flex items-center justify-center"
-                                  >
-                                    <span className="text-3xl font-bold">W</span>
-                                  </div>
-                                ) : (
-                                  <img
-                                    key={`${element.id}-symbol-${imgIndex}`}
-                                    src={url}
-                                    alt="Symbol"
-                                    className="h-10 w-10 object-contain"
-                                  />
-                                )
-                              );
-                            })}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right font-mono">
-                          {element.value.toFixed(2)}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleRemoveRoutineElement(index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12"></TableHead>
+                        <TableHead className="w-16">Item No.</TableHead>
+                        <TableHead className="w-20">Item Type</TableHead>
+                        <TableHead>Routine Elements</TableHead>
+                        <TableHead className="w-24 text-right">Value</TableHead>
+                        <TableHead className="w-16"></TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <SortableContext
+                      items={routineElements.map(el => el.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <TableBody>
+                        {routineElements.map((element, index) => (
+                          <SortableRow
+                            key={element.id}
+                            element={element}
+                            index={index}
+                            onRemove={() => handleRemoveRoutineElement(index)}
+                          />
+                        ))}
+                      </TableBody>
+                    </SortableContext>
+                  </Table>
+                </DndContext>
               </div>
             </Card>
           )}
