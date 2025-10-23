@@ -35,6 +35,7 @@ export const ApparatusSelectionDialog = ({
   const [selectedCriteria, setSelectedCriteria] = useState<SelectedCriterion[]>([]);
   const [completedDaGroups, setCompletedDaGroups] = useState<{ cells: SelectedCriterion[]; color: string }[]>([]);
   const [availableSlot, setAvailableSlot] = useState<number | null>(null);
+  const [stagedDAs, setStagedDAs] = useState<ApparatusCombination[]>([]);
   const { toast } = useToast();
 
   const handleRowClick = (item: CombinedApparatusData) => {
@@ -49,84 +50,17 @@ export const ApparatusSelectionDialog = ({
 
   const handleAddSelected = () => {
     // If using criterion-level selection
-    if (onSelectCombinations && selectedCriteria.length > 0) {
-      // Use analyzeDaGroups to find all valid DAs (including overlapping ones)
-      const validDaGroups = analyzeDaGroups();
-      
-      if (validDaGroups.length === 0) {
-        toast({
-          title: "Invalid selection",
-          description: "Please select criteria that form valid DAs.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const combinations: ApparatusCombination[] = [];
-      
-      // Create combinations from each DA group
-      validDaGroups.forEach(daGroup => {
-        const { cells } = daGroup;
-        
-        // Check if this is a Type 1 DA (same row) or Type 2 DA (different rows)
-        const uniqueRows = new Set(cells.map(c => c.rowId));
-        
-        if (uniqueRows.size === 1) {
-          // Type 1 DA: 2 criteria in same row
-          const rowId = cells[0].rowId;
-          const element = apparatusData.find(e => e.id === rowId);
-          if (element && apparatus) {
-            combinations.push({
-              element,
-              selectedCriteria: cells.map(c => c.criterionCode),
-              apparatus
-            });
-          }
-        } else if (uniqueRows.size === 2) {
-          // Type 2 DA: same criterion across 2 rows (special code pairing)
-          // Calculate special value: max(value1, value2) + 0.1
-          const element1 = apparatusData.find(e => e.id === cells[0].rowId);
-          const element2 = apparatusData.find(e => e.id === cells[1].rowId);
-          
-          if (element1 && element2 && apparatus) {
-            const calculatedValue = Math.max(element1.value, element2.value) + 0.1;
-            const criterion = cells[0].criterionCode; // Same criterion for both
-            
-            // Create one combination for each row
-            combinations.push({
-              element: element1,
-              selectedCriteria: [criterion],
-              apparatus,
-              calculatedValue
-            });
-            combinations.push({
-              element: element2,
-              selectedCriteria: [criterion],
-              apparatus,
-              calculatedValue
-            });
-          }
-        }
-      });
-
-      if (combinations.length === 0) {
-        toast({
-          title: "No valid combinations",
-          description: "Please select valid criteria to form DAs.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      onSelectCombinations(combinations);
+    if (onSelectCombinations && stagedDAs.length > 0) {
+      onSelectCombinations(stagedDAs);
       setSelectedCriteria([]);
       setCompletedDaGroups([]);
       setAvailableSlot(null);
+      setStagedDAs([]);
       onOpenChange(false);
       
       toast({
-        title: "Combinations added",
-        description: `Added ${combinations.length} apparatus combination${combinations.length > 1 ? 's' : ''} to routine.`,
+        title: "DAs added",
+        description: `Added ${stagedDAs.length} DA${stagedDAs.length > 1 ? 's' : ''} to routine.`,
       });
       return;
     }
@@ -158,6 +92,7 @@ export const ApparatusSelectionDialog = ({
     setSelectedCriteria([]);
     setCompletedDaGroups([]);
     setAvailableSlot(null);
+    setStagedDAs([]);
     onOpenChange(false);
   };
 
@@ -446,82 +381,90 @@ export const ApparatusSelectionDialog = ({
     setSelectedCriteria(newCriteria);
   };
 
-  // Validate selections and auto-remove invalid ones
+  // Detect when a valid DA is completed and stage it
   useEffect(() => {
-    if (selectedCriteria.length === 0) return;
+    if (selectedCriteria.length !== 2) return;
     
-    // Calculate incomplete criteria (not part of completed DAs)
-    const cellsInCompletedDas = new Set<string>();
-    completedDaGroups.forEach(group => {
-      group.cells.forEach(cell => {
-        cellsInCompletedDas.add(`${cell.rowId}:${cell.criterionCode}`);
-      });
-    });
-    
-    const incompleteCriteria = selectedCriteria.filter(sc => 
-      !cellsInCompletedDas.has(`${sc.rowId}:${sc.criterionCode}`)
-    );
-    
-    const incompleteCount = incompleteCriteria.length;
-    
-    // Only validate when we have 2+ incomplete criteria
-    if (incompleteCount < 2) return;
-    
-    // Validate after a short pause
     const timeoutId = setTimeout(() => {
-      // Group incomplete criteria
-      const incompleteByRow = new Map<string, string[]>();
-      const incompleteByCriterion = new Map<string, string[]>();
+      // Check if these 2 cells form a valid DA
+      const [a, b] = selectedCriteria;
+      let isValidDA = false;
+      let daType: 'type1' | 'type2' | null = null;
       
-      incompleteCriteria.forEach(sc => {
-        if (!incompleteByRow.has(sc.rowId)) {
-          incompleteByRow.set(sc.rowId, []);
+      // Type 1: Same row, different criteria
+      if (a.rowId === b.rowId && a.criterionCode !== b.criterionCode) {
+        isValidDA = true;
+        daType = 'type1';
+      }
+      // Type 2: Different rows, same criterion, at least one special code
+      else if (a.rowId !== b.rowId && a.criterionCode === b.criterionCode) {
+        const elementA = apparatusData.find(e => e.id === a.rowId);
+        const elementB = apparatusData.find(e => e.id === b.rowId);
+        const hasSpecial = (elementA && specialCodes.includes(elementA.code)) || 
+                          (elementB && specialCodes.includes(elementB.code));
+        if (hasSpecial) {
+          isValidDA = true;
+          daType = 'type2';
         }
-        incompleteByRow.get(sc.rowId)!.push(sc.criterionCode);
+      }
+      
+      if (isValidDA && daType && apparatus) {
+        // Create the DA combination(s)
+        const newCombinations: ApparatusCombination[] = [];
         
-        if (!incompleteByCriterion.has(sc.criterionCode)) {
-          incompleteByCriterion.set(sc.criterionCode, []);
-        }
-        incompleteByCriterion.get(sc.criterionCode)!.push(sc.rowId);
-      });
-      
-      // Check Type 1: 2 criteria in same row
-      let hasPotentialType1DA = false;
-      incompleteByRow.forEach((criteriaList) => {
-        if (criteriaList.length >= 2) {
-          hasPotentialType1DA = true;
-        }
-      });
-      
-      // Check Type 2: matching criteria across special code rows
-      let hasPotentialType2DA = false;
-      incompleteByCriterion.forEach((rowIds) => {
-        if (rowIds.length >= 2) {
-          const hasSpecialCode = rowIds.some(rowId => {
-            const element = apparatusData.find(e => e.id === rowId);
-            return element && specialCodes.includes(element.code);
-          });
-          if (hasSpecialCode) {
-            hasPotentialType2DA = true;
+        if (daType === 'type1') {
+          // Type 1: Single element with 2 criteria
+          const element = apparatusData.find(e => e.id === a.rowId);
+          if (element) {
+            newCombinations.push({
+              element,
+              selectedCriteria: [a.criterionCode, b.criterionCode],
+              apparatus
+            });
+          }
+        } else if (daType === 'type2') {
+          // Type 2: Two elements, same criterion, special pairing
+          const element1 = apparatusData.find(e => e.id === a.rowId);
+          const element2 = apparatusData.find(e => e.id === b.rowId);
+          
+          if (element1 && element2) {
+            const calculatedValue = Math.max(element1.value, element2.value) + 0.1;
+            const criterion = a.criterionCode;
+            
+            newCombinations.push({
+              element: element1,
+              selectedCriteria: [criterion],
+              apparatus,
+              calculatedValue
+            });
+            newCombinations.push({
+              element: element2,
+              selectedCriteria: [criterion],
+              apparatus,
+              calculatedValue
+            });
           }
         }
-      });
-      
-      // If invalid, remove last selected criterion
-      if (!hasPotentialType1DA && !hasPotentialType2DA) {
-        const lastCriterion = selectedCriteria[selectedCriteria.length - 1];
-        setSelectedCriteria(prev => prev.slice(0, -1));
         
-        toast({
-          title: "Invalid DA selection",
-          description: "Please select two criteria for one base. Or, choose the base \"Catch from High Throw\" with one criterion and another base with the same criterion.",
-          variant: "destructive",
-        });
+        if (newCombinations.length > 0) {
+          // Add to staged DAs
+          setStagedDAs(prev => [...prev, ...newCombinations]);
+          
+          // Clear the table for next DA
+          setSelectedCriteria([]);
+          setCompletedDaGroups([]);
+          
+          // Show success toast
+          toast({
+            title: "Valid DA was created",
+            description: "Continue selecting to create more DAs or click 'Add DAs' to finish.",
+          });
+        }
       }
-    }, 800);
+    }, 300);
     
     return () => clearTimeout(timeoutId);
-  }, [selectedCriteria, completedDaGroups, apparatusData, specialCodes, toast]);
+  }, [selectedCriteria, apparatusData, specialCodes, apparatus, toast]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -585,8 +528,8 @@ export const ApparatusSelectionDialog = ({
               <Button variant="outline" onClick={handleCancel}>
                 Cancel
               </Button>
-              <Button onClick={handleAddSelected} disabled={selectedCriteria.length === 0}>
-                Add Selected {daCount > 0 && `(${daCount} DA${daCount > 1 ? 's' : ''})`}
+              <Button onClick={handleAddSelected} disabled={stagedDAs.length === 0}>
+                Add DAs {stagedDAs.length > 0 && `(${stagedDAs.length})`}
               </Button>
             </div>
           </div>
