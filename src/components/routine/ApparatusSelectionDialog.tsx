@@ -36,6 +36,7 @@ export const ApparatusSelectionDialog = ({
   const [completedDaGroups, setCompletedDaGroups] = useState<{ cells: SelectedCriterion[]; color: string }[]>([]);
   const [availableSlot, setAvailableSlot] = useState<number | null>(null);
   const [stagedDAs, setStagedDAs] = useState<ApparatusCombination[]>([]);
+  const [daCount, setDaCount] = useState(0); // Track actual number of DAs created (not combinations)
   const { toast } = useToast();
 
   const handleRowClick = (item: CombinedApparatusData) => {
@@ -56,11 +57,13 @@ export const ApparatusSelectionDialog = ({
       setCompletedDaGroups([]);
       setAvailableSlot(null);
       setStagedDAs([]);
+      const dasAddedCount = daCount; // Store before reset
+      setDaCount(0);
       onOpenChange(false);
       
       toast({
         title: "DAs added",
-        description: `Added ${stagedDAs.length} DA${stagedDAs.length > 1 ? 's' : ''} to routine.`,
+        description: `Added ${dasAddedCount} DA${dasAddedCount !== 1 ? 's' : ''} to routine.`,
       });
       return;
     }
@@ -93,6 +96,7 @@ export const ApparatusSelectionDialog = ({
     setCompletedDaGroups([]);
     setAvailableSlot(null);
     setStagedDAs([]);
+    setDaCount(0);
     onOpenChange(false);
   };
 
@@ -236,7 +240,6 @@ export const ApparatusSelectionDialog = ({
   };
 
   const daGroups = analyzeDaGroups();
-  const daCount = daGroups.length;
   
   // Position-based color assignment: each DA's position determines its color
   React.useEffect(() => {
@@ -386,7 +389,7 @@ export const ApparatusSelectionDialog = ({
     if (selectedCriteria.length !== 2) return;
     
     // Check if we've reached the limit of 15 staged DAs
-    if (stagedDAs.length >= 15) {
+    if (daCount >= 15) {
       setSelectedCriteria(prev => prev.slice(0, -1));
       
       toast({
@@ -461,6 +464,7 @@ export const ApparatusSelectionDialog = ({
         if (newCombinations.length > 0) {
           // Add to staged DAs
           setStagedDAs(prev => [...prev, ...newCombinations]);
+          setDaCount(prev => prev + 1); // Increment DA count by 1 (regardless of how many combinations)
           
           // Clear the table for next DA
           setSelectedCriteria([]);
@@ -549,9 +553,9 @@ export const ApparatusSelectionDialog = ({
               <Button variant="outline" onClick={handleCancel}>
                 Cancel
               </Button>
-              <Button onClick={handleAddSelected} disabled={stagedDAs.length === 0}>
-                Add DAs {stagedDAs.length > 0 && `(${stagedDAs.length})`}
-              </Button>
+          <Button onClick={handleAddSelected} disabled={daCount === 0}>
+            Add DAs {daCount > 0 && `(${daCount})`}
+          </Button>
             </div>
           </div>
         )}
