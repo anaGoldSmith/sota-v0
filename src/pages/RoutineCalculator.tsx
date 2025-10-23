@@ -400,7 +400,8 @@ const RoutineCalculator = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-20">Item</TableHead>
+                      <TableHead className="w-16">Item No.</TableHead>
+                      <TableHead className="w-20">Item Type</TableHead>
                       <TableHead>Routine Elements</TableHead>
                       <TableHead className="w-24 text-right">Value</TableHead>
                       <TableHead className="w-16"></TableHead>
@@ -409,6 +410,9 @@ const RoutineCalculator = () => {
                   <TableBody>
                     {routineElements.map((element, index) => (
                       <TableRow key={element.id}>
+                        <TableCell className="text-center font-mono">
+                          {index + 1}
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="font-mono">
                             {element.type}
