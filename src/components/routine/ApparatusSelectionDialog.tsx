@@ -381,7 +381,7 @@ export const ApparatusSelectionDialog = ({
     setSelectedCriteria(newCriteria);
   };
 
-  // Detect when a valid DA is completed and stage it
+  // Detect when a valid DA is completed and stage it, or warn about invalid DA
   useEffect(() => {
     if (selectedCriteria.length !== 2) return;
     
@@ -460,6 +460,15 @@ export const ApparatusSelectionDialog = ({
             description: "Continue selecting to create more DAs or click 'Add DAs' to finish.",
           });
         }
+      } else {
+        // Invalid DA - remove the last selected cell and show warning
+        setSelectedCriteria(prev => prev.slice(0, -1));
+        
+        toast({
+          title: "Invalid DA selection",
+          description: "Please select two criteria for one base. Or, choose the base \"Catch from High Throw\" with one criterion and another base with the same criterion.",
+          variant: "destructive",
+        });
       }
     }, 300);
     
