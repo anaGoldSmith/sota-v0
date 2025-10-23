@@ -391,7 +391,7 @@ export const ApparatusSelectionDialog = ({
       
       toast({
         title: "Maximum DAs reached",
-        description: "You have staged 15 DAs. Please add them to your routine before creating more. Please note that maximum 15 DAs will be evaluated in chronological order in line with FIG CoP.",
+        description: "You have created 15 DAs. Please add them to your routine before creating more. Please note that maximum 15 DAs will be evaluated in chronological order in line with FIG CoP.",
         variant: "destructive",
       });
       return;
