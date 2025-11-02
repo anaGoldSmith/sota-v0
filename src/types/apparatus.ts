@@ -4,7 +4,6 @@ export interface DAElement {
   name: string;
   description: string;
   value: number;
-  symbol_image: string | null;
   Cr1V: boolean;
   Cr2H: boolean;
   Cr3L: boolean;

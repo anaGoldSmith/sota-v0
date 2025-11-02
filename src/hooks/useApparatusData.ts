@@ -69,9 +69,48 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
     enabled: !!apparatus,
   });
 
+  // Fetch all technical elements to get symbols for DA codes
+  const { data: technicalElements = [] } = useQuery({
+    queryKey: ["technicalElements", apparatus],
+    queryFn: async () => {
+      if (!apparatus) return [];
+
+      let data, error;
+
+      switch (apparatus) {
+        case 'hoop':
+          ({ data, error } = await supabase
+            .from('hoop_technical_elements')
+            .select('code, symbol_image'));
+          break;
+        case 'ball':
+          ({ data, error } = await supabase
+            .from('ball_technical_elements')
+            .select('code, symbol_image'));
+          break;
+        case 'clubs':
+          ({ data, error } = await supabase
+            .from('clubs_technical_elements')
+            .select('code, symbol_image'));
+          break;
+        case 'ribbon':
+          ({ data, error } = await supabase
+            .from('ribbon_technical_elements')
+            .select('code, symbol_image'));
+          break;
+        default:
+          return [];
+      }
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!apparatus,
+  });
+
   // Fetch apparatus-specific data from separate DA tables
   const { data: apparatusData, isLoading, error } = useQuery({
-    queryKey: ["apparatus", apparatus],
+    queryKey: ["apparatus", apparatus, technicalElements],
     queryFn: async () => {
       if (!apparatus) return null;
 
@@ -96,12 +135,17 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
       // Apply natural sort
       elements.sort((a, b) => naturalSort(a.code, b.code));
 
+      // Create a map of code -> symbol_image from technical elements
+      const symbolMap = new Map<string, string | null>(
+        technicalElements.map((te: any) => [te.code, te.symbol_image || null])
+      );
+
       // Transform to CombinedApparatusData format
       const combined: CombinedApparatusData[] = elements.map((element) => ({
         id: element.id,
         code: element.code,
         description: element.description,
-        symbol_image: element.symbol_image,
+        symbol_image: symbolMap.get(element.code) || null,
         value: element.value,
         criteria: {
           Cr1V: element.Cr1V,
@@ -116,7 +160,7 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
 
       return combined;
     },
-    enabled: !!apparatus,
+    enabled: !!apparatus && technicalElements.length > 0,
   });
 
   return {
