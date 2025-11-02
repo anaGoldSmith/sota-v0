@@ -59,11 +59,22 @@ export const ApparatusTable = ({
   const [expandedParents, setExpandedParents] = React.useState<Set<string>>(new Set());
   const selectedCriteria = externalSelectedCriteria ?? internalSelectedCriteria;
 
+  // Build a map of which codes actually have children
+  const codesWithChildren = React.useMemo(() => {
+    const parentCodes = new Set<string>();
+    data.forEach(item => {
+      if (item.code.includes('.')) {
+        const parentCode = item.code.split('.')[0];
+        parentCodes.add(parentCode);
+      }
+    });
+    return parentCodes;
+  }, [data]);
+
   // Helper functions to determine parent-child relationships
-  const isParentRow = (code: string) => !code.includes('.');
+  const hasChildren = (code: string) => codesWithChildren.has(code);
+  const isChildRow = (code: string) => code.includes('.');
   const getParentCode = (code: string) => code.split('.')[0];
-  const isChildOf = (childCode: string, parentCode: string) => 
-    childCode.startsWith(parentCode + '.');
 
   const toggleParent = (parentCode: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -191,8 +202,8 @@ export const ApparatusTable = ({
         </TableHeader>
         <TableBody>
           {data.map((item) => {
-            const isParent = isParentRow(item.code);
-            const isChild = !isParent;
+            const isParent = hasChildren(item.code);
+            const isChild = isChildRow(item.code);
             const parentCode = isChild ? getParentCode(item.code) : null;
             const isExpanded = isParent && expandedParents.has(item.code);
             
