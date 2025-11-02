@@ -45,6 +45,11 @@ const ApparatusConfiguration = () => {
   const clubsBasesSymbolInputRef = useRef<HTMLInputElement>(null);
   const ribbonBasesSymbolInputRef = useRef<HTMLInputElement>(null);
 
+  // TE Config upload states
+  const [teFiles, setTeFiles] = useState<File[]>([]);
+  const [uploadingTe, setUploadingTe] = useState(false);
+  const teInputRef = useRef<HTMLInputElement>(null);
+
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -417,6 +422,83 @@ const ApparatusConfiguration = () => {
     }
   };
 
+  const handleTeUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (teFiles.length === 0) {
+      toast.error("Please select at least one CSV file");
+      return;
+    }
+
+    setUploadingTe(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const file of teFiles) {
+        const fileName = file.name.toLowerCase().replace('.csv', '');
+        
+        const tableMap: Record<string, string> = {
+          'hoop_technical_elements': 'import-hoop-technical-elements-csv',
+          'ball_technical_elements': 'import-ball-technical-elements-csv',
+          'clubs_technical_elements': 'import-clubs-technical-elements-csv',
+          'ribbon_technical_elements': 'import-ribbon-technical-elements-csv',
+        };
+
+        const functionName = tableMap[fileName];
+        
+        if (!functionName) {
+          console.warn(`Skipping ${file.name} - filename must match: hoop_technical_elements.csv, ball_technical_elements.csv, clubs_technical_elements.csv, or ribbon_technical_elements.csv`);
+          failCount++;
+          continue;
+        }
+
+        try {
+          const csvContent = await file.text();
+          
+          const { data, error } = await supabase.functions.invoke(functionName, {
+            body: { csvContent },
+            headers: {
+              Authorization: `Bearer ${session?.access_token}`,
+            }
+          });
+
+          if (error) throw error;
+
+          if (data.success) {
+            successCount++;
+            console.log(`Successfully imported ${file.name}`);
+          } else {
+            failCount++;
+            console.error(`Failed to import ${file.name}:`, data.error);
+          }
+        } catch (error: any) {
+          console.error(`Error importing ${file.name}:`, error);
+          failCount++;
+        }
+      }
+
+      if (successCount > 0 && failCount === 0) {
+        toast.success(`Successfully imported ${successCount} file${successCount > 1 ? 's' : ''}!`);
+      } else if (successCount > 0 && failCount > 0) {
+        toast.success(`Imported ${successCount} files, ${failCount} failed`);
+      } else {
+        toast.error("All imports failed");
+      }
+
+      setTeFiles([]);
+      if (teInputRef.current) teInputRef.current.value = '';
+
+    } catch (error: any) {
+      console.error('TE upload error:', error);
+      toast.error(`Upload failed: ${error.message || "Unknown error"}`);
+    } finally {
+      setUploadingTe(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -775,6 +857,52 @@ const ApparatusConfiguration = () => {
                 </AccordionItem>
               </Accordion>
 
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* TE Config Section */}
+          <AccordionItem value="te-config" className="border rounded-lg px-4">
+            <AccordionTrigger className="text-xl font-semibold">TE Config</AccordionTrigger>
+            <AccordionContent className="space-y-4 pt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Import Technical Elements from CSV</CardTitle>
+                  <CardDescription>
+                    Upload CSV files for hoop, ball, clubs, and ribbon technical elements. You can select multiple files at once.
+                    <br />
+                    File names must match: hoop_technical_elements.csv, ball_technical_elements.csv, clubs_technical_elements.csv, ribbon_technical_elements.csv
+                    <br />
+                    Required columns: parentGroup, parentGroupCode, technicalElement, DA, specialCode, code, name, description, dataInformationAboutTE (optional)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleTeUpload} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="te-input">CSV Files</Label>
+                      <Input
+                        id="te-input"
+                        ref={teInputRef}
+                        type="file"
+                        accept=".csv,text/csv"
+                        multiple
+                        onChange={(e) => setTeFiles(Array.from(e.target.files || []))}
+                      />
+                      {teFiles.length > 0 && (
+                        <div className="text-sm text-muted-foreground">
+                          {teFiles.length} file{teFiles.length > 1 ? 's' : ''} selected:
+                          <ul className="list-disc list-inside mt-1">
+                            {teFiles.map((f, i) => <li key={i}>{f.name}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <Button type="submit" disabled={uploadingTe} className="w-full">
+                      {uploadingTe ? "Uploading..." : "Upload Technical Elements CSV"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
             </AccordionContent>
           </AccordionItem>
         </Accordion>

@@ -122,6 +122,51 @@ export type Database = {
         }
         Relationships: []
       }
+      ball_technical_elements: {
+        Row: {
+          code: string
+          created_at: string
+          da: boolean
+          data_information_about_te: string | null
+          description: string
+          id: string
+          name: string
+          parent_group: string
+          parent_group_code: string
+          special_code: boolean
+          technical_element: boolean
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          da?: boolean
+          data_information_about_te?: string | null
+          description: string
+          id?: string
+          name: string
+          parent_group: string
+          parent_group_code: string
+          special_code?: boolean
+          technical_element?: boolean
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          da?: boolean
+          data_information_about_te?: string | null
+          description?: string
+          id?: string
+          name?: string
+          parent_group?: string
+          parent_group_code?: string
+          special_code?: boolean
+          technical_element?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clubs_bases: {
         Row: {
           code: string
@@ -193,6 +238,51 @@ export type Database = {
           Cr7R?: string | null
           created_at?: string
           id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      clubs_technical_elements: {
+        Row: {
+          code: string
+          created_at: string
+          da: boolean
+          data_information_about_te: string | null
+          description: string
+          id: string
+          name: string
+          parent_group: string
+          parent_group_code: string
+          special_code: boolean
+          technical_element: boolean
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          da?: boolean
+          data_information_about_te?: string | null
+          description: string
+          id?: string
+          name: string
+          parent_group: string
+          parent_group_code: string
+          special_code?: boolean
+          technical_element?: boolean
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          da?: boolean
+          data_information_about_te?: string | null
+          description?: string
+          id?: string
+          name?: string
+          parent_group?: string
+          parent_group_code?: string
+          special_code?: boolean
+          technical_element?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -298,6 +388,51 @@ export type Database = {
           Cr7R?: string | null
           created_at?: string
           id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hoop_technical_elements: {
+        Row: {
+          code: string
+          created_at: string
+          da: boolean
+          data_information_about_te: string | null
+          description: string
+          id: string
+          name: string
+          parent_group: string
+          parent_group_code: string
+          special_code: boolean
+          technical_element: boolean
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          da?: boolean
+          data_information_about_te?: string | null
+          description: string
+          id?: string
+          name: string
+          parent_group: string
+          parent_group_code: string
+          special_code?: boolean
+          technical_element?: boolean
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          da?: boolean
+          data_information_about_te?: string | null
+          description?: string
+          id?: string
+          name?: string
+          parent_group?: string
+          parent_group_code?: string
+          special_code?: boolean
+          technical_element?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -436,6 +571,51 @@ export type Database = {
           Cr7R?: string | null
           created_at?: string
           id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ribbon_technical_elements: {
+        Row: {
+          code: string
+          created_at: string
+          da: boolean
+          data_information_about_te: string | null
+          description: string
+          id: string
+          name: string
+          parent_group: string
+          parent_group_code: string
+          special_code: boolean
+          technical_element: boolean
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          da?: boolean
+          data_information_about_te?: string | null
+          description: string
+          id?: string
+          name: string
+          parent_group: string
+          parent_group_code: string
+          special_code?: boolean
+          technical_element?: boolean
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          da?: boolean
+          data_information_about_te?: string | null
+          description?: string
+          id?: string
+          name?: string
+          parent_group?: string
+          parent_group_code?: string
+          special_code?: boolean
+          technical_element?: boolean
           updated_at?: string
         }
         Relationships: []
