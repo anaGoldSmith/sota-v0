@@ -853,6 +853,154 @@ const ApparatusConfiguration = () => {
                   </form>
                 </CardContent>
               </Card>
+
+              {/* Ball TE Symbols */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Import Symbols for Ball Technical Elements</CardTitle>
+                  <CardDescription>
+                    Upload PNG symbol images for ball technical elements. File names must match the code column (e.g., B01.png for code B01)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="ball-te-symbol-input">PNG Images</Label>
+                      <Input
+                        id="ball-te-symbol-input"
+                        ref={ballTeSymbolInputRef}
+                        type="file"
+                        accept=".png,image/png"
+                        multiple
+                        onChange={(e) => setBallTeSymbolFiles(Array.from(e.target.files || []))}
+                      />
+                      {ballTeSymbolFiles.length > 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          {ballTeSymbolFiles.length} file{ballTeSymbolFiles.length > 1 ? 's' : ''} selected
+                        </p>
+                      )}
+                    </div>
+                    <Button 
+                      onClick={() => handleTeSymbolUpload('ball', ballTeSymbolFiles, ballTeSymbolInputRef, setBallTeSymbolFiles)} 
+                      disabled={uploadingTeSymbol === 'ball'} 
+                      className="w-full"
+                    >
+                      {uploadingTeSymbol === 'ball' ? "Uploading..." : "Upload Ball TE Symbols"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Hoop TE Symbols */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Import Symbols for Hoop Technical Elements</CardTitle>
+                  <CardDescription>
+                    Upload PNG symbol images for hoop technical elements. File names must match the code column (e.g., H01.png for code H01)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="hoop-te-symbol-input">PNG Images</Label>
+                      <Input
+                        id="hoop-te-symbol-input"
+                        ref={hoopTeSymbolInputRef}
+                        type="file"
+                        accept=".png,image/png"
+                        multiple
+                        onChange={(e) => setHoopTeSymbolFiles(Array.from(e.target.files || []))}
+                      />
+                      {hoopTeSymbolFiles.length > 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          {hoopTeSymbolFiles.length} file{hoopTeSymbolFiles.length > 1 ? 's' : ''} selected
+                        </p>
+                      )}
+                    </div>
+                    <Button 
+                      onClick={() => handleTeSymbolUpload('hoop', hoopTeSymbolFiles, hoopTeSymbolInputRef, setHoopTeSymbolFiles)} 
+                      disabled={uploadingTeSymbol === 'hoop'} 
+                      className="w-full"
+                    >
+                      {uploadingTeSymbol === 'hoop' ? "Uploading..." : "Upload Hoop TE Symbols"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Clubs TE Symbols */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Import Symbols for Clubs Technical Elements</CardTitle>
+                  <CardDescription>
+                    Upload PNG symbol images for clubs technical elements. File names must match the code column (e.g., C01.png for code C01)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="clubs-te-symbol-input">PNG Images</Label>
+                      <Input
+                        id="clubs-te-symbol-input"
+                        ref={clubsTeSymbolInputRef}
+                        type="file"
+                        accept=".png,image/png"
+                        multiple
+                        onChange={(e) => setClubsTeSymbolFiles(Array.from(e.target.files || []))}
+                      />
+                      {clubsTeSymbolFiles.length > 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          {clubsTeSymbolFiles.length} file{clubsTeSymbolFiles.length > 1 ? 's' : ''} selected
+                        </p>
+                      )}
+                    </div>
+                    <Button 
+                      onClick={() => handleTeSymbolUpload('clubs', clubsTeSymbolFiles, clubsTeSymbolInputRef, setClubsTeSymbolFiles)} 
+                      disabled={uploadingTeSymbol === 'clubs'} 
+                      className="w-full"
+                    >
+                      {uploadingTeSymbol === 'clubs' ? "Uploading..." : "Upload Clubs TE Symbols"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Ribbon TE Symbols */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Import Symbols for Ribbon Technical Elements</CardTitle>
+                  <CardDescription>
+                    Upload PNG symbol images for ribbon technical elements. File names must match the code column (e.g., R01.png for code R01)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="ribbon-te-symbol-input">PNG Images</Label>
+                      <Input
+                        id="ribbon-te-symbol-input"
+                        ref={ribbonTeSymbolInputRef}
+                        type="file"
+                        accept=".png,image/png"
+                        multiple
+                        onChange={(e) => setRibbonTeSymbolFiles(Array.from(e.target.files || []))}
+                      />
+                      {ribbonTeSymbolFiles.length > 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          {ribbonTeSymbolFiles.length} file{ribbonTeSymbolFiles.length > 1 ? 's' : ''} selected
+                        </p>
+                      )}
+                    </div>
+                    <Button 
+                      onClick={() => handleTeSymbolUpload('ribbon', ribbonTeSymbolFiles, ribbonTeSymbolInputRef, setRibbonTeSymbolFiles)} 
+                      disabled={uploadingTeSymbol === 'ribbon'} 
+                      className="w-full"
+                    >
+                      {uploadingTeSymbol === 'ribbon' ? "Uploading..." : "Upload Ribbon TE Symbols"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </AccordionContent>
           </AccordionItem>
         </Accordion>

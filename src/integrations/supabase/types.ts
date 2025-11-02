@@ -134,6 +134,7 @@ export type Database = {
           parent_group: string
           parent_group_code: string
           special_code: boolean
+          symbol_image: string | null
           technical_element: boolean
           updated_at: string
         }
@@ -148,6 +149,7 @@ export type Database = {
           parent_group: string
           parent_group_code: string
           special_code?: boolean
+          symbol_image?: string | null
           technical_element?: boolean
           updated_at?: string
         }
@@ -162,6 +164,7 @@ export type Database = {
           parent_group?: string
           parent_group_code?: string
           special_code?: boolean
+          symbol_image?: string | null
           technical_element?: boolean
           updated_at?: string
         }
@@ -254,6 +257,7 @@ export type Database = {
           parent_group: string
           parent_group_code: string
           special_code: boolean
+          symbol_image: string | null
           technical_element: boolean
           updated_at: string
         }
@@ -268,6 +272,7 @@ export type Database = {
           parent_group: string
           parent_group_code: string
           special_code?: boolean
+          symbol_image?: string | null
           technical_element?: boolean
           updated_at?: string
         }
@@ -282,6 +287,7 @@ export type Database = {
           parent_group?: string
           parent_group_code?: string
           special_code?: boolean
+          symbol_image?: string | null
           technical_element?: boolean
           updated_at?: string
         }
@@ -404,6 +410,7 @@ export type Database = {
           parent_group: string
           parent_group_code: string
           special_code: boolean
+          symbol_image: string | null
           technical_element: boolean
           updated_at: string
         }
@@ -418,6 +425,7 @@ export type Database = {
           parent_group: string
           parent_group_code: string
           special_code?: boolean
+          symbol_image?: string | null
           technical_element?: boolean
           updated_at?: string
         }
@@ -432,6 +440,7 @@ export type Database = {
           parent_group?: string
           parent_group_code?: string
           special_code?: boolean
+          symbol_image?: string | null
           technical_element?: boolean
           updated_at?: string
         }
@@ -587,6 +596,7 @@ export type Database = {
           parent_group: string
           parent_group_code: string
           special_code: boolean
+          symbol_image: string | null
           technical_element: boolean
           updated_at: string
         }
@@ -601,6 +611,7 @@ export type Database = {
           parent_group: string
           parent_group_code: string
           special_code?: boolean
+          symbol_image?: string | null
           technical_element?: boolean
           updated_at?: string
         }
@@ -615,6 +626,7 @@ export type Database = {
           parent_group?: string
           parent_group_code?: string
           special_code?: boolean
+          symbol_image?: string | null
           technical_element?: boolean
           updated_at?: string
         }
