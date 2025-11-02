@@ -71,6 +71,9 @@ export const ApparatusTable = ({
     return parentCodes;
   }, [data]);
 
+  // All codes present (to verify a parent row actually exists)
+  const allCodes = React.useMemo(() => new Set(data.map(d => d.code)), [data]);
+
   // Helper functions to determine parent-child relationships
   const hasChildren = (code: string) => codesWithChildren.has(code);
   const isChildRow = (code: string) => code.includes('.');
@@ -202,13 +205,15 @@ export const ApparatusTable = ({
         </TableHeader>
         <TableBody>
           {data.map((item) => {
-            const isParent = hasChildren(item.code);
+            const parentCodeCandidate = getParentCode(item.code);
             const isChild = isChildRow(item.code);
-            const parentCode = isChild ? getParentCode(item.code) : null;
+            const hasParentRow = isChild && allCodes.has(parentCodeCandidate);
+            const isCollapsibleChild = isChild && hasParentRow && codesWithChildren.has(parentCodeCandidate);
+            const isParent = hasChildren(item.code);
             const isExpanded = isParent && expandedParents.has(item.code);
             
-            // Hide child rows if their parent is not expanded
-            if (isChild && parentCode && !expandedParents.has(parentCode)) {
+            // Hide only true collapsible children if their parent is not expanded
+            if (isCollapsibleChild && !expandedParents.has(parentCodeCandidate)) {
               return null;
             }
             
@@ -219,7 +224,7 @@ export const ApparatusTable = ({
                 onClick={isParent ? (e) => toggleParent(item.code, e) : () => onRowClick(item)}
                 className={`cursor-pointer transition-colors ${
                   isSelected ? 'bg-primary/10 hover:bg-primary/20' : 'hover:bg-muted/50'
-                } ${isChild ? 'bg-muted/30' : ''}`}
+                } ${isCollapsibleChild ? 'bg-muted/30' : ''}`}
               >
                 <TableCell className="font-medium text-sm">
                   <div className="flex items-center gap-2">
@@ -228,7 +233,7 @@ export const ApparatusTable = ({
                         <ChevronDown className="h-4 w-4 text-primary" /> : 
                         <ChevronRight className="h-4 w-4 text-primary" />
                     )}
-                    {isChild && <span className="ml-6" />}
+                    {isCollapsibleChild && <span className="ml-6" />}
                     {item.description}
                   </div>
                 </TableCell>
@@ -262,11 +267,11 @@ export const ApparatusTable = ({
                 {CRITERIA_CODES.map((code) => {
                   const value = item.criteria[code];
                   const isCellSelected = isCriterionSelected(item.id, code);
-                  const isClickable = formatCriteriaValue(value) === 'v' && isChild;
+                  const isClickable = formatCriteriaValue(value) === 'v' && isCollapsibleChild;
                   const borderColor = getCellBorderColor(item.id, code);
                   
-                  // For child rows, show "o" instead of "v"
-                  const displayValue = isChild && formatCriteriaValue(value) === 'v' 
+                  // For collapsible child rows, show "o" instead of "v"
+                  const displayValue = isCollapsibleChild && formatCriteriaValue(value) === 'v' 
                     ? 'o' 
                     : formatCriteriaValue(value);
                   
@@ -276,7 +281,7 @@ export const ApparatusTable = ({
                       className={`text-center text-sm transition-colors relative ${
                         isClickable ? 'cursor-pointer hover:bg-primary/10' : ''
                       } ${
-                        isCellSelected && isChild ? 'bg-primary/60 font-bold text-primary-foreground' : ''
+                        isCellSelected && isCollapsibleChild ? 'bg-primary/60 font-bold text-primary-foreground' : ''
                       } ${
                         borderColor ? `border-4 border-solid ${borderColor}` : ''
                       } ${
@@ -294,5 +299,5 @@ export const ApparatusTable = ({
         </TableBody>
       </Table>
       </TableContainer>
-  );
-};
+    );
+  };
