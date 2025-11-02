@@ -1,6 +1,5 @@
 export interface DAElement {
   id: string;
-  apparatus_type: ApparatusType;
   code: string;
   name: string;
   description: string;

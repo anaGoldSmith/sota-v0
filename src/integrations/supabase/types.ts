@@ -47,6 +47,60 @@ export type Database = {
         }
         Relationships: []
       }
+      ball_da: {
+        Row: {
+          code: string
+          Cr1V: boolean
+          Cr2H: boolean
+          Cr3L: boolean
+          Cr4F: boolean
+          Cr5W: boolean
+          Cr6DB: boolean
+          Cr7R: boolean
+          created_at: string
+          description: string
+          id: string
+          name: string
+          symbol_image: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          code: string
+          Cr1V?: boolean
+          Cr2H?: boolean
+          Cr3L?: boolean
+          Cr4F?: boolean
+          Cr5W?: boolean
+          Cr6DB?: boolean
+          Cr7R?: boolean
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          symbol_image?: string | null
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          code?: string
+          Cr1V?: boolean
+          Cr2H?: boolean
+          Cr3L?: boolean
+          Cr4F?: boolean
+          Cr5W?: boolean
+          Cr6DB?: boolean
+          Cr7R?: boolean
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          symbol_image?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
       ball_technical_elements: {
         Row: {
           code: string
@@ -92,6 +146,60 @@ export type Database = {
           symbol_image?: string | null
           technical_element?: boolean
           updated_at?: string
+        }
+        Relationships: []
+      }
+      clubs_da: {
+        Row: {
+          code: string
+          Cr1V: boolean
+          Cr2H: boolean
+          Cr3L: boolean
+          Cr4F: boolean
+          Cr5W: boolean
+          Cr6DB: boolean
+          Cr7R: boolean
+          created_at: string
+          description: string
+          id: string
+          name: string
+          symbol_image: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          code: string
+          Cr1V?: boolean
+          Cr2H?: boolean
+          Cr3L?: boolean
+          Cr4F?: boolean
+          Cr5W?: boolean
+          Cr6DB?: boolean
+          Cr7R?: boolean
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          symbol_image?: string | null
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          code?: string
+          Cr1V?: boolean
+          Cr2H?: boolean
+          Cr3L?: boolean
+          Cr4F?: boolean
+          Cr5W?: boolean
+          Cr6DB?: boolean
+          Cr7R?: boolean
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          symbol_image?: string | null
+          updated_at?: string
+          value?: number
         }
         Relationships: []
       }
@@ -173,9 +281,8 @@ export type Database = {
         }
         Relationships: []
       }
-      da_elements: {
+      hoop_da: {
         Row: {
-          apparatus_type: string
           code: string
           Cr1V: boolean
           Cr2H: boolean
@@ -193,7 +300,6 @@ export type Database = {
           value: number
         }
         Insert: {
-          apparatus_type: string
           code: string
           Cr1V?: boolean
           Cr2H?: boolean
@@ -211,7 +317,6 @@ export type Database = {
           value: number
         }
         Update: {
-          apparatus_type?: string
           code?: string
           Cr1V?: boolean
           Cr2H?: boolean
@@ -338,6 +443,60 @@ export type Database = {
           last_name?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      ribbon_da: {
+        Row: {
+          code: string
+          Cr1V: boolean
+          Cr2H: boolean
+          Cr3L: boolean
+          Cr4F: boolean
+          Cr5W: boolean
+          Cr6DB: boolean
+          Cr7R: boolean
+          created_at: string
+          description: string
+          id: string
+          name: string
+          symbol_image: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          code: string
+          Cr1V?: boolean
+          Cr2H?: boolean
+          Cr3L?: boolean
+          Cr4F?: boolean
+          Cr5W?: boolean
+          Cr6DB?: boolean
+          Cr7R?: boolean
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          symbol_image?: string | null
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          code?: string
+          Cr1V?: boolean
+          Cr2H?: boolean
+          Cr3L?: boolean
+          Cr4F?: boolean
+          Cr5W?: boolean
+          Cr6DB?: boolean
+          Cr7R?: boolean
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          symbol_image?: string | null
+          updated_at?: string
+          value?: number
         }
         Relationships: []
       }

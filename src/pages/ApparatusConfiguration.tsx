@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ApparatusType } from "@/types/apparatus";
 
 const ApparatusConfiguration = () => {
   const navigate = useNavigate();
@@ -368,7 +369,15 @@ const ApparatusConfiguration = () => {
         ribbon: 'ribbon-bases-symbols'
       };
 
+      const tableMap: Record<ApparatusType, 'ball_da' | 'hoop_da' | 'clubs_da' | 'ribbon_da'> = {
+        ball: 'ball_da',
+        hoop: 'hoop_da',
+        clubs: 'clubs_da',
+        ribbon: 'ribbon_da'
+      };
+
       const bucket = bucketMap[apparatus];
+      const table = tableMap[apparatus] as 'ball_da' | 'hoop_da' | 'clubs_da' | 'ribbon_da';
       let successCount = 0;
       let failCount = 0;
       
@@ -391,9 +400,8 @@ const ApparatusConfiguration = () => {
           }
 
           const { error: updateError } = await supabase
-            .from('da_elements')
+            .from(table)
             .update({ symbol_image: file.name })
-            .eq('apparatus_type', apparatus)
             .eq('code', code);
 
           if (updateError) {

@@ -26,17 +26,25 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
     },
   });
 
-  // Fetch apparatus-specific data from unified da_elements table
+  // Fetch apparatus-specific data from separate DA tables
   const { data: apparatusData, isLoading, error } = useQuery({
     queryKey: ["apparatus", apparatus],
     queryFn: async () => {
       if (!apparatus) return null;
 
-      // Fetch DA elements for specific apparatus type
+      const tableMap: Record<ApparatusType, 'hoop_da' | 'ball_da' | 'clubs_da' | 'ribbon_da'> = {
+        hoop: 'hoop_da',
+        ball: 'ball_da',
+        clubs: 'clubs_da',
+        ribbon: 'ribbon_da'
+      };
+
+      const tableName = tableMap[apparatus] as 'hoop_da' | 'ball_da' | 'clubs_da' | 'ribbon_da';
+
+      // Fetch DA elements from the appropriate table
       const { data, error } = await supabase
-        .from('da_elements')
-        .select('*')
-        .eq('apparatus_type', apparatus);
+        .from(tableName)
+        .select('*');
 
       if (error) throw error;
       

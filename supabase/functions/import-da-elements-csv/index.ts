@@ -3,7 +3,6 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import { parse } from "https://deno.land/std@0.224.0/csv/parse.ts";
 
 interface DAElementRow {
-  apparatus_type: string;
   code: string;
   name: string;
   description: string;
@@ -126,7 +125,6 @@ Deno.serve(async (req) => {
         }
 
         return {
-          apparatus_type: apparatusType,
           code,
           name,
           description,
@@ -147,11 +145,20 @@ Deno.serve(async (req) => {
       throw new Error("No valid DA elements found in CSV");
     }
 
+    const tableMap: Record<string, string> = {
+      'hoop': 'hoop_da',
+      'ball': 'ball_da',
+      'clubs': 'clubs_da',
+      'ribbon': 'ribbon_da'
+    };
+
+    const tableName = tableMap[apparatusType];
+
     // Delete existing elements for this apparatus type
     const { error: deleteError } = await supabase
-      .from("da_elements")
+      .from(tableName)
       .delete()
-      .eq('apparatus_type', apparatusType);
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
 
     if (deleteError) {
       throw new Error(`Failed to delete existing elements: ${deleteError.message}`);
@@ -159,7 +166,7 @@ Deno.serve(async (req) => {
 
     // Insert new DA elements
     const { error: insertError } = await supabase
-      .from("da_elements")
+      .from(tableName)
       .insert(daElements);
 
     if (insertError) {
