@@ -25,15 +25,10 @@ const ApparatusConfiguration = () => {
   const [uploadingCriteriaSymbol, setUploadingCriteriaSymbol] = useState(false);
   const criteriaSymbolInputRef = useRef<HTMLInputElement>(null);
 
-  // Control tables upload states
-  const [controlFiles, setControlFiles] = useState<File[]>([]);
-  const [uploadingControl, setUploadingControl] = useState(false);
-  const controlInputRef = useRef<HTMLInputElement>(null);
-
-  // Bases CSV upload states
-  const [basesFiles, setBasesFiles] = useState<File[]>([]);
-  const [uploadingBases, setUploadingBases] = useState(false);
-  const basesInputRef = useRef<HTMLInputElement>(null);
+  // DA tables upload states
+  const [daTablesFiles, setDaTablesFiles] = useState<File[]>([]);
+  const [uploadingDaTables, setUploadingDaTables] = useState(false);
+  const daTablesInputRef = useRef<HTMLInputElement>(null);
 
   // Base symbols upload states
   const [ballBasesSymbolFiles, setBallBasesSymbolFiles] = useState<File[]>([]);
@@ -194,112 +189,35 @@ const ApparatusConfiguration = () => {
     }
   };
 
-  const handleControlTablesUpload = async (e: React.FormEvent) => {
+  const handleDaTablesUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (controlFiles.length === 0) {
+    if (daTablesFiles.length === 0) {
       toast.error("Please select at least one CSV file");
       return;
     }
 
-    setUploadingControl(true);
+    setUploadingDaTables(true);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       let successCount = 0;
       let failCount = 0;
 
-      for (const file of controlFiles) {
+      for (const file of daTablesFiles) {
         const fileName = file.name.toLowerCase().replace('.csv', '');
         
         const tableMap: Record<string, string> = {
-          'ball_control': 'ball_control',
-          'hoop_control': 'hoop_control',
-          'clubs_control': 'clubs_control',
-          'ribbon_control': 'ribbon_control',
-        };
-
-        const tableName = tableMap[fileName];
-        
-        if (!tableName) {
-          console.warn(`Skipping ${file.name} - filename must match: ball_control.csv, hoop_control.csv, clubs_control.csv, or ribbon_control.csv`);
-          failCount++;
-          continue;
-        }
-
-        try {
-          const csvContent = await file.text();
-          
-          const { data, error } = await supabase.functions.invoke('import-control-tables-csv', {
-            body: { csvContent, tableName },
-            headers: {
-              Authorization: `Bearer ${session?.access_token}`,
-            }
-          });
-
-          if (error) throw error;
-
-          if (data.success) {
-            successCount++;
-            console.log(`Successfully imported ${file.name}`);
-          } else {
-            failCount++;
-            console.error(`Failed to import ${file.name}:`, data.error);
-          }
-        } catch (error: any) {
-          console.error(`Error importing ${file.name}:`, error);
-          failCount++;
-        }
-      }
-
-      if (successCount > 0 && failCount === 0) {
-        toast.success(`Successfully imported ${successCount} control table${successCount > 1 ? 's' : ''}!`);
-      } else if (successCount > 0 && failCount > 0) {
-        toast.success(`Imported ${successCount} tables, ${failCount} failed`);
-      } else {
-        toast.error("All imports failed");
-      }
-
-      setControlFiles([]);
-      if (controlInputRef.current) controlInputRef.current.value = '';
-
-    } catch (error: any) {
-      console.error('Control tables upload error:', error);
-      toast.error(`Upload failed: ${error.message || "Unknown error"}`);
-    } finally {
-      setUploadingControl(false);
-    }
-  };
-
-  const handleBasesUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (basesFiles.length === 0) {
-      toast.error("Please select at least one CSV file");
-      return;
-    }
-
-    setUploadingBases(true);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      let successCount = 0;
-      let failCount = 0;
-
-      for (const file of basesFiles) {
-        const fileName = file.name.toLowerCase().replace('.csv', '');
-        
-        const tableMap: Record<string, string> = {
-          'hoop_bases': 'import-hoop-bases-csv',
-          'ball_bases': 'import-ball-bases-csv',
-          'clubs_bases': 'import-clubs-bases-csv',
-          'ribbon_bases': 'import-ribbon-bases-csv',
+          'hoop_da': 'import-hoop-bases-csv',
+          'ball_da': 'import-ball-bases-csv',
+          'clubs_da': 'import-clubs-bases-csv',
+          'ribbon_da': 'import-ribbon-bases-csv',
         };
 
         const functionName = tableMap[fileName];
         
         if (!functionName) {
-          console.warn(`Skipping ${file.name} - filename must match: hoop_bases.csv, ball_bases.csv, clubs_bases.csv, or ribbon_bases.csv`);
+          console.warn(`Skipping ${file.name} - filename must match: hoop_da.csv, ball_da.csv, clubs_da.csv, or ribbon_da.csv`);
           failCount++;
           continue;
         }
@@ -330,21 +248,21 @@ const ApparatusConfiguration = () => {
       }
 
       if (successCount > 0 && failCount === 0) {
-        toast.success(`Successfully imported ${successCount} file${successCount > 1 ? 's' : ''}!`);
+        toast.success(`Successfully imported ${successCount} DA table${successCount > 1 ? 's' : ''}!`);
       } else if (successCount > 0 && failCount > 0) {
-        toast.success(`Imported ${successCount} files, ${failCount} failed`);
+        toast.success(`Imported ${successCount} tables, ${failCount} failed`);
       } else {
         toast.error("All imports failed");
       }
 
-      setBasesFiles([]);
-      if (basesInputRef.current) basesInputRef.current.value = '';
+      setDaTablesFiles([]);
+      if (daTablesInputRef.current) daTablesInputRef.current.value = '';
 
     } catch (error: any) {
-      console.error('Bases upload error:', error);
+      console.error('DA tables upload error:', error);
       toast.error(`Upload failed: ${error.message || "Unknown error"}`);
     } finally {
-      setUploadingBases(false);
+      setUploadingDaTables(false);
     }
   };
 
@@ -634,102 +552,46 @@ const ApparatusConfiguration = () => {
             <AccordionTrigger className="text-xl font-semibold">DAs Config</AccordionTrigger>
             <AccordionContent className="space-y-4 pt-4">
               
-              {/* DA Bases */}
-              <Accordion type="single" collapsible>
-                <AccordionItem value="da-bases" className="border rounded-lg px-4">
-                  <AccordionTrigger className="text-lg font-semibold">DA Bases</AccordionTrigger>
-                  <AccordionContent className="space-y-4 pt-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Import Bases from CSV</CardTitle>
-                        <CardDescription>
-                          Upload CSV files for hoop, ball, clubs, and ribbon bases. You can select multiple files at once.
-                          <br />
-                          File names must match: hoop_bases.csv, ball_bases.csv, clubs_bases.csv, ribbon_bases.csv
-                          <br />
-                          Required columns: code, name, description, value
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <form onSubmit={handleBasesUpload} className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="bases-input">CSV Files</Label>
-                            <Input
-                              id="bases-input"
-                              ref={basesInputRef}
-                              type="file"
-                              accept=".csv,text/csv"
-                              multiple
-                              onChange={(e) => setBasesFiles(Array.from(e.target.files || []))}
-                            />
-                            {basesFiles.length > 0 && (
-                              <div className="text-sm text-muted-foreground">
-                                {basesFiles.length} file{basesFiles.length > 1 ? 's' : ''} selected:
-                                <ul className="list-disc list-inside mt-1">
-                                  {basesFiles.map((f, i) => <li key={i}>{f.name}</li>)}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <Button type="submit" disabled={uploadingBases} className="w-full">
-                            {uploadingBases ? "Uploading..." : "Upload Bases CSV"}
-                          </Button>
-                        </form>
-                      </CardContent>
-                    </Card>
-
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-
-              {/* Control Tables */}
-              <Accordion type="single" collapsible>
-                <AccordionItem value="control-tables" className="border rounded-lg px-4">
-                  <AccordionTrigger className="text-lg font-semibold">Control Tables</AccordionTrigger>
-                  <AccordionContent className="space-y-4 pt-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Import Control Tables from CSV</CardTitle>
-                        <CardDescription>
-                          Upload CSV files for ball, hoop, clubs, and ribbon control tables. You can select multiple files at once.
-                          <br />
-                          File names must match: ball_control.csv, hoop_control.csv, clubs_control.csv, ribbon_control.csv
-                          <br />
-                          Required columns: code, Cr1V, Cr2H, Cr3L, Cr7R, Cr4F, Cr5W, Cr6DB (values must be Y or N)
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <form onSubmit={handleControlTablesUpload} className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="control-input">CSV Files</Label>
-                            <Input
-                              id="control-input"
-                              ref={controlInputRef}
-                              type="file"
-                              accept=".csv,text/csv"
-                              multiple
-                              onChange={(e) => setControlFiles(Array.from(e.target.files || []))}
-                            />
-                            {controlFiles.length > 0 && (
-                              <div className="text-sm text-muted-foreground">
-                                {controlFiles.length} file{controlFiles.length > 1 ? 's' : ''} selected:
-                                <ul className="list-disc list-inside mt-1">
-                                  {controlFiles.map((f, i) => <li key={i}>{f.name}</li>)}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <Button type="submit" disabled={uploadingControl} className="w-full">
-                            {uploadingControl ? "Uploading..." : "Upload Control Tables"}
-                          </Button>
-                        </form>
-                      </CardContent>
-                    </Card>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+              {/* Upload DA Tables */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Upload DA Tables</CardTitle>
+                  <CardDescription>
+                    Upload CSV files for all four apparatus DA tables. You can select multiple files at once (recommended: 4 files).
+                    <br />
+                    File names must match: hoop_da.csv, ball_da.csv, clubs_da.csv, ribbon_da.csv
+                    <br />
+                    Required columns: code, name, description, value, Cr1V, Cr2H, Cr3L, Cr7R, Cr4F, Cr5W, Cr6DB
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleDaTablesUpload} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="da-tables-input">CSV Files</Label>
+                      <Input
+                        id="da-tables-input"
+                        ref={daTablesInputRef}
+                        type="file"
+                        accept=".csv,text/csv"
+                        multiple
+                        onChange={(e) => setDaTablesFiles(Array.from(e.target.files || []))}
+                      />
+                      {daTablesFiles.length > 0 && (
+                        <div className="text-sm text-muted-foreground">
+                          {daTablesFiles.length} file{daTablesFiles.length > 1 ? 's' : ''} selected:
+                          <ul className="list-disc list-inside mt-1">
+                            {daTablesFiles.map((f, i) => <li key={i}>{f.name}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <Button type="submit" disabled={uploadingDaTables} className="w-full">
+                      {uploadingDaTables ? "Uploading..." : "Upload DA Tables"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
 
               {/* DA Criteria */}
               <Accordion type="single" collapsible>
