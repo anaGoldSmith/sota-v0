@@ -296,6 +296,12 @@ const RoutineCalculator = () => {
   const getBaseSymbol = (filename: string | null, apparatus: ApparatusType) => {
     if (!filename) return null;
     
+    // If it's already a full URL, return it directly
+    if (filename.startsWith('http')) {
+      return filename;
+    }
+    
+    // Otherwise, construct the public URL
     const bucketName = `${apparatus}-bases-symbols`;
     const { data: { publicUrl } } = supabase.storage
       .from(bucketName)

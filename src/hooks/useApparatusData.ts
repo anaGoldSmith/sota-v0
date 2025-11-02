@@ -141,22 +141,37 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
       );
 
       // Transform to CombinedApparatusData format
-      const combined: CombinedApparatusData[] = elements.map((element) => ({
-        id: element.id,
-        code: element.code,
-        description: element.description,
-        symbol_image: symbolMap.get(element.code) || null,
-        value: element.value,
-        criteria: {
-          Cr1V: element.Cr1V,
-          Cr2H: element.Cr2H,
-          Cr3L: element.Cr3L,
-          Cr7R: element.Cr7R,
-          Cr4F: element.Cr4F,
-          Cr5W: element.Cr5W,
-          Cr6DB: element.Cr6DB,
-        },
-      }));
+      const combined: CombinedApparatusData[] = elements.map((element) => {
+        // Try exact match first
+        let symbolImage = symbolMap.get(element.code) || null;
+        
+        // If no exact match, try to find a technical element with a code starting with this code followed by a dot
+        if (!symbolImage) {
+          const fallbackTe = technicalElements.find((te: any) => 
+            te.code.startsWith(`${element.code}.`) && te.symbol_image
+          );
+          if (fallbackTe) {
+            symbolImage = fallbackTe.symbol_image;
+          }
+        }
+
+        return {
+          id: element.id,
+          code: element.code,
+          description: element.description,
+          symbol_image: symbolImage,
+          value: element.value,
+          criteria: {
+            Cr1V: element.Cr1V,
+            Cr2H: element.Cr2H,
+            Cr3L: element.Cr3L,
+            Cr7R: element.Cr7R,
+            Cr4F: element.Cr4F,
+            Cr5W: element.Cr5W,
+            Cr6DB: element.Cr6DB,
+          },
+        };
+      });
 
       return combined;
     },

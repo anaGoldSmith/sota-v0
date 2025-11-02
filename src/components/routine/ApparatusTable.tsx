@@ -116,6 +116,12 @@ export const ApparatusTable = ({
   const getBaseSymbol = (filename: string | null) => {
     if (!filename) return null;
     
+    // If it's already a full URL, return it directly
+    if (filename.startsWith('http')) {
+      return filename;
+    }
+    
+    // Otherwise, construct the public URL
     const bucketName = `${apparatus}-bases-symbols`;
     const { data: { publicUrl } } = supabase.storage
       .from(bucketName)
@@ -171,7 +177,8 @@ export const ApparatusTable = ({
                         alt={item.code}
                         className="h-16 w-auto object-contain"
                         onError={(e) => {
-                          console.error('Failed to load base symbol:', item.symbol_image);
+                          const computedUrl = getBaseSymbol(item.symbol_image);
+                          console.error('Failed to load base symbol:', item.code, item.symbol_image, computedUrl);
                           e.currentTarget.style.display = 'none';
                         }}
                       />
