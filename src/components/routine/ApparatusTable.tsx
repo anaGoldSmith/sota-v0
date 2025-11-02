@@ -21,10 +21,8 @@ export interface SelectedCriterion {
   criterionCode: string;
 }
 
-const formatCriteriaValue = (value: string | null): string => {
-  if (value === 'Y') return 'v';
-  if (value === 'N') return 'N/A';
-  return '';
+const formatCriteriaValue = (value: boolean): string => {
+  return value ? 'v' : '';
 };
 
 // Color palette for DA groups (15 distinct colors optimized for visibility on light backgrounds)

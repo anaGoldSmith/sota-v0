@@ -1,22 +1,18 @@
-export interface ApparatusBase {
+export interface DAElement {
   id: string;
+  apparatus_type: ApparatusType;
   code: string;
   name: string;
   description: string;
-  symbol_image: string | null;
   value: number;
-}
-
-export interface ApparatusControl {
-  id: string;
-  code: string;
-  Cr1V: string | null;
-  Cr2H: string | null;
-  Cr3L: string | null;
-  Cr7R: string | null;
-  Cr4F: string | null;
-  Cr5W: string | null;
-  Cr6DB: string | null;
+  symbol_image: string | null;
+  Cr1V: boolean;
+  Cr2H: boolean;
+  Cr3L: boolean;
+  Cr7R: boolean;
+  Cr4F: boolean;
+  Cr5W: boolean;
+  Cr6DB: boolean;
 }
 
 export interface Criterion {
@@ -34,13 +30,13 @@ export interface CombinedApparatusData {
   symbol_image: string | null;
   value: number;
   criteria: {
-    Cr1V: string | null;
-    Cr2H: string | null;
-    Cr3L: string | null;
-    Cr7R: string | null;
-    Cr4F: string | null;
-    Cr5W: string | null;
-    Cr6DB: string | null;
+    Cr1V: boolean;
+    Cr2H: boolean;
+    Cr3L: boolean;
+    Cr7R: boolean;
+    Cr4F: boolean;
+    Cr5W: boolean;
+    Cr6DB: boolean;
   };
 }
 

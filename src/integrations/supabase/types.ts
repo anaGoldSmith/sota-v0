@@ -47,81 +47,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ball_bases: {
-        Row: {
-          code: string
-          created_at: string
-          description: string
-          id: string
-          name: string
-          symbol_image: string | null
-          updated_at: string
-          value: number
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          description: string
-          id?: string
-          name: string
-          symbol_image?: string | null
-          updated_at?: string
-          value: number
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          description?: string
-          id?: string
-          name?: string
-          symbol_image?: string | null
-          updated_at?: string
-          value?: number
-        }
-        Relationships: []
-      }
-      ball_control: {
-        Row: {
-          code: string
-          Cr1V: string | null
-          Cr2H: string | null
-          Cr3L: string | null
-          Cr4F: string | null
-          Cr5W: string | null
-          Cr6DB: string | null
-          Cr7R: string | null
-          created_at: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          code: string
-          Cr1V?: string | null
-          Cr2H?: string | null
-          Cr3L?: string | null
-          Cr4F?: string | null
-          Cr5W?: string | null
-          Cr6DB?: string | null
-          Cr7R?: string | null
-          created_at?: string
-          id?: string
-          updated_at?: string
-        }
-        Update: {
-          code?: string
-          Cr1V?: string | null
-          Cr2H?: string | null
-          Cr3L?: string | null
-          Cr4F?: string | null
-          Cr5W?: string | null
-          Cr6DB?: string | null
-          Cr7R?: string | null
-          created_at?: string
-          id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       ball_technical_elements: {
         Row: {
           code: string
@@ -166,81 +91,6 @@ export type Database = {
           special_code?: boolean
           symbol_image?: string | null
           technical_element?: boolean
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      clubs_bases: {
-        Row: {
-          code: string
-          created_at: string
-          description: string
-          id: string
-          name: string
-          symbol_image: string | null
-          updated_at: string
-          value: number
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          description: string
-          id?: string
-          name: string
-          symbol_image?: string | null
-          updated_at?: string
-          value: number
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          description?: string
-          id?: string
-          name?: string
-          symbol_image?: string | null
-          updated_at?: string
-          value?: number
-        }
-        Relationships: []
-      }
-      clubs_control: {
-        Row: {
-          code: string
-          Cr1V: string | null
-          Cr2H: string | null
-          Cr3L: string | null
-          Cr4F: string | null
-          Cr5W: string | null
-          Cr6DB: string | null
-          Cr7R: string | null
-          created_at: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          code: string
-          Cr1V?: string | null
-          Cr2H?: string | null
-          Cr3L?: string | null
-          Cr4F?: string | null
-          Cr5W?: string | null
-          Cr6DB?: string | null
-          Cr7R?: string | null
-          created_at?: string
-          id?: string
-          updated_at?: string
-        }
-        Update: {
-          code?: string
-          Cr1V?: string | null
-          Cr2H?: string | null
-          Cr3L?: string | null
-          Cr4F?: string | null
-          Cr5W?: string | null
-          Cr6DB?: string | null
-          Cr7R?: string | null
-          created_at?: string
-          id?: string
           updated_at?: string
         }
         Relationships: []
@@ -323,9 +173,17 @@ export type Database = {
         }
         Relationships: []
       }
-      hoop_bases: {
+      da_elements: {
         Row: {
+          apparatus_type: string
           code: string
+          Cr1V: boolean
+          Cr2H: boolean
+          Cr3L: boolean
+          Cr4F: boolean
+          Cr5W: boolean
+          Cr6DB: boolean
+          Cr7R: boolean
           created_at: string
           description: string
           id: string
@@ -335,7 +193,15 @@ export type Database = {
           value: number
         }
         Insert: {
+          apparatus_type: string
           code: string
+          Cr1V?: boolean
+          Cr2H?: boolean
+          Cr3L?: boolean
+          Cr4F?: boolean
+          Cr5W?: boolean
+          Cr6DB?: boolean
+          Cr7R?: boolean
           created_at?: string
           description: string
           id?: string
@@ -345,7 +211,15 @@ export type Database = {
           value: number
         }
         Update: {
+          apparatus_type?: string
           code?: string
+          Cr1V?: boolean
+          Cr2H?: boolean
+          Cr3L?: boolean
+          Cr4F?: boolean
+          Cr5W?: boolean
+          Cr6DB?: boolean
+          Cr7R?: boolean
           created_at?: string
           description?: string
           id?: string
@@ -353,48 +227,6 @@ export type Database = {
           symbol_image?: string | null
           updated_at?: string
           value?: number
-        }
-        Relationships: []
-      }
-      hoop_control: {
-        Row: {
-          code: string
-          Cr1V: string | null
-          Cr2H: string | null
-          Cr3L: string | null
-          Cr4F: string | null
-          Cr5W: string | null
-          Cr6DB: string | null
-          Cr7R: string | null
-          created_at: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          code: string
-          Cr1V?: string | null
-          Cr2H?: string | null
-          Cr3L?: string | null
-          Cr4F?: string | null
-          Cr5W?: string | null
-          Cr6DB?: string | null
-          Cr7R?: string | null
-          created_at?: string
-          id?: string
-          updated_at?: string
-        }
-        Update: {
-          code?: string
-          Cr1V?: string | null
-          Cr2H?: string | null
-          Cr3L?: string | null
-          Cr4F?: string | null
-          Cr5W?: string | null
-          Cr6DB?: string | null
-          Cr7R?: string | null
-          created_at?: string
-          id?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -506,81 +338,6 @@ export type Database = {
           last_name?: string
           updated_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      ribbon_bases: {
-        Row: {
-          code: string
-          created_at: string
-          description: string
-          id: string
-          name: string
-          symbol_image: string | null
-          updated_at: string
-          value: number
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          description: string
-          id?: string
-          name: string
-          symbol_image?: string | null
-          updated_at?: string
-          value: number
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          description?: string
-          id?: string
-          name?: string
-          symbol_image?: string | null
-          updated_at?: string
-          value?: number
-        }
-        Relationships: []
-      }
-      ribbon_control: {
-        Row: {
-          code: string
-          Cr1V: string | null
-          Cr2H: string | null
-          Cr3L: string | null
-          Cr4F: string | null
-          Cr5W: string | null
-          Cr6DB: string | null
-          Cr7R: string | null
-          created_at: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          code: string
-          Cr1V?: string | null
-          Cr2H?: string | null
-          Cr3L?: string | null
-          Cr4F?: string | null
-          Cr5W?: string | null
-          Cr6DB?: string | null
-          Cr7R?: string | null
-          created_at?: string
-          id?: string
-          updated_at?: string
-        }
-        Update: {
-          code?: string
-          Cr1V?: string | null
-          Cr2H?: string | null
-          Cr3L?: string | null
-          Cr4F?: string | null
-          Cr5W?: string | null
-          Cr6DB?: string | null
-          Cr7R?: string | null
-          created_at?: string
-          id?: string
-          updated_at?: string
         }
         Relationships: []
       }

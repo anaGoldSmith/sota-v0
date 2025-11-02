@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ApparatusBase, ApparatusControl, Criterion, CombinedApparatusData, ApparatusType } from "@/types/apparatus";
+import { DAElement, Criterion, CombinedApparatusData, ApparatusType } from "@/types/apparatus";
 
 // Natural sort comparator for alphanumeric codes (H1, H2, H10, H11, etc.)
 const naturalSort = (a: string, b: string): number => {
@@ -26,80 +26,42 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
     },
   });
 
-  // Fetch apparatus-specific data
+  // Fetch apparatus-specific data from unified da_elements table
   const { data: apparatusData, isLoading, error } = useQuery({
     queryKey: ["apparatus", apparatus],
     queryFn: async () => {
       if (!apparatus) return null;
 
-      let bases: ApparatusBase[] = [];
-      let controls: ApparatusControl[] = [];
+      // Fetch DA elements for specific apparatus type
+      const { data, error } = await supabase
+        .from('da_elements')
+        .select('*')
+        .eq('apparatus_type', apparatus);
 
-      // Fetch bases based on apparatus type
-      if (apparatus === 'hoop') {
-        const { data, error } = await supabase.from('hoop_bases').select('*');
-        if (error) throw error;
-        bases = data as ApparatusBase[];
-      } else if (apparatus === 'ball') {
-        const { data, error } = await supabase.from('ball_bases').select('*');
-        if (error) throw error;
-        bases = data as ApparatusBase[];
-      } else if (apparatus === 'clubs') {
-        const { data, error } = await supabase.from('clubs_bases').select('*');
-        if (error) throw error;
-        bases = data as ApparatusBase[];
-      } else if (apparatus === 'ribbon') {
-        const { data, error } = await supabase.from('ribbon_bases').select('*');
-        if (error) throw error;
-        bases = data as ApparatusBase[];
-      }
+      if (error) throw error;
+      
+      const elements = data as DAElement[];
+      
+      // Apply natural sort
+      elements.sort((a, b) => naturalSort(a.code, b.code));
 
-      // Apply natural sort to bases
-      bases.sort((a, b) => naturalSort(a.code, b.code));
-
-      // Fetch control data based on apparatus type
-      if (apparatus === 'hoop') {
-        const { data, error } = await supabase.from('hoop_control').select('*');
-        if (error) throw error;
-        controls = data as ApparatusControl[];
-      } else if (apparatus === 'ball') {
-        const { data, error } = await supabase.from('ball_control').select('*');
-        if (error) throw error;
-        controls = data as ApparatusControl[];
-      } else if (apparatus === 'clubs') {
-        const { data, error } = await supabase.from('clubs_control').select('*');
-        if (error) throw error;
-        controls = data as ApparatusControl[];
-      } else if (apparatus === 'ribbon') {
-        const { data, error } = await supabase.from('ribbon_control').select('*');
-        if (error) throw error;
-        controls = data as ApparatusControl[];
-      }
-
-      // Apply natural sort to controls
-      controls.sort((a, b) => naturalSort(a.code, b.code));
-
-      // Combine the data
-      const combined: CombinedApparatusData[] = bases.map((base) => {
-        const control = controls.find((c) => c.code === base.code);
-        
-        return {
-          id: base.id,
-          code: base.code,
-          description: base.description,
-          symbol_image: base.symbol_image,
-          value: base.value,
-          criteria: {
-            Cr1V: control?.Cr1V || null,
-            Cr2H: control?.Cr2H || null,
-            Cr3L: control?.Cr3L || null,
-            Cr7R: control?.Cr7R || null,
-            Cr4F: control?.Cr4F || null,
-            Cr5W: control?.Cr5W || null,
-            Cr6DB: control?.Cr6DB || null,
-          },
-        };
-      });
+      // Transform to CombinedApparatusData format
+      const combined: CombinedApparatusData[] = elements.map((element) => ({
+        id: element.id,
+        code: element.code,
+        description: element.description,
+        symbol_image: element.symbol_image,
+        value: element.value,
+        criteria: {
+          Cr1V: element.Cr1V,
+          Cr2H: element.Cr2H,
+          Cr3L: element.Cr3L,
+          Cr7R: element.Cr7R,
+          Cr4F: element.Cr4F,
+          Cr5W: element.Cr5W,
+          Cr6DB: element.Cr6DB,
+        },
+      }));
 
       return combined;
     },

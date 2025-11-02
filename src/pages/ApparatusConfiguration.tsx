@@ -368,15 +368,7 @@ const ApparatusConfiguration = () => {
         ribbon: 'ribbon-bases-symbols'
       };
 
-      const tableMap: Record<string, 'ball_bases' | 'hoop_bases' | 'clubs_bases' | 'ribbon_bases'> = {
-        ball: 'ball_bases',
-        hoop: 'hoop_bases',
-        clubs: 'clubs_bases',
-        ribbon: 'ribbon_bases'
-      };
-
       const bucket = bucketMap[apparatus];
-      const table = tableMap[apparatus] as 'ball_bases' | 'hoop_bases' | 'clubs_bases' | 'ribbon_bases';
       let successCount = 0;
       let failCount = 0;
       
@@ -399,8 +391,9 @@ const ApparatusConfiguration = () => {
           }
 
           const { error: updateError } = await supabase
-            .from(table)
+            .from('da_elements')
             .update({ symbol_image: file.name })
+            .eq('apparatus_type', apparatus)
             .eq('code', code);
 
           if (updateError) {
