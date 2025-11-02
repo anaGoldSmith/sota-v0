@@ -22,7 +22,7 @@ export interface SelectedCriterion {
 }
 
 const formatCriteriaValue = (value: boolean): string => {
-  return value ? 'v' : '';
+  return value ? 'v' : 'NA';
 };
 
 // Color palette for DA groups (15 distinct colors optimized for visibility on light backgrounds)
