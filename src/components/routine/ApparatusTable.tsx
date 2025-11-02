@@ -1,6 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableContainer } from "@/components/ui/table";
 import { CombinedApparatusData, Criterion, CRITERIA_CODES, ApparatusType } from "@/types/apparatus";
-
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import React from "react";
 
@@ -56,7 +56,27 @@ export const ApparatusTable = ({
   currentColorIndex = 0
 }: ApparatusTableProps) => {
   const [internalSelectedCriteria, setInternalSelectedCriteria] = React.useState<SelectedCriterion[]>([]);
+  const [expandedParents, setExpandedParents] = React.useState<Set<string>>(new Set());
   const selectedCriteria = externalSelectedCriteria ?? internalSelectedCriteria;
+
+  // Helper functions to determine parent-child relationships
+  const isParentRow = (code: string) => !code.includes('.');
+  const getParentCode = (code: string) => code.split('.')[0];
+  const isChildOf = (childCode: string, parentCode: string) => 
+    childCode.startsWith(parentCode + '.');
+
+  const toggleParent = (parentCode: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedParents(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(parentCode)) {
+        newSet.delete(parentCode);
+      } else {
+        newSet.add(parentCode);
+      }
+      return newSet;
+    });
+  };
 
   const handleCriterionClick = (rowId: string, criterionCode: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent row click
@@ -171,16 +191,36 @@ export const ApparatusTable = ({
         </TableHeader>
         <TableBody>
           {data.map((item) => {
+            const isParent = isParentRow(item.code);
+            const isChild = !isParent;
+            const parentCode = isChild ? getParentCode(item.code) : null;
+            const isExpanded = isParent && expandedParents.has(item.code);
+            
+            // Hide child rows if their parent is not expanded
+            if (isChild && parentCode && !expandedParents.has(parentCode)) {
+              return null;
+            }
+            
             const isSelected = selectedIds.includes(item.id);
             return (
               <TableRow
                 key={item.id}
-                onClick={() => onRowClick(item)}
+                onClick={isParent ? (e) => toggleParent(item.code, e) : () => onRowClick(item)}
                 className={`cursor-pointer transition-colors ${
                   isSelected ? 'bg-primary/10 hover:bg-primary/20' : 'hover:bg-muted/50'
-                }`}
+                } ${isChild ? 'bg-muted/30' : ''}`}
               >
-                <TableCell className="font-medium text-sm">{item.description}</TableCell>
+                <TableCell className="font-medium text-sm">
+                  <div className="flex items-center gap-2">
+                    {isParent && (
+                      isExpanded ? 
+                        <ChevronDown className="h-4 w-4 text-primary" /> : 
+                        <ChevronRight className="h-4 w-4 text-primary" />
+                    )}
+                    {isChild && <span className="ml-6" />}
+                    {item.description}
+                  </div>
+                </TableCell>
                 <TableCell className="text-center">
                   {item.symbol_image && (
                     <div className="flex justify-center">
@@ -210,9 +250,14 @@ export const ApparatusTable = ({
                 <TableCell className="text-center font-semibold">{item.value.toFixed(2)}</TableCell>
                 {CRITERIA_CODES.map((code) => {
                   const value = item.criteria[code];
-                  const isSelected = isCriterionSelected(item.id, code);
-                  const isClickable = formatCriteriaValue(value) === 'v';
+                  const isCellSelected = isCriterionSelected(item.id, code);
+                  const isClickable = formatCriteriaValue(value) === 'v' && isChild;
                   const borderColor = getCellBorderColor(item.id, code);
+                  
+                  // For child rows, show "o" instead of "v"
+                  const displayValue = isChild && formatCriteriaValue(value) === 'v' 
+                    ? 'o' 
+                    : formatCriteriaValue(value);
                   
                   return (
                     <TableCell 
@@ -220,13 +265,15 @@ export const ApparatusTable = ({
                       className={`text-center text-sm transition-colors relative ${
                         isClickable ? 'cursor-pointer hover:bg-primary/10' : ''
                       } ${
-                        isSelected ? 'bg-primary/30 font-bold' : ''
+                        isCellSelected && isChild ? 'bg-primary/60 font-bold text-primary-foreground' : ''
                       } ${
                         borderColor ? `border-4 border-solid ${borderColor}` : ''
+                      } ${
+                        isParent && formatCriteriaValue(value) === 'v' ? 'opacity-30' : ''
                       }`}
                       onClick={isClickable ? (e) => handleCriterionClick(item.id, code, e) : undefined}
                     >
-                      {formatCriteriaValue(value)}
+                      {displayValue}
                     </TableCell>
                   );
                 })}
