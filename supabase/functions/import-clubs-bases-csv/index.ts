@@ -62,7 +62,13 @@ Deno.serve(async (req) => {
       throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
     }
 
-    const clubsBases = ((result as any).data as any[]).map((raw: Record<string, unknown>, idx: number) => {
+    const clubsBases = ((result as any).data as any[])
+      .filter((raw: Record<string, unknown>) => {
+        // Skip rows where code is empty (handles trailing empty rows)
+        const code = (raw.code ?? '').toString().trim();
+        return code.length > 0;
+      })
+      .map((raw: Record<string, unknown>, idx: number) => {
       const code = (raw.code ?? '').toString().trim() || null;
       const name = raw.name != null ? raw.name.toString().trim() : null;
       const description = raw.description != null ? raw.description.toString().trim() : null;

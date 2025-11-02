@@ -62,24 +62,30 @@ Deno.serve(async (req) => {
       throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
     }
 
-    const ribbonBases = ((result as any).data as any[]).map((raw: Record<string, unknown>, idx: number) => {
-      const code = (raw.code ?? '').toString().trim() || null;
-      const name = raw.name != null ? raw.name.toString().trim() : null;
-      const description = raw.description != null ? raw.description.toString().trim() : null;
-      let valueStr = raw.value != null ? raw.value.toString().trim() : null;
+    const ribbonBases = ((result as any).data as any[])
+      .filter((raw: Record<string, unknown>) => {
+        // Skip rows where code is empty (handles trailing empty rows)
+        const code = (raw.code ?? '').toString().trim();
+        return code.length > 0;
+      })
+      .map((raw: Record<string, unknown>, idx: number) => {
+        const code = (raw.code ?? '').toString().trim() || null;
+        const name = raw.name != null ? raw.name.toString().trim() : null;
+        const description = raw.description != null ? raw.description.toString().trim() : null;
+        let valueStr = raw.value != null ? raw.value.toString().trim() : null;
 
-      if (valueStr && /^[0-9]+,[0-9]+$/.test(valueStr)) {
-        valueStr = valueStr.replace(',', '.');
-      }
-      const value = valueStr !== null ? parseFloat(valueStr) : null;
+        if (valueStr && /^[0-9]+,[0-9]+$/.test(valueStr)) {
+          valueStr = valueStr.replace(',', '.');
+        }
+        const value = valueStr !== null ? parseFloat(valueStr) : null;
 
-      if (!code) throw new Error(`Row ${idx + 2}: code is required`);
-      if (!name) throw new Error(`Row ${idx + 2}: name is required`);
-      if (!description) throw new Error(`Row ${idx + 2}: description is required`);
-      if (value === null || Number.isNaN(value)) throw new Error(`Row ${idx + 2}: value is required and must be a number`);
+        if (!code) throw new Error(`Row ${idx + 2}: code is required`);
+        if (!name) throw new Error(`Row ${idx + 2}: name is required`);
+        if (!description) throw new Error(`Row ${idx + 2}: description is required`);
+        if (value === null || Number.isNaN(value)) throw new Error(`Row ${idx + 2}: value is required and must be a number`);
 
-      return { code, name, description, value };
-    });
+        return { code, name, description, value };
+      });
 
     console.log(`✅ Parsed ${ribbonBases.length} ribbon bases from CSV`);
 
