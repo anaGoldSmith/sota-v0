@@ -267,7 +267,7 @@ export const ApparatusTable = ({
                 {CRITERIA_CODES.map((code) => {
                   const value = item.criteria[code];
                   const isCellSelected = isCriterionSelected(item.id, code);
-                  const isClickable = formatCriteriaValue(value) === 'v' && isCollapsibleChild;
+                  const isClickable = formatCriteriaValue(value) === 'v' && !isParent;
                   const borderColor = getCellBorderColor(item.id, code);
                   
                   // For collapsible child rows, show "o" instead of "v"
@@ -281,7 +281,7 @@ export const ApparatusTable = ({
                       className={`text-center text-sm transition-colors relative ${
                         isClickable ? 'cursor-pointer hover:bg-primary/10' : ''
                       } ${
-                        isCellSelected && isCollapsibleChild ? 'bg-primary/60 font-bold text-primary-foreground' : ''
+                        isCellSelected ? 'bg-primary/60 font-bold text-primary-foreground' : ''
                       } ${
                         borderColor ? `border-4 border-solid ${borderColor}` : ''
                       } ${
