@@ -104,9 +104,27 @@ export const ApparatusSelectionDialog = ({
   const getBaseSymbol = (filename: string | null) => {
     if (!filename || !apparatus) return null;
     
-    const bucketName = `${apparatus}-bases-symbols`;
+    // If it's already a full URL, return it directly
+    if (filename.startsWith('http')) {
+      return filename;
+    }
+    
+    // Try bases bucket first
+    const basesBucket = `${apparatus}-bases-symbols`;
     const { data: { publicUrl } } = supabase.storage
-      .from(bucketName)
+      .from(basesBucket)
+      .getPublicUrl(filename);
+    
+    return publicUrl;
+  };
+
+  const getBaseSymbolFallback = (filename: string | null) => {
+    if (!filename || !apparatus) return null;
+    
+    // Try technical elements bucket as fallback
+    const teBucket = `${apparatus}-technical-elements-symbols`;
+    const { data: { publicUrl } } = supabase.storage
+      .from(teBucket)
       .getPublicUrl(filename);
     
     return publicUrl;

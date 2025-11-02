@@ -301,10 +301,22 @@ const RoutineCalculator = () => {
       return filename;
     }
     
-    // Otherwise, construct the public URL
-    const bucketName = `${apparatus}-bases-symbols`;
+    // Try bases bucket first
+    const basesBucket = `${apparatus}-bases-symbols`;
     const { data: { publicUrl } } = supabase.storage
-      .from(bucketName)
+      .from(basesBucket)
+      .getPublicUrl(filename);
+    
+    return publicUrl;
+  };
+
+  const getBaseSymbolFallback = (filename: string | null, apparatus: ApparatusType) => {
+    if (!filename) return null;
+    
+    // Try technical elements bucket as fallback
+    const teBucket = `${apparatus}-technical-elements-symbols`;
+    const { data: { publicUrl } } = supabase.storage
+      .from(teBucket)
       .getPublicUrl(filename);
     
     return publicUrl;

@@ -121,10 +121,22 @@ export const ApparatusTable = ({
       return filename;
     }
     
-    // Otherwise, construct the public URL
-    const bucketName = `${apparatus}-bases-symbols`;
+    // Try bases bucket first
+    const basesBucket = `${apparatus}-bases-symbols`;
     const { data: { publicUrl } } = supabase.storage
-      .from(bucketName)
+      .from(basesBucket)
+      .getPublicUrl(filename);
+    
+    return publicUrl;
+  };
+
+  const getBaseSymbolFallback = (filename: string | null) => {
+    if (!filename) return null;
+    
+    // Try technical elements bucket as fallback
+    const teBucket = `${apparatus}-technical-elements-symbols`;
+    const { data: { publicUrl } } = supabase.storage
+      .from(teBucket)
       .getPublicUrl(filename);
     
     return publicUrl;
@@ -177,9 +189,19 @@ export const ApparatusTable = ({
                         alt={item.code}
                         className="h-16 w-auto object-contain"
                         onError={(e) => {
-                          const computedUrl = getBaseSymbol(item.symbol_image);
-                          console.error('Failed to load base symbol:', item.code, item.symbol_image, computedUrl);
-                          e.currentTarget.style.display = 'none';
+                          const currentSrc = e.currentTarget.src;
+                          const basesUrl = getBaseSymbol(item.symbol_image);
+                          const fallbackUrl = getBaseSymbolFallback(item.symbol_image);
+                          
+                          // If currently showing bases URL, try fallback
+                          if (currentSrc === basesUrl && fallbackUrl) {
+                            console.log('Trying fallback bucket for:', item.code, item.symbol_image);
+                            e.currentTarget.src = fallbackUrl;
+                          } else {
+                            // Both failed, hide image
+                            console.error('Failed to load base symbol from both buckets:', item.code, item.symbol_image, 'Bases:', basesUrl, 'TE:', fallbackUrl);
+                            e.currentTarget.style.display = 'none';
+                          }
                         }}
                       />
                     </div>
