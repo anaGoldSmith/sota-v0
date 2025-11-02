@@ -79,44 +79,53 @@ Deno.serve(async (req) => {
         }
         const value = valueStr !== null ? parseFloat(valueStr) : null;
 
+        // Parse criteria columns (Y/N to boolean)
+        const Cr1V = raw.cr1v?.toString().trim().toUpperCase() === 'Y';
+        const Cr2H = raw.cr2h?.toString().trim().toUpperCase() === 'Y';
+        const Cr3L = raw.cr3l?.toString().trim().toUpperCase() === 'Y';
+        const Cr7R = raw.cr7r?.toString().trim().toUpperCase() === 'Y';
+        const Cr4F = raw.cr4f?.toString().trim().toUpperCase() === 'Y';
+        const Cr5W = raw.cr5w?.toString().trim().toUpperCase() === 'Y';
+        const Cr6DB = raw.cr6db?.toString().trim().toUpperCase() === 'Y';
+
         if (!code) throw new Error(`Row ${idx + 2}: code is required`);
         if (!name) throw new Error(`Row ${idx + 2}: name is required`);
         if (!description) throw new Error(`Row ${idx + 2}: description is required`);
         if (value === null || Number.isNaN(value)) throw new Error(`Row ${idx + 2}: value is required and must be a number`);
 
-        return { code, name, description, value };
+        return { code, name, description, value, Cr1V, Cr2H, Cr3L, Cr7R, Cr4F, Cr5W, Cr6DB };
       });
 
     console.log(`✅ Parsed ${ribbonBases.length} ribbon bases from CSV`);
 
-    console.log('🗑️  Deleting existing ribbon bases...');
+    console.log('🗑️  Deleting existing ribbon DA...');
     const { error: deleteError } = await supabase
-      .from('ribbon_bases')
+      .from('ribbon_da')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000');
 
     if (deleteError) {
       console.error('Delete error:', deleteError);
-      throw new Error(`Failed to delete existing ribbon bases: ${deleteError.message}`);
+      throw new Error(`Failed to delete existing ribbon DA: ${deleteError.message}`);
     }
 
-    console.log('📝 Inserting new ribbon bases...');
+    console.log('📝 Inserting new ribbon DA...');
     const { data: insertedData, error: insertError } = await supabase
-      .from('ribbon_bases')
+      .from('ribbon_da')
       .insert(ribbonBases)
       .select();
 
     if (insertError) {
       console.error('Insert error:', insertError);
-      throw new Error(`Failed to insert ribbon bases: ${insertError.message}`);
+      throw new Error(`Failed to insert ribbon DA: ${insertError.message}`);
     }
 
-    console.log(`✅ Successfully imported ${insertedData.length} ribbon bases`);
+    console.log(`✅ Successfully imported ${insertedData.length} ribbon DA elements`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Successfully imported ${insertedData.length} ribbon bases`,
+        message: `Successfully imported ${insertedData.length} ribbon DA elements`,
         count: insertedData.length,
       }),
       {
