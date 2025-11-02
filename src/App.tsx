@@ -13,6 +13,7 @@ import RoutineCalculator from "./pages/RoutineCalculator";
 import ApparatusConfiguration from "./pages/ApparatusConfiguration";
 import ElementConfiguration from "./pages/ElementConfiguration";
 import GeneralConfigurations from "./pages/GeneralConfigurations";
+import SymbolManagement from "./pages/SymbolManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/admin/apparatus-configuration" element={<ApparatusConfiguration />} />
           <Route path="/admin/element-configuration" element={<ElementConfiguration />} />
           <Route path="/admin/general-configurations" element={<GeneralConfigurations />} />
+          <Route path="/admin/symbol-management" element={<SymbolManagement />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/routines" element={<Routines />} />
           <Route path="/routine-calculator" element={<RoutineCalculator />} />

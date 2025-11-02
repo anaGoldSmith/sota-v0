@@ -111,6 +111,21 @@ const Admin = () => {
               </CardDescription>
             </CardHeader>
           </Card>
+
+          <Card 
+            className="cursor-pointer hover:bg-accent transition-colors" 
+            onClick={() => navigate("/admin/symbol-management")}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Settings className="h-8 w-8 text-primary" />
+                <CardTitle>Symbol Management</CardTitle>
+              </div>
+              <CardDescription>
+                View, delete, and manage all symbol images
+              </CardDescription>
+            </CardHeader>
+          </Card>
         </div>
       </main>
     </div>
