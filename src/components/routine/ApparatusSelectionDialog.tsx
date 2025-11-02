@@ -30,7 +30,7 @@ export const ApparatusSelectionDialog = ({
   onSelectElements,
   onSelectCombinations,
 }: ApparatusSelectionDialogProps) => {
-  const { apparatusData, criteria, isLoading } = useApparatusData(apparatus);
+  const { apparatusData, criteria, specialCodes, isLoading } = useApparatusData(apparatus);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedCriteria, setSelectedCriteria] = useState<SelectedCriterion[]>([]);
   const [completedDaGroups, setCompletedDaGroups] = useState<{ cells: SelectedCriterion[]; color: string }[]>([]);
@@ -112,19 +112,7 @@ export const ApparatusSelectionDialog = ({
     return publicUrl;
   };
 
-  // Get special codes for the current apparatus
-  const getSpecialCodes = () => {
-    if (!apparatus) return [];
-    const specialCodesMap: Record<ApparatusType, string[]> = {
-      hoop: ['H13'],
-      ball: ['B2', 'B10'],
-      clubs: ['CL13', 'CL14', 'CL15'],
-      ribbon: ['RIB14'],
-    };
-    return specialCodesMap[apparatus] || [];
-  };
-
-  const specialCodes = getSpecialCodes();
+  // Special codes are now fetched dynamically from technical elements table
   const specialElements = apparatusData.filter(item => specialCodes.includes(item.code));
 
   // Color palette for DA groups (15 distinct colors optimized for visibility on light backgrounds)

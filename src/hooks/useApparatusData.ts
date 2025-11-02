@@ -26,6 +26,49 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
     },
   });
 
+  // Fetch special codes from technical elements table
+  const { data: specialCodes = [] } = useQuery({
+    queryKey: ["specialCodes", apparatus],
+    queryFn: async () => {
+      if (!apparatus) return [];
+
+      let data, error;
+
+      switch (apparatus) {
+        case 'hoop':
+          ({ data, error } = await supabase
+            .from('hoop_technical_elements')
+            .select('code')
+            .eq('special_code', true));
+          break;
+        case 'ball':
+          ({ data, error } = await supabase
+            .from('ball_technical_elements')
+            .select('code')
+            .eq('special_code', true));
+          break;
+        case 'clubs':
+          ({ data, error } = await supabase
+            .from('clubs_technical_elements')
+            .select('code')
+            .eq('special_code', true));
+          break;
+        case 'ribbon':
+          ({ data, error } = await supabase
+            .from('ribbon_technical_elements')
+            .select('code')
+            .eq('special_code', true));
+          break;
+        default:
+          return [];
+      }
+
+      if (error) throw error;
+      return (data || []).map(item => item.code);
+    },
+    enabled: !!apparatus,
+  });
+
   // Fetch apparatus-specific data from separate DA tables
   const { data: apparatusData, isLoading, error } = useQuery({
     queryKey: ["apparatus", apparatus],
@@ -79,6 +122,7 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
   return {
     apparatusData: apparatusData || [],
     criteria,
+    specialCodes,
     isLoading,
     error,
   };
