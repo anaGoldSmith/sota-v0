@@ -74,6 +74,16 @@ Deno.serve(async (req) => {
       throw new Error("Invalid or missing apparatus type");
     }
 
+    // Map apparatus type to table name
+    const tableMap: Record<string, string> = {
+      hoop: 'hoop_da',
+      ball: 'ball_da',
+      clubs: 'clubs_da',
+      ribbon: 'ribbon_da'
+    };
+
+    const tableName = tableMap[apparatusType];
+
     const records = parse(csvContent, {
       skipFirstRow: true,
       strip: true,
@@ -145,16 +155,7 @@ Deno.serve(async (req) => {
       throw new Error("No valid DA elements found in CSV");
     }
 
-    const tableMap: Record<string, string> = {
-      'hoop': 'hoop_da',
-      'ball': 'ball_da',
-      'clubs': 'clubs_da',
-      'ribbon': 'ribbon_da'
-    };
-
-    const tableName = tableMap[apparatusType];
-
-    // Delete existing elements for this apparatus type
+    // Delete existing elements from the specific table
     const { error: deleteError } = await supabase
       .from(tableName)
       .delete()
