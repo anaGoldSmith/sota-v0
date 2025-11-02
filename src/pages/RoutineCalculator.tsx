@@ -133,6 +133,10 @@ function SortableRow({ element, index, onRemove }: {
                   src={url}
                   alt="Symbol"
                   className="h-10 w-10 object-contain"
+                  onError={(e) => {
+                    console.log('Failed to load symbol:', url);
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
               )
             );
@@ -346,12 +350,16 @@ const RoutineCalculator = () => {
         const combo2 = combinations[i + 1];
         const symbolImages = [];
         
-        // Add both base symbols
+        // Add both base symbols with fallback
         if (combo.element.symbol_image && selectedApparatus) {
-          symbolImages.push(getBaseSymbol(combo.element.symbol_image, selectedApparatus) || '');
+          const baseUrl = getBaseSymbol(combo.element.symbol_image, selectedApparatus);
+          const fallbackUrl = getBaseSymbolFallback(combo.element.symbol_image, selectedApparatus);
+          symbolImages.push(baseUrl || fallbackUrl || '');
         }
         if (combo2.element.symbol_image && selectedApparatus) {
-          symbolImages.push(getBaseSymbol(combo2.element.symbol_image, selectedApparatus) || '');
+          const baseUrl = getBaseSymbol(combo2.element.symbol_image, selectedApparatus);
+          const fallbackUrl = getBaseSymbolFallback(combo2.element.symbol_image, selectedApparatus);
+          symbolImages.push(baseUrl || fallbackUrl || '');
         }
         
         // Add only one criterion symbol (they're the same)
@@ -372,7 +380,9 @@ const RoutineCalculator = () => {
         // Standard combination - process normally
         const symbolImages = [];
         if (combo.element.symbol_image && selectedApparatus) {
-          symbolImages.push(getBaseSymbol(combo.element.symbol_image, selectedApparatus) || '');
+          const baseUrl = getBaseSymbol(combo.element.symbol_image, selectedApparatus);
+          const fallbackUrl = getBaseSymbolFallback(combo.element.symbol_image, selectedApparatus);
+          symbolImages.push(baseUrl || fallbackUrl || '');
         }
         combo.selectedCriteria.forEach(criterionCode => {
           symbolImages.push(getCriteriaSymbolUrl(criterionCode));
