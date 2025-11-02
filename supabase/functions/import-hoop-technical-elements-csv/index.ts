@@ -62,42 +62,48 @@ Deno.serve(async (req) => {
       throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
     }
 
-    const technicalElements = ((result as any).data as any[]).map((raw: Record<string, unknown>, idx: number) => {
-      const parentGroup = raw.parentgroup != null ? raw.parentgroup.toString().trim() : null;
-      const parentGroupCode = raw.parentgroupcode != null ? raw.parentgroupcode.toString().trim() : null;
-      const code = raw.code != null ? raw.code.toString().trim() : null;
-      const name = raw.name != null ? raw.name.toString().trim() : null;
-      const description = raw.description != null ? raw.description.toString().trim() : null;
-      
-      const technicalElementStr = raw.technicalelement != null ? raw.technicalelement.toString().trim().toUpperCase() : 'N';
-      const technicalElement = technicalElementStr === 'Y' || technicalElementStr === 'TRUE' || technicalElementStr === '1';
-      
-      const daStr = raw.da != null ? raw.da.toString().trim().toUpperCase() : 'N';
-      const da = daStr === 'Y' || daStr === 'TRUE' || daStr === '1';
-      
-      const specialCodeStr = raw.specialcode != null ? raw.specialcode.toString().trim().toUpperCase() : 'N';
-      const specialCode = specialCodeStr === 'Y' || specialCodeStr === 'TRUE' || specialCodeStr === '1';
-      
-      const dataInformationAboutTe = raw.datainformationaboutte != null ? raw.datainformationaboutte.toString().trim() : null;
+    const technicalElements = ((result as any).data as any[])
+      .filter((raw: Record<string, unknown>) => {
+        // Skip rows where all key fields are empty
+        const hasData = raw.parentgroup || raw.code || raw.name;
+        return hasData;
+      })
+      .map((raw: Record<string, unknown>, idx: number) => {
+        const parentGroup = raw.parentgroup != null ? raw.parentgroup.toString().trim() : null;
+        const parentGroupCode = raw.parentgroupcode != null ? raw.parentgroupcode.toString().trim() : null;
+        const code = raw.code != null ? raw.code.toString().trim() : null;
+        const name = raw.name != null ? raw.name.toString().trim() : null;
+        const description = raw.description != null ? raw.description.toString().trim() : null;
+        
+        const technicalElementStr = raw.technicalelement != null ? raw.technicalelement.toString().trim().toUpperCase() : 'N';
+        const technicalElement = technicalElementStr === 'Y' || technicalElementStr === 'TRUE' || technicalElementStr === '1';
+        
+        const daStr = raw.da != null ? raw.da.toString().trim().toUpperCase() : 'N';
+        const da = daStr === 'Y' || daStr === 'TRUE' || daStr === '1';
+        
+        const specialCodeStr = raw.specialcode != null ? raw.specialcode.toString().trim().toUpperCase() : 'N';
+        const specialCode = specialCodeStr === 'Y' || specialCodeStr === 'TRUE' || specialCodeStr === '1';
+        
+        const dataInformationAboutTe = raw.datainformationaboutte != null ? raw.datainformationaboutte.toString().trim() : null;
 
-      if (!parentGroup) throw new Error(`Row ${idx + 2}: parentGroup is required`);
-      if (!parentGroupCode) throw new Error(`Row ${idx + 2}: parentGroupCode is required`);
-      if (!code) throw new Error(`Row ${idx + 2}: code is required`);
-      if (!name) throw new Error(`Row ${idx + 2}: name is required`);
-      if (!description) throw new Error(`Row ${idx + 2}: description is required`);
+        if (!parentGroup) throw new Error(`Row ${idx + 2}: parentGroup is required (value: "${raw.parentgroup}")`);
+        if (!parentGroupCode) throw new Error(`Row ${idx + 2}: parentGroupCode is required`);
+        if (!code) throw new Error(`Row ${idx + 2}: code is required`);
+        if (!name) throw new Error(`Row ${idx + 2}: name is required`);
+        if (!description) throw new Error(`Row ${idx + 2}: description is required`);
 
-      return {
-        parent_group: parentGroup,
-        parent_group_code: parentGroupCode,
-        technical_element: technicalElement,
-        da: da,
-        special_code: specialCode,
-        code,
-        name,
-        description,
-        data_information_about_te: dataInformationAboutTe,
-      };
-    });
+        return {
+          parent_group: parentGroup,
+          parent_group_code: parentGroupCode,
+          technical_element: technicalElement,
+          da: da,
+          special_code: specialCode,
+          code,
+          name,
+          description,
+          data_information_about_te: dataInformationAboutTe,
+        };
+      });
 
     console.log(`✅ Parsed ${technicalElements.length} hoop technical elements from CSV`);
 
