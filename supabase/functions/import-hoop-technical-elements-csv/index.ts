@@ -81,7 +81,12 @@ Deno.serve(async (req) => {
         const parentGroupCode = raw.parentgroupcode != null ? raw.parentgroupcode.toString().trim() : null;
         const code = raw.code != null ? raw.code.toString().trim() : null;
         const name = raw.name != null ? raw.name.toString().trim() : null;
-        const description = raw.description != null ? raw.description.toString().trim() : null;
+        let description = raw.description != null ? raw.description.toString().trim() : null;
+        
+        // Use name as description fallback if description is empty
+        if (!description && name) {
+          description = name;
+        }
         
         const technicalElementStr = raw.technicalelement != null ? raw.technicalelement.toString().trim().toUpperCase() : 'N';
         const technicalElement = technicalElementStr === 'Y' || technicalElementStr === 'TRUE' || technicalElementStr === '1';
@@ -98,7 +103,6 @@ Deno.serve(async (req) => {
         if (!parentGroupCode) throw new Error(`Row ${idx + 2}: parentGroupCode is required`);
         if (!code) throw new Error(`Row ${idx + 2}: code is required`);
         if (!name) throw new Error(`Row ${idx + 2}: name is required`);
-        if (!description) throw new Error(`Row ${idx + 2}: description is required`);
 
         return {
           parent_group: parentGroup,
