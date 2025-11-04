@@ -64,9 +64,11 @@ Deno.serve(async (req) => {
 
     const technicalElements = ((result as any).data as any[])
       .filter((raw: Record<string, unknown>) => {
-        // Skip rows where all key fields are empty
-        const hasData = raw.parentgroup || raw.code || raw.name;
-        return hasData;
+        // Skip rows where required fields are empty
+        const parentGroup = raw.parentgroup != null ? raw.parentgroup.toString().trim() : '';
+        const code = raw.code != null ? raw.code.toString().trim() : '';
+        const name = raw.name != null ? raw.name.toString().trim() : '';
+        return parentGroup && code && name;
       })
       .map((raw: Record<string, unknown>, idx: number) => {
         const parentGroup = raw.parentgroup != null ? raw.parentgroup.toString().trim() : null;
