@@ -45,14 +45,20 @@ Deno.serve(async (req) => {
 
     const result = Papa.parse(csvContent, {
       header: true,
-      skipEmptyLines: true,
+      skipEmptyLines: 'greedy',
       transformHeader: (h: string) => h.trim().toLowerCase(),
     });
 
+    // Only throw on critical parse errors, not field mismatches
     if ((result as any).errors && (result as any).errors.length > 0) {
-      console.error('CSV parse errors:', (result as any).errors);
-      const firstErr = (result as any).errors[0];
-      throw new Error(`CSV parse error: ${firstErr.message} at row ${firstErr.row}`);
+      const criticalErrors = (result as any).errors.filter((err: any) => 
+        err.type !== 'FieldMismatch'
+      );
+      if (criticalErrors.length > 0) {
+        console.error('CSV parse errors:', criticalErrors);
+        const firstErr = criticalErrors[0];
+        throw new Error(`CSV parse error: ${firstErr.message} at row ${firstErr.row}`);
+      }
     }
 
     const requiredHeaders = ['parentgroup', 'parentgroupcode', 'technicalelement', 'da', 'specialcode', 'code', 'name', 'description'];
