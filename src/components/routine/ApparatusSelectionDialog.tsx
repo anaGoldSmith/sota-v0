@@ -30,7 +30,7 @@ export const ApparatusSelectionDialog = ({
   onSelectElements,
   onSelectCombinations,
 }: ApparatusSelectionDialogProps) => {
-  const { apparatusData, criteria, specialCodes, isLoading } = useApparatusData(apparatus);
+  const { apparatusData, criteria, specialCodes, specialCodeElements, isLoading } = useApparatusData(apparatus);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedCriteria, setSelectedCriteria] = useState<SelectedCriterion[]>([]);
   const [completedDaGroups, setCompletedDaGroups] = useState<{ cells: SelectedCriterion[]; color: string }[]>([]);
@@ -130,8 +130,23 @@ export const ApparatusSelectionDialog = ({
     return publicUrl;
   };
 
-  // Special codes are now fetched dynamically from technical elements table
-  const specialElements = apparatusData.filter(item => specialCodes.includes(item.code));
+  // Get technical element symbols for storage URL construction
+  const getTechnicalElementSymbol = (filename: string | null) => {
+    if (!filename || !apparatus) return null;
+    
+    // If it's already a full URL, return it directly
+    if (filename.startsWith('http')) {
+      return filename;
+    }
+    
+    // Use technical elements bucket for special code symbols
+    const teBucket = `${apparatus}-technical-elements-symbols`;
+    const { data: { publicUrl } } = supabase.storage
+      .from(teBucket)
+      .getPublicUrl(filename);
+    
+    return publicUrl;
+  };
 
   // Color palette for DA groups (15 distinct colors optimized for visibility on light backgrounds)
   const DA_COLORS = [
@@ -508,15 +523,15 @@ export const ApparatusSelectionDialog = ({
             <span>
               To create a valid DA, choose one base with two criteria by clicking on two "v" cells in the same row. Or, choose the base "Catch from High Throw" with one criterion and another base with the same criterion — in this case, DA value = (highest base value) + 0.1.
             </span>
-            {specialElements.length > 0 && (
+            {specialCodeElements.length > 0 && (
               <span className="inline-flex items-center gap-2 text-xs">
                 <span>*For {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'apparatus'} DAs "Catch from High Throw" is valid for</span>
-                {specialElements.map((element, index) => (
-                  <React.Fragment key={element.id}>
-                    <span className="inline-flex items-center">
+                {specialCodeElements.map((element, index) => (
+                  <React.Fragment key={element.code}>
+                    <span className="inline-flex items-center gap-1">
                       {element.symbol_image && (
                         <img 
-                          src={getBaseSymbol(element.symbol_image) || ''} 
+                          src={getTechnicalElementSymbol(element.symbol_image) || ''} 
                           alt={element.code}
                           className="h-12 w-auto inline-block align-middle"
                           onError={(e) => {
@@ -525,9 +540,10 @@ export const ApparatusSelectionDialog = ({
                           }}
                         />
                       )}
+                      <span className="text-xs font-medium">({element.code})</span>
                     </span>
-                    {index < specialElements.length - 1 && (
-                      index === specialElements.length - 2 ? 
+                    {index < specialCodeElements.length - 1 && (
+                      index === specialCodeElements.length - 2 ? 
                         <span className="mx-1">and</span> : 
                         <span className="mx-1">,</span>
                     )}

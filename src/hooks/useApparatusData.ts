@@ -26,9 +26,9 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
     },
   });
 
-  // Fetch special codes from technical elements table
-  const { data: specialCodes = [] } = useQuery({
-    queryKey: ["specialCodes", apparatus],
+  // Fetch special code elements from technical elements table (with symbols)
+  const { data: specialCodeElements = [] } = useQuery({
+    queryKey: ["specialCodeElements", apparatus],
     queryFn: async () => {
       if (!apparatus) return [];
 
@@ -38,25 +38,25 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
         case 'hoop':
           ({ data, error } = await supabase
             .from('hoop_technical_elements')
-            .select('code')
+            .select('code, symbol_image')
             .eq('special_code', true));
           break;
         case 'ball':
           ({ data, error } = await supabase
             .from('ball_technical_elements')
-            .select('code')
+            .select('code, symbol_image')
             .eq('special_code', true));
           break;
         case 'clubs':
           ({ data, error } = await supabase
             .from('clubs_technical_elements')
-            .select('code')
+            .select('code, symbol_image')
             .eq('special_code', true));
           break;
         case 'ribbon':
           ({ data, error } = await supabase
             .from('ribbon_technical_elements')
-            .select('code')
+            .select('code, symbol_image')
             .eq('special_code', true));
           break;
         default:
@@ -64,10 +64,13 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
       }
 
       if (error) throw error;
-      return (data || []).map(item => item.code);
+      return data || [];
     },
     enabled: !!apparatus,
   });
+
+  // Extract just the codes for backwards compatibility
+  const specialCodes = specialCodeElements.map(item => item.code);
 
   // Fetch all technical elements to get symbols for DA codes
   const { data: technicalElements = [] } = useQuery({
@@ -182,6 +185,7 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
     apparatusData: apparatusData || [],
     criteria,
     specialCodes,
+    specialCodeElements,
     isLoading,
     error,
   };
