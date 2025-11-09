@@ -528,20 +528,17 @@ export const ApparatusSelectionDialog = ({
                 <span>*For {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'apparatus'} DAs "Catch from High Throw" is valid for</span>
                 {specialCodeElements.map((element, index) => (
                   <React.Fragment key={element.code}>
-                    <span className="inline-flex items-center gap-1">
-                      {element.symbol_image && (
-                        <img 
-                          src={getTechnicalElementSymbol(element.symbol_image) || ''} 
-                          alt={element.code}
-                          className="h-12 w-auto inline-block align-middle"
-                          onError={(e) => {
-                            console.error('Failed to load symbol:', element.symbol_image);
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      )}
-                      <span className="text-xs font-medium">({element.code})</span>
-                    </span>
+                    {element.symbol_image && (
+                      <img 
+                        src={getTechnicalElementSymbol(element.symbol_image) || ''} 
+                        alt={element.code}
+                        className="h-12 w-auto inline-block align-middle"
+                        onError={(e) => {
+                          console.error('Failed to load symbol:', element.symbol_image);
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    )}
                     {index < specialCodeElements.length - 1 && (
                       index === specialCodeElements.length - 2 ? 
                         <span className="mx-1">and</span> : 
