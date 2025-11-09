@@ -14,6 +14,7 @@ interface ApparatusTableProps {
   onCriteriaChange?: (criteria: SelectedCriterion[]) => void;
   daGroups?: { cells: SelectedCriterion[], color: string }[];
   currentColorIndex?: number;
+  daComments?: { apparatus: string; code: string; comment: string }[];
 }
 
 export interface SelectedCriterion {
@@ -53,7 +54,8 @@ export const ApparatusTable = ({
   selectedCriteria: externalSelectedCriteria,
   onCriteriaChange,
   daGroups = [],
-  currentColorIndex = 0
+  currentColorIndex = 0,
+  daComments = []
 }: ApparatusTableProps) => {
   const [internalSelectedCriteria, setInternalSelectedCriteria] = React.useState<SelectedCriterion[]>([]);
   const [expandedParents, setExpandedParents] = React.useState<Set<string>>(new Set());
@@ -176,6 +178,70 @@ export const ApparatusTable = ({
     return publicUrl;
   };
 
+  // Get comment for a specific DA code
+  const getCommentForCode = (code: string) => {
+    return daComments.find(comment => comment.code === code);
+  };
+
+  // Helper to get technical element symbol
+  const getTechnicalElementSymbol = (filename: string | null) => {
+    if (!filename) return null;
+    
+    const teBucket = `${apparatus}-technical-elements-symbols`;
+    const { data: { publicUrl } } = supabase.storage
+      .from(teBucket)
+      .getPublicUrl(filename);
+    
+    return publicUrl;
+  };
+
+  // Parse comment to render text with symbols for referenced codes
+  const renderCommentWithSymbols = (comment: string) => {
+    // Match patterns like H12.1 or H09.1 (code patterns)
+    const codePattern = /([A-Z]\d+(?:\.\d+)?)/g;
+    const parts: (string | JSX.Element)[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = codePattern.exec(comment)) !== null) {
+      const code = match[1];
+      
+      // Add text before the code
+      if (match.index > lastIndex) {
+        parts.push(comment.substring(lastIndex, match.index));
+      }
+      
+      // Find the technical element with this code
+      const element = data.find(d => d.code === code);
+      if (element?.symbol_image) {
+        parts.push(
+          <img 
+            key={`${code}-${match.index}`}
+            src={getTechnicalElementSymbol(element.symbol_image) || ''} 
+            alt={code}
+            className="h-8 w-auto inline-block align-middle mx-1"
+            onError={(e) => {
+              console.error('Failed to load symbol:', element.symbol_image);
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        );
+      } else {
+        // If no symbol found, just show the code
+        parts.push(code);
+      }
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text
+    if (lastIndex < comment.length) {
+      parts.push(comment.substring(lastIndex));
+    }
+    
+    return parts.length > 0 ? parts : comment;
+  };
+
   return (
     <TableContainer className="h-[500px] rounded-md border">
         <Table>
@@ -227,14 +293,21 @@ export const ApparatusTable = ({
                 } ${isCollapsibleChild ? 'bg-muted/30' : ''}`}
               >
                 <TableCell className="font-medium text-sm">
-                  <div className="flex items-center gap-2">
-                    {isParent && (
-                      isExpanded ? 
-                        <ChevronDown className="h-4 w-4 text-primary" /> : 
-                        <ChevronRight className="h-4 w-4 text-primary" />
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      {isParent && (
+                        isExpanded ? 
+                          <ChevronDown className="h-4 w-4 text-primary" /> : 
+                          <ChevronRight className="h-4 w-4 text-primary" />
+                      )}
+                      {isCollapsibleChild && <span className="ml-6" />}
+                      {item.description}
+                    </div>
+                    {getCommentForCode(item.code) && (
+                      <div className="text-xs text-muted-foreground flex items-center gap-1 flex-wrap">
+                        {renderCommentWithSymbols(getCommentForCode(item.code)!.comment)}
+                      </div>
                     )}
-                    {isCollapsibleChild && <span className="ml-6" />}
-                    {item.description}
                   </div>
                 </TableCell>
                 <TableCell className="text-center">

@@ -30,7 +30,7 @@ export const ApparatusSelectionDialog = ({
   onSelectElements,
   onSelectCombinations,
 }: ApparatusSelectionDialogProps) => {
-  const { apparatusData, criteria, specialCodes, specialCodeElements, isLoading } = useApparatusData(apparatus);
+  const { apparatusData, criteria, specialCodes, specialCodeElements, daComments, isLoading } = useApparatusData(apparatus);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedCriteria, setSelectedCriteria] = useState<SelectedCriterion[]>([]);
   const [completedDaGroups, setCompletedDaGroups] = useState<{ cells: SelectedCriterion[]; color: string }[]>([]);
@@ -566,6 +566,7 @@ export const ApparatusSelectionDialog = ({
               selectedCriteria={selectedCriteria}
               onCriteriaChange={handleCriteriaChange}
               daGroups={completedDaGroups}
+              daComments={daComments || []}
             />
 
             <div className="flex justify-end gap-3 pt-4 flex-shrink-0">

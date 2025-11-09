@@ -275,6 +275,33 @@ export type Database = {
         }
         Relationships: []
       }
+      da_comments: {
+        Row: {
+          apparatus: string
+          code: string
+          comment: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          apparatus: string
+          code: string
+          comment: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          apparatus?: string
+          code?: string
+          comment?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hoop_da: {
         Row: {
           code: string

@@ -181,11 +181,29 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
     enabled: !!apparatus && technicalElements.length > 0,
   });
 
+  // Fetch DA comments for this apparatus
+  const { data: daComments = [] } = useQuery({
+    queryKey: ['da-comments', apparatus],
+    queryFn: async () => {
+      if (!apparatus) return [];
+      
+      const { data, error } = await supabase
+        .from('da_comments')
+        .select('*')
+        .eq('apparatus', apparatus);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!apparatus,
+  });
+
   return {
     apparatusData: apparatusData || [],
     criteria,
     specialCodes,
     specialCodeElements,
+    daComments,
     isLoading,
     error,
   };
