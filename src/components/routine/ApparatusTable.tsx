@@ -178,9 +178,35 @@ export const ApparatusTable = ({
     return publicUrl;
   };
 
-  // Get comment for a specific DA code
+  // Get comment for a specific DA code (handles codes with "&")
   const getCommentForCode = (code: string) => {
     return daComments.find(comment => comment.code === code);
+  };
+
+  // Render symbols for codes separated by "&"
+  const renderSymbolsForCodes = (codeString: string) => {
+    const codes = codeString.split('&').map(c => c.trim());
+    const symbols: JSX.Element[] = [];
+    
+    codes.forEach((code, index) => {
+      const element = data.find(d => d.code === code);
+      if (element?.symbol_image) {
+        symbols.push(
+          <img 
+            key={`${code}-${index}`}
+            src={getTechnicalElementSymbol(element.symbol_image) || ''} 
+            alt={code}
+            className="h-8 w-auto inline-block align-middle mx-0.5"
+            onError={(e) => {
+              console.error('Failed to load symbol:', element.symbol_image);
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        );
+      }
+    });
+    
+    return symbols.length > 0 ? symbols : null;
   };
 
   // Helper to get technical element symbol
@@ -304,8 +330,11 @@ export const ApparatusTable = ({
                       {item.description}
                     </div>
                     {getCommentForCode(item.code) && (
-                      <div className="text-xs text-muted-foreground flex items-center gap-1 flex-wrap">
-                        {renderCommentWithSymbols(getCommentForCode(item.code)!.comment)}
+                      <div className="text-xs text-muted-foreground flex items-start gap-1 flex-wrap">
+                        <div className="flex items-center gap-0.5">
+                          {renderSymbolsForCodes(getCommentForCode(item.code)!.code)}
+                        </div>
+                        <span className="flex-1">{getCommentForCode(item.code)!.comment}</span>
                       </div>
                     )}
                   </div>
