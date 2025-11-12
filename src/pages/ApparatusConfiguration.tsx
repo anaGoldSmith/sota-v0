@@ -57,6 +57,12 @@ const ApparatusConfiguration = () => {
   const clubsTeSymbolInputRef = useRef<HTMLInputElement>(null);
   const ribbonTeSymbolInputRef = useRef<HTMLInputElement>(null);
 
+  // DA Comments CSV import states
+  const [daCommentsCsvFile, setDaCommentsCsvFile] = useState<File | null>(null);
+  const [daCommentsApparatus, setDaCommentsApparatus] = useState<string>("hoop");
+  const [importingDaCommentsCsv, setImportingDaCommentsCsv] = useState(false);
+  const daCommentsCsvInputRef = useRef<HTMLInputElement>(null);
+
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -515,6 +521,45 @@ const ApparatusConfiguration = () => {
     }
   };
 
+  const handleDaCommentsCsvImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!daCommentsCsvFile) {
+      toast.error("Please select a CSV file");
+      return;
+    }
+
+    setImportingDaCommentsCsv(true);
+
+    try {
+      const csvContent = await daCommentsCsvFile.text();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('import-da-comments-csv', {
+        body: { csvContent, apparatus: daCommentsApparatus },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success(data.message);
+        setDaCommentsCsvFile(null);
+        if (daCommentsCsvInputRef.current) daCommentsCsvInputRef.current.value = '';
+      } else {
+        toast.error(data.error || "Import failed");
+      }
+      
+    } catch (error: any) {
+      console.error('DA Comments CSV import error:', error);
+      toast.error(`Import failed: ${error.message || "Unknown error"}`);
+    } finally {
+      setImportingDaCommentsCsv(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -588,6 +633,55 @@ const ApparatusConfiguration = () => {
                     
                     <Button type="submit" disabled={uploadingDaTables} className="w-full">
                       {uploadingDaTables ? "Uploading..." : "Upload DA Tables"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* DA Comments CSV Import */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Import DA Comments from CSV</CardTitle>
+                  <CardDescription>
+                    Upload a CSV file to import DA-specific comments. This will replace all existing comments for the selected apparatus.
+                    <br />
+                    Required columns: code, comment
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleDaCommentsCsvImport} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="da-apparatus">Apparatus</Label>
+                      <select
+                        id="da-apparatus"
+                        value={daCommentsApparatus}
+                        onChange={(e) => setDaCommentsApparatus(e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <option value="hoop">Hoop</option>
+                        <option value="ball">Ball</option>
+                        <option value="clubs">Clubs</option>
+                        <option value="ribbon">Ribbon</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="da-comments-csv-input">CSV File</Label>
+                      <Input
+                        id="da-comments-csv-input"
+                        ref={daCommentsCsvInputRef}
+                        type="file"
+                        accept=".csv,text/csv"
+                        onChange={(e) => setDaCommentsCsvFile(e.target.files?.[0] || null)}
+                        required
+                      />
+                      {daCommentsCsvFile && (
+                        <p className="text-sm text-muted-foreground">{daCommentsCsvFile.name}</p>
+                      )}
+                    </div>
+                    
+                    <Button type="submit" disabled={importingDaCommentsCsv} className="w-full">
+                      {importingDaCommentsCsv ? "Importing..." : "Import CSV"}
                     </Button>
                   </form>
                 </CardContent>
