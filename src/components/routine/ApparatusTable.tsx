@@ -197,7 +197,7 @@ export const ApparatusTable = ({
             key={`${code}-${index}`}
             src={getTechnicalElementSymbol(element.symbol_image) || ''} 
             alt={code}
-            className="h-8 w-auto inline-block align-middle mx-0.5"
+            className="h-6 w-auto inline-block align-middle mx-0.5"
             onError={(e) => {
               console.error('Failed to load symbol:', element.symbol_image);
               e.currentTarget.style.display = 'none';
