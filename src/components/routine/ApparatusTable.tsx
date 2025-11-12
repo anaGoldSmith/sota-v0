@@ -280,11 +280,11 @@ export const ApparatusTable = ({
           <CollapsibleContent className="px-4 pb-4">
             <div className="space-y-2">
               {daComments.map((comment, idx) => (
-                <div key={idx} className="flex items-start gap-2 text-sm">
-                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                <div key={idx} className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-0.5 flex-shrink-0 min-w-[80px]">
                     {renderSymbolsForCodes(comment.code)}
                   </div>
-                  <span className="text-muted-foreground">{comment.comment}</span>
+                  <span className="text-muted-foreground flex-1">{comment.comment}</span>
                 </div>
               ))}
             </div>
