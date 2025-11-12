@@ -269,6 +269,22 @@ export const ApparatusTable = ({
   };
 
   return (
+    <div className="space-y-4">
+      {daComments && daComments.length > 0 && (
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <h3 className="font-semibold mb-3 text-sm">DA Comments:</h3>
+          <div className="space-y-2">
+            {daComments.map((comment, idx) => (
+              <div key={idx} className="flex items-start gap-2 text-sm">
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  {renderSymbolsForCodes(comment.code)}
+                </div>
+                <span className="text-muted-foreground">{comment.comment}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     <TableContainer className="h-[500px] rounded-md border">
         <Table>
           <TableHeader>
@@ -319,24 +335,14 @@ export const ApparatusTable = ({
                 } ${isCollapsibleChild ? 'bg-muted/30' : ''}`}
               >
                 <TableCell className="font-medium text-sm">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      {isParent && (
-                        isExpanded ? 
-                          <ChevronDown className="h-4 w-4 text-primary" /> : 
-                          <ChevronRight className="h-4 w-4 text-primary" />
-                      )}
-                      {isCollapsibleChild && <span className="ml-6" />}
-                      {item.description}
-                    </div>
-                    {getCommentForCode(item.code) && (
-                      <div className="text-xs text-muted-foreground flex items-start gap-1 flex-wrap">
-                        <div className="flex items-center gap-0.5">
-                          {renderSymbolsForCodes(getCommentForCode(item.code)!.code)}
-                        </div>
-                        <span className="flex-1">{getCommentForCode(item.code)!.comment}</span>
-                      </div>
+                  <div className="flex items-center gap-2">
+                    {isParent && (
+                      isExpanded ? 
+                        <ChevronDown className="h-4 w-4 text-primary" /> : 
+                        <ChevronRight className="h-4 w-4 text-primary" />
                     )}
+                    {isCollapsibleChild && <span className="ml-6" />}
+                    {item.description}
                   </div>
                 </TableCell>
                 <TableCell className="text-center">
@@ -401,5 +407,6 @@ export const ApparatusTable = ({
         </TableBody>
       </Table>
       </TableContainer>
-    );
-  };
+    </div>
+  );
+};
