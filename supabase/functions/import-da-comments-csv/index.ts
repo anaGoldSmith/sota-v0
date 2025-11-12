@@ -82,11 +82,9 @@ serve(async (req) => {
         const code = row.code?.toString().trim();
         const comment = row.comment?.toString().trim();
 
-        if (!code) {
-          throw new Error(`Row ${idx + 2}: code is required`);
-        }
-        if (!comment) {
-          throw new Error(`Row ${idx + 2}: comment is required`);
+        if (!code || !comment) {
+          console.log(`Skipping row ${idx + 2}: ${!code ? 'code' : 'comment'} is missing`);
+          return null;
         }
 
         return {
@@ -95,7 +93,7 @@ serve(async (req) => {
           comment,
         };
       })
-      .filter((item: any) => item.code && item.comment);
+      .filter((item: any) => item !== null);
 
     console.log(`Parsed ${comments.length} DA comments for ${apparatus}`);
 
