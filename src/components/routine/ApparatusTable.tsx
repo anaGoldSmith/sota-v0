@@ -3,6 +3,7 @@ import { CombinedApparatusData, Criterion, CRITERIA_CODES, ApparatusType } from 
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import React from "react";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 interface ApparatusTableProps {
   data: CombinedApparatusData[];
@@ -271,19 +272,24 @@ export const ApparatusTable = ({
   return (
     <div className="space-y-4">
       {daComments && daComments.length > 0 && (
-        <div className="rounded-lg border bg-muted/30 p-4">
-          <h3 className="font-semibold mb-3 text-sm">DA Comments:</h3>
-          <div className="space-y-2">
-            {daComments.map((comment, idx) => (
-              <div key={idx} className="flex items-start gap-2 text-sm">
-                <div className="flex items-center gap-0.5 flex-shrink-0">
-                  {renderSymbolsForCodes(comment.code)}
+        <Collapsible defaultOpen className="rounded-lg border bg-muted/30">
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
+            <h3 className="font-semibold text-sm">Notes</h3>
+            <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=closed]]:rotate-[-90deg]" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="px-4 pb-4">
+            <div className="space-y-2">
+              {daComments.map((comment, idx) => (
+                <div key={idx} className="flex items-start gap-2 text-sm">
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    {renderSymbolsForCodes(comment.code)}
+                  </div>
+                  <span className="text-muted-foreground">{comment.comment}</span>
                 </div>
-                <span className="text-muted-foreground">{comment.comment}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
     <TableContainer className="h-[500px] rounded-md border">
         <Table>
