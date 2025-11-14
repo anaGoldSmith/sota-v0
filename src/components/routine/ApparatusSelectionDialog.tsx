@@ -556,28 +556,30 @@ export const ApparatusSelectionDialog = ({
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="flex flex-col gap-4 flex-1 min-h-0">
-            <ApparatusTable
-              data={apparatusData}
-              criteria={criteria}
-              selectedIds={selectedIds}
-              onRowClick={handleRowClick}
-              apparatus={apparatus!}
-              selectedCriteria={selectedCriteria}
-              onCriteriaChange={handleCriteriaChange}
-              daGroups={completedDaGroups}
-              daComments={daComments || []}
-            />
+          <>
+            <div className="flex-1 min-h-0 overflow-auto">
+              <ApparatusTable
+                data={apparatusData}
+                criteria={criteria}
+                selectedIds={selectedIds}
+                onRowClick={handleRowClick}
+                apparatus={apparatus!}
+                selectedCriteria={selectedCriteria}
+                onCriteriaChange={handleCriteriaChange}
+                daGroups={completedDaGroups}
+                daComments={daComments || []}
+              />
+            </div>
 
-            <div className="flex justify-end gap-3 pt-4 flex-shrink-0">
+            <div className="sticky bottom-0 flex justify-end gap-3 pt-4 pb-2 bg-background border-t flex-shrink-0">
               <Button variant="outline" onClick={handleCancel}>
                 Cancel
               </Button>
-          <Button onClick={handleAddSelected} disabled={daCount === 0}>
-            Add DAs {daCount > 0 && `(${daCount})`}
-          </Button>
+              <Button onClick={handleAddSelected} disabled={daCount === 0}>
+                Add DAs {daCount > 0 && `(${daCount})`}
+              </Button>
             </div>
-          </div>
+          </>
         )}
       </DialogContent>
     </Dialog>
