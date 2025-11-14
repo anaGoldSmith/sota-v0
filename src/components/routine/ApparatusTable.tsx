@@ -189,17 +189,17 @@ export const ApparatusTable = ({
     const codes = codeString.split('&').map(c => c.trim());
     const symbols: JSX.Element[] = [];
     
-    codes.forEach((code, index) => {
+      codes.forEach((code, index) => {
       const element = data.find(d => d.code === code);
       if (element?.symbol_image) {
         symbols.push(
           <img 
             key={`${code}-${index}`}
             src={getTechnicalElementSymbol(element.symbol_image) || ''} 
-            alt={code}
+            alt=""
+            title=""
             className="h-6 w-auto inline-block align-middle mx-0.5"
             onError={(e) => {
-              console.error('Failed to load symbol:', element.symbol_image);
               e.currentTarget.style.display = 'none';
             }}
           />
@@ -245,10 +245,10 @@ export const ApparatusTable = ({
           <img 
             key={`${code}-${match.index}`}
             src={getTechnicalElementSymbol(element.symbol_image) || ''} 
-            alt={code}
+            alt=""
+            title=""
             className="h-8 w-auto inline-block align-middle mx-1"
             onError={(e) => {
-              console.error('Failed to load symbol:', element.symbol_image);
               e.currentTarget.style.display = 'none';
             }}
           />
@@ -306,7 +306,8 @@ export const ApparatusTable = ({
                   ) : getCriterionSymbol(code) ? (
                     <img 
                       src={getCriterionSymbol(code)!} 
-                      alt={code}
+                      alt=""
+                      title=""
                       className="h-20 w-20 object-contain invert brightness-0"
                     />
                   ) : (
