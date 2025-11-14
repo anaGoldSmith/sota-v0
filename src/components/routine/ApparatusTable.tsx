@@ -356,7 +356,8 @@ export const ApparatusTable = ({
                     <div className="flex justify-center">
                       <img 
                         src={getBaseSymbol(item.symbol_image) || ''} 
-                        alt={item.code}
+                        alt=""
+                        title=""
                         className="h-16 w-auto object-contain"
                         onError={(e) => {
                           const currentSrc = e.currentTarget.src;
@@ -365,11 +366,9 @@ export const ApparatusTable = ({
                           
                           // If currently showing bases URL, try fallback
                           if (currentSrc === basesUrl && fallbackUrl) {
-                            console.log('Trying fallback bucket for:', item.code, item.symbol_image);
                             e.currentTarget.src = fallbackUrl;
                           } else {
                             // Both failed, hide image
-                            console.error('Failed to load base symbol from both buckets:', item.code, item.symbol_image, 'Bases:', basesUrl, 'TE:', fallbackUrl);
                             e.currentTarget.style.display = 'none';
                           }
                         }}
