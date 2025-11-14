@@ -291,7 +291,7 @@ export const ApparatusTable = ({
           </CollapsibleContent>
         </Collapsible>
       )}
-    <TableContainer className="h-[500px] rounded-md border">
+    <TableContainer className="h-[500px] rounded-md border overflow-y-auto overflow-x-hidden pb-2">
         <Table>
           <TableHeader>
             <TableRow className="border-b-2 border-primary-foreground/20">
