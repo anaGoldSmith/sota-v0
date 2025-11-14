@@ -531,10 +531,10 @@ export const ApparatusSelectionDialog = ({
                     {element.symbol_image && (
                       <img 
                         src={getTechnicalElementSymbol(element.symbol_image) || ''} 
-                        alt={element.code}
+                        alt=""
+                        title=""
                         className="h-12 w-auto inline-block align-middle"
                         onError={(e) => {
-                          console.error('Failed to load symbol:', element.symbol_image);
                           e.currentTarget.style.display = 'none';
                         }}
                       />
