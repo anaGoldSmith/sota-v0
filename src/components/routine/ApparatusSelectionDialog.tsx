@@ -1,5 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ApparatusType, CombinedApparatusData } from "@/types/apparatus";
 import { useApparatusData } from "@/hooks/useApparatusData";
 import { ApparatusTable, SelectedCriterion } from "./ApparatusTable";
@@ -39,24 +38,6 @@ export const ApparatusSelectionDialog = ({
   const [stagedDAs, setStagedDAs] = useState<ApparatusCombination[]>([]);
   const [daCount, setDaCount] = useState(0); // Track actual number of DAs created (not combinations)
   const { toast } = useToast();
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    if (!open) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && daCount > 0) {
-        e.preventDefault();
-        handleAddSelected();
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        handleCancel();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, daCount]);
 
   const handleRowClick = (item: CombinedApparatusData) => {
     setSelectedIds((prev) => {
@@ -533,50 +514,41 @@ export const ApparatusSelectionDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col pb-0">
+      <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <DialogTitle className="text-2xl">
-                Select Difficulty of Apparatus for {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'}
-              </DialogTitle>
-              <DialogDescription className="space-y-2">
-                <span>
-                  To create a valid DA, choose one base with two criteria by clicking on two "v" cells in the same row. Or, choose the base "Catch from High Throw" with one criterion and another base with the same criterion — in this case, DA value = (highest base value) + 0.1.
-                </span>
-                {specialCodeElements.length > 0 && (
-                  <span className="inline-flex items-center gap-2 text-xs">
-                    <span>*For {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'apparatus'} DAs "Catch from High Throw" is valid for</span>
-                    {specialCodeElements.map((element, index) => (
-                      <React.Fragment key={element.code}>
-                        {element.symbol_image && (
-                          <img 
-                            src={getTechnicalElementSymbol(element.symbol_image) || ''} 
-                            alt=""
-                            title=""
-                            className="h-12 w-auto inline-block align-middle"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        )}
-                        {index < specialCodeElements.length - 1 && (
-                          index === specialCodeElements.length - 2 ? 
-                            <span className="mx-1">and</span> : 
-                            <span className="mx-1">,</span>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </span>
-                )}
-              </DialogDescription>
-            </div>
-            {daCount > 0 && (
-              <Badge variant="secondary" className="text-lg px-3 py-1.5 flex-shrink-0">
-                {daCount} DA{daCount !== 1 ? 's' : ''}
-              </Badge>
+          <DialogTitle className="text-2xl">
+            Select Difficulty of Apparatus for {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'}
+          </DialogTitle>
+          <DialogDescription className="space-y-2">
+            <span>
+              To create a valid DA, choose one base with two criteria by clicking on two "v" cells in the same row. Or, choose the base "Catch from High Throw" with one criterion and another base with the same criterion — in this case, DA value = (highest base value) + 0.1.
+            </span>
+            {specialCodeElements.length > 0 && (
+              <span className="inline-flex items-center gap-2 text-xs">
+                <span>*For {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'apparatus'} DAs "Catch from High Throw" is valid for</span>
+                {specialCodeElements.map((element, index) => (
+                  <React.Fragment key={element.code}>
+                    {element.symbol_image && (
+                      <img 
+                        src={getTechnicalElementSymbol(element.symbol_image) || ''} 
+                        alt={element.code}
+                        className="h-12 w-auto inline-block align-middle"
+                        onError={(e) => {
+                          console.error('Failed to load symbol:', element.symbol_image);
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    )}
+                    {index < specialCodeElements.length - 1 && (
+                      index === specialCodeElements.length - 2 ? 
+                        <span className="mx-1">and</span> : 
+                        <span className="mx-1">,</span>
+                    )}
+                  </React.Fragment>
+                ))}
+              </span>
             )}
-          </div>
+          </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
@@ -584,30 +556,28 @@ export const ApparatusSelectionDialog = ({
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <>
-            <div className="flex-1 min-h-0 overflow-auto pb-4">
-              <ApparatusTable
-                data={apparatusData}
-                criteria={criteria}
-                selectedIds={selectedIds}
-                onRowClick={handleRowClick}
-                apparatus={apparatus!}
-                selectedCriteria={selectedCriteria}
-                onCriteriaChange={handleCriteriaChange}
-                daGroups={completedDaGroups}
-                daComments={daComments || []}
-              />
-            </div>
+          <div className="flex flex-col gap-4 flex-1 min-h-0">
+            <ApparatusTable
+              data={apparatusData}
+              criteria={criteria}
+              selectedIds={selectedIds}
+              onRowClick={handleRowClick}
+              apparatus={apparatus!}
+              selectedCriteria={selectedCriteria}
+              onCriteriaChange={handleCriteriaChange}
+              daGroups={completedDaGroups}
+              daComments={daComments || []}
+            />
 
-            <DialogFooter className="sticky bottom-0 bg-background border-t pt-4 pb-4 mt-0">
+            <div className="flex justify-end gap-3 pt-4 flex-shrink-0">
               <Button variant="outline" onClick={handleCancel}>
-                Cancel <kbd className="ml-2 text-xs opacity-70">Esc</kbd>
+                Cancel
               </Button>
-              <Button onClick={handleAddSelected} disabled={daCount === 0}>
-                Add DAs {daCount > 0 && `(${daCount})`} <kbd className="ml-2 text-xs opacity-70">Enter</kbd>
-              </Button>
-            </DialogFooter>
-          </>
+          <Button onClick={handleAddSelected} disabled={daCount === 0}>
+            Add DAs {daCount > 0 && `(${daCount})`}
+          </Button>
+            </div>
+          </div>
         )}
       </DialogContent>
     </Dialog>
