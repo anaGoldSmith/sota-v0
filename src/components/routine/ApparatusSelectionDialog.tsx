@@ -7,6 +7,7 @@ import { Loader2, ChevronUp, ChevronDown } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 export interface ApparatusCombination {
   element: CombinedApparatusData;
@@ -585,6 +586,46 @@ export const ApparatusSelectionDialog = ({
             )}
           </DialogDescription>
         </DialogHeader>
+
+        {daComments && daComments.length > 0 && (
+          <Collapsible defaultOpen className="rounded-lg border bg-muted/30 mx-6 mt-4">
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
+              <h3 className="font-semibold text-sm">Notes</h3>
+              <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=closed]]:rotate-[-90deg]" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-4 pb-4">
+              <div className="space-y-2">
+                {daComments.map((comment, idx) => {
+                  const codes = comment.code.split('&').map(c => c.trim());
+                  return (
+                    <div key={idx} className="flex items-center gap-2 text-sm">
+                      <div className="flex items-center gap-0.5 flex-shrink-0 min-w-[80px]">
+                        {codes.map((code, index) => {
+                          const element = apparatusData.find(d => d.code === code);
+                          if (element?.symbol_image) {
+                            return (
+                              <img 
+                                key={`${code}-${index}`}
+                                src={getTechnicalElementSymbol(element.symbol_image) || ''} 
+                                alt={code}
+                                className="h-6 w-auto inline-block align-middle mx-0.5"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            );
+                          }
+                          return null;
+                        })}
+                      </div>
+                      <span className="text-muted-foreground flex-1">{comment.comment}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12 flex-1">
