@@ -3,8 +3,8 @@ import { ApparatusType, CombinedApparatusData } from "@/types/apparatus";
 import { useApparatusData } from "@/hooks/useApparatusData";
 import { ApparatusTable, SelectedCriterion } from "./ApparatusTable";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import { Loader2, ChevronUp, ChevronDown } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -38,6 +38,7 @@ export const ApparatusSelectionDialog = ({
   const [stagedDAs, setStagedDAs] = useState<ApparatusCombination[]>([]);
   const [daCount, setDaCount] = useState(0); // Track actual number of DAs created (not combinations)
   const { toast } = useToast();
+  const dialogContentRef = useRef<HTMLDivElement>(null);
 
   const handleRowClick = (item: CombinedApparatusData) => {
     setSelectedIds((prev) => {
@@ -98,6 +99,21 @@ export const ApparatusSelectionDialog = ({
     setStagedDAs([]);
     setDaCount(0);
     onOpenChange(false);
+  };
+
+  const scrollDialog = (direction: 'up' | 'down') => {
+    if (dialogContentRef.current) {
+      const scrollAmount = 300;
+      const currentScroll = dialogContentRef.current.scrollTop;
+      const targetScroll = direction === 'up' 
+        ? currentScroll - scrollAmount 
+        : currentScroll + scrollAmount;
+      
+      dialogContentRef.current.scrollTo({
+        top: targetScroll,
+        behavior: 'smooth'
+      });
+    }
   };
 
   // Get the proper storage URL for base symbols
@@ -514,7 +530,25 @@ export const ApparatusSelectionDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+      <DialogContent ref={dialogContentRef} className="max-w-6xl max-h-[90vh] flex flex-col relative overflow-y-auto">
+        <div className="fixed right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-50">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => scrollDialog('up')}
+            className="rounded-full shadow-lg bg-background hover:bg-primary/10"
+          >
+            <ChevronUp className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => scrollDialog('down')}
+            className="rounded-full shadow-lg bg-background hover:bg-primary/10"
+          >
+            <ChevronDown className="h-5 w-5" />
+          </Button>
+        </div>
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-2xl">
             Select Difficulty of Apparatus for {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'}
