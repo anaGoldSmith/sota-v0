@@ -645,7 +645,7 @@ export const ApparatusSelectionDialog = ({
               daComments={daComments || []}
             />
 
-            <div className="flex justify-end gap-3 pt-4 flex-shrink-0">
+            <div className="flex justify-end gap-3 pt-3 pb-4 flex-shrink-0">
               <Button variant="outline" onClick={handleCancel}>
                 Cancel
               </Button>
