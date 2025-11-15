@@ -271,26 +271,6 @@ export const ApparatusTable = ({
 
   return (
     <div className="space-y-4">
-      {daComments && daComments.length > 0 && (
-        <Collapsible defaultOpen className="rounded-lg border bg-muted/30">
-          <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
-            <h3 className="font-semibold text-sm">Notes</h3>
-            <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=closed]]:rotate-[-90deg]" />
-          </CollapsibleTrigger>
-          <CollapsibleContent className="px-4 pb-4">
-            <div className="space-y-2">
-              {daComments.map((comment, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-sm">
-                  <div className="flex items-center gap-0.5 flex-shrink-0 min-w-[80px]">
-                    {renderSymbolsForCodes(comment.code)}
-                  </div>
-                  <span className="text-muted-foreground flex-1">{comment.comment}</span>
-                </div>
-              ))}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      )}
     <TableContainer className="h-[500px] rounded-md border">
         <Table>
           <TableHeader>
@@ -412,6 +392,26 @@ export const ApparatusTable = ({
         </TableBody>
       </Table>
       </TableContainer>
+      {daComments && daComments.length > 0 && (
+        <Collapsible defaultOpen className="rounded-lg border bg-muted/30">
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
+            <h3 className="font-semibold text-sm">Notes</h3>
+            <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=closed]]:rotate-[-90deg]" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="px-4 pb-4">
+            <div className="space-y-2">
+              {daComments.map((comment, idx) => (
+                <div key={idx} className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-0.5 flex-shrink-0 min-w-[80px]">
+                    {renderSymbolsForCodes(comment.code)}
+                  </div>
+                  <span className="text-muted-foreground flex-1">{comment.comment}</span>
+                </div>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
     </div>
   );
 };
