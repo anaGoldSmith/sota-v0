@@ -1,10 +1,9 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableContainer } from "@/components/ui/table";
 import { CombinedApparatusData, Criterion, CRITERIA_CODES, ApparatusType } from "@/types/apparatus";
-import { ChevronDown, ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import React from "react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
 
 interface ApparatusTableProps {
   data: CombinedApparatusData[];
@@ -62,7 +61,6 @@ export const ApparatusTable = ({
   const [internalSelectedCriteria, setInternalSelectedCriteria] = React.useState<SelectedCriterion[]>([]);
   const [expandedParents, setExpandedParents] = React.useState<Set<string>>(new Set());
   const selectedCriteria = externalSelectedCriteria ?? internalSelectedCriteria;
-  const tableContainerRef = React.useRef<HTMLDivElement>(null);
 
   // Build a map of which codes actually have children
   const codesWithChildren = React.useMemo(() => {
@@ -95,21 +93,6 @@ export const ApparatusTable = ({
       }
       return newSet;
     });
-  };
-
-  const scrollTable = (direction: 'left' | 'right') => {
-    if (tableContainerRef.current) {
-      const scrollAmount = 300;
-      const currentScroll = tableContainerRef.current.scrollLeft;
-      const targetScroll = direction === 'left' 
-        ? currentScroll - scrollAmount 
-        : currentScroll + scrollAmount;
-      
-      tableContainerRef.current.scrollTo({
-        left: targetScroll,
-        behavior: 'smooth'
-      });
-    }
   };
 
   const handleCriterionClick = (rowId: string, criterionCode: string, e: React.MouseEvent) => {
@@ -287,34 +270,14 @@ export const ApparatusTable = ({
   };
 
   return (
-    <div className="space-y-4 relative">
-      {/* Horizontal scroll buttons */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-[60]">
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={() => scrollTable('left')}
-          className="rounded-full bg-background shadow-lg hover:bg-accent"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={() => scrollTable('right')}
-          className="rounded-full bg-background shadow-lg hover:bg-accent"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
-      </div>
-      
-      <TableContainer ref={tableContainerRef} className="h-[500px] rounded-md border">
+    <div className="space-y-4">
+    <TableContainer className="h-[500px] rounded-md border">
         <Table>
           <TableHeader>
             <TableRow className="border-b-2 border-primary-foreground/20">
-            <TableHead className="sticky top-0 left-0 z-30 bg-primary text-primary-foreground font-semibold text-lg w-[300px]">Base</TableHead>
-            <TableHead className="sticky top-0 left-[300px] z-30 bg-primary text-primary-foreground font-semibold text-lg text-center w-[150px]">Base symbol</TableHead>
-            <TableHead className="sticky top-0 left-[450px] z-30 bg-primary text-primary-foreground font-semibold text-lg text-center w-[120px]">Value</TableHead>
+            <TableHead className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-lg w-[300px]">Base</TableHead>
+            <TableHead className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-lg text-center w-[150px]">Base symbol</TableHead>
+            <TableHead className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-lg text-center w-[120px]">Value</TableHead>
             {CRITERIA_CODES.map((code) => (
               <TableHead key={code} className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-center w-[90px] p-2">
                 <div className="flex flex-col items-center gap-1">
@@ -357,7 +320,7 @@ export const ApparatusTable = ({
                   isSelected ? 'bg-primary/10 hover:bg-primary/20' : 'hover:bg-muted/50'
                 } ${isCollapsibleChild ? 'bg-muted/30' : ''}`}
               >
-                <TableCell className="font-medium text-sm sticky left-0 z-10 bg-background">
+                <TableCell className="font-medium text-sm">
                   <div className="flex items-center gap-2">
                     {isParent && (
                       isExpanded ? 
@@ -368,7 +331,7 @@ export const ApparatusTable = ({
                     {item.description}
                   </div>
                 </TableCell>
-                <TableCell className="text-center sticky left-[300px] z-10 bg-background">
+                <TableCell className="text-center">
                   {item.symbol_image && (
                     <div className="flex justify-center">
                       <img 
@@ -393,7 +356,7 @@ export const ApparatusTable = ({
                     </div>
                   )}
                 </TableCell>
-                <TableCell className="text-center font-semibold sticky left-[450px] z-10 bg-background">{item.value.toFixed(2)}</TableCell>
+                <TableCell className="text-center font-semibold">{item.value.toFixed(2)}</TableCell>
                 {CRITERIA_CODES.map((code) => {
                   const value = item.criteria[code];
                   const isCellSelected = isCriterionSelected(item.id, code);
