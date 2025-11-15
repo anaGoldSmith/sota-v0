@@ -283,6 +283,8 @@ export const ApparatusTable = ({
                 <div className="flex flex-col items-center gap-1">
                   {code === 'Cr5W' ? (
                     <span className="text-3xl font-bold">W</span>
+                  ) : code === 'Cr6DB' ? (
+                    <span className="text-3xl font-bold">DB</span>
                   ) : getCriterionSymbol(code) ? (
                     <img 
                       src={getCriterionSymbol(code)!} 
