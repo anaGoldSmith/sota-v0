@@ -275,11 +275,11 @@ export const ApparatusTable = ({
         <Table className="relative min-w-full">
           <TableHeader>
             <TableRow className="border-b-2 border-primary-foreground/20">
-            <TableHead className="sticky top-0 left-0 z-30 bg-primary text-primary-foreground font-semibold text-lg min-w-[300px]">Base</TableHead>
-            <TableHead className="sticky top-0 left-[300px] z-30 bg-primary text-primary-foreground font-semibold text-lg text-center min-w-[150px]">Base symbol</TableHead>
-            <TableHead className="sticky top-0 left-[450px] z-30 bg-primary text-primary-foreground font-semibold text-lg text-center min-w-[120px]">Value</TableHead>
+            <TableHead className="sticky top-0 left-0 z-30 bg-primary text-primary-foreground font-semibold text-lg min-w-[200px]">Base</TableHead>
+            <TableHead className="sticky top-0 left-[200px] z-30 bg-primary text-primary-foreground font-semibold text-lg text-center min-w-[100px]">Base symbol</TableHead>
+            <TableHead className="sticky top-0 left-[300px] z-30 bg-primary text-primary-foreground font-semibold text-lg text-center min-w-[80px]">Value</TableHead>
             {CRITERIA_CODES.map((code) => (
-              <TableHead key={code} className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-center min-w-[90px] p-2">
+              <TableHead key={code} className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-center min-w-[70px] p-2">
                 <div className="flex flex-col items-center gap-1">
                   {code === 'Cr5W' ? (
                     <span className="text-3xl font-bold">W</span>
@@ -289,7 +289,7 @@ export const ApparatusTable = ({
                     <img 
                       src={getCriterionSymbol(code)!} 
                       alt={code}
-                      className="h-20 w-20 object-contain invert brightness-0"
+                      className="h-12 w-12 object-contain invert brightness-0"
                     />
                   ) : (
                     <span className="text-xs">{code}</span>
@@ -322,7 +322,7 @@ export const ApparatusTable = ({
                   isSelected ? 'bg-primary/10 hover:bg-primary/20' : 'hover:bg-muted/50'
                 } ${isCollapsibleChild ? 'bg-muted/30' : ''}`}
               >
-                <TableCell className="font-medium text-sm sticky left-0 z-10 bg-background border-r min-w-[300px]">
+                <TableCell className="font-medium text-sm sticky left-0 z-10 bg-background border-r min-w-[200px]">
                   <div className="flex items-center gap-2">
                     {isParent && (
                       isExpanded ? 
@@ -333,7 +333,7 @@ export const ApparatusTable = ({
                     {item.description}
                   </div>
                 </TableCell>
-                <TableCell className="text-center sticky left-[300px] z-10 bg-background border-r min-w-[150px]">
+                <TableCell className="text-center sticky left-[200px] z-10 bg-background border-r min-w-[100px]">
                   {item.symbol_image && (
                     <div className="flex justify-center">
                       <img 
@@ -358,7 +358,7 @@ export const ApparatusTable = ({
                     </div>
                   )}
                 </TableCell>
-                <TableCell className="text-center font-semibold sticky left-[450px] z-10 bg-background border-r min-w-[120px]">{item.value.toFixed(2)}</TableCell>
+                <TableCell className="text-center font-semibold sticky left-[300px] z-10 bg-background border-r min-w-[80px]">{item.value.toFixed(2)}</TableCell>
                 {CRITERIA_CODES.map((code) => {
                   const value = item.criteria[code];
                   const isCellSelected = isCriterionSelected(item.id, code);
@@ -373,7 +373,7 @@ export const ApparatusTable = ({
                   return (
                     <TableCell 
                       key={code} 
-                      className={`text-center text-sm transition-colors relative min-w-[90px] ${
+                      className={`text-center text-sm transition-colors relative min-w-[70px] ${
                         isClickable ? 'cursor-pointer hover:bg-primary/10' : ''
                       } ${
                         isCellSelected ? 'bg-primary/60 font-bold text-primary-foreground' : ''
