@@ -275,9 +275,9 @@ export const ApparatusTable = ({
         <Table className="relative min-w-full">
           <TableHeader>
             <TableRow className="border-b-2 border-primary-foreground/20">
-            <TableHead className="sticky top-0 left-0 z-30 bg-primary text-primary-foreground font-semibold text-lg min-w-[300px] border-r">Base</TableHead>
-            <TableHead className="sticky top-0 left-[300px] z-30 bg-primary text-primary-foreground font-semibold text-lg text-center min-w-[150px] border-r">Base symbol</TableHead>
-            <TableHead className="sticky top-0 left-[450px] z-30 bg-primary text-primary-foreground font-semibold text-lg text-center min-w-[120px] border-r">Value</TableHead>
+            <TableHead className="sticky top-0 left-0 z-30 bg-primary text-primary-foreground font-semibold text-lg min-w-[300px]">Base</TableHead>
+            <TableHead className="sticky top-0 left-[300px] z-30 bg-primary text-primary-foreground font-semibold text-lg text-center min-w-[150px]">Base symbol</TableHead>
+            <TableHead className="sticky top-0 left-[450px] z-30 bg-primary text-primary-foreground font-semibold text-lg text-center min-w-[120px]">Value</TableHead>
             {CRITERIA_CODES.map((code) => (
               <TableHead key={code} className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-center min-w-[90px] p-2">
                 <div className="flex flex-col items-center gap-1">
