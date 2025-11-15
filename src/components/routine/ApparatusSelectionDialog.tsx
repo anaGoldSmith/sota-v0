@@ -530,8 +530,9 @@ export const ApparatusSelectionDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent ref={dialogContentRef} className="max-w-6xl max-h-[90vh] flex flex-col relative overflow-y-auto">
-        <div className="fixed right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-50">
+      <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col p-0">
+        <div ref={dialogContentRef} className="flex flex-col overflow-y-auto p-6">
+        <div className="fixed right-8 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-[60]">
           <Button
             variant="outline"
             size="icon"
@@ -613,6 +614,7 @@ export const ApparatusSelectionDialog = ({
             </div>
           </div>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );
