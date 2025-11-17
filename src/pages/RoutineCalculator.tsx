@@ -940,7 +940,13 @@ const RoutineCalculator = () => {
       {/* Success Dialog */}
       <DBSuccessDialog
         open={showSuccessDialog}
-        onOpenChange={setShowSuccessDialog}
+        onOpenChange={(open) => {
+          setShowSuccessDialog(open);
+          // Always close apparatus dialog when success dialog closes
+          if (!open) {
+            setApparatusDialogOpen(false);
+          }
+        }}
         onAddMoreElements={() => {
           setShowSuccessDialog(false);
           setApparatusDialogOpen(false);
