@@ -149,8 +149,7 @@ function SortableRow({
     <TableRow 
       ref={isMainRow ? setNodeRef : undefined} 
       style={isMainRow ? style : undefined}
-      className={!isMainRow ? "bg-muted/20" : (element.type === 'DB/DA' ? "cursor-pointer hover:bg-muted/10" : "")}
-      onClick={isMainRow && element.type === 'DB/DA' && onToggleExpand ? onToggleExpand : undefined}
+      className={!isMainRow ? "bg-muted/20" : ""}
     >
       <TableCell className="w-12">
         {isMainRow ? (
@@ -162,17 +161,24 @@ function SortableRow({
             <GripVertical className="h-4 w-4 text-muted-foreground" />
           </div>
         ) : (
-          <div className="flex items-center justify-center">
-            {element.type === 'DB/DA' && (
-              element.isExpanded ? 
-                <ChevronDown className="h-4 w-4 text-muted-foreground" /> : 
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            )}
-          </div>
+          <div className="w-4" />
         )}
       </TableCell>
-      <TableCell className={`w-20 font-mono ${!isMainRow ? 'pl-8 text-muted-foreground' : ''}`}>
-        {itemNumber}
+      <TableCell 
+        className={`w-20 font-mono ${!isMainRow ? 'pl-8 text-muted-foreground' : ''} ${isMainRow && element.type === 'DB/DA' ? 'cursor-pointer' : ''}`}
+        onClick={isMainRow && element.type === 'DB/DA' && onToggleExpand ? (e) => {
+          e.stopPropagation();
+          onToggleExpand();
+        } : undefined}
+      >
+        <div className="flex items-center gap-2">
+          {isMainRow && element.type === 'DB/DA' && (
+            element.isExpanded ? 
+              <ChevronDown className="h-4 w-4 text-muted-foreground" /> : 
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          )}
+          {itemNumber}
+        </div>
       </TableCell>
       <TableCell className="w-32 font-medium">
         {element.type}
@@ -710,7 +716,7 @@ const RoutineCalculator = () => {
                         <TableHead className="w-20">Item No.</TableHead>
                         <TableHead className="w-24">Item Type</TableHead>
                         <TableHead>Routine Elements</TableHead>
-                        <TableHead className="w-24 text-right">D/Value</TableHead>
+                        <TableHead className="w-24 text-right">Value</TableHead>
                         <TableHead className="w-12"></TableHead>
                       </TableRow>
                     </TableHeader>
