@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ApparatusHandlingDialog } from "./ApparatusHandlingDialog";
 
 interface Balance {
   id: string;
@@ -33,6 +34,8 @@ export const BalanceSelectionDialog = ({
 }: BalanceSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedBalances, setSelectedBalances] = useState<Set<string>>(new Set());
+  const [showApparatusHandling, setShowApparatusHandling] = useState(false);
+  const [pendingBalance, setPendingBalance] = useState<Balance | null>(null);
 
   const {
     data: balances,
@@ -98,15 +101,44 @@ export const BalanceSelectionDialog = ({
   };
 
   const handleBalanceToggle = (balance: Balance) => {
-    setSelectedBalances(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(balance.id)) {
+    const isCurrentlySelected = selectedBalances.has(balance.id);
+    
+    if (isCurrentlySelected) {
+      // If already selected, just deselect
+      setSelectedBalances(prev => {
+        const newSet = new Set(prev);
         newSet.delete(balance.id);
-      } else {
-        newSet.add(balance.id);
-      }
-      return newSet;
-    });
+        return newSet;
+      });
+    } else {
+      // If not selected, show apparatus handling dialog
+      setPendingBalance(balance);
+      setShowApparatusHandling(true);
+    }
+  };
+
+  const handleApparatusHandlingComplete = () => {
+    if (pendingBalance) {
+      setSelectedBalances(prev => {
+        const newSet = new Set(prev);
+        newSet.add(pendingBalance.id);
+        return newSet;
+      });
+      setPendingBalance(null);
+    }
+    setShowApparatusHandling(false);
+  };
+
+  const handleSkipApparatusHandling = () => {
+    if (pendingBalance) {
+      setSelectedBalances(prev => {
+        const newSet = new Set(prev);
+        newSet.add(pendingBalance.id);
+        return newSet;
+      });
+      setPendingBalance(null);
+    }
+    setShowApparatusHandling(false);
   };
 
   const handleConfirmSelection = () => {
@@ -242,6 +274,14 @@ export const BalanceSelectionDialog = ({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <ApparatusHandlingDialog
+        open={showApparatusHandling}
+        onOpenChange={setShowApparatusHandling}
+        onSelectTechnicalElements={handleApparatusHandlingComplete}
+        onSelectApparatusDifficulty={handleApparatusHandlingComplete}
+        onSkip={handleSkipApparatusHandling}
+      />
     </Dialog>
   );
 };

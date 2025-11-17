@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ApparatusHandlingDialog } from "./ApparatusHandlingDialog";
 interface Jump {
   id: string;
   code: string;
@@ -31,6 +32,8 @@ export const JumpSelectionDialog = ({
 }: JumpSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedJumps, setSelectedJumps] = useState<Set<string>>(new Set());
+  const [showApparatusHandling, setShowApparatusHandling] = useState(false);
+  const [pendingJump, setPendingJump] = useState<Jump | null>(null);
 
   // Fetch all jumps
   const {
@@ -114,15 +117,44 @@ export const JumpSelectionDialog = ({
     return firstJump?.description || "";
   };
   const handleJumpToggle = (jump: Jump) => {
-    setSelectedJumps(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(jump.id)) {
+    const isCurrentlySelected = selectedJumps.has(jump.id);
+    
+    if (isCurrentlySelected) {
+      // If already selected, just deselect
+      setSelectedJumps(prev => {
+        const newSet = new Set(prev);
         newSet.delete(jump.id);
-      } else {
-        newSet.add(jump.id);
-      }
-      return newSet;
-    });
+        return newSet;
+      });
+    } else {
+      // If not selected, show apparatus handling dialog
+      setPendingJump(jump);
+      setShowApparatusHandling(true);
+    }
+  };
+
+  const handleApparatusHandlingComplete = () => {
+    if (pendingJump) {
+      setSelectedJumps(prev => {
+        const newSet = new Set(prev);
+        newSet.add(pendingJump.id);
+        return newSet;
+      });
+      setPendingJump(null);
+    }
+    setShowApparatusHandling(false);
+  };
+
+  const handleSkipApparatusHandling = () => {
+    if (pendingJump) {
+      setSelectedJumps(prev => {
+        const newSet = new Set(prev);
+        newSet.add(pendingJump.id);
+        return newSet;
+      });
+      setPendingJump(null);
+    }
+    setShowApparatusHandling(false);
   };
   const handleConfirmSelection = () => {
     // Add all selected jumps to the routine
@@ -229,5 +261,13 @@ export const JumpSelectionDialog = ({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <ApparatusHandlingDialog
+        open={showApparatusHandling}
+        onOpenChange={setShowApparatusHandling}
+        onSelectTechnicalElements={handleApparatusHandlingComplete}
+        onSelectApparatusDifficulty={handleApparatusHandlingComplete}
+        onSkip={handleSkipApparatusHandling}
+      />
     </Dialog>;
 };

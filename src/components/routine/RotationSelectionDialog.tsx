@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ApparatusHandlingDialog } from "./ApparatusHandlingDialog";
 
 interface Rotation {
   id: string;
@@ -34,6 +35,8 @@ export const RotationSelectionDialog = ({
 }: RotationSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedRotations, setSelectedRotations] = useState<Set<string>>(new Set());
+  const [showApparatusHandling, setShowApparatusHandling] = useState(false);
+  const [pendingRotation, setPendingRotation] = useState<Rotation | null>(null);
 
   const {
     data: rotations,
@@ -99,15 +102,44 @@ export const RotationSelectionDialog = ({
   };
 
   const handleRotationToggle = (rotation: Rotation) => {
-    setSelectedRotations(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(rotation.id)) {
+    const isCurrentlySelected = selectedRotations.has(rotation.id);
+    
+    if (isCurrentlySelected) {
+      // If already selected, just deselect
+      setSelectedRotations(prev => {
+        const newSet = new Set(prev);
         newSet.delete(rotation.id);
-      } else {
-        newSet.add(rotation.id);
-      }
-      return newSet;
-    });
+        return newSet;
+      });
+    } else {
+      // If not selected, show apparatus handling dialog
+      setPendingRotation(rotation);
+      setShowApparatusHandling(true);
+    }
+  };
+
+  const handleApparatusHandlingComplete = () => {
+    if (pendingRotation) {
+      setSelectedRotations(prev => {
+        const newSet = new Set(prev);
+        newSet.add(pendingRotation.id);
+        return newSet;
+      });
+      setPendingRotation(null);
+    }
+    setShowApparatusHandling(false);
+  };
+
+  const handleSkipApparatusHandling = () => {
+    if (pendingRotation) {
+      setSelectedRotations(prev => {
+        const newSet = new Set(prev);
+        newSet.add(pendingRotation.id);
+        return newSet;
+      });
+      setPendingRotation(null);
+    }
+    setShowApparatusHandling(false);
   };
 
   const handleConfirmSelection = () => {
@@ -248,6 +280,14 @@ export const RotationSelectionDialog = ({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <ApparatusHandlingDialog
+        open={showApparatusHandling}
+        onOpenChange={setShowApparatusHandling}
+        onSelectTechnicalElements={handleApparatusHandlingComplete}
+        onSelectApparatusDifficulty={handleApparatusHandlingComplete}
+        onSkip={handleSkipApparatusHandling}
+      />
     </Dialog>
   );
 };
