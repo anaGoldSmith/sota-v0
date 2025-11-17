@@ -147,7 +147,10 @@ function SortableRow({ element, index, onRemove }: {
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={onRemove}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
         >
           <X className="h-4 w-4" />
         </Button>
