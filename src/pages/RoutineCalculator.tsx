@@ -81,9 +81,10 @@ interface RoutineElement {
 }
 
 // Sortable Row Component
-function SortableRow({ element, index, onRemove }: { 
+function SortableRow({ element, index, itemNumber, onRemove }: { 
   element: RoutineElement; 
-  index: number; 
+  index: number;
+  itemNumber: string;
   onRemove: () => void;
 }) {
   const {
@@ -105,25 +106,24 @@ function SortableRow({ element, index, onRemove }: {
     <TableRow 
       ref={setNodeRef} 
       style={style}
-      {...attributes}
       className={element.isSubRow ? "bg-muted/30" : ""}
     >
-      <TableCell>
+      <TableCell className="w-12">
         <div
           {...listeners}
-          className="inline-flex items-center gap-2 cursor-grab active:cursor-grabbing select-none"
+          className="cursor-grab active:cursor-grabbing flex items-center justify-center"
         >
-          <GripVertical className="h-4 w-4 opacity-60" />
-          <span className="font-mono">{element.isSubRow ? `  ${index + 1}` : index + 1}</span>
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
       </TableCell>
-      <TableCell>
-        <Badge variant="outline" className="font-mono">
-          {element.type}
-        </Badge>
+      <TableCell className={`w-20 font-mono ${element.isSubRow ? 'pl-6' : ''}`}>
+        {itemNumber}
+      </TableCell>
+      <TableCell className="w-24 font-medium">
+        {element.isSubRow ? "DA" : "DB"}
       </TableCell>
       <TableCell>
-        <div className={`flex items-center gap-1 flex-wrap ${element.isSubRow ? 'pl-4' : ''}`}>
+        <div className="flex items-center gap-1 flex-wrap">
           {element.symbolImages.map((url, imgIndex) => {
             const isWSymbol = url && url.includes('Cr5W.png');
             
@@ -131,26 +131,26 @@ function SortableRow({ element, index, onRemove }: {
               isWSymbol ? (
                 <div 
                   key={`${element.id}-symbol-${imgIndex}`}
-                  className="h-10 w-10 flex items-center justify-center"
+                  className="h-8 w-8 flex items-center justify-center"
                 >
-                  <span className="text-3xl font-bold">W</span>
+                  <span className="text-2xl font-bold">W</span>
                 </div>
               ) : (
                 <img
                   key={`${element.id}-symbol-${imgIndex}`}
                   src={url}
                   alt="Symbol"
-                  className="h-10 w-10 object-contain"
+                  className="h-8 w-8 object-contain"
                 />
               )
             );
           })}
         </div>
       </TableCell>
-      <TableCell className="text-right font-mono">
-        {element.value.toFixed(2)}
+      <TableCell className="w-24 text-right font-mono font-semibold">
+        {element.value.toFixed(1)}
       </TableCell>
-      <TableCell>
+      <TableCell className="w-12">
         <Button
           variant="ghost"
           size="icon"
@@ -674,11 +674,12 @@ const RoutineCalculator = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-16">Item No.</TableHead>
-                        <TableHead className="w-20">Item Type</TableHead>
+                        <TableHead className="w-12"></TableHead>
+                        <TableHead className="w-20">Item No.</TableHead>
+                        <TableHead className="w-24">Item Type</TableHead>
                         <TableHead>Routine Elements</TableHead>
-                        <TableHead className="w-24 text-right">Value</TableHead>
-                        <TableHead className="w-16"></TableHead>
+                        <TableHead className="w-24 text-right">D/Value</TableHead>
+                        <TableHead className="w-12"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <SortableContext
@@ -686,14 +687,34 @@ const RoutineCalculator = () => {
                       strategy={verticalListSortingStrategy}
                     >
                       <TableBody>
-                        {routineElements.map((element, index) => (
-                          <SortableRow
-                            key={element.id}
-                            element={element}
-                            index={index}
-                            onRemove={() => handleRemoveRoutineElement(index)}
-                          />
-                        ))}
+                        {routineElements.map((element, index) => {
+                          // Calculate item number based on parent-child relationship
+                          let itemNumber = "";
+                          if (element.isSubRow && element.parentId) {
+                            // Find parent index to determine parent number
+                            const parentIndex = routineElements.findIndex(el => el.id === element.parentId);
+                            const parentNumber = routineElements.slice(0, parentIndex + 1).filter(el => !el.isSubRow).length;
+                            // Find sub-index among siblings with same parent
+                            const subIndex = routineElements
+                              .slice(0, index)
+                              .filter(el => el.isSubRow && el.parentId === element.parentId).length + 1;
+                            itemNumber = `${parentNumber}.${subIndex}`;
+                          } else {
+                            // Count how many parent (non-sub-row) elements exist up to and including this one
+                            const parentCount = routineElements.slice(0, index + 1).filter(el => !el.isSubRow).length;
+                            itemNumber = `${parentCount}`;
+                          }
+                          
+                          return (
+                            <SortableRow
+                              key={element.id}
+                              element={element}
+                              index={index}
+                              itemNumber={itemNumber}
+                              onRemove={() => handleRemoveRoutineElement(index)}
+                            />
+                          );
+                        })}
                       </TableBody>
                     </SortableContext>
                   </Table>
