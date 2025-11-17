@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Balance {
   id: string;
@@ -155,79 +156,81 @@ export const BalanceSelectionDialog = ({
           )}
         </div>
 
-        <div className="border rounded-md overflow-auto flex-1 min-h-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="sticky left-0 z-10 bg-background min-w-[300px] border-r">
-                  Types of balances
-                </TableHead>
-                {values.map(value => (
-                  <TableHead key={value} className="text-center min-w-[120px]">
-                    {value.toFixed(2)} p.
+        <div className="border rounded-md flex-1 min-h-0 relative">
+          <ScrollArea className="h-[50vh]">
+            <Table>
+              <TableHeader className="sticky top-0 z-20 bg-background">
+                <TableRow>
+                  <TableHead className="sticky left-0 z-10 bg-background min-w-[300px] border-r">
+                    Types of balances
                   </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={values.length + 1} className="text-center py-8">
-                    Loading balances...
-                  </TableCell>
+                  {values.map(value => (
+                    <TableHead key={value} className="text-center min-w-[120px]">
+                      {value.toFixed(2)} p.
+                    </TableHead>
+                  ))}
                 </TableRow>
-              ) : rowNumbers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={values.length + 1} className="text-center py-8 text-muted-foreground">
-                    No balances found matching your search
-                  </TableCell>
-                </TableRow>
-              ) : (
-                rowNumbers.map(rowNumber => (
-                  <TableRow key={rowNumber}>
-                    <TableCell className="sticky left-0 z-10 bg-background font-medium border-r text-sm">
-                      {getRowDescription(rowNumber)}
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={values.length + 1} className="text-center py-8">
+                      Loading balances...
                     </TableCell>
-                    {values.map(value => {
-                      const balance = matrix.get(rowNumber)?.get(value);
-                      const isSelected = balance ? selectedBalances.has(balance.id) : false;
-                      return (
-                        <TableCell
-                          key={`${rowNumber}-${value}`}
-                          className={`text-center p-3 relative ${
-                            balance
-                              ? `cursor-pointer transition-colors ${
-                                  isSelected
-                                    ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset'
-                                    : 'hover:bg-accent/50'
-                                }`
-                              : 'bg-muted/30'
-                          }`}
-                          onClick={() => balance && handleBalanceToggle(balance)}
-                        >
-                          {balance ? (
-                            <div className="flex flex-col items-center gap-1">
-                              <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative">
-                                Symbol
-                                {isSelected && (
-                                  <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5">
-                                    <Check className="h-3 w-3" />
-                                  </div>
-                                )}
-                              </div>
-                              <Badge variant={isSelected ? "default" : "secondary"} className="font-mono text-xs">
-                                {balance.code}
-                              </Badge>
-                            </div>
-                          ) : null}
-                        </TableCell>
-                      );
-                    })}
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : rowNumbers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={values.length + 1} className="text-center py-8 text-muted-foreground">
+                      No balances found matching your search
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  rowNumbers.map(rowNumber => (
+                    <TableRow key={rowNumber}>
+                      <TableCell className="sticky left-0 z-10 bg-background font-medium border-r text-sm">
+                        {getRowDescription(rowNumber)}
+                      </TableCell>
+                      {values.map(value => {
+                        const balance = matrix.get(rowNumber)?.get(value);
+                        const isSelected = balance ? selectedBalances.has(balance.id) : false;
+                        return (
+                          <TableCell
+                            key={`${rowNumber}-${value}`}
+                            className={`text-center p-3 relative ${
+                              balance
+                                ? `cursor-pointer transition-colors ${
+                                    isSelected
+                                      ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset'
+                                      : 'hover:bg-accent/50'
+                                  }`
+                                : 'bg-muted/30'
+                            }`}
+                            onClick={() => balance && handleBalanceToggle(balance)}
+                          >
+                            {balance ? (
+                              <div className="flex flex-col items-center gap-1">
+                                <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative">
+                                  Symbol
+                                  {isSelected && (
+                                    <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5">
+                                      <Check className="h-3 w-3" />
+                                    </div>
+                                  )}
+                                </div>
+                                <Badge variant={isSelected ? "default" : "secondary"} className="font-mono text-xs">
+                                  {balance.code}
+                                </Badge>
+                              </div>
+                            ) : null}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </ScrollArea>
         </div>
 
         <DialogFooter className="gap-2">

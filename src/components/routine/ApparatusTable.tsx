@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import React from "react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ApparatusTableProps {
   data: CombinedApparatusData[];
@@ -271,129 +272,130 @@ export const ApparatusTable = ({
 
   return (
     <div className="space-y-4">
-    <TableContainer className="h-[500px] rounded-md border overflow-auto [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
-        <Table className="relative min-w-full">
-          <TableHeader>
-            <TableRow className="border-b-2 border-primary-foreground/20">
-            <TableHead className="sticky top-0 left-0 z-30 bg-primary text-primary-foreground font-semibold text-lg min-w-[200px]">Base</TableHead>
-            <TableHead className="sticky top-0 left-[200px] z-30 bg-primary text-primary-foreground font-semibold text-lg text-center min-w-[100px]">Base symbol</TableHead>
-            <TableHead className="sticky top-0 left-[300px] z-30 bg-primary text-primary-foreground font-semibold text-lg text-center min-w-[80px]">Value</TableHead>
-            {CRITERIA_CODES.map((code) => (
-              <TableHead key={code} className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-center min-w-[70px] p-2">
-                <div className="flex flex-col items-center gap-1">
-                  {code === 'Cr5W' ? (
-                    <span className="text-3xl font-bold">W</span>
-                  ) : code === 'Cr6DB' ? (
-                    <span className="text-3xl font-bold">DB</span>
-                  ) : getCriterionSymbol(code) ? (
-                    <img 
-                      src={getCriterionSymbol(code)!} 
-                      alt={code}
-                      className="h-12 w-12 object-contain invert brightness-0"
-                    />
-                  ) : (
-                    <span className="text-xs">{code}</span>
-                  )}
-                </div>
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.map((item) => {
-            const parentCodeCandidate = getParentCode(item.code);
-            const isChild = isChildRow(item.code);
-            const hasParentRow = isChild && allCodes.has(parentCodeCandidate);
-            const isCollapsibleChild = isChild && hasParentRow && codesWithChildren.has(parentCodeCandidate);
-            const isParent = hasChildren(item.code);
-            const isExpanded = isParent && expandedParents.has(item.code);
-            
-            // Hide only true collapsible children if their parent is not expanded
-            if (isCollapsibleChild && !expandedParents.has(parentCodeCandidate)) {
-              return null;
-            }
-            
-            const isSelected = selectedIds.includes(item.id);
-            return (
-              <TableRow
-                key={item.id}
-                onClick={isParent ? (e) => toggleParent(item.code, e) : () => onRowClick(item)}
-                className={`cursor-pointer transition-colors ${
-                  isSelected ? 'bg-primary/10 hover:bg-primary/20' : 'hover:bg-muted/50'
-                } ${isCollapsibleChild ? 'bg-muted/30' : ''}`}
-              >
-                <TableCell className="font-medium text-sm sticky left-0 z-10 bg-background border-r min-w-[200px]">
-                  <div className="flex items-center gap-2">
-                    {isParent && (
-                      isExpanded ? 
-                        <ChevronDown className="h-4 w-4 text-primary" /> : 
-                        <ChevronRight className="h-4 w-4 text-primary" />
-                    )}
-                    {isCollapsibleChild && <span className="ml-6" />}
-                    {item.name}
-                  </div>
-                </TableCell>
-                <TableCell className="text-center sticky left-[200px] z-10 bg-background border-r min-w-[100px]">
-                  {item.symbol_image && (
-                    <div className="flex justify-center">
+      <div className="rounded-md border relative">
+        <ScrollArea className="h-[500px]">
+          <Table className="relative min-w-full">
+            <TableHeader className="sticky top-0 z-20 bg-background">
+              <TableRow className="border-b-2 border-primary-foreground/20">
+              <TableHead className="sticky top-0 left-0 z-30 bg-primary text-primary-foreground font-semibold text-lg min-w-[200px]">Base</TableHead>
+              <TableHead className="sticky top-0 left-[200px] z-30 bg-primary text-primary-foreground font-semibold text-lg text-center min-w-[100px]">Base symbol</TableHead>
+              <TableHead className="sticky top-0 left-[300px] z-30 bg-primary text-primary-foreground font-semibold text-lg text-center min-w-[80px]">Value</TableHead>
+              {CRITERIA_CODES.map((code) => (
+                <TableHead key={code} className="sticky top-0 z-20 bg-primary text-primary-foreground font-semibold text-center min-w-[70px] p-2">
+                  <div className="flex flex-col items-center gap-1">
+                    {code === 'Cr5W' ? (
+                      <span className="text-3xl font-bold">W</span>
+                    ) : code === 'Cr6DB' ? (
+                      <span className="text-3xl font-bold">DB</span>
+                    ) : getCriterionSymbol(code) ? (
                       <img 
-                        src={getBaseSymbol(item.symbol_image) || ''} 
-                        alt=""
-                        title=""
-                        className="h-16 w-auto object-contain"
-                        onError={(e) => {
-                          const currentSrc = e.currentTarget.src;
-                          const basesUrl = getBaseSymbol(item.symbol_image);
-                          const fallbackUrl = getBaseSymbolFallback(item.symbol_image);
-                          
-                          // If currently showing bases URL, try fallback
-                          if (currentSrc === basesUrl && fallbackUrl) {
-                            e.currentTarget.src = fallbackUrl;
-                          } else {
-                            // Both failed, hide image
-                            e.currentTarget.style.display = 'none';
-                          }
-                        }}
+                        src={getCriterionSymbol(code)!} 
+                        alt={code}
+                        className="h-12 w-12 object-contain invert brightness-0"
                       />
+                    ) : (
+                      <span className="text-xs">{code}</span>
+                    )}
+                  </div>
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((item) => {
+              const parentCodeCandidate = getParentCode(item.code);
+              const isChild = isChildRow(item.code);
+              const hasParentRow = isChild && allCodes.has(parentCodeCandidate);
+              const isCollapsibleChild = isChild && hasParentRow && codesWithChildren.has(parentCodeCandidate);
+              const isParent = hasChildren(item.code);
+              const isExpanded = isParent && expandedParents.has(item.code);
+              
+              // Hide only true collapsible children if their parent is not expanded
+              if (isCollapsibleChild && !expandedParents.has(parentCodeCandidate)) {
+                return null;
+              }
+              
+              const isSelected = selectedIds.includes(item.id);
+              return (
+                <TableRow
+                  key={item.id}
+                  onClick={isParent ? (e) => toggleParent(item.code, e) : () => onRowClick(item)}
+                  className={`cursor-pointer transition-colors ${
+                    isSelected ? 'bg-primary/10 hover:bg-primary/20' : 'hover:bg-muted/50'
+                  } ${isCollapsibleChild ? 'bg-muted/30' : ''}`}
+                >
+                  <TableCell className="font-medium text-sm sticky left-0 z-10 bg-background border-r min-w-[200px]">
+                    <div className="flex items-center gap-2">
+                      {isParent && (
+                        isExpanded ? 
+                          <ChevronDown className="h-4 w-4 text-primary" /> : 
+                          <ChevronRight className="h-4 w-4 text-primary" />
+                      )}
+                      {isCollapsibleChild && <span className="ml-6" />}
+                      {item.name}
                     </div>
-                  )}
-                </TableCell>
-                <TableCell className="text-center font-semibold sticky left-[300px] z-10 bg-background border-r min-w-[80px]">{item.value.toFixed(2)}</TableCell>
-                {CRITERIA_CODES.map((code) => {
-                  const value = item.criteria[code];
-                  const isCellSelected = isCriterionSelected(item.id, code);
-                  const isClickable = formatCriteriaValue(value) === 'v' && !isParent;
-                  const borderColor = getCellBorderColor(item.id, code);
-                  
-                  // For collapsible child rows, show "o" instead of "v"
-                  const displayValue = isCollapsibleChild && formatCriteriaValue(value) === 'v' 
-                    ? 'o' 
-                    : formatCriteriaValue(value);
-                  
-                  return (
-                    <TableCell 
-                      key={code} 
-                      className={`text-center text-sm transition-colors relative min-w-[70px] ${
-                        isClickable ? 'cursor-pointer hover:bg-primary/10' : ''
-                      } ${
-                        isCellSelected ? 'bg-primary/60 font-bold text-primary-foreground' : ''
-                      } ${
-                        borderColor ? `border-4 border-solid ${borderColor}` : ''
-                      } ${
-                        isParent && formatCriteriaValue(value) === 'v' ? 'opacity-30' : ''
-                      }`}
-                      onClick={isClickable ? (e) => handleCriterionClick(item.id, code, e) : undefined}
-                    >
-                      {displayValue}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-      </TableContainer>
+                  </TableCell>
+                  <TableCell className="text-center sticky left-[200px] z-10 bg-background border-r min-w-[100px]">
+                    {item.symbol_image && (
+                      <div className="flex justify-center">
+                        <img 
+                          src={getBaseSymbol(item.symbol_image) || ''} 
+                          alt=""
+                          title=""
+                          className="h-16 w-auto object-contain"
+                          onError={(e) => {
+                            const currentSrc = e.currentTarget.src;
+                            const basesUrl = getBaseSymbol(item.symbol_image);
+                            const fallbackUrl = getBaseSymbolFallback(item.symbol_image);
+                            // If currently showing bases URL, try fallback
+                            if (currentSrc === basesUrl && fallbackUrl) {
+                              e.currentTarget.src = fallbackUrl;
+                            } else {
+                              // Both failed, hide image
+                              e.currentTarget.style.display = 'none';
+                            }
+                          }}
+                        />
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center font-semibold sticky left-[300px] z-10 bg-background border-r min-w-[80px]">{item.value.toFixed(2)}</TableCell>
+                  {CRITERIA_CODES.map((code) => {
+                    const value = item.criteria[code];
+                    const isCellSelected = isCriterionSelected(item.id, code);
+                    const isClickable = formatCriteriaValue(value) === 'v' && !isParent;
+                    const borderColor = getCellBorderColor(item.id, code);
+                    
+                    // For collapsible child rows, show "o" instead of "v"
+                    const displayValue = isCollapsibleChild && formatCriteriaValue(value) === 'v' 
+                      ? 'o' 
+                      : formatCriteriaValue(value);
+                    
+                    return (
+                      <TableCell 
+                        key={code} 
+                        className={`text-center text-sm transition-colors relative min-w-[70px] ${
+                          isClickable ? 'cursor-pointer hover:bg-primary/10' : ''
+                        } ${
+                          isCellSelected ? 'bg-primary/60 font-bold text-primary-foreground' : ''
+                        } ${
+                          borderColor ? `border-4 border-solid ${borderColor}` : ''
+                        } ${
+                          isParent && formatCriteriaValue(value) === 'v' ? 'opacity-30' : ''
+                        }`}
+                        onClick={isClickable ? (e) => handleCriterionClick(item.id, code, e) : undefined}
+                      >
+                        {displayValue}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+        </ScrollArea>
+      </div>
     </div>
   );
 };
