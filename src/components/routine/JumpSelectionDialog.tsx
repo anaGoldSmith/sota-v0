@@ -27,16 +27,18 @@ interface JumpSelectionDialogProps {
   onSelectJump: (jump: Jump) => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
+  selectedJumpIds?: Set<string>;
 }
 export const JumpSelectionDialog = ({
   open,
   onOpenChange,
   onSelectJump,
   apparatus,
-  onOpenApparatusDialog
+  onOpenApparatusDialog,
+  selectedJumpIds
 }: JumpSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
-  const [selectedJumps, setSelectedJumps] = useState<Set<string>>(new Set());
+  const [selectedJumps, setSelectedJumps] = useState<Set<string>>(selectedJumpIds || new Set());
   const [showApparatusHandling, setShowApparatusHandling] = useState(false);
   const [pendingJump, setPendingJump] = useState<Jump | null>(null);
 
@@ -230,15 +232,20 @@ export const JumpSelectionDialog = ({
                       <TableCell className="sticky left-0 z-10 bg-background font-medium border-r text-sm">
                         {getRowDescription(rowNumber)}
                       </TableCell>
-                      {values.map(value => {
+                       {values.map(value => {
                   const jump = matrix.get(rowNumber)?.get(value);
                   const isSelected = jump ? selectedJumps.has(jump.id) : false;
-                  return <TableCell key={`${rowNumber}-${value}`} className={`text-center p-3 relative ${jump ? `cursor-pointer transition-colors ${isSelected ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset' : 'hover:bg-accent/50'}` : 'bg-muted/30'}`} onClick={() => jump && handleJumpToggle(jump)}>
+                  const isPreviouslySelected = jump && selectedJumpIds ? selectedJumpIds.has(jump.id) : false;
+                  return <TableCell 
+                    key={`${rowNumber}-${value}`} 
+                    className={`text-center p-3 relative ${jump ? `${!isPreviouslySelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-colors ${isSelected || isPreviouslySelected ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset' : 'hover:bg-accent/50'}` : 'bg-muted/30'}`} 
+                    onClick={() => jump && !isPreviouslySelected && handleJumpToggle(jump)}
+                  >
                             {jump ? <div className="flex flex-col items-center gap-1">
                                 {/* Placeholder for symbol image */}
-                                <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative">
+                                 <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative">
                                   Symbol
-                                  {isSelected && <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5">
+                                  {(isSelected || isPreviouslySelected) && <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5">
                                       <Check className="h-3 w-3" />
                                     </div>}
                                 </div>
@@ -275,6 +282,7 @@ export const JumpSelectionDialog = ({
         onSkip={handleSkipApparatusHandling}
         apparatus={apparatus}
         onOpenApparatusDialog={onOpenApparatusDialog}
+        sourceElementType="jump"
       />
     </Dialog>;
 };
