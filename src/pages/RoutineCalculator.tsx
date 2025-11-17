@@ -688,6 +688,8 @@ const RoutineCalculator = () => {
         open={jumpDialogOpen}
         onOpenChange={setJumpDialogOpen}
         onSelectJump={handleSelectJump}
+        apparatus={selectedApparatus}
+        onOpenApparatusDialog={() => setApparatusDialogOpen(true)}
       />
 
       {/* Balance Selection Dialog */}
@@ -695,6 +697,8 @@ const RoutineCalculator = () => {
         open={balanceDialogOpen}
         onOpenChange={setBalanceDialogOpen}
         onSelectBalance={handleSelectBalance}
+        apparatus={selectedApparatus}
+        onOpenApparatusDialog={() => setApparatusDialogOpen(true)}
       />
 
       {/* Rotation Selection Dialog */}
@@ -702,6 +706,8 @@ const RoutineCalculator = () => {
         open={rotationDialogOpen}
         onOpenChange={setRotationDialogOpen}
         onSelectRotation={handleSelectRotation}
+        apparatus={selectedApparatus}
+        onOpenApparatusDialog={() => setApparatusDialogOpen(true)}
       />
 
       {/* Apparatus Selection Dialog */}
