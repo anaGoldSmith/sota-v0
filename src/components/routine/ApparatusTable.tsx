@@ -330,7 +330,7 @@ export const ApparatusTable = ({
                         <ChevronRight className="h-4 w-4 text-primary" />
                     )}
                     {isCollapsibleChild && <span className="ml-6" />}
-                    {item.description}
+                    {item.name}
                   </div>
                 </TableCell>
                 <TableCell className="text-center sticky left-[200px] z-10 bg-background border-r min-w-[100px]">

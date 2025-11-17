@@ -24,6 +24,7 @@ export interface Criterion {
 export interface CombinedApparatusData {
   id: string;
   code: string;
+  name: string;
   description: string;
   symbol_image: string | null;
   value: number;
