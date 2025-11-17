@@ -157,11 +157,11 @@ export const BalanceSelectionDialog = ({
         </div>
 
         <div className="border rounded-md flex-1 min-h-0 relative">
-          <ScrollArea className="h-[50vh]">
+          <div className="h-[50vh] overflow-x-auto overflow-y-auto [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
             <Table>
               <TableHeader className="sticky top-0 z-20 bg-background">
                 <TableRow>
-                  <TableHead className="sticky left-0 z-10 bg-background min-w-[300px] border-r">
+                  <TableHead className="sticky left-0 z-30 bg-background min-w-[300px] border-r">
                     Types of balances
                   </TableHead>
                   {values.map(value => (
@@ -230,7 +230,7 @@ export const BalanceSelectionDialog = ({
                 )}
               </TableBody>
             </Table>
-          </ScrollArea>
+          </div>
         </div>
 
         <DialogFooter className="gap-2">

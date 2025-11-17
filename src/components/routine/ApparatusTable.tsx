@@ -273,7 +273,7 @@ export const ApparatusTable = ({
   return (
     <div className="space-y-4">
       <div className="rounded-md border relative">
-        <ScrollArea className="h-[500px]">
+        <div className="h-[500px] overflow-x-auto overflow-y-auto [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
           <Table className="relative min-w-full">
             <TableHeader className="sticky top-0 z-20 bg-background">
               <TableRow className="border-b-2 border-primary-foreground/20">
@@ -394,7 +394,7 @@ export const ApparatusTable = ({
             })}
           </TableBody>
         </Table>
-        </ScrollArea>
+        </div>
       </div>
     </div>
   );
