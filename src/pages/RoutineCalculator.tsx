@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, X, Calculator, GripVertical } from "lucide-react";
+import { ArrowLeft, X, Calculator, GripVertical, ChevronDown, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbols";
 import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
@@ -64,7 +64,7 @@ interface SelectedRotation {
   symbol_image: string | null;
 }
 
-type RoutineElementType = 'DB' | 'DA' | 'R' | 'Steps';
+type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'R' | 'Steps';
 
 interface RoutineElement {
   id: string;
@@ -76,16 +76,33 @@ interface RoutineElement {
     combo1: ApparatusCombination;
     combo2: ApparatusCombination;
   };
-  parentId?: string; // For DA sub-rows linked to DB parent rows
-  isSubRow?: boolean; // Indicates if this is a sub-row
+  // For combined DB/DA elements
+  dbData?: {
+    symbolImages: string[];
+    value: number;
+  };
+  daData?: {
+    symbolImages: string[];
+    value: number;
+  };
+  isExpanded?: boolean;
 }
 
 // Sortable Row Component
-function SortableRow({ element, index, itemNumber, onRemove }: { 
+function SortableRow({ 
+  element, 
+  index, 
+  itemNumber, 
+  onRemove, 
+  onToggleExpand,
+  isMainRow 
+}: { 
   element: RoutineElement; 
   index: number;
   itemNumber: string;
   onRemove: () => void;
+  onToggleExpand?: () => void;
+  isMainRow: boolean;
 }) {
   const {
     attributes,
@@ -94,7 +111,7 @@ function SortableRow({ element, index, itemNumber, onRemove }: {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: element.id });
+  } = useSortable({ id: element.id, disabled: !isMainRow });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -102,76 +119,94 @@ function SortableRow({ element, index, itemNumber, onRemove }: {
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const renderSymbols = (symbolImages: string[]) => (
+    <div className="flex items-center gap-1 flex-wrap">
+      {symbolImages.map((url, imgIndex) => {
+        const isWSymbol = url && url.includes('Cr5W.png');
+        
+        return url && (
+          isWSymbol ? (
+            <div 
+              key={`${element.id}-symbol-${imgIndex}`}
+              className="h-8 w-8 flex items-center justify-center"
+            >
+              <span className="text-2xl font-bold">W</span>
+            </div>
+          ) : (
+            <img
+              key={`${element.id}-symbol-${imgIndex}`}
+              src={url}
+              alt="Symbol"
+              className="h-8 w-8 object-contain"
+            />
+          )
+        );
+      })}
+    </div>
+  );
+
   return (
     <TableRow 
-      ref={setNodeRef} 
-      style={style}
-      className={element.isSubRow ? "bg-muted/30" : ""}
+      ref={isMainRow ? setNodeRef : undefined} 
+      style={isMainRow ? style : undefined}
+      className={!isMainRow ? "bg-muted/20" : (element.type === 'DB/DA' ? "cursor-pointer hover:bg-muted/10" : "")}
+      onClick={isMainRow && element.type === 'DB/DA' && onToggleExpand ? onToggleExpand : undefined}
     >
       <TableCell className="w-12">
-        <div
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing flex items-center justify-center"
-        >
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
-        </div>
+        {isMainRow ? (
+          <div
+            {...listeners}
+            {...attributes}
+            className="cursor-grab active:cursor-grabbing flex items-center justify-center"
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="flex items-center justify-center">
+            {element.type === 'DB/DA' && (
+              element.isExpanded ? 
+                <ChevronDown className="h-4 w-4 text-muted-foreground" /> : 
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+        )}
       </TableCell>
-      <TableCell className={`w-20 font-mono ${element.isSubRow ? 'pl-6' : ''}`}>
+      <TableCell className={`w-20 font-mono ${!isMainRow ? 'pl-8 text-muted-foreground' : ''}`}>
         {itemNumber}
       </TableCell>
-      <TableCell className="w-24 font-medium">
-        {element.isSubRow ? "DA" : "DB"}
+      <TableCell className="w-32 font-medium">
+        {element.type}
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-1 flex-wrap">
-          {element.symbolImages.map((url, imgIndex) => {
-            const isWSymbol = url && url.includes('Cr5W.png');
-            
-            return url && (
-              isWSymbol ? (
-                <div 
-                  key={`${element.id}-symbol-${imgIndex}`}
-                  className="h-8 w-8 flex items-center justify-center"
-                >
-                  <span className="text-2xl font-bold">W</span>
-                </div>
-              ) : (
-                <img
-                  key={`${element.id}-symbol-${imgIndex}`}
-                  src={url}
-                  alt="Symbol"
-                  className="h-8 w-8 object-contain"
-                />
-              )
-            );
-          })}
-        </div>
+        {renderSymbols(element.symbolImages)}
       </TableCell>
       <TableCell className="w-24 text-right font-mono font-semibold">
         {element.value.toFixed(1)}
       </TableCell>
       <TableCell className="w-12">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          draggable={false}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-          }}
-          onMouseDown={(e) => {
-            e.stopPropagation();
-          }}
-          onTouchStart={(e) => {
-            e.stopPropagation();
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        {isMainRow && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            draggable={false}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </TableCell>
     </TableRow>
   );
@@ -219,45 +254,19 @@ const RoutineCalculator = () => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
       setRoutineElements((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
         
-        const movedElement = items[oldIndex];
-        
-        // If dragging a parent (DB with children), move parent and all children together
-        if (!movedElement.isSubRow && movedElement.type === 'DB') {
-          // Find all children of this parent
-          const children = items.filter(item => item.parentId === movedElement.id);
-          
-          if (children.length > 0) {
-            // Remove parent and children from original positions
-            const itemsWithoutMoved = items.filter(item => 
-              item.id !== movedElement.id && !children.some(child => child.id === item.id)
-            );
-            
-            // Calculate insertion index (accounting for removed items)
-            let insertIndex = newIndex;
-            for (let i = 0; i < oldIndex && i < newIndex; i++) {
-              if (items[i].id === movedElement.id || children.some(child => child.id === items[i].id)) {
-                insertIndex--;
-              }
-            }
-            
-            // Insert parent and children at new position
-            const newItems = [...itemsWithoutMoved];
-            newItems.splice(insertIndex, 0, movedElement, ...children);
-            return newItems;
-          }
-        }
-        
-        // If dragging a sub-row, don't allow it (sub-rows are linked to parent)
-        if (movedElement.isSubRow) {
-          return items;
-        }
-        
+        // Use standard move for all elements (sub-rows can't be dragged)
         return arrayMove(items, oldIndex, newIndex);
       });
+    }
+  };
     }
   };
 
@@ -344,27 +353,40 @@ const RoutineCalculator = () => {
     if (pendingDbElement) {
       const { element: dbElement, type: dbType } = pendingDbElement;
       
-      // Create the parent DB row
-      const parentId = `db-${dbType}-${dbElement.id}-${Date.now()}`;
-      const parentElement: RoutineElement = {
-        id: parentId,
-        type: 'DB',
-        symbolImages: dbElement.symbol_image ? [
-          getSymbolUrl(dbElement.symbol_image, 'jump-symbols') || ''
-        ] : [],
-        value: dbElement.value,
+      // Process DA elements
+      const daElements = processApparatusCombinationsToElements(combinations);
+      
+      // Get DB symbol images
+      const dbSymbolImages = dbElement.symbol_image ? [
+        getSymbolUrl(dbElement.symbol_image, 'jump-symbols') || ''
+      ] : [];
+      
+      // Get DA symbol images (combine all DA elements' symbols)
+      const daSymbolImages = daElements.flatMap(el => el.symbolImages);
+      
+      // Calculate total DA value
+      const totalDaValue = daElements.reduce((sum, el) => sum + el.value, 0);
+      
+      // Create combined DB/DA element
+      const combinedElement: RoutineElement = {
+        id: `db-da-${dbType}-${dbElement.id}-${Date.now()}`,
+        type: 'DB/DA',
+        symbolImages: [...dbSymbolImages, ...daSymbolImages], // DB symbols first, then DA symbols
+        value: dbElement.value + totalDaValue, // Total value
         originalData: dbElement,
+        dbData: {
+          symbolImages: dbSymbolImages,
+          value: dbElement.value,
+        },
+        daData: {
+          symbolImages: daSymbolImages,
+          value: totalDaValue,
+        },
+        isExpanded: false,
       };
       
-      // Create DA sub-rows linked to the parent
-      const daSubRows = processApparatusCombinationsToElements(combinations).map((daElement) => ({
-        ...daElement,
-        parentId: parentId,
-        isSubRow: true,
-      }));
-      
-      // Add parent and sub-rows to routine elements
-      setRoutineElements((prev) => [...prev, parentElement, ...daSubRows]);
+      // Add combined element to routine
+      setRoutineElements((prev) => [...prev, combinedElement]);
       
       // Clear pending DB element
       setPendingDbElement(null);
@@ -506,33 +528,43 @@ const RoutineCalculator = () => {
   };
 
   // Calculate scores from routine elements
-  const dbElements = routineElements.filter(el => el.type === 'DB');
-  const totalDB = dbElements.reduce((sum, el) => sum + el.value, 0);
+  const dbElements = routineElements.filter(el => el.type === 'DB' || el.type === 'DB/DA');
+  const totalDB = dbElements.reduce((sum, el) => {
+    // For DB/DA elements, only count DB value
+    if (el.type === 'DB/DA' && el.dbData) {
+      return sum + el.dbData.value;
+    }
+    return sum + el.value;
+  }, 0);
   const countDB = dbElements.length;
   
-  const daElements = routineElements.filter(el => el.type === 'DA' || el.type === 'R');
-  const totalDA = daElements.reduce((sum, el) => sum + el.value, 0);
+  const daElements = routineElements.filter(el => el.type === 'DA' || el.type === 'R' || el.type === 'DB/DA');
+  const totalDA = daElements.reduce((sum, el) => {
+    // For DB/DA elements, only count DA value
+    if (el.type === 'DB/DA' && el.daData) {
+      return sum + el.daData.value;
+    }
+    if (el.type === 'DA' || el.type === 'R') {
+      return sum + el.value;
+    }
+    return sum;
+  }, 0);
   const countDA = daElements.length;
 
   const totalScore = totalDB + totalDA;
+
+  const handleToggleExpand = (index: number) => {
+    setRoutineElements(prev => prev.map((el, idx) => 
+      idx === index ? { ...el, isExpanded: !el.isExpanded } : el
+    ));
+  };
 
   const handleRemoveRoutineElement = (index: number) => {
     const element = routineElements[index];
     const originalData = element.originalData;
 
-    // If removing a parent (DB), also remove all its children (DA sub-rows)
-    if (!element.isSubRow && element.type === 'DB') {
-      const childrenIds = routineElements
-        .filter(item => item.parentId === element.id)
-        .map(item => item.id);
-      
-      setRoutineElements(prev => 
-        prev.filter(item => item.id !== element.id && !childrenIds.includes(item.id))
-      );
-    } else {
-      // Remove single element (sub-row or standalone element)
-      setRoutineElements(prev => prev.filter((_, idx) => idx !== index));
-    }
+    // Simply remove the element
+    setRoutineElements(prev => prev.filter((_, idx) => idx !== index));
 
     // Also remove from source arrays to keep them in sync
     // Check if this is a paired special DA
@@ -688,32 +720,64 @@ const RoutineCalculator = () => {
                     >
                       <TableBody>
                         {routineElements.map((element, index) => {
-                          // Calculate item number based on parent-child relationship
-                          let itemNumber = "";
-                          if (element.isSubRow && element.parentId) {
-                            // Find parent index to determine parent number
-                            const parentIndex = routineElements.findIndex(el => el.id === element.parentId);
-                            const parentNumber = routineElements.slice(0, parentIndex + 1).filter(el => !el.isSubRow).length;
-                            // Find sub-index among siblings with same parent
-                            const subIndex = routineElements
-                              .slice(0, index)
-                              .filter(el => el.isSubRow && el.parentId === element.parentId).length + 1;
-                            itemNumber = `${parentNumber}.${subIndex}`;
-                          } else {
-                            // Count how many parent (non-sub-row) elements exist up to and including this one
-                            const parentCount = routineElements.slice(0, index + 1).filter(el => !el.isSubRow).length;
-                            itemNumber = `${parentCount}`;
-                          }
+                          // Calculate item number - sequential for main rows
+                          const itemNumber = `${index + 1}`;
                           
-                          return (
+                          const rows = [];
+                          
+                          // Main row
+                          rows.push(
                             <SortableRow
                               key={element.id}
                               element={element}
                               index={index}
                               itemNumber={itemNumber}
                               onRemove={() => handleRemoveRoutineElement(index)}
+                              onToggleExpand={element.type === 'DB/DA' ? () => handleToggleExpand(index) : undefined}
+                              isMainRow={true}
                             />
                           );
+                          
+                          // If expanded and has DB/DA breakdown, show sub-rows
+                          if (element.type === 'DB/DA' && element.isExpanded && element.dbData && element.daData) {
+                            // DB sub-row
+                            rows.push(
+                              <SortableRow
+                                key={`${element.id}-db-sub`}
+                                element={{
+                                  id: `${element.id}-db-sub`,
+                                  type: 'DB',
+                                  symbolImages: element.dbData.symbolImages,
+                                  value: element.dbData.value,
+                                  originalData: element.originalData,
+                                }}
+                                index={index}
+                                itemNumber={`${itemNumber}.1`}
+                                onRemove={() => {}}
+                                isMainRow={false}
+                              />
+                            );
+                            
+                            // DA sub-row
+                            rows.push(
+                              <SortableRow
+                                key={`${element.id}-da-sub`}
+                                element={{
+                                  id: `${element.id}-da-sub`,
+                                  type: 'DA',
+                                  symbolImages: element.daData.symbolImages,
+                                  value: element.daData.value,
+                                  originalData: element.originalData,
+                                }}
+                                index={index}
+                                itemNumber={`${itemNumber}.2`}
+                                onRemove={() => {}}
+                                isMainRow={false}
+                              />
+                            );
+                          }
+                          
+                          return rows;
                         })}
                       </TableBody>
                     </SortableContext>
