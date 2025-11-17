@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, X, Calculator } from "lucide-react";
+import { ArrowLeft, X, Calculator, GripVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbols";
 import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
@@ -102,12 +102,16 @@ function SortableRow({ element, index, onRemove }: {
     <TableRow 
       ref={setNodeRef} 
       style={style}
-      className="cursor-grab active:cursor-grabbing"
       {...attributes}
-      {...listeners}
     >
-      <TableCell className="text-center font-mono">
-        {index + 1}
+      <TableCell>
+        <div
+          {...listeners}
+          className="inline-flex items-center gap-2 cursor-grab active:cursor-grabbing select-none"
+        >
+          <GripVertical className="h-4 w-4 opacity-60" />
+          <span className="font-mono">{index + 1}</span>
+        </div>
       </TableCell>
       <TableCell>
         <Badge variant="outline" className="font-mono">
@@ -147,6 +151,16 @@ function SortableRow({ element, index, onRemove }: {
           variant="ghost"
           size="icon"
           className="h-8 w-8"
+          draggable={false}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+          }}
           onClick={(e) => {
             e.stopPropagation();
             onRemove();
