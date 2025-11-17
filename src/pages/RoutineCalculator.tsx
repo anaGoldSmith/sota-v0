@@ -293,7 +293,7 @@ const RoutineCalculator = () => {
     return publicUrl;
   };
 
-  const getBaseSymbol = (filename: string | null, apparatus: ApparatusType) => {
+  const getTechnicalElementSymbol = (filename: string | null, apparatus: ApparatusType) => {
     if (!filename) return null;
     
     // If it's already a full URL, return it directly
@@ -301,19 +301,7 @@ const RoutineCalculator = () => {
       return filename;
     }
     
-    // Try bases bucket first
-    const basesBucket = `${apparatus}-bases-symbols`;
-    const { data: { publicUrl } } = supabase.storage
-      .from(basesBucket)
-      .getPublicUrl(filename);
-    
-    return publicUrl;
-  };
-
-  const getBaseSymbolFallback = (filename: string | null, apparatus: ApparatusType) => {
-    if (!filename) return null;
-    
-    // Try technical elements bucket as fallback
+    // Use technical elements bucket for DA symbols
     const teBucket = `${apparatus}-technical-elements-symbols`;
     const { data: { publicUrl } } = supabase.storage
       .from(teBucket)
@@ -348,10 +336,10 @@ const RoutineCalculator = () => {
         
         // Add both base symbols
         if (combo.element.symbol_image && selectedApparatus) {
-          symbolImages.push(getBaseSymbol(combo.element.symbol_image, selectedApparatus) || '');
+          symbolImages.push(getTechnicalElementSymbol(combo.element.symbol_image, selectedApparatus) || '');
         }
         if (combo2.element.symbol_image && selectedApparatus) {
-          symbolImages.push(getBaseSymbol(combo2.element.symbol_image, selectedApparatus) || '');
+          symbolImages.push(getTechnicalElementSymbol(combo2.element.symbol_image, selectedApparatus) || '');
         }
         
         // Add only one criterion symbol (they're the same)
@@ -372,7 +360,7 @@ const RoutineCalculator = () => {
         // Standard combination - process normally
         const symbolImages = [];
         if (combo.element.symbol_image && selectedApparatus) {
-          symbolImages.push(getBaseSymbol(combo.element.symbol_image, selectedApparatus) || '');
+          symbolImages.push(getTechnicalElementSymbol(combo.element.symbol_image, selectedApparatus) || '');
         }
         combo.selectedCriteria.forEach(criterionCode => {
           symbolImages.push(getCriteriaSymbolUrl(criterionCode));
