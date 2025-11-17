@@ -25,7 +25,7 @@ interface Balance {
 interface BalanceSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectBalance: (balance: Balance) => void;
+  onSelectBalance: (balance: Balance, withApparatusHandling?: boolean) => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
   selectedBalanceIds?: Set<string>;
@@ -124,13 +124,23 @@ export const BalanceSelectionDialog = ({
     }
   };
 
-  const handleApparatusHandlingComplete = () => {
+  const handleApparatusHandlingComplete = (isApparatusDifficulty: boolean = false) => {
     if (pendingBalance) {
       setSelectedBalances(prev => {
         const newSet = new Set(prev);
         newSet.add(pendingBalance.id);
         return newSet;
       });
+      
+      // If user chose apparatus difficulty, add balance with apparatus handling flag
+      if (isApparatusDifficulty) {
+        onSelectBalance(pendingBalance, true);
+        // Reset and close
+        setSelectedBalances(new Set());
+        setSearchText("");
+        onOpenChange(false);
+      }
+      
       setPendingBalance(null);
     }
     setShowApparatusHandling(false);
@@ -286,8 +296,8 @@ export const BalanceSelectionDialog = ({
       <ApparatusHandlingDialog
         open={showApparatusHandling}
         onOpenChange={setShowApparatusHandling}
-        onSelectTechnicalElements={handleApparatusHandlingComplete}
-        onSelectApparatusDifficulty={handleApparatusHandlingComplete}
+        onSelectTechnicalElements={() => handleApparatusHandlingComplete(false)}
+        onSelectApparatusDifficulty={() => handleApparatusHandlingComplete(true)}
         onSkip={handleSkipApparatusHandling}
         apparatus={apparatus}
         onOpenApparatusDialog={onOpenApparatusDialog}

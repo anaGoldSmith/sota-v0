@@ -26,7 +26,7 @@ interface Rotation {
 interface RotationSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectRotation: (rotation: Rotation) => void;
+  onSelectRotation: (rotation: Rotation, withApparatusHandling?: boolean) => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
   selectedRotationIds?: Set<string>;
@@ -125,13 +125,23 @@ export const RotationSelectionDialog = ({
     }
   };
 
-  const handleApparatusHandlingComplete = () => {
+  const handleApparatusHandlingComplete = (isApparatusDifficulty: boolean = false) => {
     if (pendingRotation) {
       setSelectedRotations(prev => {
         const newSet = new Set(prev);
         newSet.add(pendingRotation.id);
         return newSet;
       });
+      
+      // If user chose apparatus difficulty, add rotation with apparatus handling flag
+      if (isApparatusDifficulty) {
+        onSelectRotation(pendingRotation, true);
+        // Reset and close
+        setSelectedRotations(new Set());
+        setSearchText("");
+        onOpenChange(false);
+      }
+      
       setPendingRotation(null);
     }
     setShowApparatusHandling(false);
@@ -292,8 +302,8 @@ export const RotationSelectionDialog = ({
       <ApparatusHandlingDialog
         open={showApparatusHandling}
         onOpenChange={setShowApparatusHandling}
-        onSelectTechnicalElements={handleApparatusHandlingComplete}
-        onSelectApparatusDifficulty={handleApparatusHandlingComplete}
+        onSelectTechnicalElements={() => handleApparatusHandlingComplete(false)}
+        onSelectApparatusDifficulty={() => handleApparatusHandlingComplete(true)}
         onSkip={handleSkipApparatusHandling}
         apparatus={apparatus}
         onOpenApparatusDialog={onOpenApparatusDialog}

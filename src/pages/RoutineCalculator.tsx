@@ -76,6 +76,8 @@ interface RoutineElement {
     combo1: ApparatusCombination;
     combo2: ApparatusCombination;
   };
+  parentId?: string; // For DA sub-rows linked to DB parent rows
+  isSubRow?: boolean; // Indicates if this is a sub-row
 }
 
 // Sortable Row Component
@@ -104,6 +106,7 @@ function SortableRow({ element, index, onRemove }: {
       ref={setNodeRef} 
       style={style}
       {...attributes}
+      className={element.isSubRow ? "bg-muted/30" : ""}
     >
       <TableCell>
         <div
@@ -111,7 +114,7 @@ function SortableRow({ element, index, onRemove }: {
           className="inline-flex items-center gap-2 cursor-grab active:cursor-grabbing select-none"
         >
           <GripVertical className="h-4 w-4 opacity-60" />
-          <span className="font-mono">{index + 1}</span>
+          <span className="font-mono">{element.isSubRow ? `  ${index + 1}` : index + 1}</span>
         </div>
       </TableCell>
       <TableCell>
@@ -120,7 +123,7 @@ function SortableRow({ element, index, onRemove }: {
         </Badge>
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-1 flex-wrap">
+        <div className={`flex items-center gap-1 flex-wrap ${element.isSubRow ? 'pl-4' : ''}`}>
           {element.symbolImages.map((url, imgIndex) => {
             const isWSymbol = url && url.includes('Cr5W.png');
             
@@ -187,6 +190,12 @@ const RoutineCalculator = () => {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [sourceElementType, setSourceElementType] = useState<'jump' | 'rotation' | 'balance' | null>(null);
   
+  // Track pending DB element when adding apparatus difficulty
+  const [pendingDbElement, setPendingDbElement] = useState<{
+    element: SelectedJump | SelectedBalance | SelectedRotation;
+    type: 'jump' | 'rotation' | 'balance';
+  } | null>(null);
+  
   const [selectedJumps, setSelectedJumps] = useState<SelectedJump[]>([]);
   const [selectedBalances, setSelectedBalances] = useState<SelectedBalance[]>([]);
   const [selectedRotations, setSelectedRotations] = useState<SelectedRotation[]>([]);
@@ -214,56 +223,110 @@ const RoutineCalculator = () => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
         
+        const movedElement = items[oldIndex];
+        
+        // If dragging a parent (DB with children), move parent and all children together
+        if (!movedElement.isSubRow && movedElement.type === 'DB') {
+          // Find all children of this parent
+          const children = items.filter(item => item.parentId === movedElement.id);
+          
+          if (children.length > 0) {
+            // Remove parent and children from original positions
+            const itemsWithoutMoved = items.filter(item => 
+              item.id !== movedElement.id && !children.some(child => child.id === item.id)
+            );
+            
+            // Calculate insertion index (accounting for removed items)
+            let insertIndex = newIndex;
+            for (let i = 0; i < oldIndex && i < newIndex; i++) {
+              if (items[i].id === movedElement.id || children.some(child => child.id === items[i].id)) {
+                insertIndex--;
+              }
+            }
+            
+            // Insert parent and children at new position
+            const newItems = [...itemsWithoutMoved];
+            newItems.splice(insertIndex, 0, movedElement, ...children);
+            return newItems;
+          }
+        }
+        
+        // If dragging a sub-row, don't allow it (sub-rows are linked to parent)
+        if (movedElement.isSubRow) {
+          return items;
+        }
+        
         return arrayMove(items, oldIndex, newIndex);
       });
     }
   };
 
-  const handleSelectJump = (jump: SelectedJump) => {
+  const handleSelectJump = (jump: SelectedJump, withApparatusHandling: boolean = false) => {
     setSelectedJumps((prev) => [...prev, jump]);
-    // Add to routine elements
-    const newElement: RoutineElement = {
-      id: `jump-${jump.id}-${Date.now()}`,
-      type: 'DB',
-      symbolImages: jump.symbol_image ? [getSymbolUrl(jump.symbol_image, 'jump-symbols') || ''] : [],
-      value: jump.value,
-      originalData: jump,
-    };
-    setRoutineElements((prev) => [...prev, newElement]);
+    
+    // If withApparatusHandling is true, we'll wait for DA to be added before creating the routine element
+    if (!withApparatusHandling) {
+      // Add to routine elements immediately (without DA)
+      const newElement: RoutineElement = {
+        id: `jump-${jump.id}-${Date.now()}`,
+        type: 'DB',
+        symbolImages: jump.symbol_image ? [getSymbolUrl(jump.symbol_image, 'jump-symbols') || ''] : [],
+        value: jump.value,
+        originalData: jump,
+      };
+      setRoutineElements((prev) => [...prev, newElement]);
+    } else {
+      // Store as pending DB element to link with DA later
+      setPendingDbElement({ element: jump, type: 'jump' });
+    }
   };
 
   const handleRemoveJump = (index: number) => {
     setSelectedJumps((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSelectBalance = (balance: SelectedBalance) => {
+  const handleSelectBalance = (balance: SelectedBalance, withApparatusHandling: boolean = false) => {
     setSelectedBalances((prev) => [...prev, balance]);
-    // Add to routine elements
-    const newElement: RoutineElement = {
-      id: `balance-${balance.id}-${Date.now()}`,
-      type: 'DB',
-      symbolImages: balance.symbol_image ? [getSymbolUrl(balance.symbol_image, 'jump-symbols') || ''] : [],
-      value: balance.value,
-      originalData: balance,
-    };
-    setRoutineElements((prev) => [...prev, newElement]);
+    
+    // If withApparatusHandling is true, we'll wait for DA to be added before creating the routine element
+    if (!withApparatusHandling) {
+      // Add to routine elements immediately (without DA)
+      const newElement: RoutineElement = {
+        id: `balance-${balance.id}-${Date.now()}`,
+        type: 'DB',
+        symbolImages: balance.symbol_image ? [getSymbolUrl(balance.symbol_image, 'jump-symbols') || ''] : [],
+        value: balance.value,
+        originalData: balance,
+      };
+      setRoutineElements((prev) => [...prev, newElement]);
+    } else {
+      // Store as pending DB element to link with DA later
+      setPendingDbElement({ element: balance, type: 'balance' });
+    }
   };
 
   const handleRemoveBalance = (index: number) => {
     setSelectedBalances((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSelectRotation = (rotation: SelectedRotation) => {
+  const handleSelectRotation = (rotation: SelectedRotation, withApparatusHandling: boolean = false) => {
     setSelectedRotations((prev) => [...prev, rotation]);
-    // Add to routine elements
-    const newElement: RoutineElement = {
-      id: `rotation-${rotation.id}-${Date.now()}`,
-      type: 'DB',
-      symbolImages: rotation.symbol_image ? [getSymbolUrl(rotation.symbol_image, 'jump-symbols') || ''] : [],
-      value: rotation.value,
-      originalData: rotation,
-    };
-    setRoutineElements((prev) => [...prev, newElement]);
+    
+    // If withApparatusHandling is true, we'll wait for DA to be added before creating the routine element
+    if (!withApparatusHandling) {
+      // Add to routine elements immediately (without DA)
+      const newElement: RoutineElement = {
+        id: `rotation-${rotation.id}-${Date.now()}`,
+        type: 'DB',
+        symbolImages: rotation.symbol_image ? [getSymbolUrl(rotation.symbol_image, 'jump-symbols') || ''] : [],
+        value: rotation.value,
+        originalData: rotation,
+      };
+      setRoutineElements((prev) => [...prev, newElement]);
+    } else {
+      // Store as pending DB element to link with DA later
+      setPendingDbElement({ element: rotation, type: 'rotation' });
+    }
   };
 
   const handleRemoveRotation = (index: number) => {
@@ -277,9 +340,40 @@ const RoutineCalculator = () => {
   const handleSelectApparatusCombinations = (combinations: ApparatusCombination[]) => {
     setSelectedApparatusCombinations((prev) => [...prev, ...combinations]);
     
-    // Process and add to routine elements
-    const newElements = processApparatusCombinationsToElements(combinations);
-    setRoutineElements((prev) => [...prev, ...newElements]);
+    // Check if we have a pending DB element to link this DA to
+    if (pendingDbElement) {
+      const { element: dbElement, type: dbType } = pendingDbElement;
+      
+      // Create the parent DB row
+      const parentId = `db-${dbType}-${dbElement.id}-${Date.now()}`;
+      const parentElement: RoutineElement = {
+        id: parentId,
+        type: 'DB',
+        symbolImages: dbElement.symbol_image ? [
+          getSymbolUrl(dbElement.symbol_image, 'jump-symbols') || ''
+        ] : [],
+        value: dbElement.value,
+        originalData: dbElement,
+      };
+      
+      // Create DA sub-rows linked to the parent
+      const daSubRows = processApparatusCombinationsToElements(combinations).map((daElement) => ({
+        ...daElement,
+        parentId: parentId,
+        isSubRow: true,
+      }));
+      
+      // Add parent and sub-rows to routine elements
+      setRoutineElements((prev) => [...prev, parentElement, ...daSubRows]);
+      
+      // Clear pending DB element
+      setPendingDbElement(null);
+      setSourceElementType(dbType);
+    } else {
+      // No pending DB - add DA as standalone elements (original behavior)
+      const newElements = processApparatusCombinationsToElements(combinations);
+      setRoutineElements((prev) => [...prev, ...newElements]);
+    }
     
     // Show success dialog if DA was added
     if (combinations.length > 0) {
@@ -426,8 +520,19 @@ const RoutineCalculator = () => {
     const element = routineElements[index];
     const originalData = element.originalData;
 
-    // Remove from routine elements state
-    setRoutineElements(prev => prev.filter((_, idx) => idx !== index));
+    // If removing a parent (DB), also remove all its children (DA sub-rows)
+    if (!element.isSubRow && element.type === 'DB') {
+      const childrenIds = routineElements
+        .filter(item => item.parentId === element.id)
+        .map(item => item.id);
+      
+      setRoutineElements(prev => 
+        prev.filter(item => item.id !== element.id && !childrenIds.includes(item.id))
+      );
+    } else {
+      // Remove single element (sub-row or standalone element)
+      setRoutineElements(prev => prev.filter((_, idx) => idx !== index));
+    }
 
     // Also remove from source arrays to keep them in sync
     // Check if this is a paired special DA

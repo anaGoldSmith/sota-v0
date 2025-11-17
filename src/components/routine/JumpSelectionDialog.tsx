@@ -24,7 +24,7 @@ interface Jump {
 interface JumpSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectJump: (jump: Jump) => void;
+  onSelectJump: (jump: Jump, withApparatusHandling?: boolean) => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
   selectedJumpIds?: Set<string>;
@@ -140,13 +140,23 @@ export const JumpSelectionDialog = ({
     }
   };
 
-  const handleApparatusHandlingComplete = () => {
+  const handleApparatusHandlingComplete = (isApparatusDifficulty: boolean = false) => {
     if (pendingJump) {
       setSelectedJumps(prev => {
         const newSet = new Set(prev);
         newSet.add(pendingJump.id);
         return newSet;
       });
+      
+      // If user chose apparatus difficulty, add jump with apparatus handling flag
+      if (isApparatusDifficulty) {
+        onSelectJump(pendingJump, true);
+        // Reset and close
+        setSelectedJumps(new Set());
+        setSearchText("");
+        onOpenChange(false);
+      }
+      
       setPendingJump(null);
     }
     setShowApparatusHandling(false);
@@ -277,12 +287,12 @@ export const JumpSelectionDialog = ({
       <ApparatusHandlingDialog
         open={showApparatusHandling}
         onOpenChange={setShowApparatusHandling}
-        onSelectTechnicalElements={handleApparatusHandlingComplete}
-        onSelectApparatusDifficulty={handleApparatusHandlingComplete}
+        onSelectTechnicalElements={() => handleApparatusHandlingComplete(false)}
+        onSelectApparatusDifficulty={() => handleApparatusHandlingComplete(true)}
         onSkip={handleSkipApparatusHandling}
         apparatus={apparatus}
         onOpenApparatusDialog={onOpenApparatusDialog}
         sourceElementType="jump"
       />
-    </Dialog>;
+    </Dialog>
 };
