@@ -259,21 +259,18 @@ const RoutineCalculator = () => {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (over && active.id !== over.id) {
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
-    if (over && active.id !== over.id) {
-      setRoutineElements((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        
-        // Use standard move for all elements (sub-rows can't be dragged)
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
-    }
+    setRoutineElements((items) => {
+      const oldIndex = items.findIndex((item) => item.id === active.id);
+      const newIndex = items.findIndex((item) => item.id === over.id);
+
+      // Guard: if either index is not a main row, do nothing
+      if (oldIndex === -1 || newIndex === -1) return items;
+
+      // Use standard move for main rows (sub-rows are not sortable)
+      return arrayMove(items, oldIndex, newIndex);
+    });
   };
 
   const handleSelectJump = (jump: SelectedJump, withApparatusHandling: boolean = false) => {
