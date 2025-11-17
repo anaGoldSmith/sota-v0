@@ -135,8 +135,25 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
       
       const elements = data as DAElement[];
       
-      // Apply natural sort
-      elements.sort((a, b) => naturalSort(a.code, b.code));
+      // Apply natural sort with parent-child ordering: parents before children
+      elements.sort((a, b) => {
+        const aIsChild = a.code.includes('.');
+        const bIsChild = b.code.includes('.');
+        const aParent = aIsChild ? a.code.split('.')[0] : a.code;
+        const bParent = bIsChild ? b.code.split('.')[0] : b.code;
+        
+        // If they share the same parent code
+        if (aParent === bParent) {
+          // Parent comes before children
+          if (!aIsChild && bIsChild) return -1;
+          if (aIsChild && !bIsChild) return 1;
+          // Both are children or both are parents, use natural sort
+          return naturalSort(a.code, b.code);
+        }
+        
+        // Different parent codes, use natural sort on parent codes
+        return naturalSort(aParent, bParent);
+      });
 
       // Create a map of code -> symbol_image from technical elements
       const symbolMap = new Map<string, string | null>(
@@ -161,6 +178,7 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
         return {
           id: element.id,
           code: element.code,
+          name: element.name,
           description: element.description,
           symbol_image: symbolImage,
           value: element.value,
