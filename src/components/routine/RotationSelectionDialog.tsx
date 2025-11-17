@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ApparatusHandlingDialog } from "./ApparatusHandlingDialog";
+import { ApparatusType } from "@/types/apparatus";
 
 interface Rotation {
   id: string;
@@ -26,12 +27,16 @@ interface RotationSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectRotation: (rotation: Rotation) => void;
+  apparatus: ApparatusType | null;
+  onOpenApparatusDialog: () => void;
 }
 
 export const RotationSelectionDialog = ({
   open,
   onOpenChange,
-  onSelectRotation
+  onSelectRotation,
+  apparatus,
+  onOpenApparatusDialog
 }: RotationSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedRotations, setSelectedRotations] = useState<Set<string>>(new Set());
@@ -287,6 +292,8 @@ export const RotationSelectionDialog = ({
         onSelectTechnicalElements={handleApparatusHandlingComplete}
         onSelectApparatusDifficulty={handleApparatusHandlingComplete}
         onSkip={handleSkipApparatusHandling}
+        apparatus={apparatus}
+        onOpenApparatusDialog={onOpenApparatusDialog}
       />
     </Dialog>
   );

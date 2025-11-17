@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ApparatusType } from "@/types/apparatus";
 
 interface ApparatusHandlingDialogProps {
   open: boolean;
@@ -7,6 +8,8 @@ interface ApparatusHandlingDialogProps {
   onSelectTechnicalElements: () => void;
   onSelectApparatusDifficulty: () => void;
   onSkip: () => void;
+  apparatus: ApparatusType | null;
+  onOpenApparatusDialog: () => void;
 }
 
 export const ApparatusHandlingDialog = ({
@@ -14,8 +17,19 @@ export const ApparatusHandlingDialog = ({
   onOpenChange,
   onSelectTechnicalElements,
   onSelectApparatusDifficulty,
-  onSkip
+  onSkip,
+  apparatus,
+  onOpenApparatusDialog
 }: ApparatusHandlingDialogProps) => {
+  const handleApparatusDifficultyClick = () => {
+    if (!apparatus) {
+      // Show error or warning if no apparatus selected
+      return;
+    }
+    onSelectApparatusDifficulty();
+    onOpenApparatusDialog();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -29,7 +43,11 @@ export const ApparatusHandlingDialog = ({
           <Button onClick={onSelectTechnicalElements} className="w-full sm:w-auto">
             +Technical Elements
           </Button>
-          <Button onClick={onSelectApparatusDifficulty} className="w-full sm:w-auto">
+          <Button 
+            onClick={handleApparatusDifficultyClick} 
+            className="w-full sm:w-auto"
+            disabled={!apparatus}
+          >
             +Apparatus Difficulty
           </Button>
           <Button onClick={onSkip} variant="outline" className="w-full sm:w-auto">

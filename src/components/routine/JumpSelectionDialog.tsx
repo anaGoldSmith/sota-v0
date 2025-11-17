@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ApparatusHandlingDialog } from "./ApparatusHandlingDialog";
+import { ApparatusType } from "@/types/apparatus";
 interface Jump {
   id: string;
   code: string;
@@ -24,11 +25,15 @@ interface JumpSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectJump: (jump: Jump) => void;
+  apparatus: ApparatusType | null;
+  onOpenApparatusDialog: () => void;
 }
 export const JumpSelectionDialog = ({
   open,
   onOpenChange,
-  onSelectJump
+  onSelectJump,
+  apparatus,
+  onOpenApparatusDialog
 }: JumpSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedJumps, setSelectedJumps] = useState<Set<string>>(new Set());
@@ -268,6 +273,8 @@ export const JumpSelectionDialog = ({
         onSelectTechnicalElements={handleApparatusHandlingComplete}
         onSelectApparatusDifficulty={handleApparatusHandlingComplete}
         onSkip={handleSkipApparatusHandling}
+        apparatus={apparatus}
+        onOpenApparatusDialog={onOpenApparatusDialog}
       />
     </Dialog>;
 };
