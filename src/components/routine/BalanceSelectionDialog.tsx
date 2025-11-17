@@ -28,6 +28,7 @@ interface BalanceSelectionDialogProps {
   onSelectBalance: (balance: Balance) => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
+  selectedBalanceIds?: Set<string>;
 }
 
 export const BalanceSelectionDialog = ({
@@ -35,10 +36,11 @@ export const BalanceSelectionDialog = ({
   onOpenChange,
   onSelectBalance,
   apparatus,
-  onOpenApparatusDialog
+  onOpenApparatusDialog,
+  selectedBalanceIds
 }: BalanceSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
-  const [selectedBalances, setSelectedBalances] = useState<Set<string>>(new Set());
+  const [selectedBalances, setSelectedBalances] = useState<Set<string>>(selectedBalanceIds || new Set());
   const [showApparatusHandling, setShowApparatusHandling] = useState(false);
   const [pendingBalance, setPendingBalance] = useState<Balance | null>(null);
 
@@ -227,28 +229,29 @@ export const BalanceSelectionDialog = ({
                       <TableCell className="sticky left-0 z-10 bg-background font-medium border-r text-sm">
                         {getRowDescription(rowNumber)}
                       </TableCell>
-                      {values.map(value => {
+                       {values.map(value => {
                         const balance = matrix.get(rowNumber)?.get(value);
                         const isSelected = balance ? selectedBalances.has(balance.id) : false;
+                        const isPreviouslySelected = balance && selectedBalanceIds ? selectedBalanceIds.has(balance.id) : false;
                         return (
                           <TableCell
                             key={`${rowNumber}-${value}`}
                             className={`text-center p-3 relative ${
                               balance
-                                ? `cursor-pointer transition-colors ${
-                                    isSelected
+                                ? `${!isPreviouslySelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-colors ${
+                                    isSelected || isPreviouslySelected
                                       ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset'
                                       : 'hover:bg-accent/50'
                                   }`
                                 : 'bg-muted/30'
                             }`}
-                            onClick={() => balance && handleBalanceToggle(balance)}
+                            onClick={() => balance && !isPreviouslySelected && handleBalanceToggle(balance)}
                           >
                             {balance ? (
                               <div className="flex flex-col items-center gap-1">
-                                <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative">
+                                 <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative">
                                   Symbol
-                                  {isSelected && (
+                                  {(isSelected || isPreviouslySelected) && (
                                     <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5">
                                       <Check className="h-3 w-3" />
                                     </div>
@@ -288,6 +291,7 @@ export const BalanceSelectionDialog = ({
         onSkip={handleSkipApparatusHandling}
         apparatus={apparatus}
         onOpenApparatusDialog={onOpenApparatusDialog}
+        sourceElementType="balance"
       />
     </Dialog>
   );

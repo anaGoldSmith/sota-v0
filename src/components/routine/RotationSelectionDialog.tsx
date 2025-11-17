@@ -29,6 +29,7 @@ interface RotationSelectionDialogProps {
   onSelectRotation: (rotation: Rotation) => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
+  selectedRotationIds?: Set<string>;
 }
 
 export const RotationSelectionDialog = ({
@@ -36,10 +37,11 @@ export const RotationSelectionDialog = ({
   onOpenChange,
   onSelectRotation,
   apparatus,
-  onOpenApparatusDialog
+  onOpenApparatusDialog,
+  selectedRotationIds
 }: RotationSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
-  const [selectedRotations, setSelectedRotations] = useState<Set<string>>(new Set());
+  const [selectedRotations, setSelectedRotations] = useState<Set<string>>(selectedRotationIds || new Set());
   const [showApparatusHandling, setShowApparatusHandling] = useState(false);
   const [pendingRotation, setPendingRotation] = useState<Rotation | null>(null);
 
@@ -228,28 +230,29 @@ export const RotationSelectionDialog = ({
                       <TableCell className="sticky left-0 z-10 bg-background font-medium border-r text-sm">
                         {getRowDescription(rowNumber)}
                       </TableCell>
-                      {values.map(value => {
+                       {values.map(value => {
                         const rotation = matrix.get(rowNumber)?.get(value);
                         const isSelected = rotation ? selectedRotations.has(rotation.id) : false;
+                        const isPreviouslySelected = rotation && selectedRotationIds ? selectedRotationIds.has(rotation.id) : false;
                         return (
                           <TableCell
                             key={`${rowNumber}-${value}`}
                             className={`text-center p-3 relative ${
                               rotation
-                                ? `cursor-pointer transition-colors ${
-                                    isSelected
+                                ? `${!isPreviouslySelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-colors ${
+                                    isSelected || isPreviouslySelected
                                       ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset'
                                       : 'hover:bg-accent/50'
                                   }`
                                 : 'bg-muted/30'
                             }`}
-                            onClick={() => rotation && handleRotationToggle(rotation)}
+                            onClick={() => rotation && !isPreviouslySelected && handleRotationToggle(rotation)}
                           >
                             {rotation ? (
                               <div className="flex flex-col items-center gap-1">
-                                <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative">
+                                 <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative">
                                   Symbol
-                                  {isSelected && (
+                                  {(isSelected || isPreviouslySelected) && (
                                     <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5">
                                       <Check className="h-3 w-3" />
                                     </div>
@@ -294,6 +297,7 @@ export const RotationSelectionDialog = ({
         onSkip={handleSkipApparatusHandling}
         apparatus={apparatus}
         onOpenApparatusDialog={onOpenApparatusDialog}
+        sourceElementType="rotation"
       />
     </Dialog>
   );

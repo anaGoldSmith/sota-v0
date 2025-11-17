@@ -9,7 +9,8 @@ import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
 import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDialog";
 import { RotationSelectionDialog } from "@/components/routine/RotationSelectionDialog";
 import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/routine/ApparatusSelectionDialog";
-import { useState } from "react";
+import { DBSuccessDialog } from "@/components/routine/DBSuccessDialog";
+import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ApparatusType, CombinedApparatusData } from "@/types/apparatus";
@@ -183,12 +184,19 @@ const RoutineCalculator = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedApparatus, setSelectedApparatus] = useState<ApparatusType | null>(null);
   const [routineElements, setRoutineElements] = useState<RoutineElement[]>([]);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [sourceElementType, setSourceElementType] = useState<'jump' | 'rotation' | 'balance' | null>(null);
   
   const [selectedJumps, setSelectedJumps] = useState<SelectedJump[]>([]);
   const [selectedBalances, setSelectedBalances] = useState<SelectedBalance[]>([]);
   const [selectedRotations, setSelectedRotations] = useState<SelectedRotation[]>([]);
   const [selectedApparatusElements, setSelectedApparatusElements] = useState<CombinedApparatusData[]>([]);
   const [selectedApparatusCombinations, setSelectedApparatusCombinations] = useState<ApparatusCombination[]>([]);
+
+  // Compute selected IDs for highlighting
+  const selectedJumpIds = useMemo(() => new Set(selectedJumps.map(j => j.id)), [selectedJumps]);
+  const selectedBalanceIds = useMemo(() => new Set(selectedBalances.map(b => b.id)), [selectedBalances]);
+  const selectedRotationIds = useMemo(() => new Set(selectedRotations.map(r => r.id)), [selectedRotations]);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -272,6 +280,11 @@ const RoutineCalculator = () => {
     // Process and add to routine elements
     const newElements = processApparatusCombinationsToElements(combinations);
     setRoutineElements((prev) => [...prev, ...newElements]);
+    
+    // Show success dialog if DA was added
+    if (combinations.length > 0) {
+      setShowSuccessDialog(true);
+    }
   };
 
   const handleRemoveApparatusElement = (index: number) => {
@@ -689,7 +702,11 @@ const RoutineCalculator = () => {
         onOpenChange={setJumpDialogOpen}
         onSelectJump={handleSelectJump}
         apparatus={selectedApparatus}
-        onOpenApparatusDialog={() => setApparatusDialogOpen(true)}
+        onOpenApparatusDialog={() => {
+          setSourceElementType('jump');
+          setApparatusDialogOpen(true);
+        }}
+        selectedJumpIds={selectedJumpIds}
       />
 
       {/* Balance Selection Dialog */}
@@ -698,7 +715,11 @@ const RoutineCalculator = () => {
         onOpenChange={setBalanceDialogOpen}
         onSelectBalance={handleSelectBalance}
         apparatus={selectedApparatus}
-        onOpenApparatusDialog={() => setApparatusDialogOpen(true)}
+        onOpenApparatusDialog={() => {
+          setSourceElementType('balance');
+          setApparatusDialogOpen(true);
+        }}
+        selectedBalanceIds={selectedBalanceIds}
       />
 
       {/* Rotation Selection Dialog */}
@@ -707,7 +728,11 @@ const RoutineCalculator = () => {
         onOpenChange={setRotationDialogOpen}
         onSelectRotation={handleSelectRotation}
         apparatus={selectedApparatus}
-        onOpenApparatusDialog={() => setApparatusDialogOpen(true)}
+        onOpenApparatusDialog={() => {
+          setSourceElementType('rotation');
+          setApparatusDialogOpen(true);
+        }}
+        selectedRotationIds={selectedRotationIds}
       />
 
       {/* Apparatus Selection Dialog */}
@@ -717,6 +742,29 @@ const RoutineCalculator = () => {
         apparatus={selectedApparatus}
         onSelectElements={handleSelectApparatusElements}
         onSelectCombinations={handleSelectApparatusCombinations}
+      />
+
+      {/* Success Dialog */}
+      <DBSuccessDialog
+        open={showSuccessDialog}
+        onOpenChange={setShowSuccessDialog}
+        onAddMoreElements={() => {
+          setShowSuccessDialog(false);
+          setApparatusDialogOpen(false);
+          // Reopen the appropriate element dialog
+          if (sourceElementType === 'jump') {
+            setJumpDialogOpen(true);
+          } else if (sourceElementType === 'rotation') {
+            setRotationDialogOpen(true);
+          } else if (sourceElementType === 'balance') {
+            setBalanceDialogOpen(true);
+          }
+        }}
+        onReturnToCalculator={() => {
+          setShowSuccessDialog(false);
+          setApparatusDialogOpen(false);
+          setSourceElementType(null);
+        }}
       />
     </div>
   );

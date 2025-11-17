@@ -10,6 +10,7 @@ interface ApparatusHandlingDialogProps {
   onSkip: () => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
+  sourceElementType?: 'jump' | 'rotation' | 'balance';
 }
 
 export const ApparatusHandlingDialog = ({
@@ -19,7 +20,8 @@ export const ApparatusHandlingDialog = ({
   onSelectApparatusDifficulty,
   onSkip,
   apparatus,
-  onOpenApparatusDialog
+  onOpenApparatusDialog,
+  sourceElementType
 }: ApparatusHandlingDialogProps) => {
   const handleApparatusDifficultyClick = () => {
     if (!apparatus) {
