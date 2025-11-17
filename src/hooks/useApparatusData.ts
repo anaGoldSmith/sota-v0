@@ -179,6 +179,8 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
       return combined;
     },
     enabled: !!apparatus && technicalElements.length > 0,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch DA comments for this apparatus
