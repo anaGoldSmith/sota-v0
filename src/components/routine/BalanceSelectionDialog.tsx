@@ -224,7 +224,15 @@ export const BalanceSelectionDialog = ({
 
   const handleConfirmSelection = () => {
     const selectedBalanceObjects = balances?.filter(b => selectedBalances.has(b.id)) || [];
-    selectedBalanceObjects.forEach(balance => onSelectBalance(balance));
+    
+    // Only add balances that are NOT already in the routine (not being modified)
+    selectedBalanceObjects.forEach(balance => {
+      const isBeingModified = routineElementsMap?.has(balance.id);
+      if (!isBeingModified) {
+        onSelectBalance(balance);
+      }
+    });
+    
     setSelectedBalances(new Set());
     setSearchText("");
     onOpenChange(false);
