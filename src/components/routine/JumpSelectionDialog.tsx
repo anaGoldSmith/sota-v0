@@ -13,6 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ApparatusHandlingDialog } from "./ApparatusHandlingDialog";
 import { ApparatusType } from "@/types/apparatus";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ExistingHandlingDialog } from "./ExistingHandlingDialog";
 
 interface Jump {
   id: string;
@@ -55,6 +56,8 @@ export const JumpSelectionDialog = ({
   const [pendingJump, setPendingJump] = useState<Jump | null>(null);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [jumpToRemove, setJumpToRemove] = useState<Jump | null>(null);
+  const [showExistingHandling, setShowExistingHandling] = useState(false);
+  const [existingHandlingJump, setExistingHandlingJump] = useState<Jump | null>(null);
 
   // Watch for signal to reopen apparatus handling dialog
   useEffect(() => {
@@ -148,12 +151,12 @@ export const JumpSelectionDialog = ({
     const firstJump = Array.from(rowJumps.values())[0] as Jump | undefined;
     return firstJump?.description || "";
   };
-  const handleJumpToggle = (jump: Jump) => {
+  const handleJumpClick = (jump: Jump) => {
     const isCurrentlySelected = selectedJumps.has(jump.id);
     const isPreviouslySelected = selectedJumpIds ? selectedJumpIds.has(jump.id) : false;
     
     if (isCurrentlySelected || isPreviouslySelected) {
-      // If already selected (locally or in parent), show confirmation dialog
+      // If already selected, show confirmation dialog to remove
       setJumpToRemove(jump);
       setShowRemoveDialog(true);
     } else {
@@ -161,6 +164,11 @@ export const JumpSelectionDialog = ({
       setPendingJump(jump);
       setShowApparatusHandling(true);
     }
+  };
+
+  const handleExistingHandling = (jump: Jump) => {
+    setExistingHandlingJump(jump);
+    setShowExistingHandling(true);
   };
 
   const handleConfirmRemove = () => {
@@ -312,7 +320,7 @@ export const JumpSelectionDialog = ({
                                 {/* Symbol image */}
                                  <div 
                                   className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative cursor-pointer"
-                                  onClick={() => handleJumpToggle(jump)}
+                                  onClick={() => handleJumpClick(jump)}
                                 >
                                   Symbol
                                   {(isSelected || isPreviouslySelected) && <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5">
@@ -323,19 +331,20 @@ export const JumpSelectionDialog = ({
                                 {jump.turn_degrees && jump.turn_degrees !== "NA" && <span className="text-xs text-muted-foreground">
                                     {jump.turn_degrees}°
                                   </span>}
-                                {/* Handling button */}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs px-2"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPendingJump(jump);
-                                    setShowApparatusHandling(true);
-                                  }}
-                                >
-                                  Handling
-                                </Button>
+                                {/* Handling button - only show for selected elements */}
+                                {(isSelected || isPreviouslySelected) && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs px-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleExistingHandling(jump);
+                                    }}
+                                  >
+                                    Handling
+                                  </Button>
+                                )}
                               </div> : null}
                           </TableCell>;
                 })}

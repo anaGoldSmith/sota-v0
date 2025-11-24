@@ -13,6 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ApparatusHandlingDialog } from "./ApparatusHandlingDialog";
 import { ApparatusType } from "@/types/apparatus";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ExistingHandlingDialog } from "./ExistingHandlingDialog";
 
 interface Rotation {
   id: string;
@@ -57,6 +58,8 @@ export const RotationSelectionDialog = ({
   const [pendingRotation, setPendingRotation] = useState<Rotation | null>(null);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [rotationToRemove, setRotationToRemove] = useState<Rotation | null>(null);
+  const [showExistingHandling, setShowExistingHandling] = useState(false);
+  const [existingHandlingRotation, setExistingHandlingRotation] = useState<Rotation | null>(null);
 
   // Watch for signal to reopen apparatus handling dialog
   useEffect(() => {
@@ -132,12 +135,12 @@ export const RotationSelectionDialog = ({
     return firstRotation?.description || "";
   };
 
-  const handleRotationToggle = (rotation: Rotation) => {
+  const handleRotationClick = (rotation: Rotation) => {
     const isCurrentlySelected = selectedRotations.has(rotation.id);
     const isPreviouslySelected = selectedRotationIds ? selectedRotationIds.has(rotation.id) : false;
     
     if (isCurrentlySelected || isPreviouslySelected) {
-      // If already selected (locally or in parent), show confirmation dialog
+      // If already selected, show confirmation dialog to remove
       setRotationToRemove(rotation);
       setShowRemoveDialog(true);
     } else {
@@ -145,6 +148,11 @@ export const RotationSelectionDialog = ({
       setPendingRotation(rotation);
       setShowApparatusHandling(true);
     }
+  };
+
+  const handleExistingHandling = (rotation: Rotation) => {
+    setExistingHandlingRotation(rotation);
+    setShowExistingHandling(true);
   };
 
   const handleConfirmRemove = () => {
@@ -323,7 +331,7 @@ export const RotationSelectionDialog = ({
                                 {/* Symbol image */}
                                  <div 
                                   className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative cursor-pointer"
-                                  onClick={() => handleRotationToggle(rotation)}
+                                  onClick={() => handleRotationClick(rotation)}
                                 >
                                   Symbol
                                   {(isSelected || isPreviouslySelected) && (
@@ -338,19 +346,20 @@ export const RotationSelectionDialog = ({
                                     {rotation.turn_degrees}°
                                   </span>
                                 )}
-                                {/* Handling button */}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs px-2"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPendingRotation(rotation);
-                                    setShowApparatusHandling(true);
-                                  }}
-                                >
-                                  Handling
-                                </Button>
+                                {/* Handling button - only show for selected elements */}
+                                {(isSelected || isPreviouslySelected) && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs px-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleExistingHandling(rotation);
+                                    }}
+                                  >
+                                    Handling
+                                  </Button>
+                                )}
                               </div>
                             ) : null}
                           </TableCell>
@@ -399,6 +408,25 @@ export const RotationSelectionDialog = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ExistingHandlingDialog
+        open={showExistingHandling}
+        onOpenChange={setShowExistingHandling}
+        elementName={existingHandlingRotation?.description || ""}
+        handlingSymbols={<span className="text-sm">Symbols displayed here</span>}
+        onAddTechnicalElements={() => {
+          setShowExistingHandling(false);
+          // TODO: Implement technical elements flow
+        }}
+        onAddApparatusDifficulty={() => {
+          if (existingHandlingRotation) {
+            setPendingRotation(existingHandlingRotation);
+            setShowExistingHandling(false);
+            onOpenApparatusDialog();
+          }
+        }}
+        onCancel={() => setShowExistingHandling(false)}
+      />
     </Dialog>
   );
 };
