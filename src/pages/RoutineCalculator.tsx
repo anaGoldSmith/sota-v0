@@ -400,8 +400,8 @@ const RoutineCalculator = () => {
       setRoutineElements((prev) => [...prev, ...newElements]);
     }
     
-    // Show success dialog if DA was added
-    if (combinations.length > 0) {
+    // Show success dialog ONLY if DA was added to an existing DB (not standalone DA)
+    if (combinations.length > 0 && pendingDbElement) {
       setShowSuccessDialog(true);
     }
   };
