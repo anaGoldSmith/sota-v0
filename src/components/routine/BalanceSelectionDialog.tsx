@@ -133,9 +133,10 @@ export const BalanceSelectionDialog = ({
 
   const handleBalanceToggle = (balance: Balance) => {
     const isCurrentlySelected = selectedBalances.has(balance.id);
+    const isPreviouslySelected = selectedBalanceIds ? selectedBalanceIds.has(balance.id) : false;
     
-    if (isCurrentlySelected) {
-      // If already selected, show confirmation dialog
+    if (isCurrentlySelected || isPreviouslySelected) {
+      // If already selected (locally or in parent), show confirmation dialog
       setBalanceToRemove(balance);
       setShowRemoveDialog(true);
     } else {
@@ -306,7 +307,7 @@ export const BalanceSelectionDialog = ({
                             key={`${rowNumber}-${value}`}
                             className={`text-center p-3 relative ${
                               balance
-                                ? `${!isPreviouslySelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-colors ${
+                                ? `cursor-pointer transition-colors ${
                                     isWithoutApparatusHandling 
                                       ? 'ring-2 ring-red-600 bg-red-100 dark:bg-red-900/40'
                                       : isSelected || isPreviouslySelected
@@ -315,7 +316,7 @@ export const BalanceSelectionDialog = ({
                                   }`
                                 : 'bg-muted/30'
                             }`}
-                            onClick={() => balance && !isPreviouslySelected && handleBalanceToggle(balance)}
+                            onClick={() => balance && handleBalanceToggle(balance)}
                           >
                             {balance ? (
                               <div className="flex flex-col items-center gap-1">

@@ -150,9 +150,10 @@ export const JumpSelectionDialog = ({
   };
   const handleJumpToggle = (jump: Jump) => {
     const isCurrentlySelected = selectedJumps.has(jump.id);
+    const isPreviouslySelected = selectedJumpIds ? selectedJumpIds.has(jump.id) : false;
     
-    if (isCurrentlySelected) {
-      // If already selected, show confirmation dialog
+    if (isCurrentlySelected || isPreviouslySelected) {
+      // If already selected (locally or in parent), show confirmation dialog
       setJumpToRemove(jump);
       setShowRemoveDialog(true);
     } else {
@@ -299,14 +300,14 @@ export const JumpSelectionDialog = ({
                         {getRowDescription(rowNumber)}
                       </TableCell>
                  {values.map(value => {
-                  const jump = matrix.get(rowNumber)?.get(value);
+                   const jump = matrix.get(rowNumber)?.get(value);
                   const isSelected = jump ? selectedJumps.has(jump.id) : false;
                   const isPreviouslySelected = jump && selectedJumpIds ? selectedJumpIds.has(jump.id) : false;
                   const isWithoutApparatusHandling = jump && elementsWithoutApparatusHandling ? elementsWithoutApparatusHandling.has(jump.id) : false;
                   return <TableCell 
                     key={`${rowNumber}-${value}`} 
-                    className={`text-center p-3 relative ${jump ? `${!isPreviouslySelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-colors ${isWithoutApparatusHandling ? 'ring-2 ring-red-600 bg-red-100 dark:bg-red-900/40' : isSelected || isPreviouslySelected ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset' : 'hover:bg-accent/50'}` : 'bg-muted/30'}`} 
-                    onClick={() => jump && !isPreviouslySelected && handleJumpToggle(jump)}
+                    className={`text-center p-3 relative ${jump ? `cursor-pointer transition-colors ${isWithoutApparatusHandling ? 'ring-2 ring-red-600 bg-red-100 dark:bg-red-900/40' : isSelected || isPreviouslySelected ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset' : 'hover:bg-accent/50'}` : 'bg-muted/30'}`} 
+                    onClick={() => jump && handleJumpToggle(jump)}
                   >
                             {jump ? <div className="flex flex-col items-center gap-1">
                                 {/* Placeholder for symbol image */}

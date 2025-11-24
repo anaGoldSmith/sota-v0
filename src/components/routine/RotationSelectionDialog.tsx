@@ -134,9 +134,10 @@ export const RotationSelectionDialog = ({
 
   const handleRotationToggle = (rotation: Rotation) => {
     const isCurrentlySelected = selectedRotations.has(rotation.id);
+    const isPreviouslySelected = selectedRotationIds ? selectedRotationIds.has(rotation.id) : false;
     
-    if (isCurrentlySelected) {
-      // If already selected, show confirmation dialog
+    if (isCurrentlySelected || isPreviouslySelected) {
+      // If already selected (locally or in parent), show confirmation dialog
       setRotationToRemove(rotation);
       setShowRemoveDialog(true);
     } else {
@@ -307,7 +308,7 @@ export const RotationSelectionDialog = ({
                             key={`${rowNumber}-${value}`}
                             className={`text-center p-3 relative ${
                               rotation
-                                ? `${!isPreviouslySelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-colors ${
+                                ? `cursor-pointer transition-colors ${
                                     isWithoutApparatusHandling
                                       ? 'ring-2 ring-red-600 bg-red-100 dark:bg-red-900/40'
                                       : isSelected || isPreviouslySelected
@@ -316,7 +317,7 @@ export const RotationSelectionDialog = ({
                                   }`
                                 : 'bg-muted/30'
                             }`}
-                            onClick={() => rotation && !isPreviouslySelected && handleRotationToggle(rotation)}
+                            onClick={() => rotation && handleRotationToggle(rotation)}
                           >
                             {rotation ? (
                               <div className="flex flex-col items-center gap-1">
