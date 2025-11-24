@@ -297,17 +297,17 @@ export const BalanceSelectionDialog = ({
                       <TableCell className="sticky left-0 z-10 bg-background font-medium border-r text-sm">
                         {getRowDescription(rowNumber)}
                       </TableCell>
-                       {values.map(value => {
-                        const balance = matrix.get(rowNumber)?.get(value);
-                        const isSelected = balance ? selectedBalances.has(balance.id) : false;
-                        const isPreviouslySelected = balance && selectedBalanceIds ? selectedBalanceIds.has(balance.id) : false;
-                        const isWithoutApparatusHandling = balance && elementsWithoutApparatusHandling ? elementsWithoutApparatusHandling.has(balance.id) : false;
-                        return (
+                        {values.map(value => {
+                         const balance = matrix.get(rowNumber)?.get(value);
+                         const isSelected = balance ? selectedBalances.has(balance.id) : false;
+                         const isPreviouslySelected = balance && selectedBalanceIds ? selectedBalanceIds.has(balance.id) : false;
+                         const isWithoutApparatusHandling = balance && elementsWithoutApparatusHandling ? elementsWithoutApparatusHandling.has(balance.id) : false;
+                         return (
                           <TableCell
                             key={`${rowNumber}-${value}`}
                             className={`text-center p-3 relative ${
                               balance
-                                ? `cursor-pointer transition-colors ${
+                                ? `${
                                     isWithoutApparatusHandling 
                                       ? 'ring-2 ring-red-600 bg-red-100 dark:bg-red-900/40'
                                       : isSelected || isPreviouslySelected
@@ -316,11 +316,14 @@ export const BalanceSelectionDialog = ({
                                   }`
                                 : 'bg-muted/30'
                             }`}
-                            onClick={() => balance && handleBalanceToggle(balance)}
                           >
                             {balance ? (
-                              <div className="flex flex-col items-center gap-1">
-                                 <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative">
+                              <div className="flex flex-col items-center gap-2">
+                                {/* Symbol image */}
+                                 <div 
+                                  className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative cursor-pointer"
+                                  onClick={() => handleBalanceToggle(balance)}
+                                >
                                   Symbol
                                   {(isSelected || isPreviouslySelected) && (
                                     <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5">
@@ -328,9 +331,19 @@ export const BalanceSelectionDialog = ({
                                     </div>
                                   )}
                                 </div>
-                                <Badge variant={isSelected ? "default" : "secondary"} className="font-mono text-xs">
-                                  {balance.code}
-                                </Badge>
+                                {/* Handling button */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs px-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPendingBalance(balance);
+                                    setShowApparatusHandling(true);
+                                  }}
+                                >
+                                  Handling
+                                </Button>
                               </div>
                             ) : null}
                           </TableCell>

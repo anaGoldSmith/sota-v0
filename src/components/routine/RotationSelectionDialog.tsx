@@ -308,7 +308,7 @@ export const RotationSelectionDialog = ({
                             key={`${rowNumber}-${value}`}
                             className={`text-center p-3 relative ${
                               rotation
-                                ? `cursor-pointer transition-colors ${
+                                ? `${
                                     isWithoutApparatusHandling
                                       ? 'ring-2 ring-red-600 bg-red-100 dark:bg-red-900/40'
                                       : isSelected || isPreviouslySelected
@@ -317,11 +317,14 @@ export const RotationSelectionDialog = ({
                                   }`
                                 : 'bg-muted/30'
                             }`}
-                            onClick={() => rotation && handleRotationToggle(rotation)}
                           >
                             {rotation ? (
-                              <div className="flex flex-col items-center gap-1">
-                                 <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative">
+                              <div className="flex flex-col items-center gap-2">
+                                {/* Symbol image */}
+                                 <div 
+                                  className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative cursor-pointer"
+                                  onClick={() => handleRotationToggle(rotation)}
+                                >
                                   Symbol
                                   {(isSelected || isPreviouslySelected) && (
                                     <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5">
@@ -329,9 +332,19 @@ export const RotationSelectionDialog = ({
                                     </div>
                                   )}
                                 </div>
-                                <Badge variant={isSelected ? "default" : "secondary"} className="font-mono text-xs">
-                                  {rotation.code}
-                                </Badge>
+                                {/* Handling button */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs px-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPendingRotation(rotation);
+                                    setShowApparatusHandling(true);
+                                  }}
+                                >
+                                  Handling
+                                </Button>
                                 {rotation.turn_degrees && rotation.turn_degrees !== "NA" && (
                                   <span className="text-xs text-muted-foreground">
                                     {rotation.turn_degrees}°

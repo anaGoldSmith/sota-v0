@@ -299,27 +299,39 @@ export const JumpSelectionDialog = ({
                       <TableCell className="sticky left-0 z-10 bg-background font-medium border-r text-sm">
                         {getRowDescription(rowNumber)}
                       </TableCell>
-                 {values.map(value => {
+                  {values.map(value => {
                    const jump = matrix.get(rowNumber)?.get(value);
                   const isSelected = jump ? selectedJumps.has(jump.id) : false;
                   const isPreviouslySelected = jump && selectedJumpIds ? selectedJumpIds.has(jump.id) : false;
                   const isWithoutApparatusHandling = jump && elementsWithoutApparatusHandling ? elementsWithoutApparatusHandling.has(jump.id) : false;
                   return <TableCell 
                     key={`${rowNumber}-${value}`} 
-                    className={`text-center p-3 relative ${jump ? `cursor-pointer transition-colors ${isWithoutApparatusHandling ? 'ring-2 ring-red-600 bg-red-100 dark:bg-red-900/40' : isSelected || isPreviouslySelected ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset' : 'hover:bg-accent/50'}` : 'bg-muted/30'}`} 
-                    onClick={() => jump && handleJumpToggle(jump)}
+                    className={`text-center p-3 relative ${jump ? `${isWithoutApparatusHandling ? 'ring-2 ring-red-600 bg-red-100 dark:bg-red-900/40' : isSelected || isPreviouslySelected ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset' : 'hover:bg-accent/50'}` : 'bg-muted/30'}`}
                   >
-                            {jump ? <div className="flex flex-col items-center gap-1">
-                                {/* Placeholder for symbol image */}
-                                 <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative">
+                            {jump ? <div className="flex flex-col items-center gap-2">
+                                {/* Symbol image */}
+                                 <div 
+                                  className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative cursor-pointer"
+                                  onClick={() => handleJumpToggle(jump)}
+                                >
                                   Symbol
                                   {(isSelected || isPreviouslySelected) && <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5">
                                       <Check className="h-3 w-3" />
                                     </div>}
                                 </div>
-                                <Badge variant={isSelected ? "default" : "secondary"} className="font-mono text-xs">
-                                  {jump.code}
-                                </Badge>
+                                {/* Handling button */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs px-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPendingJump(jump);
+                                    setShowApparatusHandling(true);
+                                  }}
+                                >
+                                  Handling
+                                </Button>
                                 {jump.turn_degrees && jump.turn_degrees !== "NA" && <span className="text-xs text-muted-foreground">
                                     {jump.turn_degrees}°
                                   </span>}
