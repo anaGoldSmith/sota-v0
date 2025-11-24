@@ -152,18 +152,25 @@ export const JumpSelectionDialog = ({
     return firstJump?.description || "";
   };
   const handleJumpClick = (jump: Jump) => {
+    console.log("Jump clicked:", jump.code, "ID:", jump.id);
     const isCurrentlySelected = selectedJumps.has(jump.id);
     const isPreviouslySelected = selectedJumpIds ? selectedJumpIds.has(jump.id) : false;
+    console.log("isCurrentlySelected:", isCurrentlySelected, "isPreviouslySelected:", isPreviouslySelected);
+    console.log("Current selectedJumps:", Array.from(selectedJumps));
+    console.log("selectedJumpIds from parent:", selectedJumpIds ? Array.from(selectedJumpIds) : "none");
     
     if (isCurrentlySelected || isPreviouslySelected) {
       // If already selected, show confirmation dialog to remove
+      console.log("Showing remove dialog");
       setJumpToRemove(jump);
       setShowRemoveDialog(true);
     } else {
       // If not selected, select it immediately and show apparatus handling dialog
+      console.log("Selecting jump and showing apparatus handling");
       setSelectedJumps(prev => {
         const newSet = new Set(prev);
         newSet.add(jump.id);
+        console.log("New selectedJumps:", Array.from(newSet));
         return newSet;
       });
       setPendingJump(jump);
@@ -201,11 +208,7 @@ export const JumpSelectionDialog = ({
 
   const handleApparatusHandlingComplete = (isApparatusDifficulty: boolean = false) => {
     if (pendingJump) {
-      setSelectedJumps(prev => {
-        const newSet = new Set(prev);
-        newSet.add(pendingJump.id);
-        return newSet;
-      });
+      // Don't add again - already added in handleJumpClick
       
       // If user chose apparatus difficulty, add jump with apparatus handling flag
       if (isApparatusDifficulty) {
@@ -229,8 +232,12 @@ export const JumpSelectionDialog = ({
       // Add the jump to the routine calculator without apparatus handling
       onSelectJump(pendingJump, false);
       
-      // Don't add to local selectedJumps state to avoid duplication when "Add to Routine" is clicked
-      // The element will still show as previously selected via selectedJumpIds prop
+      // Remove from local selected state since it's now in the calculator
+      setSelectedJumps(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(pendingJump.id);
+        return newSet;
+      });
       
       setPendingJump(null);
     }
@@ -247,9 +254,14 @@ export const JumpSelectionDialog = ({
     onOpenChange(false);
   };
   const handleDialogChange = (isOpen: boolean) => {
+    console.log("Dialog change - isOpen:", isOpen);
     if (!isOpen) {
+      console.log("Clearing all state on dialog close");
       setSelectedJumps(new Set());
       setSearchText("");
+      setPendingJump(null);
+      setShowApparatusHandling(false);
+      setShowExistingHandling(false);
     }
     onOpenChange(isOpen);
   };

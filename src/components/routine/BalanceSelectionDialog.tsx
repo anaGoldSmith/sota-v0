@@ -184,11 +184,7 @@ export const BalanceSelectionDialog = ({
 
   const handleApparatusHandlingComplete = (isApparatusDifficulty: boolean = false) => {
     if (pendingBalance) {
-      setSelectedBalances(prev => {
-        const newSet = new Set(prev);
-        newSet.add(pendingBalance.id);
-        return newSet;
-      });
+      // Don't add again - already added in handleBalanceClick
       
       // If user chose apparatus difficulty, add balance with apparatus handling flag
       if (isApparatusDifficulty) {
@@ -212,8 +208,12 @@ export const BalanceSelectionDialog = ({
       // Add the balance to the routine calculator without apparatus handling
       onSelectBalance(pendingBalance, false);
       
-      // Don't add to local selectedBalances state to avoid duplication when "Add to Routine" is clicked
-      // The element will still show as previously selected via selectedBalanceIds prop
+      // Remove from local selected state since it's now in the calculator
+      setSelectedBalances(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(pendingBalance.id);
+        return newSet;
+      });
       
       setPendingBalance(null);
     }
@@ -232,6 +232,9 @@ export const BalanceSelectionDialog = ({
     if (!isOpen) {
       setSelectedBalances(new Set());
       setSearchText("");
+      setPendingBalance(null);
+      setShowApparatusHandling(false);
+      setShowExistingHandling(false);
     }
     onOpenChange(isOpen);
   };
