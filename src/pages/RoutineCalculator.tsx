@@ -11,6 +11,7 @@ import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDia
 import { RotationSelectionDialog } from "@/components/routine/RotationSelectionDialog";
 import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/routine/ApparatusSelectionDialog";
 import { DBSuccessDialog } from "@/components/routine/DBSuccessDialog";
+import { DBDASuccessDialog } from "@/components/routine/DBDASuccessDialog";
 import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -230,6 +231,7 @@ const RoutineCalculator = () => {
   const [selectedApparatus, setSelectedApparatus] = useState<ApparatusType | null>(null);
   const [routineElements, setRoutineElements] = useState<RoutineElement[]>([]);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showDBDASuccessDialog, setShowDBDASuccessDialog] = useState(false);
   const [sourceElementType, setSourceElementType] = useState<'jump' | 'rotation' | 'balance' | null>(null);
   
   // Track pending DB element when adding apparatus difficulty
@@ -237,6 +239,11 @@ const RoutineCalculator = () => {
     element: SelectedJump | SelectedBalance | SelectedRotation;
     type: 'jump' | 'rotation' | 'balance';
   } | null>(null);
+  
+  // Track current DA selection for "Change DA" functionality
+  const [currentDACombinations, setCurrentDACombinations] = useState<ApparatusCombination[]>([]);
+  const [currentDBSymbols, setCurrentDBSymbols] = useState<string[]>([]);
+  const [currentDASymbols, setCurrentDASymbols] = useState<string[]>([]);
   
   const [selectedJumps, setSelectedJumps] = useState<SelectedJump[]>([]);
   const [selectedBalances, setSelectedBalances] = useState<SelectedBalance[]>([]);
@@ -371,6 +378,11 @@ const RoutineCalculator = () => {
       // Calculate total DA value
       const totalDaValue = daElements.reduce((sum, el) => sum + el.value, 0);
       
+      // Store current DA selection and symbols for success dialog
+      setCurrentDACombinations(combinations);
+      setCurrentDBSymbols(dbSymbolImages);
+      setCurrentDASymbols(daSymbolImages);
+      
       // Create combined DB/DA element
       const combinedElement: RoutineElement = {
         id: `db-da-${dbType}-${dbElement.id}-${Date.now()}`,
@@ -392,18 +404,13 @@ const RoutineCalculator = () => {
       // Add combined element to routine
       setRoutineElements((prev) => [...prev, combinedElement]);
       
-      // Clear pending DB element
-      setPendingDbElement(null);
-      setSourceElementType(dbType);
+      // Show new DB/DA success dialog with symbols
+      setShowDBDASuccessDialog(true);
+      setApparatusDialogOpen(false);
     } else {
       // No pending DB - add DA as standalone elements (original behavior)
       const newElements = processApparatusCombinationsToElements(combinations);
       setRoutineElements((prev) => [...prev, ...newElements]);
-    }
-    
-    // Show success dialog ONLY if DA was added to an existing DB (not standalone DA)
-    if (combinations.length > 0 && pendingDbElement) {
-      setShowSuccessDialog(true);
     }
   };
 
@@ -965,6 +972,28 @@ const RoutineCalculator = () => {
           setApparatusDialogOpen(false);
           setSourceElementType(null);
         }}
+      />
+
+      {/* DB/DA Success Dialog */}
+      <DBDASuccessDialog
+        open={showDBDASuccessDialog}
+        onOpenChange={setShowDBDASuccessDialog}
+        onChangeDA={() => {
+          // Reopen apparatus dialog to change DA selection
+          setShowDBDASuccessDialog(false);
+          setApparatusDialogOpen(true);
+        }}
+        onSaveCombination={() => {
+          // Save and return to calculator
+          setShowDBDASuccessDialog(false);
+          setPendingDbElement(null);
+          setSourceElementType(null);
+          setCurrentDACombinations([]);
+          setCurrentDBSymbols([]);
+          setCurrentDASymbols([]);
+        }}
+        dbSymbols={currentDBSymbols}
+        daSymbols={currentDASymbols}
       />
     </div>
   );
