@@ -245,6 +245,9 @@ const RoutineCalculator = () => {
   const [currentDBSymbols, setCurrentDBSymbols] = useState<string[]>([]);
   const [currentDASymbols, setCurrentDASymbols] = useState<string[]>([]);
   
+  // Store pending combined DB/DA element (only saved when user clicks "Save Combo")
+  const [pendingCombinedElement, setPendingCombinedElement] = useState<RoutineElement | null>(null);
+  
   const [selectedJumps, setSelectedJumps] = useState<SelectedJump[]>([]);
   const [selectedBalances, setSelectedBalances] = useState<SelectedBalance[]>([]);
   const [selectedRotations, setSelectedRotations] = useState<SelectedRotation[]>([]);
@@ -401,8 +404,8 @@ const RoutineCalculator = () => {
         isExpanded: false,
       };
       
-      // Add combined element to routine
-      setRoutineElements((prev) => [...prev, combinedElement]);
+      // Store as pending (don't add to routine yet - wait for "Save Combo" click)
+      setPendingCombinedElement(combinedElement);
       
       // Show new DB/DA success dialog with symbols
       setShowDBDASuccessDialog(true);
@@ -984,12 +987,17 @@ const RoutineCalculator = () => {
         open={showDBDASuccessDialog}
         onOpenChange={setShowDBDASuccessDialog}
         onChangeDA={() => {
-          // Reopen apparatus dialog to change DA selection
+          // Discard current DA selection and reopen apparatus dialog
           setShowDBDASuccessDialog(false);
           setApparatusDialogOpen(true);
+          // pendingCombinedElement will be overwritten when user selects new DA
         }}
         onSaveCombination={() => {
-          // Save and return to calculator
+          // Save the pending combined element to routine
+          if (pendingCombinedElement) {
+            setRoutineElements((prev) => [...prev, pendingCombinedElement]);
+            setPendingCombinedElement(null);
+          }
           setShowDBDASuccessDialog(false);
           setPendingDbElement(null);
           setSourceElementType(null);
