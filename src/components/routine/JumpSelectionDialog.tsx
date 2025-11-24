@@ -431,5 +431,24 @@ export const JumpSelectionDialog = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ExistingHandlingDialog
+        open={showExistingHandling}
+        onOpenChange={setShowExistingHandling}
+        elementName={existingHandlingJump?.description || ""}
+        handlingSymbols={<span className="text-sm">Apparatus handling symbols</span>}
+        onAddTechnicalElements={() => {
+          setShowExistingHandling(false);
+          // TODO: Implement technical elements flow
+        }}
+        onAddApparatusDifficulty={() => {
+          if (existingHandlingJump) {
+            setPendingJump(existingHandlingJump);
+            setShowExistingHandling(false);
+            onOpenApparatusDialog();
+          }
+        }}
+        onCancel={() => setShowExistingHandling(false)}
+      />
     </Dialog>
 };
