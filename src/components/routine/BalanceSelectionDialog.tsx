@@ -198,12 +198,8 @@ export const BalanceSelectionDialog = ({
       // Add the balance to the routine calculator without apparatus handling
       onSelectBalance(pendingBalance, false);
       
-      // Mark as selected in the UI
-      setSelectedBalances(prev => {
-        const newSet = new Set(prev);
-        newSet.add(pendingBalance.id);
-        return newSet;
-      });
+      // Don't add to local selectedBalances state to avoid duplication when "Add to Routine" is clicked
+      // The element will still show as previously selected via selectedBalanceIds prop
       
       setPendingBalance(null);
     }

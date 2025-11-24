@@ -199,12 +199,8 @@ export const RotationSelectionDialog = ({
       // Add the rotation to the routine calculator without apparatus handling
       onSelectRotation(pendingRotation, false);
       
-      // Mark as selected in the UI
-      setSelectedRotations(prev => {
-        const newSet = new Set(prev);
-        newSet.add(pendingRotation.id);
-        return newSet;
-      });
+      // Don't add to local selectedRotations state to avoid duplication when "Add to Routine" is clicked
+      // The element will still show as previously selected via selectedRotationIds prop
       
       setPendingRotation(null);
     }

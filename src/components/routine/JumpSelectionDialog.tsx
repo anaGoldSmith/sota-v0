@@ -215,12 +215,8 @@ export const JumpSelectionDialog = ({
       // Add the jump to the routine calculator without apparatus handling
       onSelectJump(pendingJump, false);
       
-      // Mark as selected in the UI
-      setSelectedJumps(prev => {
-        const newSet = new Set(prev);
-        newSet.add(pendingJump.id);
-        return newSet;
-      });
+      // Don't add to local selectedJumps state to avoid duplication when "Add to Routine" is clicked
+      // The element will still show as previously selected via selectedJumpIds prop
       
       setPendingJump(null);
     }
