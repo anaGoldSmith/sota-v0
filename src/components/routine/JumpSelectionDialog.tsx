@@ -160,7 +160,12 @@ export const JumpSelectionDialog = ({
       setJumpToRemove(jump);
       setShowRemoveDialog(true);
     } else {
-      // If not selected, show apparatus handling dialog
+      // If not selected, select it immediately and show apparatus handling dialog
+      setSelectedJumps(prev => {
+        const newSet = new Set(prev);
+        newSet.add(jump.id);
+        return newSet;
+      });
       setPendingJump(jump);
       setShowApparatusHandling(true);
     }

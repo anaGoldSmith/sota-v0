@@ -144,7 +144,12 @@ export const RotationSelectionDialog = ({
       setRotationToRemove(rotation);
       setShowRemoveDialog(true);
     } else {
-      // If not selected, show apparatus handling dialog
+      // If not selected, select it immediately and show apparatus handling dialog
+      setSelectedRotations(prev => {
+        const newSet = new Set(prev);
+        newSet.add(rotation.id);
+        return newSet;
+      });
       setPendingRotation(rotation);
       setShowApparatusHandling(true);
     }
