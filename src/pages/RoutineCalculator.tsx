@@ -468,6 +468,10 @@ const RoutineCalculator = () => {
   };
 
   const getCriteriaSymbolUrl = (criterionCode: string) => {
+    // Handle hardcoded text criteria
+    if (criterionCode === 'Cr5W') return 'TEXT:W';
+    if (criterionCode === 'Cr6DB') return 'TEXT:DB';
+    
     const { data: { publicUrl } } = supabase.storage
       .from('criteria-symbols')
       .getPublicUrl(`${criterionCode}.png`);
