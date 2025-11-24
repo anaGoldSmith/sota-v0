@@ -45,20 +45,20 @@ export const ExistingHandlingDialog = ({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 flex-col sm:flex-col items-center">
+        <DialogFooter className="gap-2 flex flex-col items-center">
           {!showModifyOptions ? (
             <Button onClick={() => setShowModifyOptions(true)} className="w-64">
               Modify Handling
             </Button>
           ) : (
-            <>
+            <div className="flex flex-col gap-2 items-center w-full">
               <Button onClick={onAddTechnicalElements} className="w-64">
                 + Technical Elements
               </Button>
               <Button onClick={onAddApparatusDifficulty} className="w-64">
                 + Apparatus Difficulty
               </Button>
-            </>
+            </div>
           )}
         </DialogFooter>
       </DialogContent>
