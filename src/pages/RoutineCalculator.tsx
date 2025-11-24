@@ -124,24 +124,30 @@ function SortableRow({
   const renderSymbols = (symbolImages: string[]) => (
     <div className="flex items-center gap-1 flex-wrap">
       {symbolImages.map((url, imgIndex) => {
-        const isWSymbol = url && url.includes('Cr5W.png');
+        // Check if this is a text-based symbol (W or DB)
+        const isTextSymbol = url && url.startsWith('TEXT:');
         
-        return url && (
-          isWSymbol ? (
+        if (isTextSymbol) {
+          // Extract the text after 'TEXT:'
+          const text = url.replace('TEXT:', '');
+          return (
             <div 
               key={`${element.id}-symbol-${imgIndex}`}
               className="h-8 w-8 flex items-center justify-center"
             >
-              <span className="text-2xl font-bold">W</span>
+              <span className="text-2xl font-bold">{text}</span>
             </div>
-          ) : (
-            <img
-              key={`${element.id}-symbol-${imgIndex}`}
-              src={url}
-              alt="Symbol"
-              className="h-8 w-8 object-contain"
-            />
-          )
+          );
+        }
+        
+        // Render as image
+        return url && (
+          <img
+            key={`${element.id}-symbol-${imgIndex}`}
+            src={url}
+            alt="Symbol"
+            className="h-8 w-8 object-contain"
+          />
         );
       })}
     </div>
