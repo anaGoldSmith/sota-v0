@@ -45,7 +45,8 @@ export const JumpSelectionDialog = ({
   // Fetch all jumps
   const {
     data: jumps,
-    isLoading
+    isLoading,
+    error
   } = useQuery({
     queryKey: ["jumps"],
     queryFn: async () => {
@@ -57,7 +58,9 @@ export const JumpSelectionDialog = ({
       });
       if (error) throw error;
       return data as Jump[];
-    }
+    },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Parse jump code to extract row number and value
@@ -233,6 +236,13 @@ export const JumpSelectionDialog = ({
                 {isLoading ? <TableRow>
                     <TableCell colSpan={values.length + 1} className="text-center py-8">
                       Loading jumps...
+                    </TableCell>
+                  </TableRow> : error ? <TableRow>
+                    <TableCell colSpan={values.length + 1} className="text-center py-8">
+                      <div className="space-y-2">
+                        <p className="text-destructive font-medium">Failed to load jumps</p>
+                        <p className="text-sm text-muted-foreground">Please try again</p>
+                      </div>
                     </TableCell>
                   </TableRow> : rowNumbers.length === 0 ? <TableRow>
                     <TableCell colSpan={values.length + 1} className="text-center py-8 text-muted-foreground">

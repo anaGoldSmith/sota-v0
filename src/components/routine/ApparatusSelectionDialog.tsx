@@ -33,7 +33,7 @@ export const ApparatusSelectionDialog = ({
   onSelectCombinations,
   isForDbElement = false,
 }: ApparatusSelectionDialogProps) => {
-  const { apparatusData, criteria, specialCodes, specialCodeElements, daComments, isLoading } = useApparatusData(apparatus);
+  const { apparatusData, criteria, specialCodes, specialCodeElements, daComments, isLoading, error } = useApparatusData(apparatus);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedCriteria, setSelectedCriteria] = useState<SelectedCriterion[]>([]);
   const [completedDaGroups, setCompletedDaGroups] = useState<{ cells: SelectedCriterion[]; color: string }[]>([]);
@@ -46,6 +46,15 @@ export const ApparatusSelectionDialog = ({
   // Reset state when dialog opens/closes
   useEffect(() => {
     if (!open) {
+      // Clear state when dialog closes
+      setSelectedIds([]);
+      setSelectedCriteria([]);
+      setCompletedDaGroups([]);
+      setAvailableSlot(null);
+      setStagedDAs([]);
+      setDaCount(0);
+    } else if (open && !isForDbElement) {
+      // Fresh reset when opening for pure DA selection (not for DB element)
       setSelectedIds([]);
       setSelectedCriteria([]);
       setCompletedDaGroups([]);
@@ -53,7 +62,7 @@ export const ApparatusSelectionDialog = ({
       setStagedDAs([]);
       setDaCount(0);
     }
-  }, [open]);
+  }, [open, isForDbElement]);
 
   const handleRowClick = (item: CombinedApparatusData) => {
     setSelectedIds((prev) => {
@@ -671,6 +680,17 @@ export const ApparatusSelectionDialog = ({
         {isLoading ? (
           <div className="flex items-center justify-center py-12 flex-1">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center py-12 flex-1">
+            <div className="text-center space-y-2">
+              <p className="text-destructive font-medium">Failed to load apparatus data</p>
+              <p className="text-sm text-muted-foreground">Please try again</p>
+            </div>
+          </div>
+        ) : apparatusData.length === 0 ? (
+          <div className="flex items-center justify-center py-12 flex-1">
+            <p className="text-muted-foreground">No apparatus data available</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4 flex-1 min-h-0">

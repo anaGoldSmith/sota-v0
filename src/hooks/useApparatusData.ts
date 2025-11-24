@@ -109,6 +109,8 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
       return data || [];
     },
     enabled: !!apparatus,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Fetch apparatus-specific data from separate DA tables
@@ -196,9 +198,11 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
 
       return combined;
     },
-    enabled: !!apparatus && technicalElementsFetched,
+    enabled: !!apparatus && (technicalElementsFetched || technicalElements.length > 0),
     staleTime: 0,
     refetchOnWindowFocus: true,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Fetch DA comments for this apparatus

@@ -46,7 +46,8 @@ export const BalanceSelectionDialog = ({
 
   const {
     data: balances,
-    isLoading
+    isLoading,
+    error
   } = useQuery({
     queryKey: ["balances"],
     queryFn: async () => {
@@ -56,7 +57,9 @@ export const BalanceSelectionDialog = ({
         .order("code", { ascending: true });
       if (error) throw error;
       return data as Balance[];
-    }
+    },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const parseBalanceCode = (code: string) => {
@@ -225,6 +228,15 @@ export const BalanceSelectionDialog = ({
                   <TableRow>
                     <TableCell colSpan={values.length + 1} className="text-center py-8">
                       Loading balances...
+                    </TableCell>
+                  </TableRow>
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={values.length + 1} className="text-center py-8">
+                      <div className="space-y-2">
+                        <p className="text-destructive font-medium">Failed to load balances</p>
+                        <p className="text-sm text-muted-foreground">Please try again</p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : rowNumbers.length === 0 ? (
