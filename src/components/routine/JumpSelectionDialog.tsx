@@ -337,7 +337,7 @@ export const JumpSelectionDialog = ({
             Cancel
           </Button>
           <Button onClick={handleConfirmSelection}>
-            Add {selectedJumps.size > 0 ? `${selectedJumps.size} ` : ''}Jump{selectedJumps.size !== 1 ? 's' : ''} to Routine
+            Save
           </Button>
         </DialogFooter>
       </DialogContent>

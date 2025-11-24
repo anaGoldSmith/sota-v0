@@ -349,7 +349,7 @@ export const BalanceSelectionDialog = ({
             Cancel
           </Button>
           <Button onClick={handleConfirmSelection}>
-            Add {selectedBalances.size > 0 ? `${selectedBalances.size} ` : ''}Balance{selectedBalances.size !== 1 ? 's' : ''} to Routine
+            Save
           </Button>
         </DialogFooter>
       </DialogContent>
