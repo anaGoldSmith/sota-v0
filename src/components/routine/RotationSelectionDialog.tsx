@@ -209,8 +209,11 @@ export const RotationSelectionDialog = ({
   };
 
   const handleConfirmSelection = () => {
+    // Add all locally selected rotations to the routine
     const selectedRotationObjects = rotations?.filter(r => selectedRotations.has(r.id)) || [];
     selectedRotationObjects.forEach(rotation => onSelectRotation(rotation));
+    
+    // Reset and close (elements skipped via apparatus handling are already added)
     setSelectedRotations(new Set());
     setSearchText("");
     onOpenChange(false);

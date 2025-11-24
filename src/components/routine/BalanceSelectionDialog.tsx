@@ -208,8 +208,11 @@ export const BalanceSelectionDialog = ({
   };
 
   const handleConfirmSelection = () => {
+    // Add all locally selected balances to the routine
     const selectedBalanceObjects = balances?.filter(b => selectedBalances.has(b.id)) || [];
     selectedBalanceObjects.forEach(balance => onSelectBalance(balance));
+    
+    // Reset and close (elements skipped via apparatus handling are already added)
     setSelectedBalances(new Set());
     setSearchText("");
     onOpenChange(false);
@@ -348,8 +351,10 @@ export const BalanceSelectionDialog = ({
           <Button variant="outline" onClick={() => handleDialogChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleConfirmSelection} disabled={selectedBalances.size === 0}>
-            Add {selectedBalances.size > 0 ? `${selectedBalances.size} ` : ''}Balance{selectedBalances.size !== 1 ? 's' : ''} to Routine
+          <Button onClick={handleConfirmSelection}>
+            {selectedBalances.size > 0 
+              ? `Add ${selectedBalances.size} Balance${selectedBalances.size !== 1 ? 's' : ''} to Routine`
+              : 'Close'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -224,11 +224,11 @@ export const JumpSelectionDialog = ({
     setShowApparatusHandling(false);
   };
   const handleConfirmSelection = () => {
-    // Add all selected jumps to the routine
+    // Add all locally selected jumps to the routine
     const selectedJumpObjects = jumps?.filter(j => selectedJumps.has(j.id)) || [];
     selectedJumpObjects.forEach(jump => onSelectJump(jump));
 
-    // Reset and close
+    // Reset and close (elements skipped via apparatus handling are already added)
     setSelectedJumps(new Set());
     setSearchText("");
     onOpenChange(false);
@@ -336,8 +336,10 @@ export const JumpSelectionDialog = ({
           <Button variant="outline" onClick={() => handleDialogChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleConfirmSelection} disabled={selectedJumps.size === 0}>
-            Add {selectedJumps.size > 0 ? `${selectedJumps.size} ` : ''}Jump{selectedJumps.size !== 1 ? 's' : ''} to Routine
+          <Button onClick={handleConfirmSelection}>
+            {selectedJumps.size > 0 
+              ? `Add ${selectedJumps.size} Jump${selectedJumps.size !== 1 ? 's' : ''} to Routine`
+              : 'Close'}
           </Button>
         </DialogFooter>
       </DialogContent>
