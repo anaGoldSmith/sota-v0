@@ -28,8 +28,14 @@ export const ApparatusHandlingDialog = ({
       // Show error or warning if no apparatus selected
       return;
     }
+    // First trigger the selection logic
     onSelectApparatusDifficulty();
-    onOpenApparatusDialog();
+    // Close this dialog
+    onOpenChange(false);
+    // Then open the apparatus dialog
+    setTimeout(() => {
+      onOpenApparatusDialog();
+    }, 100);
   };
 
   return (
