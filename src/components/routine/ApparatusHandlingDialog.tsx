@@ -39,7 +39,10 @@ export const ApparatusHandlingDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      console.log("ApparatusHandlingDialog onOpenChange called:", isOpen);
+      onOpenChange(isOpen);
+    }}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Apparatus Handling</DialogTitle>

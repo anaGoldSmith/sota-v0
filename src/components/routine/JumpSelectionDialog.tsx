@@ -61,11 +61,23 @@ export const JumpSelectionDialog = ({
 
   // Watch for signal to reopen apparatus handling dialog
   useEffect(() => {
+    console.log("useEffect - open:", open, "shouldReopenApparatusHandling:", shouldReopenApparatusHandling);
     if (open && shouldReopenApparatusHandling) {
       setShowApparatusHandling(true);
       onApparatusHandlingReopened?.();
     }
   }, [open, shouldReopenApparatusHandling, onApparatusHandlingReopened]);
+
+  // Sync selectedJumps with parent's selectedJumpIds when dialog opens
+  useEffect(() => {
+    console.log("Dialog open state changed:", open);
+    if (open) {
+      console.log("Dialog opened - syncing with parent selectedJumpIds:", selectedJumpIds ? Array.from(selectedJumpIds) : "none");
+      // Don't override local selections, just ensure we're aware of parent state
+    } else {
+      console.log("Dialog closed");
+    }
+  }, [open, selectedJumpIds]);
 
   // Fetch all jumps
   const {
@@ -244,13 +256,16 @@ export const JumpSelectionDialog = ({
     setShowApparatusHandling(false);
   };
   const handleConfirmSelection = () => {
-    // Add all selected jumps to the routine
+    console.log("Save clicked - selectedJumps:", Array.from(selectedJumps));
     const selectedJumpObjects = jumps?.filter(j => selectedJumps.has(j.id)) || [];
+    console.log("Sending to calculator:", selectedJumpObjects.length, "jumps");
     selectedJumpObjects.forEach(jump => onSelectJump(jump));
-
-    // Reset and close
+    console.log("Closing dialog and clearing state");
     setSelectedJumps(new Set());
     setSearchText("");
+    setPendingJump(null);
+    setShowApparatusHandling(false);
+    setShowExistingHandling(false);
     onOpenChange(false);
   };
   const handleDialogChange = (isOpen: boolean) => {
@@ -266,7 +281,11 @@ export const JumpSelectionDialog = ({
     onOpenChange(isOpen);
   };
   return <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogContent className="max-w-7xl max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-7xl max-h-[85vh] flex flex-col" onPointerDownOutside={(e) => {
+          console.log("Pointer down outside jump dialog");
+        }} onEscapeKeyDown={(e) => {
+          console.log("Escape key pressed in jump dialog");
+        }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <JumpIcon className="!h-6 !w-6" />
@@ -383,7 +402,10 @@ export const JumpSelectionDialog = ({
 
       <ApparatusHandlingDialog
         open={showApparatusHandling}
-        onOpenChange={setShowApparatusHandling}
+        onOpenChange={(open) => {
+          console.log("ApparatusHandlingDialog onOpenChange:", open);
+          setShowApparatusHandling(open);
+        }}
         onSelectTechnicalElements={() => handleApparatusHandlingComplete(false)}
         onSelectApparatusDifficulty={() => handleApparatusHandlingComplete(true)}
         onSkip={handleSkipApparatusHandling}
