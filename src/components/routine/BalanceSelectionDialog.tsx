@@ -31,6 +31,8 @@ interface BalanceSelectionDialogProps {
   selectedBalanceIds?: Set<string>;
   shouldReopenApparatusHandling?: boolean;
   onApparatusHandlingReopened?: () => void;
+  elementsWithoutApparatusHandling?: Set<string>;
+  onMarkWithoutApparatusHandling?: (id: string) => void;
 }
 
 export const BalanceSelectionDialog = ({
@@ -41,7 +43,9 @@ export const BalanceSelectionDialog = ({
   onOpenApparatusDialog,
   selectedBalanceIds,
   shouldReopenApparatusHandling = false,
-  onApparatusHandlingReopened
+  onApparatusHandlingReopened,
+  elementsWithoutApparatusHandling,
+  onMarkWithoutApparatusHandling
 }: BalanceSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedBalances, setSelectedBalances] = useState<Set<string>>(selectedBalanceIds || new Set());
@@ -163,11 +167,19 @@ export const BalanceSelectionDialog = ({
 
   const handleSkipApparatusHandling = () => {
     if (pendingBalance) {
+      // Mark this element as saved without apparatus handling
+      onMarkWithoutApparatusHandling?.(pendingBalance.id);
+      
+      // Add the balance to the routine calculator without apparatus handling
+      onSelectBalance(pendingBalance, false);
+      
+      // Mark as selected in the UI
       setSelectedBalances(prev => {
         const newSet = new Set(prev);
         newSet.add(pendingBalance.id);
         return newSet;
       });
+      
       setPendingBalance(null);
     }
     setShowApparatusHandling(false);
@@ -267,15 +279,18 @@ export const BalanceSelectionDialog = ({
                         const balance = matrix.get(rowNumber)?.get(value);
                         const isSelected = balance ? selectedBalances.has(balance.id) : false;
                         const isPreviouslySelected = balance && selectedBalanceIds ? selectedBalanceIds.has(balance.id) : false;
+                        const isWithoutApparatusHandling = balance && elementsWithoutApparatusHandling ? elementsWithoutApparatusHandling.has(balance.id) : false;
                         return (
                           <TableCell
                             key={`${rowNumber}-${value}`}
                             className={`text-center p-3 relative ${
                               balance
                                 ? `${!isPreviouslySelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-colors ${
-                                    isSelected || isPreviouslySelected
-                                      ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset'
-                                      : 'hover:bg-accent/50'
+                                    isWithoutApparatusHandling 
+                                      ? 'ring-2 ring-red-500 bg-red-50/50 dark:bg-red-950/20'
+                                      : isSelected || isPreviouslySelected
+                                        ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset'
+                                        : 'hover:bg-accent/50'
                                   }`
                                 : 'bg-muted/30'
                             }`}
