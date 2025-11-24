@@ -69,7 +69,7 @@ export const DBDASuccessDialog = ({
             Change DA
           </Button>
           <Button onClick={onSaveCombination} className="w-full sm:w-auto">
-            Save the Combination
+            Save Combo
           </Button>
         </DialogFooter>
       </DialogContent>
