@@ -225,7 +225,15 @@ export const RotationSelectionDialog = ({
 
   const handleConfirmSelection = () => {
     const selectedRotationObjects = rotations?.filter(r => selectedRotations.has(r.id)) || [];
-    selectedRotationObjects.forEach(rotation => onSelectRotation(rotation));
+    
+    // Only add rotations that are NOT already in the routine (not being modified)
+    selectedRotationObjects.forEach(rotation => {
+      const isBeingModified = routineElementsMap?.has(rotation.id);
+      if (!isBeingModified) {
+        onSelectRotation(rotation);
+      }
+    });
+    
     setSelectedRotations(new Set());
     setSearchText("");
     onOpenChange(false);

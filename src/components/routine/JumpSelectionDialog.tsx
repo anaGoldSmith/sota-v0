@@ -63,7 +63,6 @@ export const JumpSelectionDialog = ({
 
   // Watch for signal to reopen apparatus handling dialog
   useEffect(() => {
-    console.log("useEffect - open:", open, "shouldReopenApparatusHandling:", shouldReopenApparatusHandling);
     if (open && shouldReopenApparatusHandling) {
       setShowApparatusHandling(true);
       onApparatusHandlingReopened?.();
@@ -72,12 +71,8 @@ export const JumpSelectionDialog = ({
 
   // Sync selectedJumps with parent's selectedJumpIds when dialog opens
   useEffect(() => {
-    console.log("Dialog open state changed:", open);
     if (open) {
-      console.log("Dialog opened - syncing with parent selectedJumpIds:", selectedJumpIds ? Array.from(selectedJumpIds) : "none");
       // Don't override local selections, just ensure we're aware of parent state
-    } else {
-      console.log("Dialog closed");
     }
   }, [open, selectedJumpIds]);
 
@@ -166,25 +161,18 @@ export const JumpSelectionDialog = ({
     return firstJump?.description || "";
   };
   const handleJumpClick = (jump: Jump) => {
-    console.log("Jump clicked:", jump.code, "ID:", jump.id);
     const isCurrentlySelected = selectedJumps.has(jump.id);
     const isPreviouslySelected = selectedJumpIds ? selectedJumpIds.has(jump.id) : false;
-    console.log("isCurrentlySelected:", isCurrentlySelected, "isPreviouslySelected:", isPreviouslySelected);
-    console.log("Current selectedJumps:", Array.from(selectedJumps));
-    console.log("selectedJumpIds from parent:", selectedJumpIds ? Array.from(selectedJumpIds) : "none");
     
     if (isCurrentlySelected || isPreviouslySelected) {
       // If already selected, show confirmation dialog to remove
-      console.log("Showing remove dialog");
       setJumpToRemove(jump);
       setShowRemoveDialog(true);
     } else {
       // If not selected, select it immediately and show apparatus handling dialog
-      console.log("Selecting jump and showing apparatus handling");
       setSelectedJumps(prev => {
         const newSet = new Set(prev);
         newSet.add(jump.id);
-        console.log("New selectedJumps:", Array.from(newSet));
         return newSet;
       });
       setPendingJump(jump);
@@ -258,11 +246,16 @@ export const JumpSelectionDialog = ({
     setShowApparatusHandling(false);
   };
   const handleConfirmSelection = () => {
-    console.log("Save clicked - selectedJumps:", Array.from(selectedJumps));
     const selectedJumpObjects = jumps?.filter(j => selectedJumps.has(j.id)) || [];
-    console.log("Sending to calculator:", selectedJumpObjects.length, "jumps");
-    selectedJumpObjects.forEach(jump => onSelectJump(jump));
-    console.log("Closing dialog and clearing state");
+    
+    // Only add jumps that are NOT already in the routine (not being modified)
+    selectedJumpObjects.forEach(jump => {
+      const isBeingModified = routineElementsMap?.has(jump.id);
+      if (!isBeingModified) {
+        onSelectJump(jump);
+      }
+    });
+    
     setSelectedJumps(new Set());
     setSearchText("");
     setPendingJump(null);
@@ -271,9 +264,7 @@ export const JumpSelectionDialog = ({
     onOpenChange(false);
   };
   const handleDialogChange = (isOpen: boolean) => {
-    console.log("Dialog change - isOpen:", isOpen);
     if (!isOpen) {
-      console.log("Clearing all state on dialog close");
       setSelectedJumps(new Set());
       setSearchText("");
       setPendingJump(null);
@@ -283,11 +274,7 @@ export const JumpSelectionDialog = ({
     onOpenChange(isOpen);
   };
   return <Dialog open={open} onOpenChange={handleDialogChange}>
-        <DialogContent className="max-w-7xl max-h-[85vh] flex flex-col" onPointerDownOutside={(e) => {
-          console.log("Pointer down outside jump dialog");
-        }} onEscapeKeyDown={(e) => {
-          console.log("Escape key pressed in jump dialog");
-        }}>
+        <DialogContent className="max-w-7xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <JumpIcon className="!h-6 !w-6" />
@@ -407,10 +394,7 @@ export const JumpSelectionDialog = ({
 
       <ApparatusHandlingDialog
         open={showApparatusHandling}
-        onOpenChange={(open) => {
-          console.log("ApparatusHandlingDialog onOpenChange:", open);
-          setShowApparatusHandling(open);
-        }}
+        onOpenChange={setShowApparatusHandling}
         onSelectTechnicalElements={() => handleApparatusHandlingComplete(false)}
         onSelectApparatusDifficulty={() => handleApparatusHandlingComplete(true)}
         onSkip={handleSkipApparatusHandling}
