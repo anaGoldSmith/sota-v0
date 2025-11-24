@@ -421,15 +421,19 @@ export const RotationSelectionDialog = ({
         open={showExistingHandling}
         onOpenChange={setShowExistingHandling}
         elementName={existingHandlingRotation?.description || ""}
-        handlingSymbols={<span className="text-sm">Symbols displayed here</span>}
+        handlingSymbols={<span className="text-sm">Apparatus handling symbols</span>}
         onAddTechnicalElements={() => {
           setShowExistingHandling(false);
           // TODO: Implement technical elements flow
         }}
         onAddApparatusDifficulty={() => {
           if (existingHandlingRotation) {
-            setPendingRotation(existingHandlingRotation);
+            // Call the parent's callback to set pendingDbElement
+            onSelectRotation(existingHandlingRotation, true);
             setShowExistingHandling(false);
+            // Close the rotation dialog so apparatus dialog can open
+            onOpenChange(false);
+            // Open apparatus dialog
             onOpenApparatusDialog();
           }
         }}
