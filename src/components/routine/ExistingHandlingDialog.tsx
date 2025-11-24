@@ -32,7 +32,7 @@ export const ExistingHandlingDialog = ({
     }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Current Handling</DialogTitle>
+          <DialogTitle>Current DB Handling</DialogTitle>
           <DialogDescription>
             View and modify apparatus handling for {elementName}.
           </DialogDescription>
