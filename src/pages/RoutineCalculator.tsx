@@ -1050,6 +1050,7 @@ const RoutineCalculator = () => {
         onMarkWithoutApparatusHandling={handleMarkWithoutApparatusHandling}
         onRemoveElement={handleRemoveElement}
         routineElementsMap={jumpToRoutineElementMap}
+        routineElements={routineElements}
       />
 
       {/* Balance Selection Dialog */}
@@ -1069,6 +1070,7 @@ const RoutineCalculator = () => {
         onMarkWithoutApparatusHandling={handleMarkWithoutApparatusHandling}
         onRemoveElement={handleRemoveElement}
         routineElementsMap={balanceToRoutineElementMap}
+        routineElements={routineElements}
       />
 
       {/* Rotation Selection Dialog */}
@@ -1088,6 +1090,7 @@ const RoutineCalculator = () => {
         onMarkWithoutApparatusHandling={handleMarkWithoutApparatusHandling}
         onRemoveElement={handleRemoveElement}
         routineElementsMap={rotationToRoutineElementMap}
+        routineElements={routineElements}
       />
 
       {/* Apparatus Selection Dialog */}

@@ -38,6 +38,11 @@ interface RotationSelectionDialogProps {
   onMarkWithoutApparatusHandling?: (id: string) => void;
   onRemoveElement?: (id: string) => void;
   routineElementsMap?: Map<string, string>;
+  routineElements?: Array<{
+    id: string;
+    symbolImages: string[];
+    type: string;
+  }>;
 }
 
 export const RotationSelectionDialog = ({
@@ -52,7 +57,8 @@ export const RotationSelectionDialog = ({
   elementsWithoutApparatusHandling,
   onMarkWithoutApparatusHandling,
   onRemoveElement,
-  routineElementsMap
+  routineElementsMap,
+  routineElements
 }: RotationSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedRotations, setSelectedRotations] = useState<Set<string>>(selectedRotationIds || new Set());
@@ -160,6 +166,58 @@ export const RotationSelectionDialog = ({
   const handleExistingHandling = (rotation: Rotation) => {
     setExistingHandlingRotation(rotation);
     setShowExistingHandling(true);
+  };
+
+  // Function to render symbol images for existing handling
+  const renderHandlingSymbols = (rotation: Rotation | null) => {
+    if (!rotation || !routineElementsMap || !routineElements) {
+      return <span className="text-sm text-muted-foreground">No handling assigned</span>;
+    }
+    
+    // Find the routine element for this rotation
+    const routineElementId = routineElementsMap.get(rotation.id);
+    if (!routineElementId) {
+      return <span className="text-sm text-muted-foreground">No handling assigned</span>;
+    }
+    
+    // Find the actual routine element
+    const routineElement = routineElements.find(el => el.id === routineElementId);
+    if (!routineElement || !routineElement.symbolImages || routineElement.symbolImages.length === 0) {
+      return <span className="text-sm text-muted-foreground">No handling assigned</span>;
+    }
+    
+    // Render symbols
+    return (
+      <div className="flex items-center gap-1 flex-wrap">
+        {routineElement.symbolImages.map((url, imgIndex) => {
+          // Check if this is a text-based symbol (W or DB)
+          const isTextSymbol = url && url.startsWith('TEXT:');
+          
+          if (isTextSymbol) {
+            // Extract the text after 'TEXT:'
+            const text = url.replace('TEXT:', '');
+            return (
+              <div 
+                key={`symbol-${imgIndex}`}
+                className="h-8 w-8 flex items-center justify-center"
+              >
+                <span className="text-2xl font-bold">{text}</span>
+              </div>
+            );
+          }
+          
+          // Render as image
+          return url && (
+            <img
+              key={`symbol-${imgIndex}`}
+              src={url}
+              alt="Symbol"
+              className="h-8 w-8 object-contain"
+            />
+          );
+        })}
+      </div>
+    );
   };
 
   const handleConfirmRemove = () => {
@@ -431,7 +489,7 @@ export const RotationSelectionDialog = ({
         open={showExistingHandling}
         onOpenChange={setShowExistingHandling}
         elementName={existingHandlingRotation?.description || ""}
-        handlingSymbols={<span className="text-sm">Apparatus handling symbols</span>}
+        handlingSymbols={renderHandlingSymbols(existingHandlingRotation)}
         onAddTechnicalElements={() => {
           setShowExistingHandling(false);
           // TODO: Implement technical elements flow

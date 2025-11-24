@@ -37,6 +37,11 @@ interface JumpSelectionDialogProps {
   onMarkWithoutApparatusHandling?: (id: string) => void;
   onRemoveElement?: (id: string) => void;
   routineElementsMap?: Map<string, string>; // Maps jump ID to routineElement ID
+  routineElements?: Array<{
+    id: string;
+    symbolImages: string[];
+    type: string;
+  }>;
 }
 export const JumpSelectionDialog = ({
   open,
@@ -50,7 +55,8 @@ export const JumpSelectionDialog = ({
   elementsWithoutApparatusHandling,
   onMarkWithoutApparatusHandling,
   onRemoveElement,
-  routineElementsMap
+  routineElementsMap,
+  routineElements
 }: JumpSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedJumps, setSelectedJumps] = useState<Set<string>>(selectedJumpIds || new Set());
@@ -183,6 +189,58 @@ export const JumpSelectionDialog = ({
   const handleExistingHandling = (jump: Jump) => {
     setExistingHandlingJump(jump);
     setShowExistingHandling(true);
+  };
+
+  // Function to render symbol images for existing handling
+  const renderHandlingSymbols = (jump: Jump | null) => {
+    if (!jump || !routineElementsMap || !routineElements) {
+      return <span className="text-sm text-muted-foreground">No handling assigned</span>;
+    }
+    
+    // Find the routine element for this jump
+    const routineElementId = routineElementsMap.get(jump.id);
+    if (!routineElementId) {
+      return <span className="text-sm text-muted-foreground">No handling assigned</span>;
+    }
+    
+    // Find the actual routine element
+    const routineElement = routineElements.find(el => el.id === routineElementId);
+    if (!routineElement || !routineElement.symbolImages || routineElement.symbolImages.length === 0) {
+      return <span className="text-sm text-muted-foreground">No handling assigned</span>;
+    }
+    
+    // Render symbols
+    return (
+      <div className="flex items-center gap-1 flex-wrap">
+        {routineElement.symbolImages.map((url, imgIndex) => {
+          // Check if this is a text-based symbol (W or DB)
+          const isTextSymbol = url && url.startsWith('TEXT:');
+          
+          if (isTextSymbol) {
+            // Extract the text after 'TEXT:'
+            const text = url.replace('TEXT:', '');
+            return (
+              <div 
+                key={`symbol-${imgIndex}`}
+                className="h-8 w-8 flex items-center justify-center"
+              >
+                <span className="text-2xl font-bold">{text}</span>
+              </div>
+            );
+          }
+          
+          // Render as image
+          return url && (
+            <img
+              key={`symbol-${imgIndex}`}
+              src={url}
+              alt="Symbol"
+              className="h-8 w-8 object-contain"
+            />
+          );
+        })}
+      </div>
+    );
   };
 
   const handleConfirmRemove = () => {
@@ -422,7 +480,7 @@ export const JumpSelectionDialog = ({
         open={showExistingHandling}
         onOpenChange={setShowExistingHandling}
         elementName={existingHandlingJump?.description || ""}
-        handlingSymbols={<span className="text-sm">Apparatus handling symbols</span>}
+        handlingSymbols={renderHandlingSymbols(existingHandlingJump)}
         onAddTechnicalElements={() => {
           setShowExistingHandling(false);
           // TODO: Implement technical elements flow
