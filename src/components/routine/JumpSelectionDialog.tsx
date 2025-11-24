@@ -319,6 +319,10 @@ export const JumpSelectionDialog = ({
                                       <Check className="h-3 w-3" />
                                     </div>}
                                 </div>
+                                {/* Turn degrees */}
+                                {jump.turn_degrees && jump.turn_degrees !== "NA" && <span className="text-xs text-muted-foreground">
+                                    {jump.turn_degrees}°
+                                  </span>}
                                 {/* Handling button */}
                                 <Button
                                   size="sm"
@@ -332,9 +336,6 @@ export const JumpSelectionDialog = ({
                                 >
                                   Handling
                                 </Button>
-                                {jump.turn_degrees && jump.turn_degrees !== "NA" && <span className="text-xs text-muted-foreground">
-                                    {jump.turn_degrees}°
-                                  </span>}
                               </div> : null}
                           </TableCell>;
                 })}
