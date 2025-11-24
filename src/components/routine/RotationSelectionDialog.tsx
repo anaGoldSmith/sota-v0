@@ -28,7 +28,7 @@ interface Rotation {
 interface RotationSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectRotation: (rotation: Rotation, withApparatusHandling?: boolean) => void;
+  onSelectRotation: (rotation: Rotation, withApparatusHandling?: boolean, modifyingElementId?: string) => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
   selectedRotationIds?: Set<string>;
@@ -37,6 +37,7 @@ interface RotationSelectionDialogProps {
   elementsWithoutApparatusHandling?: Set<string>;
   onMarkWithoutApparatusHandling?: (id: string) => void;
   onRemoveElement?: (id: string) => void;
+  routineElementsMap?: Map<string, string>;
 }
 
 export const RotationSelectionDialog = ({
@@ -50,7 +51,8 @@ export const RotationSelectionDialog = ({
   onApparatusHandlingReopened,
   elementsWithoutApparatusHandling,
   onMarkWithoutApparatusHandling,
-  onRemoveElement
+  onRemoveElement,
+  routineElementsMap
 }: RotationSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedRotations, setSelectedRotations] = useState<Set<string>>(selectedRotationIds || new Set());
@@ -428,8 +430,10 @@ export const RotationSelectionDialog = ({
         }}
         onAddApparatusDifficulty={() => {
           if (existingHandlingRotation) {
-            // Call the parent's callback to set pendingDbElement
-            onSelectRotation(existingHandlingRotation, true);
+            // Get the routineElement ID for this rotation
+            const routineElementId = routineElementsMap?.get(existingHandlingRotation.id);
+            // Call the parent's callback to set pendingDbElement with modifying ID
+            onSelectRotation(existingHandlingRotation, true, routineElementId);
             setShowExistingHandling(false);
             // Close the rotation dialog so apparatus dialog can open
             onOpenChange(false);

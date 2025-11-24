@@ -27,7 +27,7 @@ interface Balance {
 interface BalanceSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectBalance: (balance: Balance, withApparatusHandling?: boolean) => void;
+  onSelectBalance: (balance: Balance, withApparatusHandling?: boolean, modifyingElementId?: string) => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
   selectedBalanceIds?: Set<string>;
@@ -36,6 +36,7 @@ interface BalanceSelectionDialogProps {
   elementsWithoutApparatusHandling?: Set<string>;
   onMarkWithoutApparatusHandling?: (id: string) => void;
   onRemoveElement?: (id: string) => void;
+  routineElementsMap?: Map<string, string>;
 }
 
 export const BalanceSelectionDialog = ({
@@ -49,7 +50,8 @@ export const BalanceSelectionDialog = ({
   onApparatusHandlingReopened,
   elementsWithoutApparatusHandling,
   onMarkWithoutApparatusHandling,
-  onRemoveElement
+  onRemoveElement,
+  routineElementsMap
 }: BalanceSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedBalances, setSelectedBalances] = useState<Set<string>>(selectedBalanceIds || new Set());
@@ -421,8 +423,10 @@ export const BalanceSelectionDialog = ({
         }}
         onAddApparatusDifficulty={() => {
           if (existingHandlingBalance) {
-            // Call the parent's callback to set pendingDbElement
-            onSelectBalance(existingHandlingBalance, true);
+            // Get the routineElement ID for this balance
+            const routineElementId = routineElementsMap?.get(existingHandlingBalance.id);
+            // Call the parent's callback to set pendingDbElement with modifying ID
+            onSelectBalance(existingHandlingBalance, true, routineElementId);
             setShowExistingHandling(false);
             // Close the balance dialog so apparatus dialog can open
             onOpenChange(false);

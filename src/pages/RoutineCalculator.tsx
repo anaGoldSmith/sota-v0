@@ -246,6 +246,7 @@ const RoutineCalculator = () => {
   const [pendingDbElement, setPendingDbElement] = useState<{
     element: SelectedJump | SelectedBalance | SelectedRotation;
     type: 'jump' | 'rotation' | 'balance';
+    modifyingElementId?: string; // Track if we're modifying an existing element
   } | null>(null);
   
   // Track if we should reopen apparatus handling dialog
@@ -269,6 +270,47 @@ const RoutineCalculator = () => {
   const selectedJumpIds = useMemo(() => new Set(selectedJumps.map(j => j.id)), [selectedJumps]);
   const selectedBalanceIds = useMemo(() => new Set(selectedBalances.map(b => b.id)), [selectedBalances]);
   const selectedRotationIds = useMemo(() => new Set(selectedRotations.map(r => r.id)), [selectedRotations]);
+
+  // Create maps from element IDs to routineElement IDs for modification tracking
+  const jumpToRoutineElementMap = useMemo(() => {
+    const map = new Map<string, string>();
+    routineElements.forEach(el => {
+      if (el.originalData && 'turn_degrees' in el.originalData) {
+        // This is a jump
+        map.set(el.originalData.id, el.id);
+      }
+    });
+    return map;
+  }, [routineElements]);
+
+  const balanceToRoutineElementMap = useMemo(() => {
+    const map = new Map<string, string>();
+    routineElements.forEach(el => {
+      if (el.originalData && !('turn_degrees' in el.originalData) && el.type !== 'DA') {
+        // This is a balance (has no turn_degrees and is not DA)
+        const balance = el.originalData as SelectedBalance;
+        if (balance.code && balance.code.length <= 4) {
+          // Balances have short codes
+          map.set(balance.id, el.id);
+        }
+      }
+    });
+    return map;
+  }, [routineElements]);
+
+  const rotationToRoutineElementMap = useMemo(() => {
+    const map = new Map<string, string>();
+    routineElements.forEach(el => {
+      if (el.originalData && 'turn_degrees' in el.originalData) {
+        const rotation = el.originalData as SelectedRotation;
+        // Rotations have turn_degrees and longer codes than jumps
+        if (rotation.code && rotation.code.length > 5) {
+          map.set(rotation.id, el.id);
+        }
+      }
+    });
+    return map;
+  }, [routineElements]);
 
   // Track elements saved without apparatus handling
   const [elementsWithoutApparatusHandling, setElementsWithoutApparatusHandling] = useState<Set<string>>(new Set());
@@ -298,7 +340,7 @@ const RoutineCalculator = () => {
     });
   };
 
-  const handleSelectJump = (jump: SelectedJump, withApparatusHandling: boolean = false) => {
+  const handleSelectJump = (jump: SelectedJump, withApparatusHandling: boolean = false, modifyingElementId?: string) => {
     setSelectedJumps((prev) => [...prev, jump]);
     
     // If withApparatusHandling is true, we'll wait for DA to be added before creating the routine element
@@ -314,7 +356,11 @@ const RoutineCalculator = () => {
       setRoutineElements((prev) => [...prev, newElement]);
     } else {
       // Store as pending DB element to link with DA later
-      setPendingDbElement({ element: jump, type: 'jump' });
+      setPendingDbElement({ 
+        element: jump, 
+        type: 'jump',
+        modifyingElementId 
+      });
     }
   };
 
@@ -322,7 +368,7 @@ const RoutineCalculator = () => {
     setSelectedJumps((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSelectBalance = (balance: SelectedBalance, withApparatusHandling: boolean = false) => {
+  const handleSelectBalance = (balance: SelectedBalance, withApparatusHandling: boolean = false, modifyingElementId?: string) => {
     setSelectedBalances((prev) => [...prev, balance]);
     
     // If withApparatusHandling is true, we'll wait for DA to be added before creating the routine element
@@ -338,7 +384,11 @@ const RoutineCalculator = () => {
       setRoutineElements((prev) => [...prev, newElement]);
     } else {
       // Store as pending DB element to link with DA later
-      setPendingDbElement({ element: balance, type: 'balance' });
+      setPendingDbElement({ 
+        element: balance, 
+        type: 'balance',
+        modifyingElementId 
+      });
     }
   };
 
@@ -346,7 +396,7 @@ const RoutineCalculator = () => {
     setSelectedBalances((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSelectRotation = (rotation: SelectedRotation, withApparatusHandling: boolean = false) => {
+  const handleSelectRotation = (rotation: SelectedRotation, withApparatusHandling: boolean = false, modifyingElementId?: string) => {
     setSelectedRotations((prev) => [...prev, rotation]);
     
     // If withApparatusHandling is true, we'll wait for DA to be added before creating the routine element
@@ -362,7 +412,11 @@ const RoutineCalculator = () => {
       setRoutineElements((prev) => [...prev, newElement]);
     } else {
       // Store as pending DB element to link with DA later
-      setPendingDbElement({ element: rotation, type: 'rotation' });
+      setPendingDbElement({ 
+        element: rotation, 
+        type: 'rotation',
+        modifyingElementId 
+      });
     }
   };
 
@@ -379,7 +433,7 @@ const RoutineCalculator = () => {
     
     // Check if we have a pending DB element to link this DA to
     if (pendingDbElement) {
-      const { element: dbElement, type: dbType } = pendingDbElement;
+      const { element: dbElement, type: dbType, modifyingElementId } = pendingDbElement;
       
       // Process DA elements
       const daElements = processApparatusCombinationsToElements(combinations);
@@ -402,7 +456,7 @@ const RoutineCalculator = () => {
       
       // Create combined DB/DA element
       const combinedElement: RoutineElement = {
-        id: `db-da-${dbType}-${dbElement.id}-${Date.now()}`,
+        id: modifyingElementId || `db-da-${dbType}-${dbElement.id}-${Date.now()}`,
         type: 'DB/DA',
         symbolImages: [...dbSymbolImages, ...daSymbolImages], // DB symbols first, then DA symbols
         value: dbElement.value + totalDaValue, // Total value
@@ -418,8 +472,16 @@ const RoutineCalculator = () => {
         isExpanded: false,
       };
       
-      // Store as pending (don't add to routine yet - wait for "Save Combo" click)
-      setPendingCombinedElement(combinedElement);
+      // If modifying existing element, we'll replace it; otherwise store as pending
+      if (modifyingElementId) {
+        // Replace existing element immediately
+        setRoutineElements((prev) => 
+          prev.map(el => el.id === modifyingElementId ? combinedElement : el)
+        );
+      } else {
+        // Store as pending (don't add to routine yet - wait for "Save Combo" click)
+        setPendingCombinedElement(combinedElement);
+      }
       
       // Check if the DA has Cr6DB criterion
       const hasCr6DB = combinations.some(combo => combo.selectedCriteria.includes('Cr6DB'));
@@ -978,6 +1040,7 @@ const RoutineCalculator = () => {
         elementsWithoutApparatusHandling={elementsWithoutApparatusHandling}
         onMarkWithoutApparatusHandling={handleMarkWithoutApparatusHandling}
         onRemoveElement={handleRemoveElement}
+        routineElementsMap={jumpToRoutineElementMap}
       />
 
       {/* Balance Selection Dialog */}
@@ -996,6 +1059,7 @@ const RoutineCalculator = () => {
         elementsWithoutApparatusHandling={elementsWithoutApparatusHandling}
         onMarkWithoutApparatusHandling={handleMarkWithoutApparatusHandling}
         onRemoveElement={handleRemoveElement}
+        routineElementsMap={balanceToRoutineElementMap}
       />
 
       {/* Rotation Selection Dialog */}
@@ -1014,6 +1078,7 @@ const RoutineCalculator = () => {
         elementsWithoutApparatusHandling={elementsWithoutApparatusHandling}
         onMarkWithoutApparatusHandling={handleMarkWithoutApparatusHandling}
         onRemoveElement={handleRemoveElement}
+        routineElementsMap={rotationToRoutineElementMap}
       />
 
       {/* Apparatus Selection Dialog */}
