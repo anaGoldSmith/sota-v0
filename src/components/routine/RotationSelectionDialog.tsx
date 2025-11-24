@@ -332,6 +332,12 @@ export const RotationSelectionDialog = ({
                                     </div>
                                   )}
                                 </div>
+                                {/* Turn degrees */}
+                                {rotation.turn_degrees && rotation.turn_degrees !== "NA" && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {rotation.turn_degrees}°
+                                  </span>
+                                )}
                                 {/* Handling button */}
                                 <Button
                                   size="sm"
@@ -345,11 +351,6 @@ export const RotationSelectionDialog = ({
                                 >
                                   Handling
                                 </Button>
-                                {rotation.turn_degrees && rotation.turn_degrees !== "NA" && (
-                                  <span className="text-xs text-muted-foreground">
-                                    {rotation.turn_degrees}°
-                                  </span>
-                                )}
                               </div>
                             ) : null}
                           </TableCell>
