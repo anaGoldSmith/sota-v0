@@ -12,6 +12,7 @@ import { RotationSelectionDialog } from "@/components/routine/RotationSelectionD
 import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/routine/ApparatusSelectionDialog";
 import { DBSuccessDialog } from "@/components/routine/DBSuccessDialog";
 import { DBDASuccessDialog } from "@/components/routine/DBDASuccessDialog";
+import { DBDAValidationDialog } from "@/components/routine/DBDAValidationDialog";
 import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -238,6 +239,7 @@ const RoutineCalculator = () => {
   const [routineElements, setRoutineElements] = useState<RoutineElement[]>([]);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDBDASuccessDialog, setShowDBDASuccessDialog] = useState(false);
+  const [showDBDAValidationDialog, setShowDBDAValidationDialog] = useState(false);
   const [sourceElementType, setSourceElementType] = useState<'jump' | 'rotation' | 'balance' | null>(null);
   
   // Track pending DB element when adding apparatus difficulty
@@ -413,8 +415,17 @@ const RoutineCalculator = () => {
       // Store as pending (don't add to routine yet - wait for "Save Combo" click)
       setPendingCombinedElement(combinedElement);
       
-      // Show new DB/DA success dialog with symbols
-      setShowDBDASuccessDialog(true);
+      // Check if the DA has Cr6DB criterion
+      const hasCr6DB = combinations.some(combo => combo.selectedCriteria.includes('Cr6DB'));
+      
+      if (!hasCr6DB) {
+        // Show validation dialog if DB criterion is missing
+        setShowDBDAValidationDialog(true);
+      } else {
+        // Show success dialog directly if DB criterion is present
+        setShowDBDASuccessDialog(true);
+      }
+      
       setApparatusDialogOpen(false);
     } else {
       // No pending DB - add DA as standalone elements (original behavior)
@@ -985,6 +996,20 @@ const RoutineCalculator = () => {
           setShowSuccessDialog(false);
           setApparatusDialogOpen(false);
           setSourceElementType(null);
+        }}
+      />
+
+      {/* DB/DA Validation Dialog */}
+      <DBDAValidationDialog
+        open={showDBDAValidationDialog}
+        onOpenChange={setShowDBDAValidationDialog}
+        onConfirm={() => {
+          setShowDBDAValidationDialog(false);
+          setShowDBDASuccessDialog(true);
+        }}
+        onReview={() => {
+          setShowDBDAValidationDialog(false);
+          setApparatusDialogOpen(true);
         }}
       />
 
