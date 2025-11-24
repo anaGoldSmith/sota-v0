@@ -673,6 +673,103 @@ const RoutineCalculator = () => {
             </div>
           </div>
 
+          {/* Category Buttons */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">Construct Routine</h2>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <Button 
+                variant="outline"
+                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
+                onClick={() => setActiveCategory(activeCategory === "elements" ? null : "elements")}
+              >
+                <span className="text-lg font-semibold mr-2">+</span> Elements (DB)
+              </Button>
+              
+              <Button 
+                variant="outline"
+                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
+                onClick={() => {
+                  setActiveCategory(activeCategory === "apparatus" ? null : "apparatus");
+                  if (activeCategory !== "apparatus") {
+                    handleOpenApparatusDialog();
+                  }
+                }}
+              >
+                <span className="text-lg font-semibold mr-2">+</span> Apparatus Difficulty (DA)
+              </Button>
+              
+              <Button 
+                variant="outline"
+                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
+                onClick={() => setActiveCategory(activeCategory === "dynamic" ? null : "dynamic")}
+              >
+                <span className="text-lg font-semibold mr-2">+</span> Dynamic Element (R)
+              </Button>
+              
+              <Button 
+                variant="outline"
+                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
+                onClick={() => setActiveCategory(activeCategory === "dance" ? null : "dance")}
+              >
+                <span className="text-lg font-semibold mr-2">+</span> Dance Steps
+              </Button>
+            </div>
+
+            {/* Elements (DB) - Jumps, Balances, Rotations */}
+            {activeCategory === "elements" && (
+              <div className="space-y-3 pt-4">
+                <Button 
+                  variant="outline"
+                  className="w-full h-14 text-lg justify-between"
+                  onClick={() => setJumpDialogOpen(true)}
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Jumps</span>
+                    <JumpIcon className="!h-7 !w-7" />
+                  </div>
+                  <span className="text-sm">+ Add</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full h-14 text-lg justify-between"
+                  onClick={() => setBalanceDialogOpen(true)}
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Balances</span>
+                    <BalanceIcon className="!h-7 !w-7" />
+                  </div>
+                  <span className="text-sm">+ Add</span>
+                </Button>
+
+                <Button 
+                  variant="outline"
+                  className="w-full h-14 text-lg justify-between"
+                  onClick={() => setRotationDialogOpen(true)}
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Rotations</span>
+                    <RotationIcon className="!h-8 !w-8" />
+                  </div>
+                  <span className="text-sm">+ Add</span>
+                </Button>
+              </div>
+            )}
+            
+            {activeCategory === "dynamic" && (
+              <div className="pt-4 text-center text-muted-foreground">
+                Dynamic Element configuration coming soon
+              </div>
+            )}
+            
+            {activeCategory === "dance" && (
+              <div className="pt-4 text-center text-muted-foreground">
+                Dance Steps configuration coming soon
+              </div>
+            )}
+          </div>
+
           {/* Routine Elements Table */}
           {routineElements.length > 0 && (
             <Card className="p-6">
@@ -789,103 +886,6 @@ const RoutineCalculator = () => {
               </div>
             </Card>
           )}
-
-          {/* Category Buttons */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-foreground">Construct Routine</h2>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <Button 
-                variant="outline"
-                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
-                onClick={() => setActiveCategory(activeCategory === "elements" ? null : "elements")}
-              >
-                <span className="text-lg font-semibold mr-2">+</span> Elements (DB)
-              </Button>
-              
-              <Button 
-                variant="outline"
-                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
-                onClick={() => {
-                  setActiveCategory(activeCategory === "apparatus" ? null : "apparatus");
-                  if (activeCategory !== "apparatus") {
-                    handleOpenApparatusDialog();
-                  }
-                }}
-              >
-                <span className="text-lg font-semibold mr-2">+</span> Apparatus Difficulty (DA)
-              </Button>
-              
-              <Button 
-                variant="outline"
-                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
-                onClick={() => setActiveCategory(activeCategory === "dynamic" ? null : "dynamic")}
-              >
-                <span className="text-lg font-semibold mr-2">+</span> Dynamic Element (R)
-              </Button>
-              
-              <Button 
-                variant="outline"
-                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
-                onClick={() => setActiveCategory(activeCategory === "dance" ? null : "dance")}
-              >
-                <span className="text-lg font-semibold mr-2">+</span> Dance Steps
-              </Button>
-            </div>
-
-            {/* Elements (DB) - Jumps, Balances, Rotations */}
-            {activeCategory === "elements" && (
-              <div className="space-y-3 pt-4">
-                <Button 
-                  variant="outline"
-                  className="w-full h-14 text-lg justify-between"
-                  onClick={() => setJumpDialogOpen(true)}
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Jumps</span>
-                    <JumpIcon className="!h-7 !w-7" />
-                  </div>
-                  <span className="text-sm">+ Add</span>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="w-full h-14 text-lg justify-between"
-                  onClick={() => setBalanceDialogOpen(true)}
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Balances</span>
-                    <BalanceIcon className="!h-7 !w-7" />
-                  </div>
-                  <span className="text-sm">+ Add</span>
-                </Button>
-
-                <Button 
-                  variant="outline"
-                  className="w-full h-14 text-lg justify-between"
-                  onClick={() => setRotationDialogOpen(true)}
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Rotations</span>
-                    <RotationIcon className="!h-8 !w-8" />
-                  </div>
-                  <span className="text-sm">+ Add</span>
-                </Button>
-              </div>
-            )}
-            
-            {activeCategory === "dynamic" && (
-              <div className="pt-4 text-center text-muted-foreground">
-                Dynamic Element configuration coming soon
-              </div>
-            )}
-            
-            {activeCategory === "dance" && (
-              <div className="pt-4 text-center text-muted-foreground">
-                Dance Steps configuration coming soon
-              </div>
-            )}
-          </div>
         </div>
       </main>
 
