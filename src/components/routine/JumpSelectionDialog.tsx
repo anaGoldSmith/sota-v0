@@ -352,16 +352,19 @@ export const JumpSelectionDialog = ({
                     key={`${rowNumber}-${value}`} 
                     className={`text-center p-3 relative ${jump ? `${isWithoutApparatusHandling ? 'ring-2 ring-red-600 bg-red-100 dark:bg-red-900/40' : isSelected || isPreviouslySelected ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset' : 'hover:bg-accent/50'}` : 'bg-muted/30'}`}
                   >
-                            {jump ? <div className="flex flex-col items-center gap-2">
+                            {jump ? <div 
+                                className="flex flex-col items-center gap-2 cursor-pointer relative"
+                                onClick={() => handleJumpClick(jump)}
+                              >
+                                {/* Selection circle indicator */}
+                                {(isSelected || isPreviouslySelected) && (
+                                  <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-1 shadow-md z-10 border-2 border-background">
+                                    <Check className="h-4 w-4" />
+                                  </div>
+                                )}
                                 {/* Symbol image */}
-                                 <div 
-                                  className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative cursor-pointer"
-                                  onClick={() => handleJumpClick(jump)}
-                                >
+                                <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1">
                                   Symbol
-                                  {(isSelected || isPreviouslySelected) && <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5">
-                                      <Check className="h-3 w-3" />
-                                    </div>}
                                 </div>
                                 {/* Turn degrees */}
                                 {jump.turn_degrees && jump.turn_degrees !== "NA" && <span className="text-xs text-muted-foreground">
