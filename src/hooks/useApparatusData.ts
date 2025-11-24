@@ -73,7 +73,7 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
   const specialCodes = specialCodeElements.map(item => item.code);
 
   // Fetch all technical elements to get symbols for DA codes
-  const { data: technicalElements = [] } = useQuery({
+  const { data: technicalElements = [], isFetched: technicalElementsFetched } = useQuery({
     queryKey: ["technicalElements", apparatus],
     queryFn: async () => {
       if (!apparatus) return [];
@@ -196,7 +196,7 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
 
       return combined;
     },
-    enabled: !!apparatus && technicalElements.length > 0,
+    enabled: !!apparatus && technicalElementsFetched,
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
