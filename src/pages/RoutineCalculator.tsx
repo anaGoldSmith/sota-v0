@@ -637,6 +637,37 @@ const RoutineCalculator = () => {
     }
   };
 
+  const handleMarkWithoutApparatusHandling = (id: string) => {
+    setElementsWithoutApparatusHandling(prev => new Set(prev).add(id));
+  };
+
+  const handleRemoveElement = (elementId: string) => {
+    // Remove from routine elements
+    setRoutineElements(prev => prev.filter(el => {
+      // Check if this is a simple element (jump, balance, rotation)
+      if ('id' in el.originalData && typeof el.originalData.id === 'string') {
+        return el.originalData.id !== elementId;
+      }
+      return true;
+    }));
+
+    // Remove from selected jumps
+    setSelectedJumps(prev => prev.filter(j => j.id !== elementId));
+    
+    // Remove from selected balances
+    setSelectedBalances(prev => prev.filter(b => b.id !== elementId));
+    
+    // Remove from selected rotations
+    setSelectedRotations(prev => prev.filter(r => r.id !== elementId));
+
+    // Remove from elements without apparatus handling tracking
+    setElementsWithoutApparatusHandling(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(elementId);
+      return newSet;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -941,7 +972,8 @@ const RoutineCalculator = () => {
         shouldReopenApparatusHandling={shouldReopenApparatusHandling && pendingDbElement?.type === 'jump'}
         onApparatusHandlingReopened={() => setShouldReopenApparatusHandling(false)}
         elementsWithoutApparatusHandling={elementsWithoutApparatusHandling}
-        onMarkWithoutApparatusHandling={(id) => setElementsWithoutApparatusHandling(prev => new Set(prev).add(id))}
+        onMarkWithoutApparatusHandling={handleMarkWithoutApparatusHandling}
+        onRemoveElement={handleRemoveElement}
       />
 
       {/* Balance Selection Dialog */}
@@ -958,7 +990,8 @@ const RoutineCalculator = () => {
         shouldReopenApparatusHandling={shouldReopenApparatusHandling && pendingDbElement?.type === 'balance'}
         onApparatusHandlingReopened={() => setShouldReopenApparatusHandling(false)}
         elementsWithoutApparatusHandling={elementsWithoutApparatusHandling}
-        onMarkWithoutApparatusHandling={(id) => setElementsWithoutApparatusHandling(prev => new Set(prev).add(id))}
+        onMarkWithoutApparatusHandling={handleMarkWithoutApparatusHandling}
+        onRemoveElement={handleRemoveElement}
       />
 
       {/* Rotation Selection Dialog */}
@@ -975,7 +1008,8 @@ const RoutineCalculator = () => {
         shouldReopenApparatusHandling={shouldReopenApparatusHandling && pendingDbElement?.type === 'rotation'}
         onApparatusHandlingReopened={() => setShouldReopenApparatusHandling(false)}
         elementsWithoutApparatusHandling={elementsWithoutApparatusHandling}
-        onMarkWithoutApparatusHandling={(id) => setElementsWithoutApparatusHandling(prev => new Set(prev).add(id))}
+        onMarkWithoutApparatusHandling={handleMarkWithoutApparatusHandling}
+        onRemoveElement={handleRemoveElement}
       />
 
       {/* Apparatus Selection Dialog */}

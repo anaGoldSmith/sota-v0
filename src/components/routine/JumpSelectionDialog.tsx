@@ -12,6 +12,8 @@ import { Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ApparatusHandlingDialog } from "./ApparatusHandlingDialog";
 import { ApparatusType } from "@/types/apparatus";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
 interface Jump {
   id: string;
   code: string;
@@ -32,6 +34,7 @@ interface JumpSelectionDialogProps {
   onApparatusHandlingReopened?: () => void;
   elementsWithoutApparatusHandling?: Set<string>;
   onMarkWithoutApparatusHandling?: (id: string) => void;
+  onRemoveElement?: (id: string) => void;
 }
 export const JumpSelectionDialog = ({
   open,
@@ -43,12 +46,15 @@ export const JumpSelectionDialog = ({
   shouldReopenApparatusHandling = false,
   onApparatusHandlingReopened,
   elementsWithoutApparatusHandling,
-  onMarkWithoutApparatusHandling
+  onMarkWithoutApparatusHandling,
+  onRemoveElement
 }: JumpSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedJumps, setSelectedJumps] = useState<Set<string>>(selectedJumpIds || new Set());
   const [showApparatusHandling, setShowApparatusHandling] = useState(false);
   const [pendingJump, setPendingJump] = useState<Jump | null>(null);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [jumpToRemove, setJumpToRemove] = useState<Jump | null>(null);
 
   // Watch for signal to reopen apparatus handling dialog
   useEffect(() => {
@@ -146,17 +152,37 @@ export const JumpSelectionDialog = ({
     const isCurrentlySelected = selectedJumps.has(jump.id);
     
     if (isCurrentlySelected) {
-      // If already selected, just deselect
-      setSelectedJumps(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(jump.id);
-        return newSet;
-      });
+      // If already selected, show confirmation dialog
+      setJumpToRemove(jump);
+      setShowRemoveDialog(true);
     } else {
       // If not selected, show apparatus handling dialog
       setPendingJump(jump);
       setShowApparatusHandling(true);
     }
+  };
+
+  const handleConfirmRemove = () => {
+    if (jumpToRemove) {
+      // Deselect from local state
+      setSelectedJumps(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(jumpToRemove.id);
+        return newSet;
+      });
+      
+      // Remove from calculator
+      onRemoveElement?.(jumpToRemove.id);
+      
+      // Clear the pending removal
+      setJumpToRemove(null);
+    }
+    setShowRemoveDialog(false);
+  };
+
+  const handleCancelRemove = () => {
+    setJumpToRemove(null);
+    setShowRemoveDialog(false);
   };
 
   const handleApparatusHandlingComplete = (isApparatusDifficulty: boolean = false) => {
@@ -329,5 +355,20 @@ export const JumpSelectionDialog = ({
         onOpenApparatusDialog={onOpenApparatusDialog}
         sourceElementType="jump"
       />
+
+      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Element?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this element? The element, along with its associated apparatus difficulty, will also be removed from the Routine Calculator.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelRemove}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRemove}>Yes, remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
 };

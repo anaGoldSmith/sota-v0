@@ -12,6 +12,7 @@ import { Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ApparatusHandlingDialog } from "./ApparatusHandlingDialog";
 import { ApparatusType } from "@/types/apparatus";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface Balance {
   id: string;
@@ -33,6 +34,7 @@ interface BalanceSelectionDialogProps {
   onApparatusHandlingReopened?: () => void;
   elementsWithoutApparatusHandling?: Set<string>;
   onMarkWithoutApparatusHandling?: (id: string) => void;
+  onRemoveElement?: (id: string) => void;
 }
 
 export const BalanceSelectionDialog = ({
@@ -45,12 +47,15 @@ export const BalanceSelectionDialog = ({
   shouldReopenApparatusHandling = false,
   onApparatusHandlingReopened,
   elementsWithoutApparatusHandling,
-  onMarkWithoutApparatusHandling
+  onMarkWithoutApparatusHandling,
+  onRemoveElement
 }: BalanceSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedBalances, setSelectedBalances] = useState<Set<string>>(selectedBalanceIds || new Set());
   const [showApparatusHandling, setShowApparatusHandling] = useState(false);
   const [pendingBalance, setPendingBalance] = useState<Balance | null>(null);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [balanceToRemove, setBalanceToRemove] = useState<Balance | null>(null);
 
   // Watch for signal to reopen apparatus handling dialog
   useEffect(() => {
@@ -130,17 +135,37 @@ export const BalanceSelectionDialog = ({
     const isCurrentlySelected = selectedBalances.has(balance.id);
     
     if (isCurrentlySelected) {
-      // If already selected, just deselect
-      setSelectedBalances(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(balance.id);
-        return newSet;
-      });
+      // If already selected, show confirmation dialog
+      setBalanceToRemove(balance);
+      setShowRemoveDialog(true);
     } else {
       // If not selected, show apparatus handling dialog
       setPendingBalance(balance);
       setShowApparatusHandling(true);
     }
+  };
+
+  const handleConfirmRemove = () => {
+    if (balanceToRemove) {
+      // Deselect from local state
+      setSelectedBalances(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(balanceToRemove.id);
+        return newSet;
+      });
+      
+      // Remove from calculator
+      onRemoveElement?.(balanceToRemove.id);
+      
+      // Clear the pending removal
+      setBalanceToRemove(null);
+    }
+    setShowRemoveDialog(false);
+  };
+
+  const handleCancelRemove = () => {
+    setBalanceToRemove(null);
+    setShowRemoveDialog(false);
   };
 
   const handleApparatusHandlingComplete = (isApparatusDifficulty: boolean = false) => {
@@ -342,6 +367,21 @@ export const BalanceSelectionDialog = ({
         onOpenApparatusDialog={onOpenApparatusDialog}
         sourceElementType="balance"
       />
+
+      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Element?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this element? The element, along with its associated apparatus difficulty, will also be removed from the Routine Calculator.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelRemove}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRemove}>Yes, remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

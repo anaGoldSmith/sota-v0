@@ -12,6 +12,7 @@ import { Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ApparatusHandlingDialog } from "./ApparatusHandlingDialog";
 import { ApparatusType } from "@/types/apparatus";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface Rotation {
   id: string;
@@ -34,6 +35,7 @@ interface RotationSelectionDialogProps {
   onApparatusHandlingReopened?: () => void;
   elementsWithoutApparatusHandling?: Set<string>;
   onMarkWithoutApparatusHandling?: (id: string) => void;
+  onRemoveElement?: (id: string) => void;
 }
 
 export const RotationSelectionDialog = ({
@@ -46,12 +48,15 @@ export const RotationSelectionDialog = ({
   shouldReopenApparatusHandling = false,
   onApparatusHandlingReopened,
   elementsWithoutApparatusHandling,
-  onMarkWithoutApparatusHandling
+  onMarkWithoutApparatusHandling,
+  onRemoveElement
 }: RotationSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedRotations, setSelectedRotations] = useState<Set<string>>(selectedRotationIds || new Set());
   const [showApparatusHandling, setShowApparatusHandling] = useState(false);
   const [pendingRotation, setPendingRotation] = useState<Rotation | null>(null);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [rotationToRemove, setRotationToRemove] = useState<Rotation | null>(null);
 
   // Watch for signal to reopen apparatus handling dialog
   useEffect(() => {
@@ -131,17 +136,37 @@ export const RotationSelectionDialog = ({
     const isCurrentlySelected = selectedRotations.has(rotation.id);
     
     if (isCurrentlySelected) {
-      // If already selected, just deselect
-      setSelectedRotations(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(rotation.id);
-        return newSet;
-      });
+      // If already selected, show confirmation dialog
+      setRotationToRemove(rotation);
+      setShowRemoveDialog(true);
     } else {
       // If not selected, show apparatus handling dialog
       setPendingRotation(rotation);
       setShowApparatusHandling(true);
     }
+  };
+
+  const handleConfirmRemove = () => {
+    if (rotationToRemove) {
+      // Deselect from local state
+      setSelectedRotations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(rotationToRemove.id);
+        return newSet;
+      });
+      
+      // Remove from calculator
+      onRemoveElement?.(rotationToRemove.id);
+      
+      // Clear the pending removal
+      setRotationToRemove(null);
+    }
+    setShowRemoveDialog(false);
+  };
+
+  const handleCancelRemove = () => {
+    setRotationToRemove(null);
+    setShowRemoveDialog(false);
   };
 
   const handleApparatusHandlingComplete = (isApparatusDifficulty: boolean = false) => {
@@ -348,6 +373,21 @@ export const RotationSelectionDialog = ({
         onOpenApparatusDialog={onOpenApparatusDialog}
         sourceElementType="rotation"
       />
+
+      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Element?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this element? The element, along with its associated apparatus difficulty, will also be removed from the Routine Calculator.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelRemove}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRemove}>Yes, remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
