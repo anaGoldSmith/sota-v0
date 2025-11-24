@@ -30,6 +30,8 @@ interface JumpSelectionDialogProps {
   selectedJumpIds?: Set<string>;
   shouldReopenApparatusHandling?: boolean;
   onApparatusHandlingReopened?: () => void;
+  elementsWithoutApparatusHandling?: Set<string>;
+  onMarkWithoutApparatusHandling?: (id: string) => void;
 }
 export const JumpSelectionDialog = ({
   open,
@@ -39,7 +41,9 @@ export const JumpSelectionDialog = ({
   onOpenApparatusDialog,
   selectedJumpIds,
   shouldReopenApparatusHandling = false,
-  onApparatusHandlingReopened
+  onApparatusHandlingReopened,
+  elementsWithoutApparatusHandling,
+  onMarkWithoutApparatusHandling
 }: JumpSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedJumps, setSelectedJumps] = useState<Set<string>>(selectedJumpIds || new Set());
@@ -179,11 +183,19 @@ export const JumpSelectionDialog = ({
 
   const handleSkipApparatusHandling = () => {
     if (pendingJump) {
+      // Mark this element as saved without apparatus handling
+      onMarkWithoutApparatusHandling?.(pendingJump.id);
+      
+      // Add the jump to the routine calculator without apparatus handling
+      onSelectJump(pendingJump, false);
+      
+      // Mark as selected in the UI
       setSelectedJumps(prev => {
         const newSet = new Set(prev);
         newSet.add(pendingJump.id);
         return newSet;
       });
+      
       setPendingJump(null);
     }
     setShowApparatusHandling(false);
@@ -264,13 +276,14 @@ export const JumpSelectionDialog = ({
                       <TableCell className="sticky left-0 z-10 bg-background font-medium border-r text-sm">
                         {getRowDescription(rowNumber)}
                       </TableCell>
-                       {values.map(value => {
+                 {values.map(value => {
                   const jump = matrix.get(rowNumber)?.get(value);
                   const isSelected = jump ? selectedJumps.has(jump.id) : false;
                   const isPreviouslySelected = jump && selectedJumpIds ? selectedJumpIds.has(jump.id) : false;
+                  const isWithoutApparatusHandling = jump && elementsWithoutApparatusHandling ? elementsWithoutApparatusHandling.has(jump.id) : false;
                   return <TableCell 
                     key={`${rowNumber}-${value}`} 
-                    className={`text-center p-3 relative ${jump ? `${!isPreviouslySelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-colors ${isSelected || isPreviouslySelected ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset' : 'hover:bg-accent/50'}` : 'bg-muted/30'}`} 
+                    className={`text-center p-3 relative ${jump ? `${!isPreviouslySelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-colors ${isWithoutApparatusHandling ? 'ring-2 ring-red-500 bg-red-50/50 dark:bg-red-950/20' : isSelected || isPreviouslySelected ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset' : 'hover:bg-accent/50'}` : 'bg-muted/30'}`} 
                     onClick={() => jump && !isPreviouslySelected && handleJumpToggle(jump)}
                   >
                             {jump ? <div className="flex flex-col items-center gap-1">

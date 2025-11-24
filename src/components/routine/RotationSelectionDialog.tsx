@@ -32,6 +32,8 @@ interface RotationSelectionDialogProps {
   selectedRotationIds?: Set<string>;
   shouldReopenApparatusHandling?: boolean;
   onApparatusHandlingReopened?: () => void;
+  elementsWithoutApparatusHandling?: Set<string>;
+  onMarkWithoutApparatusHandling?: (id: string) => void;
 }
 
 export const RotationSelectionDialog = ({
@@ -42,7 +44,9 @@ export const RotationSelectionDialog = ({
   onOpenApparatusDialog,
   selectedRotationIds,
   shouldReopenApparatusHandling = false,
-  onApparatusHandlingReopened
+  onApparatusHandlingReopened,
+  elementsWithoutApparatusHandling,
+  onMarkWithoutApparatusHandling
 }: RotationSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedRotations, setSelectedRotations] = useState<Set<string>>(selectedRotationIds || new Set());
@@ -164,11 +168,19 @@ export const RotationSelectionDialog = ({
 
   const handleSkipApparatusHandling = () => {
     if (pendingRotation) {
+      // Mark this element as saved without apparatus handling
+      onMarkWithoutApparatusHandling?.(pendingRotation.id);
+      
+      // Add the rotation to the routine calculator without apparatus handling
+      onSelectRotation(pendingRotation, false);
+      
+      // Mark as selected in the UI
       setSelectedRotations(prev => {
         const newSet = new Set(prev);
         newSet.add(pendingRotation.id);
         return newSet;
       });
+      
       setPendingRotation(null);
     }
     setShowApparatusHandling(false);
@@ -268,15 +280,18 @@ export const RotationSelectionDialog = ({
                         const rotation = matrix.get(rowNumber)?.get(value);
                         const isSelected = rotation ? selectedRotations.has(rotation.id) : false;
                         const isPreviouslySelected = rotation && selectedRotationIds ? selectedRotationIds.has(rotation.id) : false;
+                        const isWithoutApparatusHandling = rotation && elementsWithoutApparatusHandling ? elementsWithoutApparatusHandling.has(rotation.id) : false;
                         return (
                           <TableCell
                             key={`${rowNumber}-${value}`}
                             className={`text-center p-3 relative ${
                               rotation
                                 ? `${!isPreviouslySelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-colors ${
-                                    isSelected || isPreviouslySelected
-                                      ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset'
-                                      : 'hover:bg-accent/50'
+                                    isWithoutApparatusHandling
+                                      ? 'ring-2 ring-red-500 bg-red-50/50 dark:bg-red-950/20'
+                                      : isSelected || isPreviouslySelected
+                                        ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset'
+                                        : 'hover:bg-accent/50'
                                   }`
                                 : 'bg-muted/30'
                             }`}

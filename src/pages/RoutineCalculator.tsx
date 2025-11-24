@@ -270,6 +270,9 @@ const RoutineCalculator = () => {
   const selectedBalanceIds = useMemo(() => new Set(selectedBalances.map(b => b.id)), [selectedBalances]);
   const selectedRotationIds = useMemo(() => new Set(selectedRotations.map(r => r.id)), [selectedRotations]);
 
+  // Track elements saved without apparatus handling
+  const [elementsWithoutApparatusHandling, setElementsWithoutApparatusHandling] = useState<Set<string>>(new Set());
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -937,6 +940,8 @@ const RoutineCalculator = () => {
         selectedJumpIds={selectedJumpIds}
         shouldReopenApparatusHandling={shouldReopenApparatusHandling && pendingDbElement?.type === 'jump'}
         onApparatusHandlingReopened={() => setShouldReopenApparatusHandling(false)}
+        elementsWithoutApparatusHandling={elementsWithoutApparatusHandling}
+        onMarkWithoutApparatusHandling={(id) => setElementsWithoutApparatusHandling(prev => new Set(prev).add(id))}
       />
 
       {/* Balance Selection Dialog */}
@@ -952,6 +957,8 @@ const RoutineCalculator = () => {
         selectedBalanceIds={selectedBalanceIds}
         shouldReopenApparatusHandling={shouldReopenApparatusHandling && pendingDbElement?.type === 'balance'}
         onApparatusHandlingReopened={() => setShouldReopenApparatusHandling(false)}
+        elementsWithoutApparatusHandling={elementsWithoutApparatusHandling}
+        onMarkWithoutApparatusHandling={(id) => setElementsWithoutApparatusHandling(prev => new Set(prev).add(id))}
       />
 
       {/* Rotation Selection Dialog */}
@@ -967,6 +974,8 @@ const RoutineCalculator = () => {
         selectedRotationIds={selectedRotationIds}
         shouldReopenApparatusHandling={shouldReopenApparatusHandling && pendingDbElement?.type === 'rotation'}
         onApparatusHandlingReopened={() => setShouldReopenApparatusHandling(false)}
+        elementsWithoutApparatusHandling={elementsWithoutApparatusHandling}
+        onMarkWithoutApparatusHandling={(id) => setElementsWithoutApparatusHandling(prev => new Set(prev).add(id))}
       />
 
       {/* Apparatus Selection Dialog */}
