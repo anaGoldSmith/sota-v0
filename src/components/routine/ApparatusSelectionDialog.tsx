@@ -22,6 +22,7 @@ interface ApparatusSelectionDialogProps {
   apparatus: ApparatusType | null;
   onSelectElements: (elements: CombinedApparatusData[]) => void;
   onSelectCombinations?: (combinations: ApparatusCombination[]) => void;
+  isForDbElement?: boolean; // Indicates if DA is being added to a DB element
 }
 
 export const ApparatusSelectionDialog = ({
@@ -30,6 +31,7 @@ export const ApparatusSelectionDialog = ({
   apparatus,
   onSelectElements,
   onSelectCombinations,
+  isForDbElement = false,
 }: ApparatusSelectionDialogProps) => {
   const { apparatusData, criteria, specialCodes, specialCodeElements, daComments, isLoading } = useApparatusData(apparatus);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -438,6 +440,18 @@ export const ApparatusSelectionDialog = ({
       return;
     }
     
+    // If this is for a DB element and we already have one DA, don't allow more
+    if (isForDbElement && daCount >= 1) {
+      setSelectedCriteria(prev => prev.slice(0, -1));
+      
+      toast({
+        title: "One DA per DB",
+        description: "You can only add one DA to a DB element.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const timeoutId = setTimeout(() => {
       // Check if these 2 cells form a valid DA
       const [a, b] = selectedCriteria;
@@ -508,11 +522,23 @@ export const ApparatusSelectionDialog = ({
           setSelectedCriteria([]);
           setCompletedDaGroups([]);
           
-          // Show success toast
-          toast({
-            title: "Valid DA was created",
-            description: "Continue selecting to create more DAs or click 'Add DAs' to finish.",
-          });
+          // If this is for a DB element, automatically submit the DA and close dialog
+          if (isForDbElement && onSelectCombinations) {
+            // Automatically submit this single DA for the DB element
+            onSelectCombinations(newCombinations);
+            // Reset state
+            setStagedDAs([]);
+            setDaCount(0);
+            setSelectedIds([]);
+            setAvailableSlot(null);
+            // Dialog will be closed by parent, which will then show success dialog
+          } else {
+            // Show success toast for normal flow
+            toast({
+              title: "Valid DA was created",
+              description: "Continue selecting to create more DAs or click 'Add DAs' to finish.",
+            });
+          }
         }
       } else {
         // Invalid DA - remove the last selected cell and show warning
@@ -527,7 +553,7 @@ export const ApparatusSelectionDialog = ({
     }, 300);
     
     return () => clearTimeout(timeoutId);
-  }, [selectedCriteria, apparatusData, specialCodes, apparatus, toast]);
+  }, [selectedCriteria, apparatusData, specialCodes, apparatus, toast, isForDbElement, daCount, onSelectCombinations]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

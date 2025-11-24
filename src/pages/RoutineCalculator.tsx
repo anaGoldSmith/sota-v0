@@ -943,6 +943,7 @@ const RoutineCalculator = () => {
         apparatus={selectedApparatus}
         onSelectElements={handleSelectApparatusElements}
         onSelectCombinations={handleSelectApparatusCombinations}
+        isForDbElement={pendingDbElement !== null}
       />
 
       {/* Success Dialog */}
