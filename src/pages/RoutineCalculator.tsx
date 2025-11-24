@@ -341,7 +341,10 @@ const RoutineCalculator = () => {
   };
 
   const handleSelectJump = (jump: SelectedJump, withApparatusHandling: boolean = false, modifyingElementId?: string) => {
-    setSelectedJumps((prev) => [...prev, jump]);
+    // Only add to selectedJumps if not modifying an existing element
+    if (!modifyingElementId) {
+      setSelectedJumps((prev) => [...prev, jump]);
+    }
     
     // If withApparatusHandling is true, we'll wait for DA to be added before creating the routine element
     if (!withApparatusHandling) {
@@ -369,7 +372,10 @@ const RoutineCalculator = () => {
   };
 
   const handleSelectBalance = (balance: SelectedBalance, withApparatusHandling: boolean = false, modifyingElementId?: string) => {
-    setSelectedBalances((prev) => [...prev, balance]);
+    // Only add to selectedBalances if not modifying an existing element
+    if (!modifyingElementId) {
+      setSelectedBalances((prev) => [...prev, balance]);
+    }
     
     // If withApparatusHandling is true, we'll wait for DA to be added before creating the routine element
     if (!withApparatusHandling) {
@@ -397,7 +403,10 @@ const RoutineCalculator = () => {
   };
 
   const handleSelectRotation = (rotation: SelectedRotation, withApparatusHandling: boolean = false, modifyingElementId?: string) => {
-    setSelectedRotations((prev) => [...prev, rotation]);
+    // Only add to selectedRotations if not modifying an existing element
+    if (!modifyingElementId) {
+      setSelectedRotations((prev) => [...prev, rotation]);
+    }
     
     // If withApparatusHandling is true, we'll wait for DA to be added before creating the routine element
     if (!withApparatusHandling) {
