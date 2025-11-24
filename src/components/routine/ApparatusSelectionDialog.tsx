@@ -647,11 +647,11 @@ export const ApparatusSelectionDialog = ({
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Notes section */}
+        {/* Extra DA Information section */}
         {daComments && daComments.length > 0 && (
           <Collapsible defaultOpen className="rounded-lg border bg-muted/30 mx-6 mt-2 mb-4">
             <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
-              <h3 className="font-semibold text-sm">Notes</h3>
+              <h3 className="font-semibold text-sm">Extra DA Information</h3>
               <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=closed]]:rotate-[-90deg]" />
             </CollapsibleTrigger>
             <CollapsibleContent className="px-4 pb-4">
