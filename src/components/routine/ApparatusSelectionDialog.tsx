@@ -606,11 +606,11 @@ export const ApparatusSelectionDialog = ({
             Select Difficulty of Apparatus for {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'}
           </DialogTitle>
           <DialogDescription className="space-y-2">
-            <span>
+            <p>
               To create a valid DA, choose one base with two criteria by clicking on two "v" cells in the same row. Or, choose the base "Catch from High Throw" with one criterion and another base with the same criterion — in this case, DA value = (highest base value) + 0.1.
-            </span>
+            </p>
             {specialCodeElements.length > 0 && (
-              <span className="inline-flex items-center gap-2 text-xs">
+              <p className="flex items-center gap-2 text-xs flex-wrap">
                 <span>*For {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'apparatus'} DAs "Catch from High Throw" is valid for</span>
                 {specialCodeElements.map((element, index) => (
                   <React.Fragment key={element.code}>
@@ -632,7 +632,7 @@ export const ApparatusSelectionDialog = ({
                     )}
                   </React.Fragment>
                 ))}
-              </span>
+              </p>
             )}
           </DialogDescription>
         </DialogHeader>
