@@ -357,8 +357,10 @@ export const RotationSelectionDialog = ({
           <Button variant="outline" onClick={() => handleDialogChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleConfirmSelection} disabled={selectedRotations.size === 0}>
-            Add {selectedRotations.size > 0 ? `${selectedRotations.size} ` : ''}Rotation{selectedRotations.size !== 1 ? 's' : ''} to Routine
+          <Button onClick={handleConfirmSelection}>
+            {selectedRotations.size > 0 
+              ? `Add ${selectedRotations.size} Rotation${selectedRotations.size !== 1 ? 's' : ''} to Routine`
+              : 'Close'}
           </Button>
         </DialogFooter>
       </DialogContent>
