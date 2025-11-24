@@ -27,7 +27,7 @@ interface Jump {
 interface JumpSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectJump: (jump: Jump, withApparatusHandling?: boolean) => void;
+  onSelectJump: (jump: Jump, withApparatusHandling?: boolean, modifyingElementId?: string) => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
   selectedJumpIds?: Set<string>;
@@ -36,6 +36,7 @@ interface JumpSelectionDialogProps {
   elementsWithoutApparatusHandling?: Set<string>;
   onMarkWithoutApparatusHandling?: (id: string) => void;
   onRemoveElement?: (id: string) => void;
+  routineElementsMap?: Map<string, string>; // Maps jump ID to routineElement ID
 }
 export const JumpSelectionDialog = ({
   open,
@@ -48,7 +49,8 @@ export const JumpSelectionDialog = ({
   onApparatusHandlingReopened,
   elementsWithoutApparatusHandling,
   onMarkWithoutApparatusHandling,
-  onRemoveElement
+  onRemoveElement,
+  routineElementsMap
 }: JumpSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedJumps, setSelectedJumps] = useState<Set<string>>(selectedJumpIds || new Set());
@@ -443,8 +445,10 @@ export const JumpSelectionDialog = ({
         }}
         onAddApparatusDifficulty={() => {
           if (existingHandlingJump) {
-            // Call the parent's callback to set pendingDbElement
-            onSelectJump(existingHandlingJump, true);
+            // Get the routineElement ID for this jump
+            const routineElementId = routineElementsMap?.get(existingHandlingJump.id);
+            // Call the parent's callback to set pendingDbElement with modifying ID
+            onSelectJump(existingHandlingJump, true, routineElementId);
             setShowExistingHandling(false);
             // Close the jump dialog so apparatus dialog can open
             onOpenChange(false);
