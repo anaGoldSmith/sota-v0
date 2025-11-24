@@ -37,6 +37,11 @@ interface BalanceSelectionDialogProps {
   onMarkWithoutApparatusHandling?: (id: string) => void;
   onRemoveElement?: (id: string) => void;
   routineElementsMap?: Map<string, string>;
+  routineElements?: Array<{
+    id: string;
+    symbolImages: string[];
+    type: string;
+  }>;
 }
 
 export const BalanceSelectionDialog = ({
@@ -51,7 +56,8 @@ export const BalanceSelectionDialog = ({
   elementsWithoutApparatusHandling,
   onMarkWithoutApparatusHandling,
   onRemoveElement,
-  routineElementsMap
+  routineElementsMap,
+  routineElements
 }: BalanceSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedBalances, setSelectedBalances] = useState<Set<string>>(selectedBalanceIds || new Set());
@@ -159,6 +165,58 @@ export const BalanceSelectionDialog = ({
   const handleExistingHandling = (balance: Balance) => {
     setExistingHandlingBalance(balance);
     setShowExistingHandling(true);
+  };
+
+  // Function to render symbol images for existing handling
+  const renderHandlingSymbols = (balance: Balance | null) => {
+    if (!balance || !routineElementsMap || !routineElements) {
+      return <span className="text-sm text-muted-foreground">No handling assigned</span>;
+    }
+    
+    // Find the routine element for this balance
+    const routineElementId = routineElementsMap.get(balance.id);
+    if (!routineElementId) {
+      return <span className="text-sm text-muted-foreground">No handling assigned</span>;
+    }
+    
+    // Find the actual routine element
+    const routineElement = routineElements.find(el => el.id === routineElementId);
+    if (!routineElement || !routineElement.symbolImages || routineElement.symbolImages.length === 0) {
+      return <span className="text-sm text-muted-foreground">No handling assigned</span>;
+    }
+    
+    // Render symbols
+    return (
+      <div className="flex items-center gap-1 flex-wrap">
+        {routineElement.symbolImages.map((url, imgIndex) => {
+          // Check if this is a text-based symbol (W or DB)
+          const isTextSymbol = url && url.startsWith('TEXT:');
+          
+          if (isTextSymbol) {
+            // Extract the text after 'TEXT:'
+            const text = url.replace('TEXT:', '');
+            return (
+              <div 
+                key={`symbol-${imgIndex}`}
+                className="h-8 w-8 flex items-center justify-center"
+              >
+                <span className="text-2xl font-bold">{text}</span>
+              </div>
+            );
+          }
+          
+          // Render as image
+          return url && (
+            <img
+              key={`symbol-${imgIndex}`}
+              src={url}
+              alt="Symbol"
+              className="h-8 w-8 object-contain"
+            />
+          );
+        })}
+      </div>
+    );
   };
 
   const handleConfirmRemove = () => {
@@ -424,7 +482,7 @@ export const BalanceSelectionDialog = ({
         open={showExistingHandling}
         onOpenChange={setShowExistingHandling}
         elementName={existingHandlingBalance?.description || ""}
-        handlingSymbols={<span className="text-sm">Apparatus handling symbols</span>}
+        handlingSymbols={renderHandlingSymbols(existingHandlingBalance)}
         onAddTechnicalElements={() => {
           setShowExistingHandling(false);
           // TODO: Implement technical elements flow
