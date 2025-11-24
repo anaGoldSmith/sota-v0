@@ -336,7 +336,7 @@ export const JumpSelectionDialog = ({
           <Button variant="outline" onClick={() => handleDialogChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleConfirmSelection} disabled={selectedJumps.size === 0}>
+          <Button onClick={handleConfirmSelection}>
             Add {selectedJumps.size > 0 ? `${selectedJumps.size} ` : ''}Jump{selectedJumps.size !== 1 ? 's' : ''} to Routine
           </Button>
         </DialogFooter>

@@ -348,7 +348,7 @@ export const BalanceSelectionDialog = ({
           <Button variant="outline" onClick={() => handleDialogChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleConfirmSelection} disabled={selectedBalances.size === 0}>
+          <Button onClick={handleConfirmSelection}>
             Add {selectedBalances.size > 0 ? `${selectedBalances.size} ` : ''}Balance{selectedBalances.size !== 1 ? 's' : ''} to Routine
           </Button>
         </DialogFooter>
