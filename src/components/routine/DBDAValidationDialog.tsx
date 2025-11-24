@@ -25,7 +25,7 @@ export const DBDAValidationDialog = ({
           <DialogTitle className="text-center">Reminder</DialogTitle>
           <DialogDescription className="text-center pt-4">
             You selected a DA that does not include DB as one of its criteria. 
-            When assigning DAs to a DB, at least one DA criteria should normally be DB. 
+            When assigning DAs to DBs, at least one DA criteria should normally be DB. 
             Are you sure the selection is correct?
           </DialogDescription>
         </DialogHeader>
