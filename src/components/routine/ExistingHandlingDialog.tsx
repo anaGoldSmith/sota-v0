@@ -1,7 +1,6 @@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 interface ExistingHandlingDialogProps {
   open: boolean;
@@ -22,13 +21,20 @@ export const ExistingHandlingDialog = ({
   onAddApparatusDifficulty,
   onCancel
 }: ExistingHandlingDialogProps) => {
+  const [showModifyOptions, setShowModifyOptions] = useState(false);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      onOpenChange(isOpen);
+      if (!isOpen) {
+        setShowModifyOptions(false);
+      }
+    }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Manage Handling for {elementName}</DialogTitle>
+          <DialogTitle>Current Handling</DialogTitle>
           <DialogDescription>
-            View and modify apparatus handling for this element.
+            View and modify apparatus handling for {elementName}.
           </DialogDescription>
         </DialogHeader>
         
@@ -39,27 +45,29 @@ export const ExistingHandlingDialog = ({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 flex-col sm:flex-row sm:justify-between">
-          <Button onClick={onCancel} variant="outline">
-            Cancel
-          </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>
-                Change Handling
-                <ChevronDown className="ml-2 h-4 w-4" />
+        <DialogFooter className="gap-2 flex-col sm:flex-col items-center">
+          {!showModifyOptions ? (
+            <>
+              <Button onClick={onCancel} variant="outline" className="w-64">
+                Cancel
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onAddTechnicalElements}>
+              <Button onClick={() => setShowModifyOptions(true)} className="w-64">
+                Modify Handling
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button onClick={onAddTechnicalElements} className="w-64">
                 + Technical Elements
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onAddApparatusDifficulty}>
+              </Button>
+              <Button onClick={onAddApparatusDifficulty} className="w-64">
                 + Apparatus Difficulty
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </Button>
+              <Button onClick={() => setShowModifyOptions(false)} variant="outline" className="w-64">
+                Back
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
