@@ -48,9 +48,6 @@ export const ExistingHandlingDialog = ({
         <DialogFooter className="gap-2 flex-col sm:flex-col items-center">
           {!showModifyOptions ? (
             <>
-              <Button onClick={onCancel} variant="outline" className="w-64">
-                Cancel
-              </Button>
               <Button onClick={() => setShowModifyOptions(true)} className="w-64">
                 Modify Handling
               </Button>
