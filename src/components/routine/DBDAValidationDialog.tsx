@@ -32,7 +32,7 @@ export const DBDAValidationDialog = ({
 
         <DialogFooter className="gap-2 sm:gap-2 flex-col sm:flex-row">
           <Button onClick={onReview} variant="outline" className="w-full sm:w-auto">
-            Review DA
+            Change DA
           </Button>
           <Button onClick={onConfirm} className="w-full sm:w-auto">
             Confirm Selection
