@@ -220,18 +220,18 @@ export const JumpSelectionDialog = ({
 
   const handleApparatusHandlingComplete = (isApparatusDifficulty: boolean = false) => {
     if (pendingJump) {
-      // Don't add again - already added in handleJumpClick
-      
-      // If user chose apparatus difficulty, add jump with apparatus handling flag
+      // If user chose apparatus difficulty, mark the jump but don't close yet
+      // The DA table needs to open first
       if (isApparatusDifficulty) {
         onSelectJump(pendingJump, true);
-        // Reset and close
+        // Don't close the dialog or clear state yet - DA table will handle that
+      } else {
+        // For technical elements, reset and close
         setSelectedJumps(new Set());
         setSearchText("");
         onOpenChange(false);
+        setPendingJump(null);
       }
-      
-      setPendingJump(null);
     }
     setShowApparatusHandling(false);
   };

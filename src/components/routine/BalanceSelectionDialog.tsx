@@ -184,18 +184,18 @@ export const BalanceSelectionDialog = ({
 
   const handleApparatusHandlingComplete = (isApparatusDifficulty: boolean = false) => {
     if (pendingBalance) {
-      // Don't add again - already added in handleBalanceClick
-      
-      // If user chose apparatus difficulty, add balance with apparatus handling flag
+      // If user chose apparatus difficulty, mark the balance but don't close yet
+      // The DA table needs to open first
       if (isApparatusDifficulty) {
         onSelectBalance(pendingBalance, true);
-        // Reset and close
+        // Don't close the dialog or clear state yet - DA table will handle that
+      } else {
+        // For technical elements, reset and close
         setSelectedBalances(new Set());
         setSearchText("");
         onOpenChange(false);
+        setPendingBalance(null);
       }
-      
-      setPendingBalance(null);
     }
     setShowApparatusHandling(false);
   };

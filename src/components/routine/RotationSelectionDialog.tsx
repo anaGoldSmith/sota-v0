@@ -185,18 +185,18 @@ export const RotationSelectionDialog = ({
 
   const handleApparatusHandlingComplete = (isApparatusDifficulty: boolean = false) => {
     if (pendingRotation) {
-      // Don't add again - already added in handleRotationClick
-      
-      // If user chose apparatus difficulty, add rotation with apparatus handling flag
+      // If user chose apparatus difficulty, mark the rotation but don't close yet
+      // The DA table needs to open first
       if (isApparatusDifficulty) {
         onSelectRotation(pendingRotation, true);
-        // Reset and close
+        // Don't close the dialog or clear state yet - DA table will handle that
+      } else {
+        // For technical elements, reset and close
         setSelectedRotations(new Set());
         setSearchText("");
         onOpenChange(false);
+        setPendingRotation(null);
       }
-      
-      setPendingRotation(null);
     }
     setShowApparatusHandling(false);
   };
