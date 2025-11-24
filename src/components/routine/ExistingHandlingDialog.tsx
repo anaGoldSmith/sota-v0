@@ -45,7 +45,7 @@ export const ExistingHandlingDialog = ({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 flex flex-col items-center">
+        <DialogFooter className="gap-2 flex items-center justify-center">
           {!showModifyOptions ? (
             <Button onClick={() => setShowModifyOptions(true)} className="w-64">
               Modify Handling
