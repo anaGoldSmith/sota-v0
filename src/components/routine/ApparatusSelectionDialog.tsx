@@ -647,6 +647,23 @@ export const ApparatusSelectionDialog = ({
           </CollapsibleContent>
         </Collapsible>
 
+        {/* DA creation for DB section - only show in DB module */}
+        {isForDbElement && (
+          <Collapsible defaultOpen className="rounded-lg border bg-muted/30 mx-6 mt-2 mb-2">
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
+              <h3 className="font-semibold text-sm">DA creation for DB</h3>
+              <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=closed]]:rotate-[-90deg]" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-4 pb-4">
+              <div className="text-sm text-muted-foreground">
+                <p>
+                  When assigning DAs to DBs, at least one DA criterion should normally be a DB. To create a valid DA for DB, you could firstly select a cell in the final "DB" column for the relevant base, and then add a second criterion by selecting another cell in the same row (i.e., a second criterion for that same base).
+                </p>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
         {/* Extra DA Information section */}
         {daComments && daComments.length > 0 && (
           <Collapsible defaultOpen className="rounded-lg border bg-muted/30 mx-6 mt-2 mb-4">
