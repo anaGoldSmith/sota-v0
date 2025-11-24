@@ -41,18 +41,18 @@ export const ApparatusHandlingDialog = ({
             Please select at least 1 apparatus technical element or apparatus difficulty to make DB valid.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="gap-3 flex-col sm:flex-col">
-          <Button onClick={onSelectTechnicalElements} className="w-full">
+        <DialogFooter className="gap-3 flex-col sm:flex-col items-center">
+          <Button onClick={onSelectTechnicalElements} className="w-64">
             +Technical Elements
           </Button>
           <Button 
             onClick={handleApparatusDifficultyClick} 
-            className="w-full"
+            className="w-64"
             disabled={!apparatus}
           >
             +Apparatus Difficulty
           </Button>
-          <Button onClick={onSkip} variant="outline" className="w-full">
+          <Button onClick={onSkip} variant="outline" className="w-64">
             Skip Apparatus Handling
           </Button>
         </DialogFooter>
