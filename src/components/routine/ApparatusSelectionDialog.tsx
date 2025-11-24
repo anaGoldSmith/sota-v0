@@ -23,6 +23,7 @@ interface ApparatusSelectionDialogProps {
   onSelectElements: (elements: CombinedApparatusData[]) => void;
   onSelectCombinations?: (combinations: ApparatusCombination[]) => void;
   isForDbElement?: boolean; // Indicates if DA is being added to a DB element
+  onGoBackToApparatusHandling?: () => void; // Callback to go back to Apparatus Handling dialog
 }
 
 export const ApparatusSelectionDialog = ({
@@ -32,6 +33,7 @@ export const ApparatusSelectionDialog = ({
   onSelectElements,
   onSelectCombinations,
   isForDbElement = false,
+  onGoBackToApparatusHandling,
 }: ApparatusSelectionDialogProps) => {
   const { apparatusData, criteria, specialCodes, specialCodeElements, daComments, isLoading, error } = useApparatusData(apparatus);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -735,12 +737,26 @@ export const ApparatusSelectionDialog = ({
             />
 
             <div className="flex justify-end gap-3 pt-3 pb-4 flex-shrink-0">
-              <Button variant="outline" onClick={handleCancel}>
-                Cancel
-              </Button>
-          <Button onClick={handleAddSelected} disabled={daCount === 0}>
-            Add DAs {daCount > 0 && `(${daCount})`}
-          </Button>
+              {isForDbElement ? (
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    onOpenChange(false);
+                    onGoBackToApparatusHandling?.();
+                  }}
+                >
+                  Go Back
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={handleCancel}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleAddSelected} disabled={daCount === 0}>
+                    Add DAs {daCount > 0 && `(${daCount})`}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )}
