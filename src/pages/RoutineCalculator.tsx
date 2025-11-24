@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ArrowLeft, X, Calculator, GripVertical, ChevronDown, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbols";
@@ -678,13 +679,54 @@ const RoutineCalculator = () => {
             <h2 className="text-xl font-semibold text-foreground">Construct Routine</h2>
             
             <div className="grid grid-cols-2 gap-3">
-              <Button 
-                variant="outline"
-                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
-                onClick={() => setActiveCategory(activeCategory === "elements" ? null : "elements")}
-              >
-                <span className="text-lg font-semibold mr-2">+</span> Elements (DB)
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline"
+                    className="h-16 text-base hover:scale-[1.02] transition-transform"
+                  >
+                    <span className="text-lg font-semibold mr-2">+</span> Elements (DB)
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[300px] bg-background z-50" align="start">
+                  <DropdownMenuItem 
+                    className="h-14 text-lg cursor-pointer"
+                    onClick={() => setJumpDialogOpen(true)}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-1">
+                        <span>Jumps</span>
+                        <JumpIcon className="!h-7 !w-7" />
+                      </div>
+                      <span className="text-sm">+ Add</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="h-14 text-lg cursor-pointer"
+                    onClick={() => setBalanceDialogOpen(true)}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-1">
+                        <span>Balances</span>
+                        <BalanceIcon className="!h-7 !w-7" />
+                      </div>
+                      <span className="text-sm">+ Add</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="h-14 text-lg cursor-pointer"
+                    onClick={() => setRotationDialogOpen(true)}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-1">
+                        <span>Rotations</span>
+                        <RotationIcon className="!h-8 !w-8" />
+                      </div>
+                      <span className="text-sm">+ Add</span>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               
               <Button 
                 variant="outline"
@@ -716,47 +758,6 @@ const RoutineCalculator = () => {
               </Button>
             </div>
 
-            {/* Elements (DB) - Jumps, Balances, Rotations */}
-            {activeCategory === "elements" && (
-              <div className="space-y-3 pt-4">
-                <Button 
-                  variant="outline"
-                  className="w-full h-14 text-lg justify-between"
-                  onClick={() => setJumpDialogOpen(true)}
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Jumps</span>
-                    <JumpIcon className="!h-7 !w-7" />
-                  </div>
-                  <span className="text-sm">+ Add</span>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="w-full h-14 text-lg justify-between"
-                  onClick={() => setBalanceDialogOpen(true)}
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Balances</span>
-                    <BalanceIcon className="!h-7 !w-7" />
-                  </div>
-                  <span className="text-sm">+ Add</span>
-                </Button>
-
-                <Button 
-                  variant="outline"
-                  className="w-full h-14 text-lg justify-between"
-                  onClick={() => setRotationDialogOpen(true)}
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Rotations</span>
-                    <RotationIcon className="!h-8 !w-8" />
-                  </div>
-                  <span className="text-sm">+ Add</span>
-                </Button>
-              </div>
-            )}
-            
             {activeCategory === "dynamic" && (
               <div className="pt-4 text-center text-muted-foreground">
                 Dynamic Element configuration coming soon
