@@ -43,6 +43,18 @@ export const ApparatusSelectionDialog = ({
   const { toast } = useToast();
   const dialogContentRef = useRef<HTMLDivElement>(null);
 
+  // Reset state when dialog opens/closes
+  useEffect(() => {
+    if (!open) {
+      setSelectedIds([]);
+      setSelectedCriteria([]);
+      setCompletedDaGroups([]);
+      setAvailableSlot(null);
+      setStagedDAs([]);
+      setDaCount(0);
+    }
+  }, [open]);
+
   const handleRowClick = (item: CombinedApparatusData) => {
     setSelectedIds((prev) => {
       if (prev.includes(item.id)) {
@@ -531,7 +543,10 @@ export const ApparatusSelectionDialog = ({
             setDaCount(0);
             setSelectedIds([]);
             setAvailableSlot(null);
-            // Dialog will be closed by parent, which will then show success dialog
+            setSelectedCriteria([]);
+            setCompletedDaGroups([]);
+            // Close the dialog immediately
+            onOpenChange(false);
           } else {
             // Show success toast for normal flow
             toast({
