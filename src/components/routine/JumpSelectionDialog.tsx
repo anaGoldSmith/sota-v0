@@ -283,7 +283,7 @@ export const JumpSelectionDialog = ({
                   const isWithoutApparatusHandling = jump && elementsWithoutApparatusHandling ? elementsWithoutApparatusHandling.has(jump.id) : false;
                   return <TableCell 
                     key={`${rowNumber}-${value}`} 
-                    className={`text-center p-3 relative ${jump ? `${!isPreviouslySelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-colors ${isWithoutApparatusHandling ? 'ring-2 ring-red-500 bg-red-50/50 dark:bg-red-950/20' : isSelected || isPreviouslySelected ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset' : 'hover:bg-accent/50'}` : 'bg-muted/30'}`} 
+                    className={`text-center p-3 relative ${jump ? `${!isPreviouslySelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-colors ${isWithoutApparatusHandling ? 'ring-2 ring-red-600 bg-red-100 dark:bg-red-900/40' : isSelected || isPreviouslySelected ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset' : 'hover:bg-accent/50'}` : 'bg-muted/30'}`} 
                     onClick={() => jump && !isPreviouslySelected && handleJumpToggle(jump)}
                   >
                             {jump ? <div className="flex flex-col items-center gap-1">

@@ -287,7 +287,7 @@ export const BalanceSelectionDialog = ({
                               balance
                                 ? `${!isPreviouslySelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-colors ${
                                     isWithoutApparatusHandling 
-                                      ? 'ring-2 ring-red-500 bg-red-50/50 dark:bg-red-950/20'
+                                      ? 'ring-2 ring-red-600 bg-red-100 dark:bg-red-900/40'
                                       : isSelected || isPreviouslySelected
                                         ? 'bg-primary/20 hover:bg-primary/30 ring-2 ring-primary ring-inset'
                                         : 'hover:bg-accent/50'
