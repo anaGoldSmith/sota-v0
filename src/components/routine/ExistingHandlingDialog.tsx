@@ -45,21 +45,23 @@ export const ExistingHandlingDialog = ({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 flex items-center justify-center">
-          {!showModifyOptions ? (
-            <Button onClick={() => setShowModifyOptions(true)} className="w-64">
-              Modify Handling
-            </Button>
-          ) : (
-            <div className="flex flex-col gap-2 items-center w-full">
-              <Button onClick={onAddTechnicalElements} className="w-64">
-                + Technical Elements
+        <DialogFooter className="gap-2">
+          <div className="flex flex-col items-center justify-center w-full">
+            {!showModifyOptions ? (
+              <Button onClick={() => setShowModifyOptions(true)} className="w-64">
+                Modify Handling
               </Button>
-              <Button onClick={onAddApparatusDifficulty} className="w-64">
-                + Apparatus Difficulty
-              </Button>
-            </div>
-          )}
+            ) : (
+              <div className="flex flex-col gap-2 items-center w-full">
+                <Button onClick={onAddTechnicalElements} className="w-64">
+                  + Technical Elements
+                </Button>
+                <Button onClick={onAddApparatusDifficulty} className="w-64">
+                  + Apparatus Difficulty
+                </Button>
+              </div>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
