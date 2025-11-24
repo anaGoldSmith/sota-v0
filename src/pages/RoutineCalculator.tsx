@@ -604,36 +604,40 @@ const RoutineCalculator = () => {
     const element = routineElements[index];
     const originalData = element.originalData;
 
-    // Simply remove the element
+    // Remove the element from routine
     setRoutineElements(prev => prev.filter((_, idx) => idx !== index));
 
-    // Also remove from source arrays to keep them in sync
-    // Check if this is a paired special DA
-    if (originalData && typeof originalData === 'object' && 'isPaired' in originalData) {
-      // Remove both combinations from the array
+    // Remove from source arrays by ID to keep them in sync
+    if (originalData && typeof originalData === 'object' && 'id' in originalData && typeof originalData.id === 'string') {
+      const elementId = originalData.id;
+      
+      // Remove from selected jumps
+      setSelectedJumps(prev => prev.filter(j => j.id !== elementId));
+      
+      // Remove from selected balances
+      setSelectedBalances(prev => prev.filter(b => b.id !== elementId));
+      
+      // Remove from selected rotations
+      setSelectedRotations(prev => prev.filter(r => r.id !== elementId));
+      
+      // Remove from elements without apparatus handling tracking
+      setElementsWithoutApparatusHandling(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(elementId);
+        return newSet;
+      });
+    } else if (originalData && typeof originalData === 'object' && 'isPaired' in originalData) {
+      // Handle paired special DA
       const combo1Index = selectedApparatusCombinations.indexOf(originalData.combo1);
       const combo2Index = selectedApparatusCombinations.indexOf(originalData.combo2);
       
       setSelectedApparatusCombinations(prev => 
         prev.filter((_, idx) => idx !== combo1Index && idx !== combo2Index)
       );
-    } else if ('turn_degrees' in originalData && 'description' in originalData && originalData.description) {
-      // It's a Jump or Rotation
-      if (selectedJumps.includes(originalData as SelectedJump)) {
-        const jumpIndex = selectedJumps.indexOf(originalData as SelectedJump);
-        handleRemoveJump(jumpIndex);
-      } else {
-        const rotationIndex = selectedRotations.indexOf(originalData as SelectedRotation);
-        handleRemoveRotation(rotationIndex);
-      }
     } else if ('element' in originalData) {
       // It's an ApparatusCombination
       const comboIndex = selectedApparatusCombinations.indexOf(originalData as ApparatusCombination);
       handleRemoveApparatusCombination(comboIndex);
-    } else {
-      // It's a Balance
-      const balanceIndex = selectedBalances.indexOf(originalData as SelectedBalance);
-      handleRemoveBalance(balanceIndex);
     }
   };
 
