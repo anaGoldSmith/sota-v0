@@ -185,11 +185,7 @@ export const RotationSelectionDialog = ({
 
   const handleApparatusHandlingComplete = (isApparatusDifficulty: boolean = false) => {
     if (pendingRotation) {
-      setSelectedRotations(prev => {
-        const newSet = new Set(prev);
-        newSet.add(pendingRotation.id);
-        return newSet;
-      });
+      // Don't add again - already added in handleRotationClick
       
       // If user chose apparatus difficulty, add rotation with apparatus handling flag
       if (isApparatusDifficulty) {
@@ -213,8 +209,12 @@ export const RotationSelectionDialog = ({
       // Add the rotation to the routine calculator without apparatus handling
       onSelectRotation(pendingRotation, false);
       
-      // Don't add to local selectedRotations state to avoid duplication when "Add to Routine" is clicked
-      // The element will still show as previously selected via selectedRotationIds prop
+      // Remove from local selected state since it's now in the calculator
+      setSelectedRotations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(pendingRotation.id);
+        return newSet;
+      });
       
       setPendingRotation(null);
     }
@@ -233,6 +233,9 @@ export const RotationSelectionDialog = ({
     if (!isOpen) {
       setSelectedRotations(new Set());
       setSearchText("");
+      setPendingRotation(null);
+      setShowApparatusHandling(false);
+      setShowExistingHandling(false);
     }
     onOpenChange(isOpen);
   };
