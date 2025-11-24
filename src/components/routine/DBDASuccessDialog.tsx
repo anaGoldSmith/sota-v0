@@ -54,11 +54,17 @@ export const DBDASuccessDialog = ({
             {/* DA Symbols */}
             {daSymbols.map((symbol, index) => (
               <div key={`da-${index}`} className="flex items-center justify-center">
-                <img 
-                  src={symbol} 
-                  alt={`DA symbol ${index + 1}`}
-                  className="w-16 h-16 object-contain"
-                />
+                {symbol.startsWith('TEXT:') ? (
+                  <span className="text-5xl font-bold">
+                    {symbol.replace('TEXT:', '')}
+                  </span>
+                ) : (
+                  <img 
+                    src={symbol} 
+                    alt={`DA symbol ${index + 1}`}
+                    className="w-16 h-16 object-contain"
+                  />
+                )}
               </div>
             ))}
           </div>
