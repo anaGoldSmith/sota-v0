@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +30,8 @@ interface RotationSelectionDialogProps {
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
   selectedRotationIds?: Set<string>;
+  shouldReopenApparatusHandling?: boolean;
+  onApparatusHandlingReopened?: () => void;
 }
 
 export const RotationSelectionDialog = ({
@@ -38,12 +40,22 @@ export const RotationSelectionDialog = ({
   onSelectRotation,
   apparatus,
   onOpenApparatusDialog,
-  selectedRotationIds
+  selectedRotationIds,
+  shouldReopenApparatusHandling = false,
+  onApparatusHandlingReopened
 }: RotationSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedRotations, setSelectedRotations] = useState<Set<string>>(selectedRotationIds || new Set());
   const [showApparatusHandling, setShowApparatusHandling] = useState(false);
   const [pendingRotation, setPendingRotation] = useState<Rotation | null>(null);
+
+  // Watch for signal to reopen apparatus handling dialog
+  useEffect(() => {
+    if (open && shouldReopenApparatusHandling) {
+      setShowApparatusHandling(true);
+      onApparatusHandlingReopened?.();
+    }
+  }, [open, shouldReopenApparatusHandling, onApparatusHandlingReopened]);
 
   const {
     data: rotations,

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,8 @@ interface BalanceSelectionDialogProps {
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
   selectedBalanceIds?: Set<string>;
+  shouldReopenApparatusHandling?: boolean;
+  onApparatusHandlingReopened?: () => void;
 }
 
 export const BalanceSelectionDialog = ({
@@ -37,12 +39,22 @@ export const BalanceSelectionDialog = ({
   onSelectBalance,
   apparatus,
   onOpenApparatusDialog,
-  selectedBalanceIds
+  selectedBalanceIds,
+  shouldReopenApparatusHandling = false,
+  onApparatusHandlingReopened
 }: BalanceSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedBalances, setSelectedBalances] = useState<Set<string>>(selectedBalanceIds || new Set());
   const [showApparatusHandling, setShowApparatusHandling] = useState(false);
   const [pendingBalance, setPendingBalance] = useState<Balance | null>(null);
+
+  // Watch for signal to reopen apparatus handling dialog
+  useEffect(() => {
+    if (open && shouldReopenApparatusHandling) {
+      setShowApparatusHandling(true);
+      onApparatusHandlingReopened?.();
+    }
+  }, [open, shouldReopenApparatusHandling, onApparatusHandlingReopened]);
 
   const {
     data: balances,

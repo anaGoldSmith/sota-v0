@@ -248,6 +248,9 @@ const RoutineCalculator = () => {
     type: 'jump' | 'rotation' | 'balance';
   } | null>(null);
   
+  // Track if we should reopen apparatus handling dialog
+  const [shouldReopenApparatusHandling, setShouldReopenApparatusHandling] = useState(false);
+  
   // Track current DA selection for "Change DA" functionality
   const [currentDACombinations, setCurrentDACombinations] = useState<ApparatusCombination[]>([]);
   const [currentDBSymbols, setCurrentDBSymbols] = useState<string[]>([]);
@@ -932,6 +935,8 @@ const RoutineCalculator = () => {
           setApparatusDialogOpen(true);
         }}
         selectedJumpIds={selectedJumpIds}
+        shouldReopenApparatusHandling={shouldReopenApparatusHandling && pendingDbElement?.type === 'jump'}
+        onApparatusHandlingReopened={() => setShouldReopenApparatusHandling(false)}
       />
 
       {/* Balance Selection Dialog */}
@@ -945,6 +950,8 @@ const RoutineCalculator = () => {
           setApparatusDialogOpen(true);
         }}
         selectedBalanceIds={selectedBalanceIds}
+        shouldReopenApparatusHandling={shouldReopenApparatusHandling && pendingDbElement?.type === 'balance'}
+        onApparatusHandlingReopened={() => setShouldReopenApparatusHandling(false)}
       />
 
       {/* Rotation Selection Dialog */}
@@ -958,6 +965,8 @@ const RoutineCalculator = () => {
           setApparatusDialogOpen(true);
         }}
         selectedRotationIds={selectedRotationIds}
+        shouldReopenApparatusHandling={shouldReopenApparatusHandling && pendingDbElement?.type === 'rotation'}
+        onApparatusHandlingReopened={() => setShouldReopenApparatusHandling(false)}
       />
 
       {/* Apparatus Selection Dialog */}
@@ -968,6 +977,19 @@ const RoutineCalculator = () => {
         onSelectElements={handleSelectApparatusElements}
         onSelectCombinations={handleSelectApparatusCombinations}
         isForDbElement={pendingDbElement !== null}
+        onGoBackToApparatusHandling={() => {
+          // Close apparatus dialog
+          setApparatusDialogOpen(false);
+          // Reopen appropriate element selection dialog with apparatus handling
+          setShouldReopenApparatusHandling(true);
+          if (pendingDbElement?.type === 'jump') {
+            setJumpDialogOpen(true);
+          } else if (pendingDbElement?.type === 'balance') {
+            setBalanceDialogOpen(true);
+          } else if (pendingDbElement?.type === 'rotation') {
+            setRotationDialogOpen(true);
+          }
+        }}
       />
 
       {/* Success Dialog */}

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,8 @@ interface JumpSelectionDialogProps {
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
   selectedJumpIds?: Set<string>;
+  shouldReopenApparatusHandling?: boolean;
+  onApparatusHandlingReopened?: () => void;
 }
 export const JumpSelectionDialog = ({
   open,
@@ -35,12 +37,22 @@ export const JumpSelectionDialog = ({
   onSelectJump,
   apparatus,
   onOpenApparatusDialog,
-  selectedJumpIds
+  selectedJumpIds,
+  shouldReopenApparatusHandling = false,
+  onApparatusHandlingReopened
 }: JumpSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedJumps, setSelectedJumps] = useState<Set<string>>(selectedJumpIds || new Set());
   const [showApparatusHandling, setShowApparatusHandling] = useState(false);
   const [pendingJump, setPendingJump] = useState<Jump | null>(null);
+
+  // Watch for signal to reopen apparatus handling dialog
+  useEffect(() => {
+    if (open && shouldReopenApparatusHandling) {
+      setShowApparatusHandling(true);
+      onApparatusHandlingReopened?.();
+    }
+  }, [open, shouldReopenApparatusHandling, onApparatusHandlingReopened]);
 
   // Fetch all jumps
   const {
