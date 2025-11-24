@@ -414,15 +414,19 @@ export const BalanceSelectionDialog = ({
         open={showExistingHandling}
         onOpenChange={setShowExistingHandling}
         elementName={existingHandlingBalance?.description || ""}
-        handlingSymbols={<span className="text-sm">Symbols displayed here</span>}
+        handlingSymbols={<span className="text-sm">Apparatus handling symbols</span>}
         onAddTechnicalElements={() => {
           setShowExistingHandling(false);
           // TODO: Implement technical elements flow
         }}
         onAddApparatusDifficulty={() => {
           if (existingHandlingBalance) {
-            setPendingBalance(existingHandlingBalance);
+            // Call the parent's callback to set pendingDbElement
+            onSelectBalance(existingHandlingBalance, true);
             setShowExistingHandling(false);
+            // Close the balance dialog so apparatus dialog can open
+            onOpenChange(false);
+            // Open apparatus dialog
             onOpenApparatusDialog();
           }
         }}

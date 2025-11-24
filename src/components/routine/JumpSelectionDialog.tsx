@@ -443,8 +443,12 @@ export const JumpSelectionDialog = ({
         }}
         onAddApparatusDifficulty={() => {
           if (existingHandlingJump) {
-            setPendingJump(existingHandlingJump);
+            // Call the parent's callback to set pendingDbElement
+            onSelectJump(existingHandlingJump, true);
             setShowExistingHandling(false);
+            // Close the jump dialog so apparatus dialog can open
+            onOpenChange(false);
+            // Open apparatus dialog
             onOpenApparatusDialog();
           }
         }}
