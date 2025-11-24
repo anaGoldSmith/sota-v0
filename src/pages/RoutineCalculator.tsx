@@ -438,11 +438,18 @@ const RoutineCalculator = () => {
   };
 
   const handleSelectApparatusCombinations = (combinations: ApparatusCombination[]) => {
+    console.log("=== handleSelectApparatusCombinations called ===");
+    console.log("pendingDbElement:", pendingDbElement);
+    console.log("routineElements before:", routineElements.length, routineElements.map(el => ({ id: el.id, type: el.type })));
+    
     setSelectedApparatusCombinations((prev) => [...prev, ...combinations]);
     
     // Check if we have a pending DB element to link this DA to
     if (pendingDbElement) {
       const { element: dbElement, type: dbType, modifyingElementId } = pendingDbElement;
+      
+      console.log("DB element:", dbElement);
+      console.log("modifyingElementId:", modifyingElementId);
       
       // Process DA elements
       const daElements = processApparatusCombinationsToElements(combinations);
@@ -481,13 +488,19 @@ const RoutineCalculator = () => {
         isExpanded: false,
       };
       
+      console.log("combinedElement created with id:", combinedElement.id);
+      
       // If modifying existing element, we'll replace it; otherwise store as pending
       if (modifyingElementId) {
+        console.log("MODIFYING - Replacing element with id:", modifyingElementId);
         // Replace existing element immediately
-        setRoutineElements((prev) => 
-          prev.map(el => el.id === modifyingElementId ? combinedElement : el)
-        );
+        setRoutineElements((prev) => {
+          const updated = prev.map(el => el.id === modifyingElementId ? combinedElement : el);
+          console.log("routineElements after replacement:", updated.length, updated.map(el => ({ id: el.id, type: el.type })));
+          return updated;
+        });
       } else {
+        console.log("NEW DB/DA - Storing as pending");
         // Store as pending (don't add to routine yet - wait for "Save Combo" click)
         setPendingCombinedElement(combinedElement);
       }
