@@ -703,7 +703,7 @@ const RoutineCalculator = () => {
 
                 <DndContext
                   sensors={sensors}
-                  collisionDetection={closestCenter}
+                  collisionDetection={closestCorners}
                   onDragEnd={handleDragEnd}
                 >
                   <Table>
