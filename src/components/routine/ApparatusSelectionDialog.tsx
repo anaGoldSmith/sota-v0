@@ -605,40 +605,51 @@ export const ApparatusSelectionDialog = ({
           <DialogTitle className="text-2xl">
             Select Difficulty of Apparatus for {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'}
           </DialogTitle>
-          <DialogDescription className="space-y-2">
-            <p>
-              To create a valid DA, choose one base with two criteria by clicking on two "v" cells in the same row. Or, choose the base "Catch from High Throw" with one criterion and another base with the same criterion — in this case, DA value = (highest base value) + 0.1.
-            </p>
-            {specialCodeElements.length > 0 && (
-              <p className="flex items-center gap-2 text-xs flex-wrap">
-                <span>*For {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'apparatus'} DAs "Catch from High Throw" is valid for</span>
-                {specialCodeElements.map((element, index) => (
-                  <React.Fragment key={element.code}>
-                    {element.symbol_image && (
-                      <img 
-                        src={getTechnicalElementSymbol(element.symbol_image) || ''} 
-                        alt={element.code}
-                        className="h-12 w-auto inline-block align-middle"
-                        onError={(e) => {
-                          console.error('Failed to load symbol:', element.symbol_image);
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    )}
-                    {index < specialCodeElements.length - 1 && (
-                      index === specialCodeElements.length - 2 ? 
-                        <span className="mx-1">and</span> : 
-                        <span className="mx-1">,</span>
-                    )}
-                  </React.Fragment>
-                ))}
-              </p>
-            )}
-          </DialogDescription>
         </DialogHeader>
 
+        {/* General Rules for DA creation */}
+        <Collapsible defaultOpen className="rounded-lg border bg-muted/30 mx-6 mt-4 mb-2">
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
+            <h3 className="font-semibold text-sm">General Rules for DA creation</h3>
+            <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=closed]]:rotate-[-90deg]" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="px-4 pb-4">
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                To create a valid DA, choose one base with two criteria by clicking on two "v" cells in the same row. Or, choose the base "Catch from High Throw" with one criterion and another base with the same criterion — in this case, DA value = (highest base value) + 0.1.
+              </p>
+              {specialCodeElements.length > 0 && (
+                <p className="flex items-center gap-2 text-xs flex-wrap">
+                  <span>*For {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'apparatus'} DAs "Catch from High Throw" is valid for</span>
+                  {specialCodeElements.map((element, index) => (
+                    <React.Fragment key={element.code}>
+                      {element.symbol_image && (
+                        <img 
+                          src={getTechnicalElementSymbol(element.symbol_image) || ''} 
+                          alt={element.code}
+                          className="h-12 w-auto inline-block align-middle"
+                          onError={(e) => {
+                            console.error('Failed to load symbol:', element.symbol_image);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      {index < specialCodeElements.length - 1 && (
+                        index === specialCodeElements.length - 2 ? 
+                          <span className="mx-1">and</span> : 
+                          <span className="mx-1">,</span>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </p>
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Notes section */}
         {daComments && daComments.length > 0 && (
-          <Collapsible defaultOpen className="rounded-lg border bg-muted/30 mx-6 mt-4 mb-4">
+          <Collapsible defaultOpen className="rounded-lg border bg-muted/30 mx-6 mt-2 mb-4">
             <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
               <h3 className="font-semibold text-sm">Notes</h3>
               <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=closed]]:rotate-[-90deg]" />
