@@ -13,6 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ApparatusHandlingDialog } from "./ApparatusHandlingDialog";
 import { ApparatusType } from "@/types/apparatus";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ExistingHandlingDialog } from "./ExistingHandlingDialog";
 
 interface Balance {
   id: string;
@@ -56,6 +57,8 @@ export const BalanceSelectionDialog = ({
   const [pendingBalance, setPendingBalance] = useState<Balance | null>(null);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [balanceToRemove, setBalanceToRemove] = useState<Balance | null>(null);
+  const [showExistingHandling, setShowExistingHandling] = useState(false);
+  const [existingHandlingBalance, setExistingHandlingBalance] = useState<Balance | null>(null);
 
   // Watch for signal to reopen apparatus handling dialog
   useEffect(() => {
@@ -131,12 +134,12 @@ export const BalanceSelectionDialog = ({
     return firstBalance?.description || "";
   };
 
-  const handleBalanceToggle = (balance: Balance) => {
+  const handleBalanceClick = (balance: Balance) => {
     const isCurrentlySelected = selectedBalances.has(balance.id);
     const isPreviouslySelected = selectedBalanceIds ? selectedBalanceIds.has(balance.id) : false;
     
     if (isCurrentlySelected || isPreviouslySelected) {
-      // If already selected (locally or in parent), show confirmation dialog
+      // If already selected, show confirmation dialog to remove
       setBalanceToRemove(balance);
       setShowRemoveDialog(true);
     } else {
@@ -144,6 +147,11 @@ export const BalanceSelectionDialog = ({
       setPendingBalance(balance);
       setShowApparatusHandling(true);
     }
+  };
+
+  const handleExistingHandling = (balance: Balance) => {
+    setExistingHandlingBalance(balance);
+    setShowExistingHandling(true);
   };
 
   const handleConfirmRemove = () => {
@@ -322,7 +330,7 @@ export const BalanceSelectionDialog = ({
                                 {/* Symbol image */}
                                  <div 
                                   className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative cursor-pointer"
-                                  onClick={() => handleBalanceToggle(balance)}
+                                  onClick={() => handleBalanceClick(balance)}
                                 >
                                   Symbol
                                   {(isSelected || isPreviouslySelected) && (
@@ -331,19 +339,20 @@ export const BalanceSelectionDialog = ({
                                     </div>
                                   )}
                                 </div>
-                                {/* Handling button */}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs px-2"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPendingBalance(balance);
-                                    setShowApparatusHandling(true);
-                                  }}
-                                >
-                                  Handling
-                                </Button>
+                                {/* Handling button - only show for selected elements */}
+                                {(isSelected || isPreviouslySelected) && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs px-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleExistingHandling(balance);
+                                    }}
+                                  >
+                                    Handling
+                                  </Button>
+                                )}
                               </div>
                             ) : null}
                           </TableCell>
@@ -392,6 +401,25 @@ export const BalanceSelectionDialog = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ExistingHandlingDialog
+        open={showExistingHandling}
+        onOpenChange={setShowExistingHandling}
+        elementName={existingHandlingBalance?.description || ""}
+        handlingSymbols={<span className="text-sm">Symbols displayed here</span>}
+        onAddTechnicalElements={() => {
+          setShowExistingHandling(false);
+          // TODO: Implement technical elements flow
+        }}
+        onAddApparatusDifficulty={() => {
+          if (existingHandlingBalance) {
+            setPendingBalance(existingHandlingBalance);
+            setShowExistingHandling(false);
+            onOpenApparatusDialog();
+          }
+        }}
+        onCancel={() => setShowExistingHandling(false)}
+      />
     </Dialog>
   );
 };
