@@ -41,7 +41,7 @@ export const ApparatusHandlingDialog = ({
             Please select at least 1 apparatus technical element or apparatus difficulty to make DB valid.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="gap-3 flex-col">
+        <DialogFooter className="gap-3 flex-col sm:flex-col">
           <Button onClick={onSelectTechnicalElements} className="w-full">
             +Technical Elements
           </Button>
