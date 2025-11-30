@@ -68,7 +68,7 @@ interface SelectedRotation {
   symbol_image: string | null;
 }
 
-type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'R' | 'Steps';
+type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'DB/TE' | 'TE' | 'R' | 'Steps';
 
 interface RoutineElement {
   id: string;
@@ -175,14 +175,14 @@ function SortableRow({
         )}
       </TableCell>
       <TableCell 
-        className={`w-20 font-mono ${!isMainRow ? 'pl-8 text-muted-foreground' : ''} ${isMainRow && element.type === 'DB/DA' ? 'cursor-pointer' : ''}`}
-        onClick={isMainRow && element.type === 'DB/DA' && onToggleExpand ? (e) => {
+        className={`w-20 font-mono ${!isMainRow ? 'pl-8 text-muted-foreground' : ''} ${isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE') ? 'cursor-pointer' : ''}`}
+        onClick={isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE') && onToggleExpand ? (e) => {
           e.stopPropagation();
           onToggleExpand();
         } : undefined}
       >
         <div className="flex items-center gap-2">
-          {isMainRow && element.type === 'DB/DA' && (
+          {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE') && (
             element.isExpanded ? 
               <ChevronDown className="h-4 w-4 text-muted-foreground" /> : 
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -776,7 +776,7 @@ const RoutineCalculator = () => {
       // Create combined DB/TE element
       const combinedElement: RoutineElement = {
         id: modifyingElementId || `db-te-${dbType}-${dbElement.id}-${Date.now()}`,
-        type: 'DB/DA',
+        type: 'DB/TE',
         symbolImages: [...dbSymbolImages, ...teSymbolImages],
         value: dbElement.value, // Technical elements don't add value, just validate DB
         originalData: dbElement,
@@ -1062,13 +1062,13 @@ const RoutineCalculator = () => {
                               index={index}
                               itemNumber={itemNumber}
                               onRemove={() => handleRemoveRoutineElement(index)}
-                              onToggleExpand={element.type === 'DB/DA' ? () => handleToggleExpand(index) : undefined}
+                              onToggleExpand={(element.type === 'DB/DA' || element.type === 'DB/TE') ? () => handleToggleExpand(index) : undefined}
                               isMainRow={true}
                             />
                           );
                           
-                          // If expanded and has DB/DA breakdown, show sub-rows
-                          if (element.type === 'DB/DA' && element.isExpanded && element.dbData && element.daData) {
+                          // If expanded and has DB/DA or DB/TE breakdown, show sub-rows
+                          if ((element.type === 'DB/DA' || element.type === 'DB/TE') && element.isExpanded && element.dbData && element.daData) {
                             // DB sub-row
                             rows.push(
                               <SortableRow
@@ -1087,13 +1087,13 @@ const RoutineCalculator = () => {
                               />
                             );
                             
-                            // DA sub-row
+                            // DA or TE sub-row
                             rows.push(
                               <SortableRow
                                 key={`${element.id}-da-sub`}
                                 element={{
                                   id: `${element.id}-da-sub`,
-                                  type: 'DA',
+                                  type: element.type === 'DB/TE' ? 'TE' as RoutineElementType : 'DA',
                                   symbolImages: element.daData.symbolImages,
                                   value: element.daData.value,
                                   originalData: element.originalData,

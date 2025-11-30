@@ -281,7 +281,7 @@ export const TechnicalElementsSelectionDialog = ({
             onClick={handleConfirmSelection}
             disabled={selectedElements.size === 0}
           >
-            Add {selectedElements.size > 0 ? `(${selectedElements.size})` : ''} Technical Element{selectedElements.size !== 1 ? 's' : ''}
+            Save
           </Button>
         </DialogFooter>
       </DialogContent>
