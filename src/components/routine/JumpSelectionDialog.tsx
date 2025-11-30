@@ -484,8 +484,17 @@ export const JumpSelectionDialog = ({
         elementName={existingHandlingJump?.description || ""}
         handlingSymbols={renderHandlingSymbols(existingHandlingJump)}
         onAddTechnicalElements={() => {
-          setShowExistingHandling(false);
-          // TODO: Implement technical elements flow
+          if (existingHandlingJump) {
+            // Get the routineElement ID for this jump
+            const routineElementId = routineElementsMap?.get(existingHandlingJump.id);
+            // Call the parent's callback to set pendingDbElement with modifying ID
+            onSelectJump(existingHandlingJump, true, routineElementId);
+            setShowExistingHandling(false);
+            // Close the jump dialog so technical elements dialog can open
+            onOpenChange(false);
+            // Open technical elements dialog
+            onOpenTechnicalElementsDialog();
+          }
         }}
         onAddApparatusDifficulty={() => {
           if (existingHandlingJump) {

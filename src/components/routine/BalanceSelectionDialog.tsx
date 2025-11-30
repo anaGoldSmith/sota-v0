@@ -486,8 +486,17 @@ export const BalanceSelectionDialog = ({
         elementName={existingHandlingBalance?.description || ""}
         handlingSymbols={renderHandlingSymbols(existingHandlingBalance)}
         onAddTechnicalElements={() => {
-          setShowExistingHandling(false);
-          // TODO: Implement technical elements flow
+          if (existingHandlingBalance) {
+            // Get the routineElement ID for this balance
+            const routineElementId = routineElementsMap?.get(existingHandlingBalance.id);
+            // Call the parent's callback to set pendingDbElement with modifying ID
+            onSelectBalance(existingHandlingBalance, true, routineElementId);
+            setShowExistingHandling(false);
+            // Close the balance dialog so technical elements dialog can open
+            onOpenChange(false);
+            // Open technical elements dialog
+            onOpenTechnicalElementsDialog();
+          }
         }}
         onAddApparatusDifficulty={() => {
           if (existingHandlingBalance) {
