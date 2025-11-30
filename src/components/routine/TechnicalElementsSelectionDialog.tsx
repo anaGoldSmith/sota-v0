@@ -223,15 +223,12 @@ export const TechnicalElementsSelectionDialog = ({
                 <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow>
                     <TableHead className="w-[80px]">Symbol</TableHead>
-                    <TableHead className="w-[100px]">Code</TableHead>
-                    <TableHead>Name</TableHead>
                     <TableHead>Description</TableHead>
-                    <TableHead className="w-[140px]">Group</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {Array.from(groupedElements.entries()).map(([group, elements]) => (
-                    elements.map((element, idx) => {
+                    elements.map((element) => {
                       const isSelected = selectedElements.has(element.id);
                       const symbolUrl = getSymbolUrl(element.symbol_image);
                       
@@ -263,19 +260,8 @@ export const TechnicalElementsSelectionDialog = ({
                               </div>
                             )}
                           </TableCell>
-                          <TableCell className="font-mono text-sm">
-                            {element.code}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {element.name}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground max-w-[300px]">
-                            <span className="line-clamp-2">{element.description}</span>
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {idx === 0 && (
-                              <span className="text-muted-foreground">{group}</span>
-                            )}
+                          <TableCell className="text-sm text-muted-foreground">
+                            {element.description}
                           </TableCell>
                         </TableRow>
                       );
