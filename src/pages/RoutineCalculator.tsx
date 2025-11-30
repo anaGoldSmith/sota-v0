@@ -10,6 +10,7 @@ import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
 import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDialog";
 import { RotationSelectionDialog } from "@/components/routine/RotationSelectionDialog";
 import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/routine/ApparatusSelectionDialog";
+import { TechnicalElementsSelectionDialog } from "@/components/routine/TechnicalElementsSelectionDialog";
 import { DBSuccessDialog } from "@/components/routine/DBSuccessDialog";
 import { DBDASuccessDialog } from "@/components/routine/DBDASuccessDialog";
 import { DBDAValidationDialog } from "@/components/routine/DBDAValidationDialog";
@@ -234,6 +235,7 @@ const RoutineCalculator = () => {
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
   const [rotationDialogOpen, setRotationDialogOpen] = useState(false);
   const [apparatusDialogOpen, setApparatusDialogOpen] = useState(false);
+  const [technicalElementsDialogOpen, setTechnicalElementsDialogOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedApparatus, setSelectedApparatus] = useState<ApparatusType | null>(null);
   const [routineElements, setRoutineElements] = useState<RoutineElement[]>([]);
@@ -743,6 +745,89 @@ const RoutineCalculator = () => {
     });
   };
 
+  // Handle technical elements selection for apparatus handling
+  const handleSelectTechnicalElements = (elements: Array<{
+    id: string;
+    code: string;
+    name: string;
+    description: string;
+    symbol_image: string | null;
+  }>) => {
+    if (pendingDbElement && elements.length > 0) {
+      const { element: dbElement, type: dbType, modifyingElementId } = pendingDbElement;
+      
+      // Get DB symbol images
+      const dbSymbolImages = dbElement.symbol_image ? [
+        getSymbolUrl(dbElement.symbol_image, 'jump-symbols') || ''
+      ] : [];
+      
+      // Get technical elements symbol images
+      const teSymbolImages = elements.map(el => {
+        if (el.symbol_image && selectedApparatus) {
+          return getTechnicalElementSymbol(el.symbol_image, selectedApparatus) || '';
+        }
+        return '';
+      }).filter(Boolean);
+      
+      // Store symbols for success display
+      setCurrentDBSymbols(dbSymbolImages);
+      setCurrentDASymbols(teSymbolImages);
+      
+      // Create combined DB/TE element
+      const combinedElement: RoutineElement = {
+        id: modifyingElementId || `db-te-${dbType}-${dbElement.id}-${Date.now()}`,
+        type: 'DB/DA',
+        symbolImages: [...dbSymbolImages, ...teSymbolImages],
+        value: dbElement.value, // Technical elements don't add value, just validate DB
+        originalData: dbElement,
+        dbData: {
+          symbolImages: dbSymbolImages,
+          value: dbElement.value,
+        },
+        daData: {
+          symbolImages: teSymbolImages,
+          value: 0, // Technical elements don't have point value
+        },
+        isExpanded: false,
+      };
+      
+      if (modifyingElementId) {
+        // Replace existing element
+        setRoutineElements((prev) => 
+          prev.map(el => el.id === modifyingElementId ? combinedElement : el)
+        );
+      } else {
+        // Add new combined element
+        setRoutineElements((prev) => [...prev, combinedElement]);
+      }
+      
+      // Clear pending state
+      setPendingDbElement(null);
+      setSourceElementType(null);
+      
+      toast({
+        title: "Technical Elements Added",
+        description: `Added ${elements.length} technical element(s) to DB.`,
+      });
+    }
+  };
+
+  const handleOpenTechnicalElementsDialog = () => {
+    setTechnicalElementsDialogOpen(true);
+  };
+
+  const handleTechnicalElementsGoBack = () => {
+    // Reopen appropriate element selection dialog with apparatus handling
+    setShouldReopenApparatusHandling(true);
+    if (pendingDbElement?.type === 'jump') {
+      setJumpDialogOpen(true);
+    } else if (pendingDbElement?.type === 'balance') {
+      setBalanceDialogOpen(true);
+    } else if (pendingDbElement?.type === 'rotation') {
+      setRotationDialogOpen(true);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -1043,6 +1128,7 @@ const RoutineCalculator = () => {
           setSourceElementType('jump');
           setApparatusDialogOpen(true);
         }}
+        onOpenTechnicalElementsDialog={handleOpenTechnicalElementsDialog}
         selectedJumpIds={selectedJumpIds}
         shouldReopenApparatusHandling={shouldReopenApparatusHandling && pendingDbElement?.type === 'jump'}
         onApparatusHandlingReopened={() => setShouldReopenApparatusHandling(false)}
@@ -1063,6 +1149,7 @@ const RoutineCalculator = () => {
           setSourceElementType('balance');
           setApparatusDialogOpen(true);
         }}
+        onOpenTechnicalElementsDialog={handleOpenTechnicalElementsDialog}
         selectedBalanceIds={selectedBalanceIds}
         shouldReopenApparatusHandling={shouldReopenApparatusHandling && pendingDbElement?.type === 'balance'}
         onApparatusHandlingReopened={() => setShouldReopenApparatusHandling(false)}
@@ -1083,6 +1170,7 @@ const RoutineCalculator = () => {
           setSourceElementType('rotation');
           setApparatusDialogOpen(true);
         }}
+        onOpenTechnicalElementsDialog={handleOpenTechnicalElementsDialog}
         selectedRotationIds={selectedRotationIds}
         shouldReopenApparatusHandling={shouldReopenApparatusHandling && pendingDbElement?.type === 'rotation'}
         onApparatusHandlingReopened={() => setShouldReopenApparatusHandling(false)}
@@ -1184,6 +1272,15 @@ const RoutineCalculator = () => {
         }}
         dbSymbols={currentDBSymbols}
         daSymbols={currentDASymbols}
+      />
+
+      {/* Technical Elements Selection Dialog */}
+      <TechnicalElementsSelectionDialog
+        open={technicalElementsDialogOpen}
+        onOpenChange={setTechnicalElementsDialogOpen}
+        apparatus={selectedApparatus}
+        onSelectTechnicalElements={handleSelectTechnicalElements}
+        onGoBack={handleTechnicalElementsGoBack}
       />
     </div>
   );

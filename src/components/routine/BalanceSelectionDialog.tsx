@@ -30,6 +30,7 @@ interface BalanceSelectionDialogProps {
   onSelectBalance: (balance: Balance, withApparatusHandling?: boolean, modifyingElementId?: string) => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
+  onOpenTechnicalElementsDialog: () => void;
   selectedBalanceIds?: Set<string>;
   shouldReopenApparatusHandling?: boolean;
   onApparatusHandlingReopened?: () => void;
@@ -50,6 +51,7 @@ export const BalanceSelectionDialog = ({
   onSelectBalance,
   apparatus,
   onOpenApparatusDialog,
+  onOpenTechnicalElementsDialog,
   selectedBalanceIds,
   shouldReopenApparatusHandling = false,
   onApparatusHandlingReopened,
@@ -460,6 +462,7 @@ export const BalanceSelectionDialog = ({
         onSkip={handleSkipApparatusHandling}
         apparatus={apparatus}
         onOpenApparatusDialog={onOpenApparatusDialog}
+        onOpenTechnicalElementsDialog={onOpenTechnicalElementsDialog}
         sourceElementType="balance"
       />
 
