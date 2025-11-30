@@ -244,15 +244,14 @@ export const BalanceSelectionDialog = ({
     setShowRemoveDialog(false);
   };
 
-  const handleApparatusHandlingComplete = (isApparatusDifficulty: boolean = false) => {
+  const handleApparatusHandlingComplete = (isApparatusDifficulty: boolean = false, isTechnicalElements: boolean = false) => {
     if (pendingBalance) {
-      // If user chose apparatus difficulty, mark the balance but don't close yet
-      // The DA table needs to open first
-      if (isApparatusDifficulty) {
+      if (isApparatusDifficulty || isTechnicalElements) {
+        // Call onSelectBalance to set pendingDbElement in parent for both DA and TE
         onSelectBalance(pendingBalance, true);
-        // Don't close the dialog or clear state yet - DA table will handle that
+        // Don't close the dialog or clear state yet - DA/TE table will handle that
       } else {
-        // For technical elements, reset and close
+        // For skip, reset and close
         setSelectedBalances(new Set());
         setSearchText("");
         onOpenChange(false);
@@ -457,8 +456,8 @@ export const BalanceSelectionDialog = ({
       <ApparatusHandlingDialog
         open={showApparatusHandling}
         onOpenChange={setShowApparatusHandling}
-        onSelectTechnicalElements={() => handleApparatusHandlingComplete(false)}
-        onSelectApparatusDifficulty={() => handleApparatusHandlingComplete(true)}
+        onSelectTechnicalElements={() => handleApparatusHandlingComplete(false, true)}
+        onSelectApparatusDifficulty={() => handleApparatusHandlingComplete(true, false)}
         onSkip={handleSkipApparatusHandling}
         apparatus={apparatus}
         onOpenApparatusDialog={onOpenApparatusDialog}

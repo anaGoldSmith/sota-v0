@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -173,6 +173,9 @@ export const TechnicalElementsSelectionDialog = ({
           <DialogTitle className="flex items-center gap-2">
             Select Technical Elements - {apparatusLabel}
           </DialogTitle>
+          <DialogDescription>
+            Select technical elements to add as apparatus handling for your DB element.
+          </DialogDescription>
         </DialogHeader>
 
         {/* Search Section */}
