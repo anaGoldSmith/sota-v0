@@ -206,8 +206,8 @@ export const TechnicalElementsSelectionDialog = ({
         </div>
 
         {/* Elements Table */}
-        <div className="border rounded-md flex-1 min-h-0">
-          <ScrollArea className="h-[50vh]">
+        <div className="border rounded-md flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-[45vh]">
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">
                 Loading technical elements...
@@ -276,7 +276,7 @@ export const TechnicalElementsSelectionDialog = ({
           </ScrollArea>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-2">
+        <DialogFooter className="gap-2 sm:gap-2 mt-4 pt-4 border-t">
           <Button variant="outline" onClick={handleGoBack}>
             Go Back
           </Button>
