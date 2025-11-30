@@ -276,7 +276,7 @@ export const TechnicalElementsSelectionDialog = ({
           </ScrollArea>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-2 mt-4 pt-4 border-t">
+        <DialogFooter className="gap-2 sm:gap-2 mt-4">
           <Button variant="outline" onClick={handleGoBack}>
             Go Back
           </Button>
