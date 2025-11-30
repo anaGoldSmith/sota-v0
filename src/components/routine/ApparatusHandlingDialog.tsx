@@ -10,6 +10,7 @@ interface ApparatusHandlingDialogProps {
   onSkip: () => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
+  onOpenTechnicalElementsDialog: () => void;
   sourceElementType?: 'jump' | 'rotation' | 'balance';
 }
 
@@ -21,6 +22,7 @@ export const ApparatusHandlingDialog = ({
   onSkip,
   apparatus,
   onOpenApparatusDialog,
+  onOpenTechnicalElementsDialog,
   sourceElementType
 }: ApparatusHandlingDialogProps) => {
   const handleApparatusDifficultyClick = () => {
@@ -38,6 +40,20 @@ export const ApparatusHandlingDialog = ({
     }, 100);
   };
 
+  const handleTechnicalElementsClick = () => {
+    if (!apparatus) {
+      return;
+    }
+    // Trigger the selection logic
+    onSelectTechnicalElements();
+    // Close this dialog
+    onOpenChange(false);
+    // Open the technical elements dialog
+    setTimeout(() => {
+      onOpenTechnicalElementsDialog();
+    }, 100);
+  };
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       console.log("ApparatusHandlingDialog onOpenChange called:", isOpen);
@@ -51,7 +67,11 @@ export const ApparatusHandlingDialog = ({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-3 flex-col sm:flex-col items-center">
-          <Button onClick={onSelectTechnicalElements} className="w-64">
+          <Button 
+            onClick={handleTechnicalElementsClick} 
+            className="w-64"
+            disabled={!apparatus}
+          >
             +Technical Elements
           </Button>
           <Button 

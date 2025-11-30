@@ -31,6 +31,7 @@ interface RotationSelectionDialogProps {
   onSelectRotation: (rotation: Rotation, withApparatusHandling?: boolean, modifyingElementId?: string) => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
+  onOpenTechnicalElementsDialog: () => void;
   selectedRotationIds?: Set<string>;
   shouldReopenApparatusHandling?: boolean;
   onApparatusHandlingReopened?: () => void;
@@ -51,6 +52,7 @@ export const RotationSelectionDialog = ({
   onSelectRotation,
   apparatus,
   onOpenApparatusDialog,
+  onOpenTechnicalElementsDialog,
   selectedRotationIds,
   shouldReopenApparatusHandling = false,
   onApparatusHandlingReopened,
@@ -467,6 +469,7 @@ export const RotationSelectionDialog = ({
         onSkip={handleSkipApparatusHandling}
         apparatus={apparatus}
         onOpenApparatusDialog={onOpenApparatusDialog}
+        onOpenTechnicalElementsDialog={onOpenTechnicalElementsDialog}
         sourceElementType="rotation"
       />
 

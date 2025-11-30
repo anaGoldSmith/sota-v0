@@ -30,6 +30,7 @@ interface JumpSelectionDialogProps {
   onSelectJump: (jump: Jump, withApparatusHandling?: boolean, modifyingElementId?: string) => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
+  onOpenTechnicalElementsDialog: () => void;
   selectedJumpIds?: Set<string>;
   shouldReopenApparatusHandling?: boolean;
   onApparatusHandlingReopened?: () => void;
@@ -49,6 +50,7 @@ export const JumpSelectionDialog = ({
   onSelectJump,
   apparatus,
   onOpenApparatusDialog,
+  onOpenTechnicalElementsDialog,
   selectedJumpIds,
   shouldReopenApparatusHandling = false,
   onApparatusHandlingReopened,
@@ -458,6 +460,7 @@ export const JumpSelectionDialog = ({
         onSkip={handleSkipApparatusHandling}
         apparatus={apparatus}
         onOpenApparatusDialog={onOpenApparatusDialog}
+        onOpenTechnicalElementsDialog={onOpenTechnicalElementsDialog}
         sourceElementType="jump"
       />
 
