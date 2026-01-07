@@ -84,7 +84,7 @@ const DynamicElementsRisk = () => {
           <div className="space-y-4">
             <Button variant="outline" className="w-full h-16 text-lg hover:scale-[1.02] transition-transform" onClick={handleSelectStandardRisk}>Select Standard Risk of 0.2</Button>
             
-            <Button variant="outline" className="w-full h-16 text-lg hover:scale-[1.02] transition-transform" onClick={handleCreateOwnRisk}>Create RiskwithExtra</Button>
+            <Button variant="outline" className="w-full h-16 text-lg hover:scale-[1.02] transition-transform" onClick={handleCreateOwnRisk}>Create Risk with Extra Criteria</Button>
           </div>
         </div>
       </main>
