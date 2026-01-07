@@ -972,7 +972,7 @@ const RoutineCalculator = () => {
               <Button 
                 variant="outline"
                 className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
-                onClick={() => setActiveCategory(activeCategory === "dynamic" ? null : "dynamic")}
+                onClick={() => navigate("/dynamic-elements-risk")}
               >
                 <span className="text-lg font-semibold mr-2">+</span> Dynamic Element (R)
               </Button>
@@ -986,11 +986,6 @@ const RoutineCalculator = () => {
               </Button>
             </div>
 
-            {activeCategory === "dynamic" && (
-              <div className="pt-4 text-center text-muted-foreground">
-                Dynamic Element configuration coming soon
-              </div>
-            )}
             
             {activeCategory === "dance" && (
               <div className="pt-4 text-center text-muted-foreground">
