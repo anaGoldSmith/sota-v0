@@ -60,7 +60,7 @@ const DynamicElementsRisk = () => {
                   <div>
                     <p className="font-semibold mb-2">Risk Value</p>
                     <ul className="list-disc pl-6 space-y-1">
-                      <li>The base value of a standard risk with two base rotation is 0.2 points</li>
+                      <li>The base value of a standard risk with two base rotations is 0.2 points</li>
                       <li>Each base rotation must be a full 360°</li>
                       <li>The value of Risk can be increased by using additional criteria that may be performed during the throw of the apparatus, under the flight, and/or during the catch of the apparatus</li>
                     </ul>
@@ -69,7 +69,7 @@ const DynamicElementsRisk = () => {
                   <div>
                     <p className="font-semibold mb-2">Important Rules</p>
                     <ul className="list-disc pl-6 space-y-1">
-                      <li>At least two base rotations under the flight must be performed to validate a Risk</li>
+                      <li>To validate a Risk, at least two base rotations of 360° must be performed under the flight</li>
                       <li>Rotations can be performed around any axis, with or without passing to the floor</li>
                       <li>The two base rotations must be continuous, without additional steps between base rotations</li>
                       
@@ -84,7 +84,7 @@ const DynamicElementsRisk = () => {
           <div className="space-y-4">
             <Button variant="outline" className="w-full h-16 text-lg hover:scale-[1.02] transition-transform" onClick={handleSelectStandardRisk}>Select Standard Risk of 0.2</Button>
             
-            <Button variant="outline" className="w-full h-16 text-lg hover:scale-[1.02] transition-transform" onClick={handleCreateOwnRisk}>Create Your Own Risk</Button>
+            <Button variant="outline" className="w-full h-16 text-lg hover:scale-[1.02] transition-transform" onClick={handleCreateOwnRisk}>Create RiskwithExtra</Button>
           </div>
         </div>
       </main>
