@@ -44,23 +44,36 @@ const DynamicElementsRisk = () => {
             <CardHeader>
               <CardTitle>Description</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p>Here you can create dynamic elements with rotations, naming Risks.</p>
+            <CardContent className="space-y-6">
+              <p>Here you can create dynamic elements with rotations, called Risks.</p>
               
               <div>
-                <p>A valid risk consists of 3 parts:</p>
-                <ul className="list-none pl-0 mt-1">
-                  <li>A High throw of apparatus</li>
-                  <li>2 base rotations</li>
-                  <li>A catch of apparatus after rotations.</li>
+                <p className="font-medium mb-2">A valid Risk must include all three of the following parts:</p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>A high throw of the apparatus</li>
+                  <li>Two base rotations</li>
+                  <li>A catch of the apparatus after the rotations</li>
                 </ul>
               </div>
               
-              <p>The base value of Risk (minimum 2 base rotations with a complete 360° for each rotation) is 0.20 p.</p>
+              <div>
+                <p className="font-semibold mb-2">Risk Value</p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>The base value of a Risk is 0.20 points</li>
+                  <li>This value is awarded for a minimum of two base rotations</li>
+                  <li>Each base rotation must be a full 360°</li>
+                </ul>
+              </div>
               
-              <p>
-                Note that a minimum of two base rotations (around any axis/with or without passing on the floor) must be performed to make a risk valid. The 2 base rotations must be performed <strong>without any additional step(s)</strong> between the base rotations to validate the risk.
-              </p>
+              <div>
+                <p className="font-semibold mb-2">Important Rules</p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>At least two base rotations must be performed to validate a Risk</li>
+                  <li>Rotations can be performed around any axis, with or without passing on the floor</li>
+                  <li>The two base rotations must be continuous</li>
+                  <li>No additional steps are allowed between the two base rotations</li>
+                </ul>
+              </div>
             </CardContent>
           </Card>
 
