@@ -61,8 +61,8 @@ const DynamicElementsRisk = () => {
                     <p className="font-semibold mb-2">Risk Value</p>
                     <ul className="list-disc pl-6 space-y-1">
                       <li>The base value of a standard risk with two base rotation is 0.2 points</li>
-                      
                       <li>Each base rotation must be a full 360°</li>
+                      <li>The value of Risk can be increased by using additional criteria that may be performed during the throw of the apparatus, under the flight, and/or during the catch of the apparatus</li>
                     </ul>
                   </div>
                   
