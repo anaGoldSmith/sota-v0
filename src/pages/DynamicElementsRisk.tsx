@@ -73,7 +73,7 @@ const DynamicElementsRisk = () => {
                   <div>
                     <p className="font-semibold mb-2">Risk Value</p>
                     <ul className="list-disc pl-6 space-y-1">
-                      <li>The base value of a Risk is 0.20 points</li>
+                      <li>The base value of a standard risk with two base rotation is 0.2 points</li>
                       <li>This value is awarded for a minimum of two base rotations</li>
                       <li>Each base rotation must be a full 360°</li>
                     </ul>
