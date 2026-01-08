@@ -11,7 +11,7 @@ const DynamicElementsRisk = () => {
     navigate("/standard-risks");
   };
   const handleCreateOwnRisk = () => {
-    // TODO: Implement custom risk creation
+    navigate("/create-custom-risk");
   };
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Header */}
