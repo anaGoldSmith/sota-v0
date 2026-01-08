@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Upload, FileText } from "lucide-react";
+import { ArrowLeft, Upload, FileText, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,10 +13,16 @@ const DynamicElementsConfiguration = () => {
   const [uploadingCatches, setUploadingCatches] = useState(false);
   const [uploadingThrows, setUploadingThrows] = useState(false);
   const [uploadingGeneralCriteria, setUploadingGeneralCriteria] = useState(false);
+  const [uploadingCatchesSymbols, setUploadingCatchesSymbols] = useState(false);
+  const [uploadingThrowsSymbols, setUploadingThrowsSymbols] = useState(false);
+  const [uploadingGeneralCriteriaSymbols, setUploadingGeneralCriteriaSymbols] = useState(false);
   
   const catchesInputRef = useRef<HTMLInputElement>(null);
   const throwsInputRef = useRef<HTMLInputElement>(null);
   const generalCriteriaInputRef = useRef<HTMLInputElement>(null);
+  const catchesSymbolsInputRef = useRef<HTMLInputElement>(null);
+  const throwsSymbolsInputRef = useRef<HTMLInputElement>(null);
+  const generalCriteriaSymbolsInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -82,6 +88,92 @@ const DynamicElementsConfiguration = () => {
     }
   };
 
+  const handleSymbolsUpload = async (
+    files: FileList,
+    tableName: 'dynamic_catches' | 'dynamic_throws' | 'dynamic_general_criteria',
+    setUploading: (val: boolean) => void,
+    entityName: string
+  ) => {
+    setUploading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please log in to upload symbols");
+        return;
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const file of Array.from(files)) {
+        const fileName = file.name;
+        const code = fileName.replace(/\.[^/.]+$/, ""); // Remove extension to get code
+
+        // Check if a record with this code exists
+        const { data: existingRecord, error: queryError } = await supabase
+          .from(tableName)
+          .select('id, code')
+          .eq('code', code)
+          .maybeSingle();
+
+        if (queryError) {
+          console.error(`Error checking for ${code}:`, queryError);
+          errorCount++;
+          continue;
+        }
+
+        if (!existingRecord) {
+          console.warn(`No ${entityName} found with code: ${code}`);
+          errorCount++;
+          continue;
+        }
+
+        // Upload to storage
+        const filePath = `${tableName}/${code}/${fileName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('dynamic-element-symbols')
+          .upload(filePath, file, { upsert: true });
+
+        if (uploadError) {
+          console.error(`Error uploading symbol for ${code}:`, uploadError);
+          errorCount++;
+          continue;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('dynamic-element-symbols')
+          .getPublicUrl(filePath);
+
+        // Update the record with the symbol URL
+        const { error: updateError } = await supabase
+          .from(tableName)
+          .update({ symbol_image: publicUrl })
+          .eq('code', code);
+
+        if (updateError) {
+          console.error(`Error updating ${code} with symbol:`, updateError);
+          errorCount++;
+          continue;
+        }
+
+        successCount++;
+      }
+
+      if (successCount > 0) {
+        toast.success(`Successfully uploaded ${successCount} ${entityName} symbol(s)`);
+      }
+      if (errorCount > 0) {
+        toast.warning(`${errorCount} symbol(s) could not be matched or uploaded`);
+      }
+    } catch (error) {
+      console.error(`Error uploading ${entityName} symbols:`, error);
+      toast.error(`Failed to upload ${entityName} symbols`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -112,7 +204,9 @@ const DynamicElementsConfiguration = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="grid gap-6 md:grid-cols-3">
+        {/* CSV Upload Section */}
+        <h2 className="text-xl font-semibold mb-4 text-foreground">CSV Data Import</h2>
+        <div className="grid gap-6 md:grid-cols-3 mb-8">
           {/* Catches CSV Upload */}
           <Card>
             <CardHeader>
@@ -217,6 +311,128 @@ const DynamicElementsConfiguration = () => {
               >
                 <Upload className="h-4 w-4 mr-2" />
                 {uploadingGeneralCriteria ? "Uploading..." : "Upload General Criteria CSV"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Symbols Upload Section */}
+        <h2 className="text-xl font-semibold mb-4 text-foreground">Symbol Images Upload</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Upload symbol images with filenames matching the code (e.g., "C1.png" for code "C1"). 
+          Multiple files can be selected at once.
+        </p>
+        <div className="grid gap-6 md:grid-cols-3">
+          {/* Catches Symbols Upload */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Image className="h-8 w-8 text-primary" />
+                <CardTitle>Catches Symbols</CardTitle>
+              </div>
+              <CardDescription>
+                Upload images named by code (e.g., C1.png)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                ref={catchesSymbolsInputRef}
+                className="hidden"
+                onChange={(e) => {
+                  const files = e.target.files;
+                  if (files && files.length > 0) {
+                    handleSymbolsUpload(files, 'dynamic_catches', setUploadingCatchesSymbols, 'catches');
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <Button
+                onClick={() => catchesSymbolsInputRef.current?.click()}
+                disabled={uploadingCatchesSymbols}
+                className="w-full"
+                variant="outline"
+              >
+                <Image className="h-4 w-4 mr-2" />
+                {uploadingCatchesSymbols ? "Uploading..." : "Upload Catches Symbols"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Throws Symbols Upload */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Image className="h-8 w-8 text-primary" />
+                <CardTitle>Throws Symbols</CardTitle>
+              </div>
+              <CardDescription>
+                Upload images named by code (e.g., T1.png)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                ref={throwsSymbolsInputRef}
+                className="hidden"
+                onChange={(e) => {
+                  const files = e.target.files;
+                  if (files && files.length > 0) {
+                    handleSymbolsUpload(files, 'dynamic_throws', setUploadingThrowsSymbols, 'throws');
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <Button
+                onClick={() => throwsSymbolsInputRef.current?.click()}
+                disabled={uploadingThrowsSymbols}
+                className="w-full"
+                variant="outline"
+              >
+                <Image className="h-4 w-4 mr-2" />
+                {uploadingThrowsSymbols ? "Uploading..." : "Upload Throws Symbols"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* General Criteria Symbols Upload */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Image className="h-8 w-8 text-primary" />
+                <CardTitle>General Criteria Symbols</CardTitle>
+              </div>
+              <CardDescription>
+                Upload images named by code (e.g., GC1.png)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                ref={generalCriteriaSymbolsInputRef}
+                className="hidden"
+                onChange={(e) => {
+                  const files = e.target.files;
+                  if (files && files.length > 0) {
+                    handleSymbolsUpload(files, 'dynamic_general_criteria', setUploadingGeneralCriteriaSymbols, 'general criteria');
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <Button
+                onClick={() => generalCriteriaSymbolsInputRef.current?.click()}
+                disabled={uploadingGeneralCriteriaSymbols}
+                className="w-full"
+                variant="outline"
+              >
+                <Image className="h-4 w-4 mr-2" />
+                {uploadingGeneralCriteriaSymbols ? "Uploading..." : "Upload General Criteria Symbols"}
               </Button>
             </CardContent>
           </Card>
