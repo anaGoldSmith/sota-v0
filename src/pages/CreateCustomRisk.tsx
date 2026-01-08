@@ -23,11 +23,21 @@ interface GeneralCriteria {
   symbol_image: string | null;
 }
 
-interface ThrowSpecific {
+interface DynamicThrow {
   id: string;
   code: string;
   name: string;
   apparatus: string;
+  symbol_image: string | null;
+}
+
+interface DynamicCatch {
+  id: string;
+  code: string;
+  name: string;
+  apparatus: string;
+  extra_criteria: string | null;
+  notes: string | null;
   symbol_image: string | null;
 }
 
@@ -42,10 +52,10 @@ const getApparatusCode = (apparatus: ApparatusType | null): string => {
   }
 };
 
-// Check if throw is applicable for current apparatus
-const isThrowApplicable = (throwItem: ThrowSpecific, apparatusCode: string): boolean => {
-  if (throwItem.apparatus === 'all') return true;
-  const codes = throwItem.apparatus.split('&').map(c => c.trim());
+// Check if item is applicable for current apparatus
+const isApplicableForApparatus = (item: { apparatus: string }, apparatusCode: string): boolean => {
+  if (item.apparatus === 'all') return true;
+  const codes = item.apparatus.split('&').map(c => c.trim());
   return codes.includes(apparatusCode);
 };
 
@@ -66,7 +76,8 @@ const CreateCustomRisk = () => {
   const [showThrowCriteriaDropdown, setShowThrowCriteriaDropdown] = useState(false);
   const [showCatchCriteriaDropdown, setShowCatchCriteriaDropdown] = useState(false);
   const [generalCriteria, setGeneralCriteria] = useState<GeneralCriteria[]>([]);
-  const [throwsSpecific, setThrowsSpecific] = useState<ThrowSpecific[]>([]);
+  const [dynamicThrows, setDynamicThrows] = useState<DynamicThrow[]>([]);
+  const [dynamicCatches, setDynamicCatches] = useState<DynamicCatch[]>([]);
   const [selectedThrowCriteria, setSelectedThrowCriteria] = useState<string[]>([]);
   const [selectedCatchCriteria, setSelectedCatchCriteria] = useState<string[]>([]);
   
@@ -76,8 +87,8 @@ const CreateCustomRisk = () => {
   const catchCriteriaDropdownRef = useRef<HTMLDivElement>(null);
 
   // Selected throw and catch
-  const [selectedThrow, setSelectedThrow] = useState<ThrowSpecific | null>(null);
-  const [selectedCatch, setSelectedCatch] = useState<ThrowSpecific | null>(null);
+  const [selectedThrow, setSelectedThrow] = useState<DynamicThrow | null>(null);
+  const [selectedCatch, setSelectedCatch] = useState<DynamicCatch | null>(null);
 
   // Risk components state
   const [throwCriteria, setThrowCriteria] = useState<CriteriaItem[]>([]);
@@ -143,19 +154,30 @@ const CreateCustomRisk = () => {
       }
     };
 
-    const loadThrowsSpecific = async () => {
+    const loadDynamicThrows = async () => {
       const { data, error } = await supabase
-        .from('r_throws_specific')
+        .from('dynamic_throws')
         .select('*');
       
       if (data && !error) {
-        setThrowsSpecific(data);
+        setDynamicThrows(data);
+      }
+    };
+
+    const loadDynamicCatches = async () => {
+      const { data, error } = await supabase
+        .from('dynamic_catches')
+        .select('*');
+      
+      if (data && !error) {
+        setDynamicCatches(data);
       }
     };
     
     loadSymbols();
     loadGeneralCriteria();
-    loadThrowsSpecific();
+    loadDynamicThrows();
+    loadDynamicCatches();
   }, []);
 
   // Update selected criteria based on current throw/catch criteria
@@ -169,9 +191,13 @@ const CreateCustomRisk = () => {
     setSelectedCatchCriteria(catchCodes);
   }, [catchCriteria]);
 
-  // Filter throws based on apparatus
-  const filteredThrows = throwsSpecific.filter(t => 
-    apparatusCode ? isThrowApplicable(t, apparatusCode) : true
+  // Filter throws and catches based on apparatus
+  const filteredThrows = dynamicThrows.filter(t => 
+    apparatusCode ? isApplicableForApparatus(t, apparatusCode) : true
+  );
+
+  const filteredCatches = dynamicCatches.filter(c => 
+    apparatusCode ? isApplicableForApparatus(c, apparatusCode) : true
   );
 
   const handleAddRotation = () => {
@@ -189,12 +215,12 @@ const CreateCustomRisk = () => {
     }
   };
 
-  const handleSelectThrow = (throwItem: ThrowSpecific) => {
+  const handleSelectThrow = (throwItem: DynamicThrow) => {
     setSelectedThrow(throwItem);
     setShowThrowDropdown(false);
   };
 
-  const handleSelectCatch = (catchItem: ThrowSpecific) => {
+  const handleSelectCatch = (catchItem: DynamicCatch) => {
     setSelectedCatch(catchItem);
     setShowCatchDropdown(false);
   };
@@ -621,12 +647,12 @@ const CreateCustomRisk = () => {
                   
                   {showCatchDropdown && (
                     <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                      {filteredThrows.length === 0 ? (
+                      {filteredCatches.length === 0 ? (
                         <div className="p-4 text-center text-muted-foreground">
                           No catches available for this apparatus
                         </div>
                       ) : (
-                        filteredThrows.map((catchItem) => (
+                        filteredCatches.map((catchItem) => (
                           <div
                             key={catchItem.id}
                             className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
