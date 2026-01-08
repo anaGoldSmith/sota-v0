@@ -69,7 +69,7 @@ const StandardRisks = () => {
 
   const handleCreateOwnRisk = () => {
     navigate("/routine-calculator", { state: { newRisk: savedRiskData } });
-    // TODO: Navigate to custom risk creator after saving
+    setTimeout(() => navigate("/create-custom-risk"), 100);
   };
 
   const handleGoToCalculator = () => {
