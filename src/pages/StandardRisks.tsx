@@ -11,14 +11,28 @@ const StandardRisks = () => {
 
   useEffect(() => {
     const loadSymbols = async () => {
-      const symbolCodes = ["R2", "Thr1", "baseRotations", "Catch 1"];
+      const symbolCodes = ["R2", "Thr1", "baseRotations", "Catch1"];
+      const extensions = [".png", ".jpg", ".jpeg", ".svg"];
       const symbolUrls: Record<string, string> = {};
       
+      // List files in the other_risks folder to find actual filenames
+      const { data: files } = await supabase.storage
+        .from("dynamic-element-symbols")
+        .list("other_risks");
+      
       for (const code of symbolCodes) {
-        const { data } = supabase.storage
-          .from("dynamic-element-symbols")
-          .getPublicUrl(`other_risks/${code}.png`);
-        symbolUrls[code] = data.publicUrl;
+        // Try to find matching file with any extension
+        const matchingFile = files?.find(f => {
+          const nameWithoutExt = f.name.replace(/\.[^/.]+$/, "");
+          return nameWithoutExt === code || nameWithoutExt === code.replace(" ", "");
+        });
+        
+        if (matchingFile) {
+          const { data } = supabase.storage
+            .from("dynamic-element-symbols")
+            .getPublicUrl(`other_risks/${matchingFile.name}`);
+          symbolUrls[code] = data.publicUrl;
+        }
       }
       
       setSymbols(symbolUrls);
@@ -60,15 +74,15 @@ const StandardRisks = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Risk Label */}
-          <div className="text-center flex items-center justify-center gap-3">
-            <h2 className="text-3xl font-bold text-primary">
-              R<sub className="text-xl">2</sub>
+          <div className="text-center flex items-center justify-center gap-2">
+            <h2 className="text-4xl font-bold text-primary flex items-baseline">
+              R<sub className="text-2xl">2</sub>
             </h2>
             {symbols["R2"] && (
               <img 
                 src={symbols["R2"]} 
                 alt="R2 Symbol" 
-                className="h-10 w-10 object-contain"
+                className="h-12 w-auto object-contain"
                 onError={(e) => (e.currentTarget.style.display = 'none')}
               />
             )}
@@ -141,9 +155,9 @@ const StandardRisks = () => {
               {/* Standard Catch Row */}
               <div className="flex items-center">
                 <div className="w-16 flex justify-center py-4">
-                  {symbols["Catch 1"] ? (
+                  {symbols["Catch1"] ? (
                     <img 
-                      src={symbols["Catch 1"]} 
+                      src={symbols["Catch1"]} 
                       alt="Standard Catch" 
                       className="h-8 w-8 object-contain"
                       onError={(e) => (e.currentTarget.style.display = 'none')}
