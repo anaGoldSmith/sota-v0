@@ -11,29 +11,30 @@ const StandardRisks = () => {
 
   useEffect(() => {
     const loadSymbols = async () => {
-      const symbolCodes = ["R2", "Thr1", "baseRotations", "Catch1"];
-      const extensions = [".png", ".jpg", ".jpeg", ".svg"];
       const symbolUrls: Record<string, string> = {};
       
-      // List files in the other_risks folder to find actual filenames
-      const { data: files } = await supabase.storage
+      // R2 and baseRotations from other_risks folder
+      const { data: r2Data } = supabase.storage
         .from("dynamic-element-symbols")
-        .list("other_risks");
+        .getPublicUrl("other_risks/R2.png");
+      symbolUrls["R2"] = r2Data.publicUrl;
       
-      for (const code of symbolCodes) {
-        // Try to find matching file with any extension
-        const matchingFile = files?.find(f => {
-          const nameWithoutExt = f.name.replace(/\.[^/.]+$/, "");
-          return nameWithoutExt === code || nameWithoutExt === code.replace(" ", "");
-        });
-        
-        if (matchingFile) {
-          const { data } = supabase.storage
-            .from("dynamic-element-symbols")
-            .getPublicUrl(`other_risks/${matchingFile.name}`);
-          symbolUrls[code] = data.publicUrl;
-        }
-      }
+      const { data: rotationsData } = supabase.storage
+        .from("dynamic-element-symbols")
+        .getPublicUrl("other_risks/baseRotations.png");
+      symbolUrls["baseRotations"] = rotationsData.publicUrl;
+      
+      // Thr1 from dynamic_throws folder
+      const { data: throwData } = supabase.storage
+        .from("dynamic-element-symbols")
+        .getPublicUrl("dynamic_throws/Thr1.png");
+      symbolUrls["Thr1"] = throwData.publicUrl;
+      
+      // Catch1 from dynamic_catches folder
+      const { data: catchData } = supabase.storage
+        .from("dynamic-element-symbols")
+        .getPublicUrl("dynamic_catches/Catch1.png");
+      symbolUrls["Catch1"] = catchData.publicUrl;
       
       setSymbols(symbolUrls);
     };
