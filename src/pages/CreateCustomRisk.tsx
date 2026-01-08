@@ -317,7 +317,7 @@ const CreateCustomRisk = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {throwCriteria.map((item, index) => (
+              {throwCriteria.map((item) => (
                 <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
                   <div className="w-16 flex justify-center py-4">
                     {item.symbol ? (
@@ -341,19 +341,21 @@ const CreateCustomRisk = () => {
                   <div className="flex-1 py-4 px-4">
                     <span className="font-medium text-foreground">{item.name}</span>
                   </div>
-                  <div className="w-24 py-4 px-4 text-center border-l border-border">
+                  <div className="w-20 py-4 px-2 text-center border-l border-border">
                     <p className="font-semibold text-foreground">{item.value}</p>
                   </div>
-                  {item.code && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setThrowCriteria(throwCriteria.filter(t => t.id !== item.id))}
-                      className="mr-2 text-destructive hover:bg-destructive/10"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <div className="w-10 flex justify-center">
+                    {item.code && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setThrowCriteria(throwCriteria.filter(t => t.id !== item.id))}
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </CardContent>
@@ -376,7 +378,7 @@ const CreateCustomRisk = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {rotations.map((item, index) => (
+              {rotations.map((item) => (
                 <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
                   <div className="w-16 flex justify-center py-4">
                     {symbols["baseRotations"] ? (
@@ -393,19 +395,21 @@ const CreateCustomRisk = () => {
                   <div className="flex-1 py-4 px-4">
                     <span className="font-medium text-foreground">{item.name}</span>
                   </div>
-                  <div className="w-24 py-4 px-4 text-center border-l border-border">
+                  <div className="w-20 py-4 px-2 text-center border-l border-border">
                     <p className="font-semibold text-primary">{item.value}</p>
                   </div>
-                  {rotations.length > 2 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveRotation(item.id)}
-                      className="mr-2 text-destructive hover:bg-destructive/10"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <div className="w-10 flex justify-center">
+                    {rotations.length > 2 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveRotation(item.id)}
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </CardContent>
@@ -471,7 +475,7 @@ const CreateCustomRisk = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {catchCriteria.map((item, index) => (
+              {catchCriteria.map((item) => (
                 <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
                   <div className="w-16 flex justify-center py-4">
                     {item.symbol ? (
@@ -495,19 +499,21 @@ const CreateCustomRisk = () => {
                   <div className="flex-1 py-4 px-4">
                     <span className="font-medium text-foreground">{item.name}</span>
                   </div>
-                  <div className="w-24 py-4 px-4 text-center border-l border-border">
+                  <div className="w-20 py-4 px-2 text-center border-l border-border">
                     <p className="font-semibold text-foreground">{item.value}</p>
                   </div>
-                  {item.code && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setCatchCriteria(catchCriteria.filter(c => c.id !== item.id))}
-                      className="mr-2 text-destructive hover:bg-destructive/10"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <div className="w-10 flex justify-center">
+                    {item.code && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setCatchCriteria(catchCriteria.filter(c => c.id !== item.id))}
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </CardContent>
