@@ -8,7 +8,7 @@ const DynamicElementsRisk = () => {
   const navigate = useNavigate();
   const [isOverviewOpen, setIsOverviewOpen] = useState(true);
   const handleSelectStandardRisk = () => {
-    // TODO: Implement standard risk selection
+    navigate("/standard-risks");
   };
   const handleCreateOwnRisk = () => {
     // TODO: Implement custom risk creation
