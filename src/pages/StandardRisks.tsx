@@ -1,11 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ArrowUp, ArrowDown, Search } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const StandardRisks = () => {
   const navigate = useNavigate();
+  const [symbols, setSymbols] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const loadSymbols = async () => {
+      const symbolCodes = ["R2", "Thr1", "baseRotations", "Catch 1"];
+      const symbolUrls: Record<string, string> = {};
+      
+      for (const code of symbolCodes) {
+        const { data } = supabase.storage
+          .from("dynamic-element-symbols")
+          .getPublicUrl(`other_risks/${code}.png`);
+        symbolUrls[code] = data.publicUrl;
+      }
+      
+      setSymbols(symbolUrls);
+    };
+    
+    loadSymbols();
+  }, []);
 
   const handleSave = () => {
     // TODO: Save the standard risk and return to routine calculator
@@ -40,38 +60,71 @@ const StandardRisks = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Risk Label */}
-          <div className="text-center">
+          <div className="text-center flex items-center justify-center gap-3">
             <h2 className="text-3xl font-bold text-primary">
               R<sub className="text-xl">2</sub>
             </h2>
+            {symbols["R2"] && (
+              <img 
+                src={symbols["R2"]} 
+                alt="R2 Symbol" 
+                className="h-10 w-10 object-contain"
+                onError={(e) => (e.currentTarget.style.display = 'none')}
+              />
+            )}
           </div>
 
           {/* Risk Components Table */}
           <Card className="border-primary/20 shadow-md">
             <CardContent className="p-0">
+              {/* Table Header */}
+              <div className="flex items-center border-b border-border bg-muted/30">
+                <div className="w-16 py-3 px-4 text-center">
+                  <span className="text-sm font-semibold text-muted-foreground">Symbol</span>
+                </div>
+                <div className="flex-1 py-3 px-4">
+                  <span className="text-sm font-semibold text-muted-foreground">Risk Components</span>
+                </div>
+                <div className="w-24 py-3 px-4 text-center border-l border-border">
+                  <span className="text-sm font-semibold text-muted-foreground">Value</span>
+                </div>
+              </div>
+
               {/* Standard Throw Row */}
               <div className="flex items-center border-b border-border">
-                <div className="w-12 flex justify-center py-4">
-                  <ArrowUp className="h-5 w-5 text-primary" />
+                <div className="w-16 flex justify-center py-4">
+                  {symbols["Thr1"] ? (
+                    <img 
+                      src={symbols["Thr1"]} 
+                      alt="Standard Throw" 
+                      className="h-8 w-8 object-contain"
+                      onError={(e) => (e.currentTarget.style.display = 'none')}
+                    />
+                  ) : (
+                    <div className="h-8 w-8 bg-muted rounded" />
+                  )}
                 </div>
                 <div className="flex-1 py-4 px-4">
                   <span className="font-medium text-foreground">Standard Throw</span>
                 </div>
                 <div className="w-24 py-4 px-4 text-center border-l border-border">
-                  <span className="text-sm text-muted-foreground">Value</span>
                   <p className="font-semibold text-foreground">0</p>
                 </div>
               </div>
 
               {/* Base Rotations Row */}
               <div className="flex items-center border-b border-border bg-secondary/10">
-                <div className="w-12 flex justify-center py-4">
-                  <div className="flex flex-col gap-0.5">
-                    <div className="w-4 h-0.5 bg-primary"></div>
-                    <div className="w-4 h-0.5 bg-primary"></div>
-                    <div className="w-4 h-0.5 bg-primary"></div>
-                    <div className="w-4 h-0.5 bg-primary"></div>
-                  </div>
+                <div className="w-16 flex justify-center py-4">
+                  {symbols["baseRotations"] ? (
+                    <img 
+                      src={symbols["baseRotations"]} 
+                      alt="Base Rotations" 
+                      className="h-8 w-8 object-contain"
+                      onError={(e) => (e.currentTarget.style.display = 'none')}
+                    />
+                  ) : (
+                    <div className="h-8 w-8 bg-muted rounded" />
+                  )}
                 </div>
                 <div className="flex-1 py-4 px-4">
                   <span className="font-medium text-foreground">Base Rotations</span>
@@ -81,21 +134,28 @@ const StandardRisks = () => {
                   </div>
                 </div>
                 <div className="w-24 py-4 px-4 text-center border-l border-border">
-                  <span className="text-sm text-muted-foreground">Value</span>
                   <p className="font-semibold text-primary">0.2</p>
                 </div>
               </div>
 
               {/* Standard Catch Row */}
               <div className="flex items-center">
-                <div className="w-12 flex justify-center py-4">
-                  <ArrowDown className="h-5 w-5 text-primary" />
+                <div className="w-16 flex justify-center py-4">
+                  {symbols["Catch 1"] ? (
+                    <img 
+                      src={symbols["Catch 1"]} 
+                      alt="Standard Catch" 
+                      className="h-8 w-8 object-contain"
+                      onError={(e) => (e.currentTarget.style.display = 'none')}
+                    />
+                  ) : (
+                    <div className="h-8 w-8 bg-muted rounded" />
+                  )}
                 </div>
                 <div className="flex-1 py-4 px-4">
                   <span className="font-medium text-foreground">Standard Catch</span>
                 </div>
                 <div className="w-24 py-4 px-4 text-center border-l border-border">
-                  <span className="text-sm text-muted-foreground">Value</span>
                   <p className="font-semibold text-foreground">0</p>
                 </div>
               </div>
