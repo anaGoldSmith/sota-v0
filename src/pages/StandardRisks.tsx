@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Search } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ArrowLeft, Search, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 const StandardRisks = () => {
   const navigate = useNavigate();
   const [symbols, setSymbols] = useState<Record<string, string>>({});
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [savedRiskData, setSavedRiskData] = useState<any>(null);
 
   useEffect(() => {
     const loadSymbols = async () => {
@@ -43,7 +46,6 @@ const StandardRisks = () => {
   }, []);
 
   const handleSave = () => {
-    // Pass the standard risk data to routine calculator
     const riskData = {
       type: 'R' as const,
       label: 'R₂',
@@ -55,7 +57,23 @@ const StandardRisks = () => {
         { name: 'Standard Catch', symbol: symbols["Catch1"], value: 0 },
       ]
     };
-    navigate("/routine-calculator", { state: { newRisk: riskData } });
+    setSavedRiskData(riskData);
+    setShowSuccessDialog(true);
+  };
+
+  const handleAddMoreStandardRisks = () => {
+    // Navigate to routine calculator with current risk, then come back
+    navigate("/routine-calculator", { state: { newRisk: savedRiskData } });
+    setTimeout(() => navigate("/standard-risks"), 100);
+  };
+
+  const handleCreateOwnRisk = () => {
+    navigate("/routine-calculator", { state: { newRisk: savedRiskData } });
+    // TODO: Navigate to custom risk creator after saving
+  };
+
+  const handleGoToCalculator = () => {
+    navigate("/routine-calculator", { state: { newRisk: savedRiskData } });
   };
 
   const handleCancel = () => {
@@ -206,6 +224,43 @@ const StandardRisks = () => {
           </div>
         </div>
       </main>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <CheckCircle className="h-16 w-16 text-green-500" />
+            </div>
+            <DialogTitle className="text-center text-xl">Risk Saved!</DialogTitle>
+            <DialogDescription className="text-center">
+              The standard risk R₂ has been saved to the routine calculator.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button 
+              className="w-full bg-primary hover:bg-primary/90"
+              onClick={handleAddMoreStandardRisks}
+            >
+              Add More Standard Risks
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full border-secondary text-secondary hover:bg-secondary/10"
+              onClick={handleCreateOwnRisk}
+            >
+              Create Your Own Risk
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={handleGoToCalculator}
+            >
+              Go to Routine Calculator
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
