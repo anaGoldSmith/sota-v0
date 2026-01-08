@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Plus, CheckCircle, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +12,14 @@ interface CriteriaItem {
   name: string;
   symbol?: string;
   value: number;
+  code?: string;
+}
+
+interface GeneralCriteria {
+  id: string;
+  code: string;
+  name: string;
+  symbol_image: string | null;
 }
 
 const CreateCustomRisk = () => {
@@ -18,6 +27,16 @@ const CreateCustomRisk = () => {
   const [symbols, setSymbols] = useState<Record<string, string>>({});
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [savedRiskData, setSavedRiskData] = useState<any>(null);
+  
+  // Dropdown states
+  const [showThrowDropdown, setShowThrowDropdown] = useState(false);
+  const [showCatchDropdown, setShowCatchDropdown] = useState(false);
+  const [generalCriteria, setGeneralCriteria] = useState<GeneralCriteria[]>([]);
+  const [selectedThrowCriteria, setSelectedThrowCriteria] = useState<string[]>([]);
+  const [selectedCatchCriteria, setSelectedCatchCriteria] = useState<string[]>([]);
+  
+  const throwDropdownRef = useRef<HTMLDivElement>(null);
+  const catchDropdownRef = useRef<HTMLDivElement>(null);
 
   // Risk components state
   const [throwCriteria, setThrowCriteria] = useState<CriteriaItem[]>([
@@ -39,6 +58,21 @@ const CreateCustomRisk = () => {
 
   // Calculate R level based on rotations count
   const rLevel = rotations.length;
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (throwDropdownRef.current && !throwDropdownRef.current.contains(event.target as Node)) {
+        setShowThrowDropdown(false);
+      }
+      if (catchDropdownRef.current && !catchDropdownRef.current.contains(event.target as Node)) {
+        setShowCatchDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const loadSymbols = async () => {
@@ -62,8 +96,30 @@ const CreateCustomRisk = () => {
       setSymbols(symbolUrls);
     };
     
+    const loadGeneralCriteria = async () => {
+      const { data, error } = await supabase
+        .from('dynamic_general_criteria')
+        .select('*');
+      
+      if (data && !error) {
+        setGeneralCriteria(data);
+      }
+    };
+    
     loadSymbols();
+    loadGeneralCriteria();
   }, []);
+
+  // Update selected criteria based on current throw/catch criteria
+  useEffect(() => {
+    const throwCodes = throwCriteria.filter(t => t.code).map(t => t.code!);
+    setSelectedThrowCriteria(throwCodes);
+  }, [throwCriteria]);
+
+  useEffect(() => {
+    const catchCodes = catchCriteria.filter(c => c.code).map(c => c.code!);
+    setSelectedCatchCriteria(catchCodes);
+  }, [catchCriteria]);
 
   const handleAddRotation = () => {
     const newRotation: CriteriaItem = {
@@ -80,22 +136,56 @@ const CreateCustomRisk = () => {
     }
   };
 
-  const handleAddThrowCriteria = () => {
-    const newCriteria: CriteriaItem = {
-      id: `thr${throwCriteria.length + 1}`,
-      name: 'Extra Throw Criteria',
-      value: 0.1
-    };
-    setThrowCriteria([...throwCriteria, newCriteria]);
+  const handleToggleThrowCriteria = (criteria: GeneralCriteria) => {
+    const isSelected = selectedThrowCriteria.includes(criteria.code);
+    
+    if (isSelected) {
+      // Remove from throw criteria
+      setThrowCriteria(throwCriteria.filter(t => t.code !== criteria.code));
+    } else {
+      // Add to throw criteria (max 2 extra criteria)
+      const extraCriteriaCount = throwCriteria.filter(t => t.code).length;
+      if (extraCriteriaCount < 2) {
+        const newCriteria: CriteriaItem = {
+          id: `thr_${criteria.code}`,
+          name: criteria.name,
+          symbol: criteria.symbol_image || undefined,
+          value: 0.1,
+          code: criteria.code
+        };
+        setThrowCriteria([...throwCriteria, newCriteria]);
+      }
+    }
   };
 
-  const handleAddCatchCriteria = () => {
-    const newCriteria: CriteriaItem = {
-      id: `catch${catchCriteria.length + 1}`,
-      name: 'Extra Catch Criteria',
-      value: 0.1
-    };
-    setCatchCriteria([...catchCriteria, newCriteria]);
+  const handleToggleCatchCriteria = (criteria: GeneralCriteria) => {
+    const isSelected = selectedCatchCriteria.includes(criteria.code);
+    
+    if (isSelected) {
+      // Remove from catch criteria
+      setCatchCriteria(catchCriteria.filter(c => c.code !== criteria.code));
+    } else {
+      // Add to catch criteria (max 2 extra criteria)
+      const extraCriteriaCount = catchCriteria.filter(c => c.code).length;
+      if (extraCriteriaCount < 2) {
+        const newCriteria: CriteriaItem = {
+          id: `catch_${criteria.code}`,
+          name: criteria.name,
+          symbol: criteria.symbol_image || undefined,
+          value: 0.1,
+          code: criteria.code
+        };
+        setCatchCriteria([...catchCriteria, newCriteria]);
+      }
+    }
+  };
+
+  const handleSaveThrowSelection = () => {
+    setShowThrowDropdown(false);
+  };
+
+  const handleSaveCatchSelection = () => {
+    setShowCatchDropdown(false);
   };
 
   const handleSave = () => {
@@ -106,9 +196,9 @@ const CreateCustomRisk = () => {
       value: totalValue,
       symbols: symbols,
       components: [
-        ...throwCriteria.map(t => ({ name: t.name, symbol: symbols["Thr1"], value: t.value })),
+        ...throwCriteria.map(t => ({ name: t.name, symbol: t.symbol || symbols["Thr1"], value: t.value })),
         ...rotations.map(r => ({ name: r.name, symbol: symbols["baseRotations"], value: r.value })),
-        ...catchCriteria.map(c => ({ name: c.name, symbol: symbols["Catch1"], value: c.value })),
+        ...catchCriteria.map(c => ({ name: c.name, symbol: c.symbol || symbols["Catch1"], value: c.value })),
       ]
     };
     setSavedRiskData(riskData);
@@ -172,22 +262,72 @@ const CreateCustomRisk = () => {
             <CardHeader className="pb-2 bg-secondary/10">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg text-primary">Throw Criteria</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleAddThrowCriteria}
-                  className="text-primary hover:bg-primary/10"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Criteria
-                </Button>
+                <div className="relative" ref={throwDropdownRef}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowThrowDropdown(!showThrowDropdown)}
+                    className="text-primary hover:bg-primary/10"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Criteria
+                  </Button>
+                  
+                  {/* Throw Dropdown Menu */}
+                  {showThrowDropdown && (
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
+                      <div className="p-3 border-b border-border">
+                        <span className="font-medium text-foreground">Select Criteria (max 2)</span>
+                      </div>
+                      <div className="p-2 space-y-1">
+                        {generalCriteria.map((criteria) => (
+                          <div
+                            key={criteria.id}
+                            className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
+                            onClick={() => handleToggleThrowCriteria(criteria)}
+                          >
+                            <Checkbox 
+                              checked={selectedThrowCriteria.includes(criteria.code)}
+                              disabled={!selectedThrowCriteria.includes(criteria.code) && selectedThrowCriteria.length >= 2}
+                            />
+                            {criteria.symbol_image && (
+                              <img 
+                                src={criteria.symbol_image} 
+                                alt={criteria.name}
+                                className="h-6 w-6 object-contain"
+                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                              />
+                            )}
+                            <span className="text-sm text-foreground">{criteria.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="p-2 border-t border-border">
+                        <Button
+                          size="sm"
+                          className="w-full bg-primary hover:bg-primary/90"
+                          onClick={handleSaveThrowSelection}
+                        >
+                          Save Selection
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               {throwCriteria.map((item, index) => (
                 <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
                   <div className="w-16 flex justify-center py-4">
-                    {symbols["Thr1"] ? (
+                    {item.symbol ? (
+                      <img 
+                        src={item.symbol} 
+                        alt={item.name} 
+                        className="h-8 w-8 object-contain"
+                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                      />
+                    ) : symbols["Thr1"] ? (
                       <img 
                         src={symbols["Thr1"]} 
                         alt="Throw" 
@@ -204,7 +344,7 @@ const CreateCustomRisk = () => {
                   <div className="w-24 py-4 px-4 text-center border-l border-border">
                     <p className="font-semibold text-foreground">{item.value}</p>
                   </div>
-                  {index > 0 && (
+                  {item.code && (
                     <Button
                       variant="ghost"
                       size="icon"
@@ -276,22 +416,72 @@ const CreateCustomRisk = () => {
             <CardHeader className="pb-2 bg-secondary/10">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg text-primary">Catch Criteria</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleAddCatchCriteria}
-                  className="text-primary hover:bg-primary/10"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Criteria
-                </Button>
+                <div className="relative" ref={catchDropdownRef}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCatchDropdown(!showCatchDropdown)}
+                    className="text-primary hover:bg-primary/10"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Criteria
+                  </Button>
+                  
+                  {/* Catch Dropdown Menu */}
+                  {showCatchDropdown && (
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
+                      <div className="p-3 border-b border-border">
+                        <span className="font-medium text-foreground">Select Criteria (max 2)</span>
+                      </div>
+                      <div className="p-2 space-y-1">
+                        {generalCriteria.map((criteria) => (
+                          <div
+                            key={criteria.id}
+                            className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
+                            onClick={() => handleToggleCatchCriteria(criteria)}
+                          >
+                            <Checkbox 
+                              checked={selectedCatchCriteria.includes(criteria.code)}
+                              disabled={!selectedCatchCriteria.includes(criteria.code) && selectedCatchCriteria.length >= 2}
+                            />
+                            {criteria.symbol_image && (
+                              <img 
+                                src={criteria.symbol_image} 
+                                alt={criteria.name}
+                                className="h-6 w-6 object-contain"
+                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                              />
+                            )}
+                            <span className="text-sm text-foreground">{criteria.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="p-2 border-t border-border">
+                        <Button
+                          size="sm"
+                          className="w-full bg-primary hover:bg-primary/90"
+                          onClick={handleSaveCatchSelection}
+                        >
+                          Save Selection
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               {catchCriteria.map((item, index) => (
                 <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
                   <div className="w-16 flex justify-center py-4">
-                    {symbols["Catch1"] ? (
+                    {item.symbol ? (
+                      <img 
+                        src={item.symbol} 
+                        alt={item.name} 
+                        className="h-8 w-8 object-contain"
+                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                      />
+                    ) : symbols["Catch1"] ? (
                       <img 
                         src={symbols["Catch1"]} 
                         alt="Catch" 
@@ -308,7 +498,7 @@ const CreateCustomRisk = () => {
                   <div className="w-24 py-4 px-4 text-center border-l border-border">
                     <p className="font-semibold text-foreground">{item.value}</p>
                   </div>
-                  {index > 0 && (
+                  {item.code && (
                     <Button
                       variant="ghost"
                       size="icon"
