@@ -95,13 +95,13 @@ const StandardRisks = () => {
               {/* Table Header */}
               <div className="flex items-center border-b border-border bg-muted/30">
                 <div className="w-16 py-3 px-4 text-center">
-                  <span className="text-base font-semibold text-foreground">Symbol</span>
+                  <span className="text-base font-semibold text-muted-foreground">Symbol</span>
                 </div>
                 <div className="flex-1 py-3 px-4">
-                  <span className="text-base font-semibold text-foreground">Risk Components</span>
+                  <span className="text-base font-semibold text-muted-foreground">Risk Components</span>
                 </div>
                 <div className="w-24 py-3 px-4 text-center border-l border-border">
-                  <span className="text-base font-semibold text-foreground">Value</span>
+                  <span className="text-base font-semibold text-muted-foreground">Value</span>
                 </div>
               </div>
 
