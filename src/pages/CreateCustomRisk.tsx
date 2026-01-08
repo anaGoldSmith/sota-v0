@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Plus, CheckCircle, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Plus, CheckCircle, X, ChevronDown } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { ApparatusType } from "@/types/apparatus";
 
 interface CriteriaItem {
   id: string;
@@ -22,38 +23,78 @@ interface GeneralCriteria {
   symbol_image: string | null;
 }
 
+interface ThrowSpecific {
+  id: string;
+  code: string;
+  name: string;
+  apparatus: string;
+  symbol_image: string | null;
+}
+
+// Map apparatus type to code
+const getApparatusCode = (apparatus: ApparatusType | null): string => {
+  switch (apparatus) {
+    case 'hoop': return 'H';
+    case 'ball': return 'B';
+    case 'clubs': return 'CL';
+    case 'ribbon': return 'R';
+    default: return '';
+  }
+};
+
+// Check if throw is applicable for current apparatus
+const isThrowApplicable = (throwItem: ThrowSpecific, apparatusCode: string): boolean => {
+  if (throwItem.apparatus === 'all') return true;
+  const codes = throwItem.apparatus.split('&').map(c => c.trim());
+  return codes.includes(apparatusCode);
+};
+
 const CreateCustomRisk = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [symbols, setSymbols] = useState<Record<string, string>>({});
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [savedRiskData, setSavedRiskData] = useState<any>(null);
   
+  // Get apparatus from navigation state
+  const apparatus = (location.state as { apparatus?: ApparatusType })?.apparatus;
+  const apparatusCode = getApparatusCode(apparatus || null);
+  
   // Dropdown states
   const [showThrowDropdown, setShowThrowDropdown] = useState(false);
   const [showCatchDropdown, setShowCatchDropdown] = useState(false);
+  const [showThrowCriteriaDropdown, setShowThrowCriteriaDropdown] = useState(false);
+  const [showCatchCriteriaDropdown, setShowCatchCriteriaDropdown] = useState(false);
   const [generalCriteria, setGeneralCriteria] = useState<GeneralCriteria[]>([]);
+  const [throwsSpecific, setThrowsSpecific] = useState<ThrowSpecific[]>([]);
   const [selectedThrowCriteria, setSelectedThrowCriteria] = useState<string[]>([]);
   const [selectedCatchCriteria, setSelectedCatchCriteria] = useState<string[]>([]);
   
   const throwDropdownRef = useRef<HTMLDivElement>(null);
   const catchDropdownRef = useRef<HTMLDivElement>(null);
+  const throwCriteriaDropdownRef = useRef<HTMLDivElement>(null);
+  const catchCriteriaDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Selected throw and catch
+  const [selectedThrow, setSelectedThrow] = useState<ThrowSpecific | null>(null);
+  const [selectedCatch, setSelectedCatch] = useState<ThrowSpecific | null>(null);
 
   // Risk components state
-  const [throwCriteria, setThrowCriteria] = useState<CriteriaItem[]>([
-    { id: 'thr1', name: 'Standard Throw', value: 0 }
-  ]);
+  const [throwCriteria, setThrowCriteria] = useState<CriteriaItem[]>([]);
   const [rotations, setRotations] = useState<CriteriaItem[]>([
     { id: 'rot1', name: 'Base Rotation 1', value: 0.1 },
     { id: 'rot2', name: 'Base Rotation 2', value: 0.1 }
   ]);
-  const [catchCriteria, setCatchCriteria] = useState<CriteriaItem[]>([
-    { id: 'catch1', name: 'Standard Catch', value: 0 }
-  ]);
+  const [catchCriteria, setCatchCriteria] = useState<CriteriaItem[]>([]);
 
   // Calculate total value
+  const throwValue = selectedThrow ? 0 : 0;
+  const catchValue = selectedCatch ? 0 : 0;
   const totalValue = 
+    throwValue +
     throwCriteria.reduce((sum, item) => sum + item.value, 0) +
     rotations.reduce((sum, item) => sum + item.value, 0) +
+    catchValue +
     catchCriteria.reduce((sum, item) => sum + item.value, 0);
 
   // Calculate R level based on rotations count
@@ -68,6 +109,12 @@ const CreateCustomRisk = () => {
       if (catchDropdownRef.current && !catchDropdownRef.current.contains(event.target as Node)) {
         setShowCatchDropdown(false);
       }
+      if (throwCriteriaDropdownRef.current && !throwCriteriaDropdownRef.current.contains(event.target as Node)) {
+        setShowThrowCriteriaDropdown(false);
+      }
+      if (catchCriteriaDropdownRef.current && !catchCriteriaDropdownRef.current.contains(event.target as Node)) {
+        setShowCatchCriteriaDropdown(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -77,16 +124,6 @@ const CreateCustomRisk = () => {
   useEffect(() => {
     const loadSymbols = async () => {
       const symbolUrls: Record<string, string> = {};
-      
-      const { data: throwData } = supabase.storage
-        .from("dynamic-element-symbols")
-        .getPublicUrl("dynamic_throws/Thr1.png");
-      symbolUrls["Thr1"] = throwData.publicUrl;
-      
-      const { data: catchData } = supabase.storage
-        .from("dynamic-element-symbols")
-        .getPublicUrl("dynamic_catches/Catch1.png");
-      symbolUrls["Catch1"] = catchData.publicUrl;
       
       const { data: rotationsData } = supabase.storage
         .from("dynamic-element-symbols")
@@ -105,9 +142,20 @@ const CreateCustomRisk = () => {
         setGeneralCriteria(data);
       }
     };
+
+    const loadThrowsSpecific = async () => {
+      const { data, error } = await supabase
+        .from('r_throws_specific')
+        .select('*');
+      
+      if (data && !error) {
+        setThrowsSpecific(data);
+      }
+    };
     
     loadSymbols();
     loadGeneralCriteria();
+    loadThrowsSpecific();
   }, []);
 
   // Update selected criteria based on current throw/catch criteria
@@ -120,6 +168,11 @@ const CreateCustomRisk = () => {
     const catchCodes = catchCriteria.filter(c => c.code).map(c => c.code!);
     setSelectedCatchCriteria(catchCodes);
   }, [catchCriteria]);
+
+  // Filter throws based on apparatus
+  const filteredThrows = throwsSpecific.filter(t => 
+    apparatusCode ? isThrowApplicable(t, apparatusCode) : true
+  );
 
   const handleAddRotation = () => {
     const newRotation: CriteriaItem = {
@@ -136,14 +189,22 @@ const CreateCustomRisk = () => {
     }
   };
 
+  const handleSelectThrow = (throwItem: ThrowSpecific) => {
+    setSelectedThrow(throwItem);
+    setShowThrowDropdown(false);
+  };
+
+  const handleSelectCatch = (catchItem: ThrowSpecific) => {
+    setSelectedCatch(catchItem);
+    setShowCatchDropdown(false);
+  };
+
   const handleToggleThrowCriteria = (criteria: GeneralCriteria) => {
     const isSelected = selectedThrowCriteria.includes(criteria.code);
     
     if (isSelected) {
-      // Remove from throw criteria
       setThrowCriteria(throwCriteria.filter(t => t.code !== criteria.code));
     } else {
-      // Add to throw criteria (max 2 extra criteria)
       const extraCriteriaCount = throwCriteria.filter(t => t.code).length;
       if (extraCriteriaCount < 2) {
         const newCriteria: CriteriaItem = {
@@ -162,10 +223,8 @@ const CreateCustomRisk = () => {
     const isSelected = selectedCatchCriteria.includes(criteria.code);
     
     if (isSelected) {
-      // Remove from catch criteria
       setCatchCriteria(catchCriteria.filter(c => c.code !== criteria.code));
     } else {
-      // Add to catch criteria (max 2 extra criteria)
       const extraCriteriaCount = catchCriteria.filter(c => c.code).length;
       if (extraCriteriaCount < 2) {
         const newCriteria: CriteriaItem = {
@@ -180,12 +239,12 @@ const CreateCustomRisk = () => {
     }
   };
 
-  const handleSaveThrowSelection = () => {
-    setShowThrowDropdown(false);
+  const handleSaveThrowCriteriaSelection = () => {
+    setShowThrowCriteriaDropdown(false);
   };
 
-  const handleSaveCatchSelection = () => {
-    setShowCatchDropdown(false);
+  const handleSaveCatchCriteriaSelection = () => {
+    setShowCatchCriteriaDropdown(false);
   };
 
   const handleSave = () => {
@@ -196,9 +255,11 @@ const CreateCustomRisk = () => {
       value: totalValue,
       symbols: symbols,
       components: [
-        ...throwCriteria.map(t => ({ name: t.name, symbol: t.symbol || symbols["Thr1"], value: t.value })),
+        ...(selectedThrow ? [{ name: selectedThrow.name, symbol: selectedThrow.symbol_image || '', value: 0 }] : []),
+        ...throwCriteria.map(t => ({ name: t.name, symbol: t.symbol || '', value: t.value })),
         ...rotations.map(r => ({ name: r.name, symbol: symbols["baseRotations"], value: r.value })),
-        ...catchCriteria.map(c => ({ name: c.name, symbol: c.symbol || symbols["Catch1"], value: c.value })),
+        ...(selectedCatch ? [{ name: selectedCatch.name, symbol: selectedCatch.symbol_image || '', value: 0 }] : []),
+        ...catchCriteria.map(c => ({ name: c.name, symbol: c.symbol || '', value: c.value })),
       ]
     };
     setSavedRiskData(riskData);
@@ -207,12 +268,12 @@ const CreateCustomRisk = () => {
 
   const handleAddMoreStandardRisks = () => {
     navigate("/routine-calculator", { state: { newRisk: savedRiskData } });
-    setTimeout(() => navigate("/standard-risks"), 100);
+    setTimeout(() => navigate("/standard-risks", { state: { apparatus } }), 100);
   };
 
   const handleCreateAnotherRisk = () => {
     navigate("/routine-calculator", { state: { newRisk: savedRiskData } });
-    setTimeout(() => navigate("/create-custom-risk"), 100);
+    setTimeout(() => navigate("/create-custom-risk", { state: { apparatus } }), 100);
   };
 
   const handleGoToCalculator = () => {
@@ -220,7 +281,7 @@ const CreateCustomRisk = () => {
   };
 
   const handleCancel = () => {
-    navigate("/dynamic-elements-risk");
+    navigate("/dynamic-elements-risk", { state: { apparatus } });
   };
 
   return (
@@ -231,7 +292,7 @@ const CreateCustomRisk = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/dynamic-elements-risk")}
+            onClick={() => navigate("/dynamic-elements-risk", { state: { apparatus } })}
             className="text-primary-foreground hover:bg-primary-foreground/20"
           >
             <ArrowLeft className="h-6 w-6" />
@@ -261,103 +322,174 @@ const CreateCustomRisk = () => {
           <Card className="border-primary/20 shadow-md">
             <CardHeader className="pb-2 bg-secondary/10">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg text-primary">Throw Criteria</CardTitle>
-                <div className="relative" ref={throwDropdownRef}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowThrowDropdown(!showThrowDropdown)}
-                    className="text-primary hover:bg-primary/10"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Criteria
-                  </Button>
-                  
-                  {/* Throw Dropdown Menu */}
-                  {showThrowDropdown && (
-                    <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
-                      <div className="p-3 border-b border-border">
-                        <span className="font-medium text-foreground">Select Criteria (max 2)</span>
-                      </div>
-                      <div className="p-2 space-y-1">
-                        {generalCriteria.map((criteria) => (
-                          <div
-                            key={criteria.id}
-                            className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
-                            onClick={() => handleToggleThrowCriteria(criteria)}
-                          >
-                            <Checkbox 
-                              checked={selectedThrowCriteria.includes(criteria.code)}
-                              disabled={!selectedThrowCriteria.includes(criteria.code) && selectedThrowCriteria.length >= 2}
-                            />
-                            {criteria.symbol_image && (
-                              <img 
-                                src={criteria.symbol_image} 
-                                alt={criteria.name}
-                                className="h-6 w-6 object-contain"
-                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                <CardTitle className="text-lg text-primary">Throw</CardTitle>
+                {selectedThrow && (
+                  <div className="relative" ref={throwCriteriaDropdownRef}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowThrowCriteriaDropdown(!showThrowCriteriaDropdown)}
+                      className="text-primary hover:bg-primary/10"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Criteria
+                    </Button>
+                    
+                    {showThrowCriteriaDropdown && (
+                      <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
+                        <div className="p-3 border-b border-border">
+                          <span className="font-medium text-foreground">Select Criteria (max 2)</span>
+                        </div>
+                        <div className="p-2 space-y-1">
+                          {generalCriteria.map((criteria) => (
+                            <div
+                              key={criteria.id}
+                              className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
+                              onClick={() => handleToggleThrowCriteria(criteria)}
+                            >
+                              <Checkbox 
+                                checked={selectedThrowCriteria.includes(criteria.code)}
+                                disabled={!selectedThrowCriteria.includes(criteria.code) && selectedThrowCriteria.length >= 2}
                               />
-                            )}
-                            <span className="text-sm text-foreground">{criteria.name}</span>
-                          </div>
-                        ))}
+                              {criteria.symbol_image && (
+                                <img 
+                                  src={criteria.symbol_image} 
+                                  alt={criteria.name}
+                                  className="h-6 w-6 object-contain"
+                                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                                />
+                              )}
+                              <span className="text-sm text-foreground">{criteria.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="p-2 border-t border-border">
+                          <Button
+                            size="sm"
+                            className="w-full bg-primary hover:bg-primary/90"
+                            onClick={handleSaveThrowCriteriaSelection}
+                          >
+                            Save Selection
+                          </Button>
+                        </div>
                       </div>
-                      <div className="p-2 border-t border-border">
-                        <Button
-                          size="sm"
-                          className="w-full bg-primary hover:bg-primary/90"
-                          onClick={handleSaveThrowSelection}
-                        >
-                          Save Selection
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {throwCriteria.map((item) => (
-                <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
-                  <div className="w-16 flex justify-center py-4">
-                    {item.symbol ? (
-                      <img 
-                        src={item.symbol} 
-                        alt={item.name} 
-                        className="h-8 w-8 object-contain"
-                        onError={(e) => (e.currentTarget.style.display = 'none')}
-                      />
-                    ) : symbols["Thr1"] ? (
-                      <img 
-                        src={symbols["Thr1"]} 
-                        alt="Throw" 
-                        className="h-8 w-8 object-contain"
-                        onError={(e) => (e.currentTarget.style.display = 'none')}
-                      />
-                    ) : (
-                      <div className="h-8 w-8 bg-muted rounded" />
-                    )}
-                  </div>
-                  <div className="flex-1 py-4 px-4">
-                    <span className="font-medium text-foreground">{item.name}</span>
-                  </div>
-                  <div className="w-20 py-4 px-2 text-center border-l border-border">
-                    <p className="font-semibold text-foreground">{item.value}</p>
-                  </div>
-                  <div className="w-10 flex justify-center">
-                    {item.code && (
+              {!selectedThrow ? (
+                <div className="p-4" ref={throwDropdownRef}>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between border-dashed border-2 border-primary/30 hover:border-primary/50 h-14"
+                    onClick={() => setShowThrowDropdown(!showThrowDropdown)}
+                  >
+                    <span className="text-muted-foreground">Select Throw</span>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                  
+                  {showThrowDropdown && (
+                    <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                      {filteredThrows.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground">
+                          No throws available for this apparatus
+                        </div>
+                      ) : (
+                        filteredThrows.map((throwItem) => (
+                          <div
+                            key={throwItem.id}
+                            className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                            onClick={() => handleSelectThrow(throwItem)}
+                          >
+                            {throwItem.symbol_image && (
+                              <img 
+                                src={throwItem.symbol_image} 
+                                alt={throwItem.name}
+                                className="h-8 w-8 object-contain"
+                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                              />
+                            )}
+                            <span className="text-foreground">{throwItem.name}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* Selected Throw Row */}
+                  <div className="flex items-center border-b border-border">
+                    <div className="w-16 flex justify-center py-4">
+                      {selectedThrow.symbol_image ? (
+                        <img 
+                          src={selectedThrow.symbol_image} 
+                          alt={selectedThrow.name} 
+                          className="h-8 w-8 object-contain"
+                          onError={(e) => (e.currentTarget.style.display = 'none')}
+                        />
+                      ) : (
+                        <div className="h-8 w-8 bg-muted rounded" />
+                      )}
+                    </div>
+                    <div className="flex-1 py-4 px-4">
+                      <span className="font-medium text-foreground">{selectedThrow.name}</span>
+                    </div>
+                    <div className="w-20 py-4 px-2 text-center border-l border-border">
+                      <p className="font-semibold text-foreground">0</p>
+                    </div>
+                    <div className="w-10 flex justify-center">
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setThrowCriteria(throwCriteria.filter(t => t.id !== item.id))}
+                        onClick={() => {
+                          setSelectedThrow(null);
+                          setThrowCriteria([]);
+                        }}
                         className="h-8 w-8 text-destructive hover:bg-destructive/10"
                       >
                         <X className="h-4 w-4" />
                       </Button>
-                    )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                  
+                  {/* Extra Throw Criteria */}
+                  {throwCriteria.map((item) => (
+                    <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
+                      <div className="w-16 flex justify-center py-4">
+                        {item.symbol ? (
+                          <img 
+                            src={item.symbol} 
+                            alt={item.name} 
+                            className="h-8 w-8 object-contain"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded" />
+                        )}
+                      </div>
+                      <div className="flex-1 py-4 px-4">
+                        <span className="font-medium text-foreground">{item.name}</span>
+                      </div>
+                      <div className="w-20 py-4 px-2 text-center border-l border-border">
+                        <p className="font-semibold text-foreground">{item.value}</p>
+                      </div>
+                      <div className="w-10 flex justify-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setThrowCriteria(throwCriteria.filter(t => t.id !== item.id))}
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -419,103 +551,174 @@ const CreateCustomRisk = () => {
           <Card className="border-primary/20 shadow-md">
             <CardHeader className="pb-2 bg-secondary/10">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg text-primary">Catch Criteria</CardTitle>
-                <div className="relative" ref={catchDropdownRef}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowCatchDropdown(!showCatchDropdown)}
-                    className="text-primary hover:bg-primary/10"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Criteria
-                  </Button>
-                  
-                  {/* Catch Dropdown Menu */}
-                  {showCatchDropdown && (
-                    <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
-                      <div className="p-3 border-b border-border">
-                        <span className="font-medium text-foreground">Select Criteria (max 2)</span>
-                      </div>
-                      <div className="p-2 space-y-1">
-                        {generalCriteria.map((criteria) => (
-                          <div
-                            key={criteria.id}
-                            className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
-                            onClick={() => handleToggleCatchCriteria(criteria)}
-                          >
-                            <Checkbox 
-                              checked={selectedCatchCriteria.includes(criteria.code)}
-                              disabled={!selectedCatchCriteria.includes(criteria.code) && selectedCatchCriteria.length >= 2}
-                            />
-                            {criteria.symbol_image && (
-                              <img 
-                                src={criteria.symbol_image} 
-                                alt={criteria.name}
-                                className="h-6 w-6 object-contain"
-                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                <CardTitle className="text-lg text-primary">Catch</CardTitle>
+                {selectedCatch && (
+                  <div className="relative" ref={catchCriteriaDropdownRef}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCatchCriteriaDropdown(!showCatchCriteriaDropdown)}
+                      className="text-primary hover:bg-primary/10"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Criteria
+                    </Button>
+                    
+                    {showCatchCriteriaDropdown && (
+                      <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
+                        <div className="p-3 border-b border-border">
+                          <span className="font-medium text-foreground">Select Criteria (max 2)</span>
+                        </div>
+                        <div className="p-2 space-y-1">
+                          {generalCriteria.map((criteria) => (
+                            <div
+                              key={criteria.id}
+                              className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
+                              onClick={() => handleToggleCatchCriteria(criteria)}
+                            >
+                              <Checkbox 
+                                checked={selectedCatchCriteria.includes(criteria.code)}
+                                disabled={!selectedCatchCriteria.includes(criteria.code) && selectedCatchCriteria.length >= 2}
                               />
-                            )}
-                            <span className="text-sm text-foreground">{criteria.name}</span>
-                          </div>
-                        ))}
+                              {criteria.symbol_image && (
+                                <img 
+                                  src={criteria.symbol_image} 
+                                  alt={criteria.name}
+                                  className="h-6 w-6 object-contain"
+                                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                                />
+                              )}
+                              <span className="text-sm text-foreground">{criteria.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="p-2 border-t border-border">
+                          <Button
+                            size="sm"
+                            className="w-full bg-primary hover:bg-primary/90"
+                            onClick={handleSaveCatchCriteriaSelection}
+                          >
+                            Save Selection
+                          </Button>
+                        </div>
                       </div>
-                      <div className="p-2 border-t border-border">
-                        <Button
-                          size="sm"
-                          className="w-full bg-primary hover:bg-primary/90"
-                          onClick={handleSaveCatchSelection}
-                        >
-                          Save Selection
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {catchCriteria.map((item) => (
-                <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
-                  <div className="w-16 flex justify-center py-4">
-                    {item.symbol ? (
-                      <img 
-                        src={item.symbol} 
-                        alt={item.name} 
-                        className="h-8 w-8 object-contain"
-                        onError={(e) => (e.currentTarget.style.display = 'none')}
-                      />
-                    ) : symbols["Catch1"] ? (
-                      <img 
-                        src={symbols["Catch1"]} 
-                        alt="Catch" 
-                        className="h-8 w-8 object-contain"
-                        onError={(e) => (e.currentTarget.style.display = 'none')}
-                      />
-                    ) : (
-                      <div className="h-8 w-8 bg-muted rounded" />
-                    )}
-                  </div>
-                  <div className="flex-1 py-4 px-4">
-                    <span className="font-medium text-foreground">{item.name}</span>
-                  </div>
-                  <div className="w-20 py-4 px-2 text-center border-l border-border">
-                    <p className="font-semibold text-foreground">{item.value}</p>
-                  </div>
-                  <div className="w-10 flex justify-center">
-                    {item.code && (
+              {!selectedCatch ? (
+                <div className="p-4" ref={catchDropdownRef}>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between border-dashed border-2 border-primary/30 hover:border-primary/50 h-14"
+                    onClick={() => setShowCatchDropdown(!showCatchDropdown)}
+                  >
+                    <span className="text-muted-foreground">Select Catch</span>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                  
+                  {showCatchDropdown && (
+                    <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                      {filteredThrows.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground">
+                          No catches available for this apparatus
+                        </div>
+                      ) : (
+                        filteredThrows.map((catchItem) => (
+                          <div
+                            key={catchItem.id}
+                            className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                            onClick={() => handleSelectCatch(catchItem)}
+                          >
+                            {catchItem.symbol_image && (
+                              <img 
+                                src={catchItem.symbol_image} 
+                                alt={catchItem.name}
+                                className="h-8 w-8 object-contain"
+                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                              />
+                            )}
+                            <span className="text-foreground">{catchItem.name}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* Selected Catch Row */}
+                  <div className="flex items-center border-b border-border">
+                    <div className="w-16 flex justify-center py-4">
+                      {selectedCatch.symbol_image ? (
+                        <img 
+                          src={selectedCatch.symbol_image} 
+                          alt={selectedCatch.name} 
+                          className="h-8 w-8 object-contain"
+                          onError={(e) => (e.currentTarget.style.display = 'none')}
+                        />
+                      ) : (
+                        <div className="h-8 w-8 bg-muted rounded" />
+                      )}
+                    </div>
+                    <div className="flex-1 py-4 px-4">
+                      <span className="font-medium text-foreground">{selectedCatch.name}</span>
+                    </div>
+                    <div className="w-20 py-4 px-2 text-center border-l border-border">
+                      <p className="font-semibold text-foreground">0</p>
+                    </div>
+                    <div className="w-10 flex justify-center">
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setCatchCriteria(catchCriteria.filter(c => c.id !== item.id))}
+                        onClick={() => {
+                          setSelectedCatch(null);
+                          setCatchCriteria([]);
+                        }}
                         className="h-8 w-8 text-destructive hover:bg-destructive/10"
                       >
                         <X className="h-4 w-4" />
                       </Button>
-                    )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                  
+                  {/* Extra Catch Criteria */}
+                  {catchCriteria.map((item) => (
+                    <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
+                      <div className="w-16 flex justify-center py-4">
+                        {item.symbol ? (
+                          <img 
+                            src={item.symbol} 
+                            alt={item.name} 
+                            className="h-8 w-8 object-contain"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded" />
+                        )}
+                      </div>
+                      <div className="flex-1 py-4 px-4">
+                        <span className="font-medium text-foreground">{item.name}</span>
+                      </div>
+                      <div className="w-20 py-4 px-2 text-center border-l border-border">
+                        <p className="font-semibold text-foreground">{item.value}</p>
+                      </div>
+                      <div className="w-10 flex justify-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setCatchCriteria(catchCriteria.filter(c => c.id !== item.id))}
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </CardContent>
           </Card>
 

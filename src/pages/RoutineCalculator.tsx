@@ -1075,7 +1075,7 @@ const RoutineCalculator = () => {
               <Button 
                 variant="outline"
                 className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
-                onClick={() => navigate("/dynamic-elements-risk")}
+                onClick={() => navigate("/dynamic-elements-risk", { state: { apparatus: selectedApparatus } })}
               >
                 <span className="text-lg font-semibold mr-2">+</span> Dynamic Element (R)
               </Button>

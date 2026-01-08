@@ -557,6 +557,36 @@ export type Database = {
         }
         Relationships: []
       }
+      r_throws_specific: {
+        Row: {
+          apparatus: string
+          code: string
+          created_at: string
+          id: string
+          name: string
+          symbol_image: string | null
+          updated_at: string
+        }
+        Insert: {
+          apparatus: string
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          symbol_image?: string | null
+          updated_at?: string
+        }
+        Update: {
+          apparatus?: string
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          symbol_image?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ribbon_da: {
         Row: {
           code: string

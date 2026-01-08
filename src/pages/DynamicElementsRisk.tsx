@@ -3,15 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ArrowLeft, Minus, Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { ApparatusType } from "@/types/apparatus";
+
 const DynamicElementsRisk = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isOverviewOpen, setIsOverviewOpen] = useState(true);
+  
+  // Get apparatus from navigation state
+  const apparatus = (location.state as { apparatus?: ApparatusType })?.apparatus;
+  
   const handleSelectStandardRisk = () => {
-    navigate("/standard-risks");
+    navigate("/standard-risks", { state: { apparatus } });
   };
   const handleCreateOwnRisk = () => {
-    navigate("/create-custom-risk");
+    navigate("/create-custom-risk", { state: { apparatus } });
   };
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Header */}
