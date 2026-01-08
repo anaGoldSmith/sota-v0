@@ -36,9 +36,10 @@ const SYMBOL_CATEGORIES = [
 ];
 
 const DYNAMIC_ELEMENTS_CATEGORIES = [
-  { name: 'Catches', bucket: 'dynamic-element-symbols', table: 'dynamic_catches', folder: 'dynamic_catches' },
-  { name: 'Throws', bucket: 'dynamic-element-symbols', table: 'dynamic_throws', folder: 'dynamic_throws' },
-  { name: 'General Criteria', bucket: 'dynamic-element-symbols', table: 'dynamic_general_criteria', folder: 'dynamic_general_criteria' },
+  { name: 'Catches', bucket: 'dynamic-element-symbols', table: 'dynamic_catches' as string | null, folder: 'dynamic_catches' },
+  { name: 'Throws', bucket: 'dynamic-element-symbols', table: 'dynamic_throws' as string | null, folder: 'dynamic_throws' },
+  { name: 'General Criteria', bucket: 'dynamic-element-symbols', table: 'dynamic_general_criteria' as string | null, folder: 'dynamic_general_criteria' },
+  { name: 'Other Risks Symbols', bucket: 'dynamic-element-symbols', table: null as string | null, folder: 'other_risks' },
 ];
 
 export default function SymbolManagement() {
@@ -101,7 +102,7 @@ export default function SymbolManagement() {
     setLoading(false);
   };
 
-  const loadSymbolsForCategory = async (bucket: string, table: string, folder: string | null): Promise<SymbolStatus[]> => {
+  const loadSymbolsForCategory = async (bucket: string, table: string | null, folder: string | null): Promise<SymbolStatus[]> => {
     try {
       // Get all files from storage bucket (with folder path if specified)
       const { data: files, error: storageError } = await supabase.storage
@@ -110,12 +111,16 @@ export default function SymbolManagement() {
 
       if (storageError) throw storageError;
 
-      // Get all records from database table
-      const { data: dbRecords, error: dbError } = await supabase
-        .from(table as any)
-        .select('code, symbol_image');
+      // Get all records from database table (only if table exists)
+      let dbRecords: any[] = [];
+      if (table) {
+        const { data, error: dbError } = await supabase
+          .from(table as any)
+          .select('code, symbol_image');
 
-      if (dbError) throw dbError;
+        if (dbError) throw dbError;
+        dbRecords = data || [];
+      }
 
       // Map files to their status
       const symbolStatuses: SymbolStatus[] = (files || [])
@@ -126,7 +131,7 @@ export default function SymbolManagement() {
             .from(bucket)
             .getPublicUrl(filePath);
 
-          const linkedRecord = (dbRecords || []).find((record: any) => 
+          const linkedRecord = dbRecords.find((record: any) => 
             record.symbol_image === publicUrl || record.symbol_image === file.name
           );
 
@@ -137,7 +142,8 @@ export default function SymbolManagement() {
               publicUrl
             },
             linkedCode: (linkedRecord as any)?.code || null,
-            status: linkedRecord ? 'synced' : 'orphaned'
+            // If no table, treat as synced (standalone files)
+            status: table ? (linkedRecord ? 'synced' : 'orphaned') : 'synced'
           };
         });
 
@@ -150,7 +156,7 @@ export default function SymbolManagement() {
 
   const handleDynamicSymbolUpload = async (
     files: FileList,
-    category: typeof DYNAMIC_ELEMENTS_CATEGORIES[0]
+    category: typeof DYNAMIC_ELEMENTS_CATEGORIES[number]
   ) => {
     setUploadingDynamic(prev => ({ ...prev, [category.folder]: true }));
     try {
@@ -161,55 +167,72 @@ export default function SymbolManagement() {
         const fileName = file.name;
         const code = fileName.replace(/\.[^/.]+$/, ""); // Remove extension to get code
 
-        // Check if a record with this code exists
-        const { data: existingRecord, error: queryError } = await supabase
-          .from(category.table as any)
-          .select('id, code')
-          .eq('code', code)
-          .maybeSingle();
+        // If category has a table, check if a record exists and update it
+        if (category.table) {
+          // Check if a record with this code exists
+          const { data: existingRecord, error: queryError } = await supabase
+            .from(category.table as any)
+            .select('id, code')
+            .eq('code', code)
+            .maybeSingle();
 
-        if (queryError) {
-          console.error(`Error checking for ${code}:`, queryError);
-          errorCount++;
-          continue;
+          if (queryError) {
+            console.error(`Error checking for ${code}:`, queryError);
+            errorCount++;
+            continue;
+          }
+
+          if (!existingRecord) {
+            console.warn(`No ${category.name} found with code: ${code}`);
+            errorCount++;
+            continue;
+          }
+
+          // Upload to storage
+          const filePath = `${category.folder}/${fileName}`;
+          const { error: uploadError } = await supabase.storage
+            .from(category.bucket)
+            .upload(filePath, file, { upsert: true });
+
+          if (uploadError) {
+            console.error(`Error uploading symbol for ${code}:`, uploadError);
+            errorCount++;
+            continue;
+          }
+
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from(category.bucket)
+            .getPublicUrl(filePath);
+
+          // Update the record with the symbol URL
+          const { error: updateError } = await supabase
+            .from(category.table as any)
+            .update({ symbol_image: publicUrl })
+            .eq('code', code);
+
+          if (updateError) {
+            console.error(`Error updating ${code} with symbol:`, updateError);
+            errorCount++;
+            continue;
+          }
+
+          successCount++;
+        } else {
+          // No table - just upload to storage without linking
+          const filePath = `${category.folder}/${fileName}`;
+          const { error: uploadError } = await supabase.storage
+            .from(category.bucket)
+            .upload(filePath, file, { upsert: true });
+
+          if (uploadError) {
+            console.error(`Error uploading symbol ${fileName}:`, uploadError);
+            errorCount++;
+            continue;
+          }
+
+          successCount++;
         }
-
-        if (!existingRecord) {
-          console.warn(`No ${category.name} found with code: ${code}`);
-          errorCount++;
-          continue;
-        }
-
-        // Upload to storage
-        const filePath = `${category.folder}/${fileName}`;
-        const { error: uploadError } = await supabase.storage
-          .from(category.bucket)
-          .upload(filePath, file, { upsert: true });
-
-        if (uploadError) {
-          console.error(`Error uploading symbol for ${code}:`, uploadError);
-          errorCount++;
-          continue;
-        }
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from(category.bucket)
-          .getPublicUrl(filePath);
-
-        // Update the record with the symbol URL
-        const { error: updateError } = await supabase
-          .from(category.table as any)
-          .update({ symbol_image: publicUrl })
-          .eq('code', code);
-
-        if (updateError) {
-          console.error(`Error updating ${code} with symbol:`, updateError);
-          errorCount++;
-          continue;
-        }
-
-        successCount++;
       }
 
       if (successCount > 0) {
