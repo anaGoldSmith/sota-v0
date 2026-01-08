@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ArrowLeft, X, Calculator, GripVertical, ChevronDown, ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbols";
 import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
 import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDialog";
@@ -14,7 +14,7 @@ import { TechnicalElementsSelectionDialog } from "@/components/routine/Technical
 import { DBSuccessDialog } from "@/components/routine/DBSuccessDialog";
 import { DBDASuccessDialog } from "@/components/routine/DBDASuccessDialog";
 import { DBDAValidationDialog } from "@/components/routine/DBDAValidationDialog";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ApparatusType, CombinedApparatusData } from "@/types/apparatus";
@@ -68,6 +68,20 @@ interface SelectedRotation {
   symbol_image: string | null;
 }
 
+interface RiskComponent {
+  name: string;
+  symbol: string;
+  value: number;
+}
+
+interface RiskData {
+  type: 'R';
+  label: string;
+  value: number;
+  symbols: Record<string, string>;
+  components: RiskComponent[];
+}
+
 type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'DB/TE' | 'TE' | 'R' | 'Steps';
 
 interface RoutineElement {
@@ -75,7 +89,7 @@ interface RoutineElement {
   type: RoutineElementType;
   symbolImages: string[];
   value: number;
-  originalData: SelectedJump | SelectedBalance | SelectedRotation | ApparatusCombination | {
+  originalData: SelectedJump | SelectedBalance | SelectedRotation | ApparatusCombination | RiskData | {
     isPaired: true;
     combo1: ApparatusCombination;
     combo2: ApparatusCombination;
@@ -89,6 +103,8 @@ interface RoutineElement {
     symbolImages: string[];
     value: number;
   };
+  // For Risk elements
+  riskData?: RiskData;
   isExpanded?: boolean;
 }
 
@@ -155,81 +171,142 @@ function SortableRow({
     </div>
   );
 
+  // Render Risk element with R₂ label and symbol
+  const renderRiskSymbols = () => {
+    if (element.type !== 'R' || !element.riskData) return null;
+    
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-lg font-bold text-foreground">
+          R<sub className="text-sm">2</sub>
+        </span>
+        {element.riskData.symbols["R2"] && (
+          <img
+            src={element.riskData.symbols["R2"]}
+            alt="R2 Symbol"
+            className="h-8 w-auto object-contain filter grayscale"
+          />
+        )}
+      </div>
+    );
+  };
+
   return (
-    <TableRow 
-      ref={isMainRow ? setNodeRef : undefined} 
-      style={isMainRow ? style : undefined}
-      className={!isMainRow ? "bg-muted/20" : ""}
-    >
-      <TableCell className="w-12">
-        {isMainRow ? (
-          <div
-            {...listeners}
-            {...attributes}
-            className="cursor-grab active:cursor-grabbing flex items-center justify-center"
-          >
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
-          </div>
-        ) : (
-          <div className="w-4" />
-        )}
-      </TableCell>
-      <TableCell 
-        className={`w-20 font-mono ${!isMainRow ? 'pl-8 text-muted-foreground' : ''} ${isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE') ? 'cursor-pointer' : ''}`}
-        onClick={isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE') && onToggleExpand ? (e) => {
-          e.stopPropagation();
-          onToggleExpand();
-        } : undefined}
+    <>
+      <TableRow 
+        ref={isMainRow ? setNodeRef : undefined} 
+        style={isMainRow ? style : undefined}
+        className={!isMainRow ? "bg-muted/20" : ""}
       >
-        <div className="flex items-center gap-2">
-          {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE') && (
-            element.isExpanded ? 
-              <ChevronDown className="h-4 w-4 text-muted-foreground" /> : 
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        <TableCell className="w-12">
+          {isMainRow ? (
+            <div
+              {...listeners}
+              {...attributes}
+              className="cursor-grab active:cursor-grabbing flex items-center justify-center"
+            >
+              <GripVertical className="h-4 w-4 text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="w-4" />
           )}
-          {itemNumber}
-        </div>
-      </TableCell>
-      <TableCell className="w-32 font-medium">
-        {element.type}
-      </TableCell>
-      <TableCell>
-        {renderSymbols(element.symbolImages)}
-      </TableCell>
-      <TableCell className="w-24 text-right font-mono font-semibold">
-        {element.value.toFixed(1)}
-      </TableCell>
-      <TableCell className="w-12">
-        {isMainRow && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            draggable={false}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-            onTouchStart={(e) => {
-              e.stopPropagation();
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
-      </TableCell>
-    </TableRow>
+        </TableCell>
+        <TableCell 
+          className={`w-20 font-mono ${!isMainRow ? 'pl-8 text-muted-foreground' : ''} ${isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R') ? 'cursor-pointer' : ''}`}
+          onClick={isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R') && onToggleExpand ? (e) => {
+            e.stopPropagation();
+            onToggleExpand();
+          } : undefined}
+        >
+          <div className="flex items-center gap-2">
+            {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R') && (
+              element.isExpanded ? 
+                <ChevronDown className="h-4 w-4 text-muted-foreground" /> : 
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
+            {itemNumber}
+          </div>
+        </TableCell>
+        <TableCell className="w-32 font-medium">
+          {element.type}
+        </TableCell>
+        <TableCell>
+          {element.type === 'R' ? renderRiskSymbols() : renderSymbols(element.symbolImages)}
+        </TableCell>
+        <TableCell className="w-24 text-right font-mono font-semibold">
+          {element.value.toFixed(1)}
+        </TableCell>
+        <TableCell className="w-12">
+          {isMainRow && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              draggable={false}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </TableCell>
+      </TableRow>
+      
+      {/* Expanded Risk Details Table */}
+      {element.type === 'R' && element.isExpanded && element.riskData && (
+        <TableRow className="bg-muted/10">
+          <TableCell colSpan={6} className="p-4">
+            <div className="ml-8 border rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-muted/30">
+                  <tr>
+                    <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Symbol</th>
+                    <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Risk Component</th>
+                    <th className="py-2 px-4 text-right text-sm font-semibold text-muted-foreground">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {element.riskData.components.map((component, idx) => (
+                    <tr key={idx} className={idx % 2 === 1 ? "bg-secondary/10" : ""}>
+                      <td className="py-2 px-4">
+                        {component.symbol ? (
+                          <img 
+                            src={component.symbol} 
+                            alt={component.name} 
+                            className="h-6 w-6 object-contain"
+                          />
+                        ) : (
+                          <div className="h-6 w-6 bg-muted rounded" />
+                        )}
+                      </td>
+                      <td className="py-2 px-4 font-medium">{component.name}</td>
+                      <td className="py-2 px-4 text-right font-mono">{component.value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 }
 
 const RoutineCalculator = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [jumpDialogOpen, setJumpDialogOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
@@ -316,6 +393,32 @@ const RoutineCalculator = () => {
 
   // Track elements saved without apparatus handling
   const [elementsWithoutApparatusHandling, setElementsWithoutApparatusHandling] = useState<Set<string>>(new Set());
+
+  // Handle incoming risk data from StandardRisks page
+  useEffect(() => {
+    const state = location.state as { newRisk?: RiskData } | null;
+    if (state?.newRisk) {
+      const riskData = state.newRisk;
+      const newElement: RoutineElement = {
+        id: `risk-${Date.now()}`,
+        type: 'R',
+        symbolImages: [riskData.symbols["R2"] || ''],
+        value: riskData.value,
+        originalData: riskData,
+        riskData: riskData,
+        isExpanded: false,
+      };
+      setRoutineElements((prev) => [...prev, newElement]);
+      
+      // Clear the state to prevent re-adding on refresh
+      navigate(location.pathname, { replace: true, state: {} });
+      
+      toast({
+        title: "Risk Added",
+        description: `Standard Risk R₂ with value ${riskData.value} has been added to your routine.`,
+      });
+    }
+  }, [location.state]);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -1057,7 +1160,7 @@ const RoutineCalculator = () => {
                               index={index}
                               itemNumber={itemNumber}
                               onRemove={() => handleRemoveRoutineElement(index)}
-                              onToggleExpand={(element.type === 'DB/DA' || element.type === 'DB/TE') ? () => handleToggleExpand(index) : undefined}
+                              onToggleExpand={(element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R') ? () => handleToggleExpand(index) : undefined}
                               isMainRow={true}
                             />
                           );

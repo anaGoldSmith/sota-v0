@@ -43,8 +43,19 @@ const StandardRisks = () => {
   }, []);
 
   const handleSave = () => {
-    // TODO: Save the standard risk and return to routine calculator
-    navigate("/routine-calculator");
+    // Pass the standard risk data to routine calculator
+    const riskData = {
+      type: 'R' as const,
+      label: 'R₂',
+      value: 0.2,
+      symbols: symbols,
+      components: [
+        { name: 'Standard Throw', symbol: symbols["Thr1"], value: 0 },
+        { name: 'Base Rotations', symbol: symbols["baseRotations"], value: 0.2 },
+        { name: 'Standard Catch', symbol: symbols["Catch1"], value: 0 },
+      ]
+    };
+    navigate("/routine-calculator", { state: { newRisk: riskData } });
   };
 
   const handleCancel = () => {
