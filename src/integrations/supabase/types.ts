@@ -302,6 +302,90 @@ export type Database = {
         }
         Relationships: []
       }
+      dynamic_catches: {
+        Row: {
+          apparatus: string
+          code: string
+          created_at: string
+          extra_criteria: string | null
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          apparatus: string
+          code: string
+          created_at?: string
+          extra_criteria?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          apparatus?: string
+          code?: string
+          created_at?: string
+          extra_criteria?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dynamic_general_criteria: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dynamic_throws: {
+        Row: {
+          apparatus: string
+          code: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          apparatus: string
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          apparatus?: string
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hoop_da: {
         Row: {
           code: string

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, FileText, ListCheck, Settings } from "lucide-react";
+import { ArrowLeft, FileText, ListCheck, Settings, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -123,6 +123,21 @@ const Admin = () => {
               </div>
               <CardDescription>
                 View, delete, and manage all symbol images
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card 
+            className="cursor-pointer hover:bg-accent transition-colors" 
+            onClick={() => navigate("/admin/dynamic-elements-configuration")}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Zap className="h-8 w-8 text-primary" />
+                <CardTitle>Dynamic Elements</CardTitle>
+              </div>
+              <CardDescription>
+                Manage catches, throws, and general criteria
               </CardDescription>
             </CardHeader>
           </Card>
