@@ -29,3 +29,30 @@ verify_jwt = true
 
 [functions.import-ribbon-bases-csv]
 verify_jwt = true
+
+[functions.import-hoop-technical-elements-csv]
+verify_jwt = true
+
+[functions.import-clubs-technical-elements-csv]
+verify_jwt = true
+
+[functions.import-ribbon-technical-elements-csv]
+verify_jwt = true
+
+[functions.import-ball-technical-elements-csv]
+verify_jwt = true
+
+[functions.import-control-tables-csv]
+verify_jwt = true
+
+[functions.import-da-comments-csv]
+verify_jwt = true
+
+[functions.import-dynamic-catches-csv]
+verify_jwt = true
+
+[functions.import-dynamic-throws-csv]
+verify_jwt = true
+
+[functions.import-dynamic-general-criteria-csv]
+verify_jwt = true
