@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Trash2, Search, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Trash2, Search, AlertTriangle, Upload, Image } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface StorageFile {
@@ -23,16 +23,22 @@ interface SymbolStatus {
 }
 
 const SYMBOL_CATEGORIES = [
-  { name: 'Jumps', bucket: 'jump-symbols', table: 'jumps' },
-  { name: 'Criteria', bucket: 'criteria-symbols', table: 'criteria' },
-  { name: 'Ball Bases', bucket: 'ball-bases-symbols', table: 'ball_technical_elements' },
-  { name: 'Ball Technical Elements', bucket: 'ball-technical-elements-symbols', table: 'ball_technical_elements' },
-  { name: 'Hoop Bases', bucket: 'hoop-bases-symbols', table: 'hoop_technical_elements' },
-  { name: 'Hoop Technical Elements', bucket: 'hoop-technical-elements-symbols', table: 'hoop_technical_elements' },
-  { name: 'Clubs Bases', bucket: 'clubs-bases-symbols', table: 'clubs_technical_elements' },
-  { name: 'Clubs Technical Elements', bucket: 'clubs-technical-elements-symbols', table: 'clubs_technical_elements' },
-  { name: 'Ribbon Bases', bucket: 'ribbon-bases-symbols', table: 'ribbon_technical_elements' },
-  { name: 'Ribbon Technical Elements', bucket: 'ribbon-technical-elements-symbols', table: 'ribbon_technical_elements' },
+  { name: 'Jumps', bucket: 'jump-symbols', table: 'jumps', folder: null },
+  { name: 'Criteria', bucket: 'criteria-symbols', table: 'criteria', folder: null },
+  { name: 'Ball Bases', bucket: 'ball-bases-symbols', table: 'ball_technical_elements', folder: null },
+  { name: 'Ball Technical Elements', bucket: 'ball-technical-elements-symbols', table: 'ball_technical_elements', folder: null },
+  { name: 'Hoop Bases', bucket: 'hoop-bases-symbols', table: 'hoop_technical_elements', folder: null },
+  { name: 'Hoop Technical Elements', bucket: 'hoop-technical-elements-symbols', table: 'hoop_technical_elements', folder: null },
+  { name: 'Clubs Bases', bucket: 'clubs-bases-symbols', table: 'clubs_technical_elements', folder: null },
+  { name: 'Clubs Technical Elements', bucket: 'clubs-technical-elements-symbols', table: 'clubs_technical_elements', folder: null },
+  { name: 'Ribbon Bases', bucket: 'ribbon-bases-symbols', table: 'ribbon_technical_elements', folder: null },
+  { name: 'Ribbon Technical Elements', bucket: 'ribbon-technical-elements-symbols', table: 'ribbon_technical_elements', folder: null },
+];
+
+const DYNAMIC_ELEMENTS_CATEGORIES = [
+  { name: 'Catches', bucket: 'dynamic-element-symbols', table: 'dynamic_catches', folder: 'dynamic_catches' },
+  { name: 'Throws', bucket: 'dynamic-element-symbols', table: 'dynamic_throws', folder: 'dynamic_throws' },
+  { name: 'General Criteria', bucket: 'dynamic-element-symbols', table: 'dynamic_general_criteria', folder: 'dynamic_general_criteria' },
 ];
 
 export default function SymbolManagement() {
@@ -40,9 +46,13 @@ export default function SymbolManagement() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [symbolData, setSymbolData] = useState<Record<string, SymbolStatus[]>>({});
+  const [dynamicSymbolData, setDynamicSymbolData] = useState<Record<string, SymbolStatus[]>>({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<{ bucket: string; file: StorageFile; code: string | null } | null>(null);
-  const [cleanupTarget, setCleanupTarget] = useState<{ bucket: string; category: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ bucket: string; file: StorageFile; code: string | null; folder?: string | null } | null>(null);
+  const [cleanupTarget, setCleanupTarget] = useState<{ bucket: string; category: string; folder?: string | null } | null>(null);
+  const [uploadingDynamic, setUploadingDynamic] = useState<Record<string, boolean>>({});
+  
+  const dynamicInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     checkAuth();
@@ -74,22 +84,29 @@ export default function SymbolManagement() {
   const loadAllSymbols = async () => {
     setLoading(true);
     const allData: Record<string, SymbolStatus[]> = {};
+    const dynamicData: Record<string, SymbolStatus[]> = {};
 
     for (const category of SYMBOL_CATEGORIES) {
-      const symbols = await loadSymbolsForCategory(category.bucket, category.table);
+      const symbols = await loadSymbolsForCategory(category.bucket, category.table, null);
       allData[category.bucket] = symbols;
     }
 
+    for (const category of DYNAMIC_ELEMENTS_CATEGORIES) {
+      const symbols = await loadSymbolsForCategory(category.bucket, category.table, category.folder);
+      dynamicData[category.folder] = symbols;
+    }
+
     setSymbolData(allData);
+    setDynamicSymbolData(dynamicData);
     setLoading(false);
   };
 
-  const loadSymbolsForCategory = async (bucket: string, table: string): Promise<SymbolStatus[]> => {
+  const loadSymbolsForCategory = async (bucket: string, table: string, folder: string | null): Promise<SymbolStatus[]> => {
     try {
-      // Get all files from storage bucket
+      // Get all files from storage bucket (with folder path if specified)
       const { data: files, error: storageError } = await supabase.storage
         .from(bucket)
-        .list();
+        .list(folder || undefined);
 
       if (storageError) throw storageError;
 
@@ -101,23 +118,28 @@ export default function SymbolManagement() {
       if (dbError) throw dbError;
 
       // Map files to their status
-      const symbolStatuses: SymbolStatus[] = (files || []).map(file => {
-        const { data: { publicUrl } } = supabase.storage
-          .from(bucket)
-          .getPublicUrl(file.name);
+      const symbolStatuses: SymbolStatus[] = (files || [])
+        .filter(file => file.name !== '.emptyFolderPlaceholder')
+        .map(file => {
+          const filePath = folder ? `${folder}/${file.name}` : file.name;
+          const { data: { publicUrl } } = supabase.storage
+            .from(bucket)
+            .getPublicUrl(filePath);
 
-        const linkedRecord = (dbRecords || []).find((record: any) => record.symbol_image === file.name);
+          const linkedRecord = (dbRecords || []).find((record: any) => 
+            record.symbol_image === publicUrl || record.symbol_image === file.name
+          );
 
-        return {
-          file: {
-            name: file.name,
-            id: file.id || file.name,
-            publicUrl
-          },
-          linkedCode: (linkedRecord as any)?.code || null,
-          status: linkedRecord ? 'synced' : 'orphaned'
-        };
-      });
+          return {
+            file: {
+              name: file.name,
+              id: file.id || file.name,
+              publicUrl
+            },
+            linkedCode: (linkedRecord as any)?.code || null,
+            status: linkedRecord ? 'synced' : 'orphaned'
+          };
+        });
 
       return symbolStatuses;
     } catch (error) {
@@ -126,20 +148,119 @@ export default function SymbolManagement() {
     }
   };
 
+  const handleDynamicSymbolUpload = async (
+    files: FileList,
+    category: typeof DYNAMIC_ELEMENTS_CATEGORIES[0]
+  ) => {
+    setUploadingDynamic(prev => ({ ...prev, [category.folder]: true }));
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const file of Array.from(files)) {
+        const fileName = file.name;
+        const code = fileName.replace(/\.[^/.]+$/, ""); // Remove extension to get code
+
+        // Check if a record with this code exists
+        const { data: existingRecord, error: queryError } = await supabase
+          .from(category.table as any)
+          .select('id, code')
+          .eq('code', code)
+          .maybeSingle();
+
+        if (queryError) {
+          console.error(`Error checking for ${code}:`, queryError);
+          errorCount++;
+          continue;
+        }
+
+        if (!existingRecord) {
+          console.warn(`No ${category.name} found with code: ${code}`);
+          errorCount++;
+          continue;
+        }
+
+        // Upload to storage
+        const filePath = `${category.folder}/${fileName}`;
+        const { error: uploadError } = await supabase.storage
+          .from(category.bucket)
+          .upload(filePath, file, { upsert: true });
+
+        if (uploadError) {
+          console.error(`Error uploading symbol for ${code}:`, uploadError);
+          errorCount++;
+          continue;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from(category.bucket)
+          .getPublicUrl(filePath);
+
+        // Update the record with the symbol URL
+        const { error: updateError } = await supabase
+          .from(category.table as any)
+          .update({ symbol_image: publicUrl })
+          .eq('code', code);
+
+        if (updateError) {
+          console.error(`Error updating ${code} with symbol:`, updateError);
+          errorCount++;
+          continue;
+        }
+
+        successCount++;
+      }
+
+      if (successCount > 0) {
+        toast({
+          title: "Upload successful",
+          description: `Successfully uploaded ${successCount} ${category.name.toLowerCase()} symbol(s)`,
+        });
+      }
+      if (errorCount > 0) {
+        toast({
+          title: "Some uploads failed",
+          description: `${errorCount} symbol(s) could not be matched or uploaded`,
+          variant: "destructive",
+        });
+      }
+
+      await loadAllSymbols();
+    } catch (error) {
+      console.error(`Error uploading ${category.name} symbols:`, error);
+      toast({
+        title: "Upload failed",
+        description: `Failed to upload ${category.name} symbols`,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingDynamic(prev => ({ ...prev, [category.folder]: false }));
+    }
+  };
   const handleDeleteSymbol = async () => {
     if (!deleteTarget) return;
 
     try {
+      // Build the file path (include folder for dynamic elements)
+      const filePath = deleteTarget.folder 
+        ? `${deleteTarget.folder}/${deleteTarget.file.name}` 
+        : deleteTarget.file.name;
+
       // Delete from storage
       const { error: storageError } = await supabase.storage
         .from(deleteTarget.bucket)
-        .remove([deleteTarget.file.name]);
+        .remove([filePath]);
 
       if (storageError) throw storageError;
 
       // Update database if linked to a code
       if (deleteTarget.code) {
-        const category = SYMBOL_CATEGORIES.find(c => c.bucket === deleteTarget.bucket);
+        // Check if it's a dynamic element category
+        const dynamicCategory = DYNAMIC_ELEMENTS_CATEGORIES.find(c => c.folder === deleteTarget.folder);
+        const regularCategory = SYMBOL_CATEGORIES.find(c => c.bucket === deleteTarget.bucket);
+        const category = dynamicCategory || regularCategory;
+        
         if (category) {
           await supabase
             .from(category.table as any)
@@ -171,9 +292,15 @@ export default function SymbolManagement() {
     if (!cleanupTarget) return;
 
     try {
-      const orphanedFiles = symbolData[cleanupTarget.bucket]
+      // Get the right symbol data based on whether it's a dynamic category
+      const isDynamic = !!cleanupTarget.folder;
+      const symbolsData = isDynamic 
+        ? dynamicSymbolData[cleanupTarget.folder!] 
+        : symbolData[cleanupTarget.bucket];
+
+      const orphanedFiles = (symbolsData || [])
         .filter(s => s.status === 'orphaned')
-        .map(s => s.file.name);
+        .map(s => isDynamic ? `${cleanupTarget.folder}/${s.file.name}` : s.file.name);
 
       if (orphanedFiles.length === 0) {
         toast({
@@ -219,6 +346,17 @@ export default function SymbolManagement() {
     return acc;
   }, {} as Record<string, SymbolStatus[]>);
 
+  const filteredDynamicSymbolData = Object.entries(dynamicSymbolData).reduce((acc, [folder, symbols]) => {
+    const filtered = symbols.filter(s => 
+      s.file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.linkedCode?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    if (filtered.length > 0) {
+      acc[folder] = filtered;
+    }
+    return acc;
+  }, {} as Record<string, SymbolStatus[]>);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted p-8">
       <div className="max-w-7xl mx-auto">
@@ -257,97 +395,232 @@ export default function SymbolManagement() {
             </CardContent>
           </Card>
         ) : (
-          <Accordion type="multiple" className="space-y-4">
-            {SYMBOL_CATEGORIES.map(category => {
-              const symbols = filteredSymbolData[category.bucket] || [];
-              const orphanedCount = symbols.filter(s => s.status === 'orphaned').length;
-              
-              return (
-                <AccordionItem key={category.bucket} value={category.bucket} className="border rounded-lg bg-card">
-                  <AccordionTrigger className="px-6 hover:no-underline">
-                    <div className="flex items-center justify-between w-full pr-4">
-                      <div className="flex items-center gap-3">
-                        <span className="font-semibold">{category.name}</span>
-                        <Badge variant="secondary">{symbols.length} files</Badge>
-                        {orphanedCount > 0 && (
-                          <Badge variant="destructive">{orphanedCount} orphaned</Badge>
-                        )}
-                      </div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-6">
-                    {orphanedCount > 0 && (
-                      <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <AlertTriangle className="h-4 w-4 text-destructive" />
-                          <span className="text-sm">
-                            {orphanedCount} orphaned file(s) not linked to any database record
-                          </span>
+          <>
+            <Accordion type="multiple" className="space-y-4">
+              {SYMBOL_CATEGORIES.map(category => {
+                const symbols = filteredSymbolData[category.bucket] || [];
+                const orphanedCount = symbols.filter(s => s.status === 'orphaned').length;
+                
+                return (
+                  <AccordionItem key={category.bucket} value={category.bucket} className="border rounded-lg bg-card">
+                    <AccordionTrigger className="px-6 hover:no-underline">
+                      <div className="flex items-center justify-between w-full pr-4">
+                        <div className="flex items-center gap-3">
+                          <span className="font-semibold">{category.name}</span>
+                          <Badge variant="secondary">{symbols.length} files</Badge>
+                          {orphanedCount > 0 && (
+                            <Badge variant="destructive">{orphanedCount} orphaned</Badge>
+                          )}
                         </div>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => setCleanupTarget({ bucket: category.bucket, category: category.name })}
-                        >
-                          Cleanup Orphaned
-                        </Button>
                       </div>
-                    )}
-                    
-                    {symbols.length === 0 ? (
-                      <p className="text-center text-muted-foreground py-8">No symbols found</p>
-                    ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        {symbols.map(symbol => (
-                          <Card key={symbol.file.id} className="overflow-hidden">
-                            <CardContent className="p-4">
-                              <div className="aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center overflow-hidden">
-                                <img
-                                  src={symbol.file.publicUrl}
-                                  alt={symbol.file.name}
-                                  className="max-w-full max-h-full object-contain"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                  }}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <p className="text-xs font-mono truncate" title={symbol.file.name}>
-                                  {symbol.file.name}
-                                </p>
-                                {symbol.linkedCode ? (
-                                  <Badge variant="default" className="w-full justify-center">
-                                    {symbol.linkedCode}
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="outline" className="w-full justify-center">
-                                    No code
-                                  </Badge>
-                                )}
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  className="w-full"
-                                  onClick={() => setDeleteTarget({ 
-                                    bucket: category.bucket, 
-                                    file: symbol.file,
-                                    code: symbol.linkedCode 
-                                  })}
-                                >
-                                  <Trash2 className="h-3 w-3 mr-1" />
-                                  Delete
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-              );
-            })}
-          </Accordion>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-6 pb-6">
+                      {orphanedCount > 0 && (
+                        <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-destructive" />
+                            <span className="text-sm">
+                              {orphanedCount} orphaned file(s) not linked to any database record
+                            </span>
+                          </div>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setCleanupTarget({ bucket: category.bucket, category: category.name })}
+                          >
+                            Cleanup Orphaned
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {symbols.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-8">No symbols found</p>
+                      ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                          {symbols.map(symbol => (
+                            <Card key={symbol.file.id} className="overflow-hidden">
+                              <CardContent className="p-4">
+                                <div className="aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                                  <img
+                                    src={symbol.file.publicUrl}
+                                    alt={symbol.file.name}
+                                    className="max-w-full max-h-full object-contain"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <p className="text-xs font-mono truncate" title={symbol.file.name}>
+                                    {symbol.file.name}
+                                  </p>
+                                  {symbol.linkedCode ? (
+                                    <Badge variant="default" className="w-full justify-center">
+                                      {symbol.linkedCode}
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="w-full justify-center">
+                                      No code
+                                    </Badge>
+                                  )}
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => setDeleteTarget({ 
+                                      bucket: category.bucket, 
+                                      file: symbol.file,
+                                      code: symbol.linkedCode 
+                                    })}
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    Delete
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+
+            {/* Dynamic Elements Symbols Section */}
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold mb-4">Dynamic Elements Symbols</h2>
+              <p className="text-muted-foreground mb-4">
+                Upload symbol images with filenames matching the code (e.g., "C1.png" for code "C1").
+              </p>
+              <Accordion type="multiple" className="space-y-4">
+                {DYNAMIC_ELEMENTS_CATEGORIES.map(category => {
+                  const symbols = filteredDynamicSymbolData[category.folder] || [];
+                  const orphanedCount = symbols.filter(s => s.status === 'orphaned').length;
+                  const isUploading = uploadingDynamic[category.folder] || false;
+                  
+                  return (
+                    <AccordionItem key={category.folder} value={category.folder} className="border rounded-lg bg-card">
+                      <AccordionTrigger className="px-6 hover:no-underline">
+                        <div className="flex items-center justify-between w-full pr-4">
+                          <div className="flex items-center gap-3">
+                            <span className="font-semibold">{category.name}</span>
+                            <Badge variant="secondary">{symbols.length} files</Badge>
+                            {orphanedCount > 0 && (
+                              <Badge variant="destructive">{orphanedCount} orphaned</Badge>
+                            )}
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-6 pb-6">
+                        {/* Upload Section */}
+                        <div className="mb-4 p-4 bg-muted/50 border rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Image className="h-4 w-4 text-primary" />
+                              <span className="text-sm">Upload {category.name} Symbols</span>
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              ref={(el) => { dynamicInputRefs.current[category.folder] = el; }}
+                              className="hidden"
+                              onChange={(e) => {
+                                const files = e.target.files;
+                                if (files && files.length > 0) {
+                                  handleDynamicSymbolUpload(files, category);
+                                  e.target.value = '';
+                                }
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => dynamicInputRefs.current[category.folder]?.click()}
+                              disabled={isUploading}
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              {isUploading ? "Uploading..." : "Upload Symbols"}
+                            </Button>
+                          </div>
+                        </div>
+
+                        {orphanedCount > 0 && (
+                          <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <AlertTriangle className="h-4 w-4 text-destructive" />
+                              <span className="text-sm">
+                                {orphanedCount} orphaned file(s) not linked to any database record
+                              </span>
+                            </div>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => setCleanupTarget({ bucket: category.bucket, category: category.name, folder: category.folder })}
+                            >
+                              Cleanup Orphaned
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {symbols.length === 0 ? (
+                          <p className="text-center text-muted-foreground py-8">No symbols found</p>
+                        ) : (
+                          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {symbols.map(symbol => (
+                              <Card key={symbol.file.id} className="overflow-hidden">
+                                <CardContent className="p-4">
+                                  <div className="aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                                    <img
+                                      src={symbol.file.publicUrl}
+                                      alt={symbol.file.name}
+                                      className="max-w-full max-h-full object-contain"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <p className="text-xs font-mono truncate" title={symbol.file.name}>
+                                      {symbol.file.name}
+                                    </p>
+                                    {symbol.linkedCode ? (
+                                      <Badge variant="default" className="w-full justify-center">
+                                        {symbol.linkedCode}
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="w-full justify-center">
+                                        No code
+                                      </Badge>
+                                    )}
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      className="w-full"
+                                      onClick={() => setDeleteTarget({ 
+                                        bucket: category.bucket, 
+                                        file: symbol.file,
+                                        code: symbol.linkedCode,
+                                        folder: category.folder
+                                      })}
+                                    >
+                                      <Trash2 className="h-3 w-3 mr-1" />
+                                      Delete
+                                    </Button>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+            </div>
+          </>
         )}
       </div>
 
