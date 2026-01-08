@@ -311,6 +311,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          symbol_image: string | null
           updated_at: string
         }
         Insert: {
@@ -321,6 +322,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          symbol_image?: string | null
           updated_at?: string
         }
         Update: {
@@ -331,6 +333,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          symbol_image?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -341,6 +344,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          symbol_image: string | null
           updated_at: string
         }
         Insert: {
@@ -348,6 +352,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          symbol_image?: string | null
           updated_at?: string
         }
         Update: {
@@ -355,6 +360,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          symbol_image?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -366,6 +372,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          symbol_image: string | null
           updated_at: string
         }
         Insert: {
@@ -374,6 +381,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          symbol_image?: string | null
           updated_at?: string
         }
         Update: {
@@ -382,6 +390,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          symbol_image?: string | null
           updated_at?: string
         }
         Relationships: []
