@@ -82,7 +82,11 @@ const DynamicElementsRisk = () => {
 
           {/* Action Buttons */}
           <div className="space-y-4">
-            <Button className="w-full h-16 text-lg hover:scale-[1.02] transition-transform bg-primary hover:bg-primary/90 text-primary-foreground shadow-md" onClick={handleSelectStandardRisk}>Add Standard Risk of 0.2 - R<sub>2</sub></Button>
+            <Button className="w-full h-16 text-lg hover:scale-[1.02] transition-transform bg-primary hover:bg-primary/90 text-primary-foreground shadow-md" onClick={handleSelectStandardRisk}>
+              <span className="flex items-baseline">
+                Add Standard Risk of 0.2 - R<sub className="text-sm">2</sub>
+              </span>
+            </Button>
             
             <Button variant="outline" className="w-full h-16 text-lg hover:scale-[1.02] transition-transform border-secondary text-secondary hover:bg-secondary/10" onClick={handleCreateOwnRisk}>Create Risk with Extra Criteria</Button>
           </div>
