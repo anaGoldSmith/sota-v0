@@ -7,6 +7,7 @@ import { ArrowLeft, Plus, CheckCircle, X, ChevronDown } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ApparatusType } from "@/types/apparatus";
+import { useToast } from "@/hooks/use-toast";
 
 interface CriteriaItem {
   id: string;
@@ -64,6 +65,7 @@ const isApplicableForApparatus = (item: { apparatus: string }, apparatusCode: st
 const CreateCustomRisk = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const [symbols, setSymbols] = useState<Record<string, string>>({});
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [savedRiskData, setSavedRiskData] = useState<any>(null);
@@ -351,59 +353,67 @@ const CreateCustomRisk = () => {
             <CardHeader className="pb-2 bg-secondary/10">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg text-primary">Throw</CardTitle>
-                {selectedThrow && (
-                  <div className="relative" ref={throwCriteriaDropdownRef}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowThrowCriteriaDropdown(!showThrowCriteriaDropdown)}
-                      className="text-primary hover:bg-primary/10"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Criteria
-                    </Button>
-                    
-                    {showThrowCriteriaDropdown && (
-                      <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
-                        <div className="p-3 border-b border-border">
-                          <span className="font-medium text-foreground">Select Criteria (max 2)</span>
-                        </div>
-                        <div className="p-2 space-y-1">
-                          {generalCriteria.map((criteria) => (
-                            <div
-                              key={criteria.id}
-                              className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
-                              onClick={() => handleToggleThrowCriteria(criteria)}
-                            >
-                              <Checkbox 
-                                checked={selectedThrowCriteria.includes(criteria.code)}
-                                disabled={!selectedThrowCriteria.includes(criteria.code) && selectedThrowCriteria.length >= 2}
-                              />
-                              {criteria.symbol_image && (
-                                <img 
-                                  src={criteria.symbol_image} 
-                                  alt={criteria.name}
-                                  className="h-6 w-6 object-contain"
-                                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                                />
-                              )}
-                              <span className="text-sm text-foreground">{criteria.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="p-2 border-t border-border">
-                          <Button
-                            size="sm"
-                            className="w-full bg-primary hover:bg-primary/90"
-                            onClick={handleSaveThrowCriteriaSelection}
-                          >
-                            Save Selection
-                          </Button>
-                        </div>
+                <div className="relative" ref={throwCriteriaDropdownRef}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (!selectedThrow) {
+                        toast({
+                          title: "Selection required",
+                          description: "Please select a throw type before adding extra criteria.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      setShowThrowCriteriaDropdown(!showThrowCriteriaDropdown);
+                    }}
+                    className={`text-primary hover:bg-primary/10 ${!selectedThrow ? 'opacity-50' : ''}`}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Criteria
+                  </Button>
+                  
+                  {showThrowCriteriaDropdown && selectedThrow && (
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
+                      <div className="p-3 border-b border-border">
+                        <span className="font-medium text-foreground">Select Criteria (max 2)</span>
                       </div>
-                    )}
-                  </div>
-                )}
+                      <div className="p-2 space-y-1">
+                        {generalCriteria.map((criteria) => (
+                          <div
+                            key={criteria.id}
+                            className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
+                            onClick={() => handleToggleThrowCriteria(criteria)}
+                          >
+                            <Checkbox 
+                              checked={selectedThrowCriteria.includes(criteria.code)}
+                              disabled={!selectedThrowCriteria.includes(criteria.code) && selectedThrowCriteria.length >= 2}
+                            />
+                            {criteria.symbol_image && (
+                              <img 
+                                src={criteria.symbol_image} 
+                                alt={criteria.name}
+                                className="h-6 w-6 object-contain"
+                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                              />
+                            )}
+                            <span className="text-sm text-foreground">{criteria.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="p-2 border-t border-border">
+                        <Button
+                          size="sm"
+                          className="w-full bg-primary hover:bg-primary/90"
+                          onClick={handleSaveThrowCriteriaSelection}
+                        >
+                          Save Selection
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -589,59 +599,67 @@ const CreateCustomRisk = () => {
             <CardHeader className="pb-2 bg-secondary/10">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg text-primary">Catch</CardTitle>
-                {selectedCatch && (
-                  <div className="relative" ref={catchCriteriaDropdownRef}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowCatchCriteriaDropdown(!showCatchCriteriaDropdown)}
-                      className="text-primary hover:bg-primary/10"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Criteria
-                    </Button>
-                    
-                    {showCatchCriteriaDropdown && (
-                      <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
-                        <div className="p-3 border-b border-border">
-                          <span className="font-medium text-foreground">Select Criteria (max 2)</span>
-                        </div>
-                        <div className="p-2 space-y-1">
-                          {generalCriteria.map((criteria) => (
-                            <div
-                              key={criteria.id}
-                              className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
-                              onClick={() => handleToggleCatchCriteria(criteria)}
-                            >
-                              <Checkbox 
-                                checked={selectedCatchCriteria.includes(criteria.code)}
-                                disabled={!selectedCatchCriteria.includes(criteria.code) && selectedCatchCriteria.length >= 2}
-                              />
-                              {criteria.symbol_image && (
-                                <img 
-                                  src={criteria.symbol_image} 
-                                  alt={criteria.name}
-                                  className="h-6 w-6 object-contain"
-                                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                                />
-                              )}
-                              <span className="text-sm text-foreground">{criteria.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="p-2 border-t border-border">
-                          <Button
-                            size="sm"
-                            className="w-full bg-primary hover:bg-primary/90"
-                            onClick={handleSaveCatchCriteriaSelection}
-                          >
-                            Save Selection
-                          </Button>
-                        </div>
+                <div className="relative" ref={catchCriteriaDropdownRef}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (!selectedCatch) {
+                        toast({
+                          title: "Selection required",
+                          description: "Please select a catch type before adding extra criteria.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      setShowCatchCriteriaDropdown(!showCatchCriteriaDropdown);
+                    }}
+                    className={`text-primary hover:bg-primary/10 ${!selectedCatch ? 'opacity-50' : ''}`}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Criteria
+                  </Button>
+                  
+                  {showCatchCriteriaDropdown && selectedCatch && (
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
+                      <div className="p-3 border-b border-border">
+                        <span className="font-medium text-foreground">Select Criteria (max 2)</span>
                       </div>
-                    )}
-                  </div>
-                )}
+                      <div className="p-2 space-y-1">
+                        {generalCriteria.map((criteria) => (
+                          <div
+                            key={criteria.id}
+                            className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
+                            onClick={() => handleToggleCatchCriteria(criteria)}
+                          >
+                            <Checkbox 
+                              checked={selectedCatchCriteria.includes(criteria.code)}
+                              disabled={!selectedCatchCriteria.includes(criteria.code) && selectedCatchCriteria.length >= 2}
+                            />
+                            {criteria.symbol_image && (
+                              <img 
+                                src={criteria.symbol_image} 
+                                alt={criteria.name}
+                                className="h-6 w-6 object-contain"
+                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                              />
+                            )}
+                            <span className="text-sm text-foreground">{criteria.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="p-2 border-t border-border">
+                        <Button
+                          size="sm"
+                          className="w-full bg-primary hover:bg-primary/90"
+                          onClick={handleSaveCatchCriteriaSelection}
+                        >
+                          Save Selection
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
