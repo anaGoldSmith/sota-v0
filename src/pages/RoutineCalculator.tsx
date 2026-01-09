@@ -82,6 +82,7 @@ interface RiskData {
   symbols: Record<string, string>;
   throwSymbols?: string[];
   catchSymbols?: string[];
+  axisLevelSymbol?: string;
   components: RiskComponent[];
 }
 
@@ -174,13 +175,14 @@ function SortableRow({
     </div>
   );
 
-  // Render Risk element with throw symbols, R subscript, and catch symbols
+  // Render Risk element with throw symbols, R subscript, axis/level symbol, and catch symbols
   const renderRiskSymbols = () => {
     if (element.type !== 'R' || !element.riskData) return null;
     
     const rLevel = element.riskData.rLevel || 2;
     const throwSymbols = element.riskData.throwSymbols || [];
     const catchSymbols = element.riskData.catchSymbols || [];
+    const axisLevelSymbol = element.riskData.axisLevelSymbol;
     
     return (
       <div className="flex items-center gap-1 flex-wrap">
@@ -198,6 +200,15 @@ function SortableRow({
         <span className="text-lg font-bold text-foreground mx-1">
           R<sub className="text-sm">{rLevel}</sub>
         </span>
+        
+        {/* Axis/Level Change symbol (displayed after R subscript) */}
+        {axisLevelSymbol && (
+          <img
+            src={axisLevelSymbol}
+            alt="Axis/Level Change"
+            className="h-8 w-8 object-contain"
+          />
+        )}
         
         {/* Catch symbols */}
         {catchSymbols.map((url, idx) => (
