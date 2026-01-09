@@ -713,20 +713,59 @@ const CreateCustomRisk = () => {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg text-primary">Rotations</CardTitle>
                 <Button
-                  variant={hasAxisChange ? "default" : "outline"}
+                  variant="outline"
                   size="sm"
-                  onClick={() => setHasAxisChange(!hasAxisChange)}
-                  className={hasAxisChange ? "bg-primary text-primary-foreground" : "border-primary/30 text-primary hover:bg-primary/10"}
+                  onClick={() => setHasAxisChange(true)}
+                  disabled={hasAxisChange}
+                  className={hasAxisChange ? "opacity-50 cursor-not-allowed" : "border-primary/30 text-primary hover:bg-primary/10"}
                 >
-                  {symbols["axisLevelChange"] && (
-                    <img src={symbols["axisLevelChange"]} alt="Axis" className="h-4 w-4 mr-1" />
-                  )}
-                  {hasAxisChange ? "Axis/Level Change Added" : "+ Add Axis/Level Change"}
+                  + Add Axis/Level Change
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="relative" ref={rotationDropdownRef}>
+                {/* Axis/Level Change row */}
+                {hasAxisChange && (
+                  <div className="flex items-center gap-3 p-4 border-b border-border/50">
+                    <div className="w-10 flex items-center justify-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => setHasAxisChange(false)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="w-10 h-10 flex items-center justify-center">
+                      {symbols["axisLevelChange"] ? (
+                        <img src={symbols["axisLevelChange"]} alt="Axis/Level Change" className="h-8 w-8 object-contain" />
+                      ) : (
+                        <div className="h-8 w-8 bg-muted rounded" />
+                      )}
+                    </div>
+                    <div className="flex-1 flex items-center gap-2">
+                      <span className="font-medium text-foreground">Axis/Level Change</span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex">
+                              <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-sm">
+                            <p>For each Risk (R), only one criterion can be applied: either a change of axis or a change of level — not both. When evaluating levels, only two levels are considered: in flight or standing, and on the floor.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <div className="w-20 text-right">
+                      <span className="text-primary font-semibold">0.1</span>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Show existing rotation entries with drag and drop */}
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={rotationEntries.map(e => e.id)} strategy={verticalListSortingStrategy}>
