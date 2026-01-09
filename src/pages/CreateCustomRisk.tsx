@@ -104,33 +104,36 @@ const CreateCustomRisk = () => {
 
   // Rotation type: 'one' | 'two' | 'series'
   type RotationType = 'one' | 'two' | 'series';
+  type RotationEntry = { id: string; type: RotationType; seriesCount?: number };
 
   // Risk components state
   const [throwCriteria, setThrowCriteria] = useState<CriteriaItem[]>([]);
-  const [rotationType, setRotationType] = useState<RotationType | null>(null);
+  const [rotationEntries, setRotationEntries] = useState<RotationEntry[]>([]);
   const [seriesCount, setSeriesCount] = useState<number>(3);
   const [showRotationDropdown, setShowRotationDropdown] = useState(false);
   const [catchCriteria, setCatchCriteria] = useState<CriteriaItem[]>([]);
   const rotationDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Calculate rotation value based on type
+  // Calculate rotation value based on entries
   const getRotationValue = (): number => {
-    if (!rotationType) return 0;
-    if (rotationType === 'one') return 0.1;
-    if (rotationType === 'two') return 0.2;
-    // Series: base rotations (0.1 each) + 0.2 series bonus
-    return seriesCount * 0.1 + 0.2;
+    return rotationEntries.reduce((sum, entry) => {
+      if (entry.type === 'one') return sum + 0.1;
+      if (entry.type === 'two') return sum + 0.2;
+      // Series: base rotations (0.1 each) + 0.2 series bonus
+      return sum + (entry.seriesCount || 3) * 0.1 + 0.2;
+    }, 0);
   };
 
-  // Calculate R level based on rotation type
-  const getRLevel = (): number => {
-    if (!rotationType) return 0;
-    if (rotationType === 'one') return 1;
-    if (rotationType === 'two') return 2;
-    return seriesCount; // Series shows number of rotations
+  // Calculate total rotations for R level
+  const getTotalRotations = (): number => {
+    return rotationEntries.reduce((sum, entry) => {
+      if (entry.type === 'one') return sum + 1;
+      if (entry.type === 'two') return sum + 2;
+      return sum + (entry.seriesCount || 3);
+    }, 0);
   };
   const rotationValue = getRotationValue();
-  const rLevel = getRLevel();
+  const rLevel = getTotalRotations();
 
   // Calculate total value
   const throwValue = selectedThrow?.value ?? 0;
@@ -248,16 +251,27 @@ const CreateCustomRisk = () => {
     return map;
   }, [dynamicCatches, generalCriteria, dynamicThrows]);
   const handleSelectRotationType = (type: 'one' | 'two' | 'series') => {
-    setRotationType(type);
-    if (type === 'series') {
-      setSeriesCount(3); // Default to 3 for series
-    }
+    const newEntry: RotationEntry = {
+      id: crypto.randomUUID(),
+      type,
+      seriesCount: type === 'series' ? 3 : undefined
+    };
+    setRotationEntries(prev => [...prev, newEntry]);
     setShowRotationDropdown(false);
   };
   const handleClearRotationType = () => {
-    setRotationType(null);
-    setSeriesCount(3);
+    setRotationEntries([]);
   };
+  const handleRemoveRotation = (id: string) => {
+    setRotationEntries(prev => prev.filter(e => e.id !== id));
+  };
+  const handleUpdateSeriesCount = (id: string, count: number) => {
+    setRotationEntries(prev => prev.map(e => 
+      e.id === id ? { ...e, seriesCount: count } : e
+    ));
+  };
+  // Check if 2 base rotations already exists
+  const hasTwoBaseRotations = rotationEntries.some(e => e.type === 'two');
   const handleSelectThrow = (throwItem: DynamicThrow) => {
     setSelectedThrow(throwItem);
     setShowThrowDropdown(false);
@@ -370,12 +384,13 @@ const CreateCustomRisk = () => {
         symbol: t.symbol || '',
         value: t.value
       })),
-      // Add rotation component based on type
-      ...(rotationType ? [{
-        name: rotationType === 'one' ? 'One Rotation' : rotationType === 'two' ? '2 Base Rotations' : `Series (${seriesCount} rotations)`,
-        symbol: symbols["baseRotations"] || '',
-        value: rotationValue
-      }] : []), ...(selectedCatch ? [{
+      // Add rotation components
+      ...rotationEntries.map(entry => ({
+        name: entry.type === 'one' ? 'One Rotation' : entry.type === 'two' ? '2 Base Rotations' : `Series (${entry.seriesCount || 3} rotations)`,
+        symbol: entry.type === 'series' ? '' : (entry.type === 'one' ? symbols["extraRotation"] : symbols["baseRotations"]) || '',
+        value: entry.type === 'one' ? 0.1 : entry.type === 'two' ? 0.2 : ((entry.seriesCount || 3) * 0.1 + 0.2)
+      })),
+      ...(selectedCatch ? [{
         name: selectedCatch.name,
         symbol: selectedCatch.symbol_image || '',
         value: selectedCatch.value ?? 0
@@ -581,51 +596,63 @@ const CreateCustomRisk = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="relative p-4" ref={rotationDropdownRef}>
-                {!rotationType ? (
-                  <Button variant="outline" onClick={() => setShowRotationDropdown(!showRotationDropdown)} className="w-full justify-between border-primary/30 text-foreground hover:bg-primary/5">
-                    <span>Select Rotation Type</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${showRotationDropdown ? 'rotate-180' : ''}`} />
-                  </Button>
-                ) : (
-                  <div className="space-y-0 -mx-4 -mt-4 -mb-4">
-                    <div className="flex items-center border-b border-border cursor-pointer hover:bg-muted/50" onClick={() => setShowRotationDropdown(prev => !prev)}>
-                      <div className="w-16 flex justify-center py-4">
-                        {rotationType === 'series' ? <span className="text-2xl font-bold text-foreground">S</span> : rotationType === 'one' ? (symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />) : (symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />)}
-                      </div>
-                      <div className="flex-1 py-4 px-4 flex items-center gap-2">
-                        <span className="font-medium text-foreground">
-                          {rotationType === 'one' && 'One Rotation'}
-                          {rotationType === 'two' && '2 Base Rotations'}
-                          {rotationType === 'series' && <div className="flex items-center gap-3">
-                              <span>Series</span>
-                              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => setSeriesCount(Math.max(3, seriesCount - 1))} disabled={seriesCount <= 3}>
-                                  -
-                                </Button>
-                                <span className="w-6 text-center font-semibold">{seriesCount}</span>
-                                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => setSeriesCount(seriesCount + 1)}>
-                                  +
-                                </Button>
-                                <span className="text-sm text-muted-foreground">rotations</span>
-                              </div>
-                            </div>}
-                        </span>
-                        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showRotationDropdown ? 'rotate-180' : ''}`} />
-                      </div>
-                      <div className="w-20 py-4 px-2 text-center border-l border-border">
-                        <p className="font-semibold text-primary">{rotationValue.toFixed(1)}</p>
-                      </div>
-                      <div className="w-10 flex justify-center" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" onClick={handleClearRotationType} className="h-8 w-8 text-destructive hover:bg-destructive/10">
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
+              <div className="relative" ref={rotationDropdownRef}>
+                {/* Show existing rotation entries */}
+                {rotationEntries.map((entry) => (
+                  <div key={entry.id} className="flex items-center border-b border-border">
+                    <div className="w-16 flex justify-center py-4">
+                      {entry.type === 'series' ? (
+                        <span className="text-2xl font-bold text-foreground">S</span>
+                      ) : entry.type === 'one' ? (
+                        symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />
+                      ) : (
+                        symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />
+                      )}
+                    </div>
+                    <div className="flex-1 py-4 px-4">
+                      <span className="font-medium text-foreground">
+                        {entry.type === 'one' && 'One Rotation'}
+                        {entry.type === 'two' && '2 Base Rotations'}
+                        {entry.type === 'series' && (
+                          <div className="flex items-center gap-3">
+                            <span>Series</span>
+                            <div className="flex items-center gap-2">
+                              <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => handleUpdateSeriesCount(entry.id, Math.max(3, (entry.seriesCount || 3) - 1))} disabled={(entry.seriesCount || 3) <= 3}>
+                                -
+                              </Button>
+                              <span className="w-6 text-center font-semibold">{entry.seriesCount || 3}</span>
+                              <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => handleUpdateSeriesCount(entry.id, (entry.seriesCount || 3) + 1)}>
+                                +
+                              </Button>
+                              <span className="text-sm text-muted-foreground">rotations</span>
+                            </div>
+                          </div>
+                        )}
+                      </span>
+                    </div>
+                    <div className="w-20 py-4 px-2 text-center border-l border-border">
+                      <p className="font-semibold text-primary">
+                        {entry.type === 'one' ? '0.1' : entry.type === 'two' ? '0.2' : ((entry.seriesCount || 3) * 0.1 + 0.2).toFixed(1)}
+                      </p>
+                    </div>
+                    <div className="w-10 flex justify-center">
+                      <Button variant="ghost" size="icon" onClick={() => handleRemoveRotation(entry.id)} className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                )}
+                ))}
                 
-                {showRotationDropdown && <div className="absolute left-0 right-0 top-full mt-1 bg-background border border-border rounded-lg shadow-lg z-50">
+                {/* Add rotation button */}
+                <div className="p-4">
+                  <Button variant="outline" onClick={() => setShowRotationDropdown(!showRotationDropdown)} className="w-full justify-between border-primary/30 text-foreground hover:bg-primary/5">
+                    <span>{rotationEntries.length === 0 ? 'Select Rotation Type' : '+ Add More Rotations'}</span>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${showRotationDropdown ? 'rotate-180' : ''}`} />
+                  </Button>
+                </div>
+                
+                {showRotationDropdown && (
+                  <div className="absolute left-4 right-4 bottom-0 translate-y-full mt-1 bg-background border border-border rounded-lg shadow-lg z-50">
                     <div className="p-2 space-y-1">
                       <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('one')}>
                         <div className="w-8 h-8 flex items-center justify-center">
@@ -635,8 +662,10 @@ const CreateCustomRisk = () => {
                           <span className="font-medium text-foreground">One Rotation</span>
                           <TooltipProvider>
                             <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                              <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <span className="inline-flex">
+                                  <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                                </span>
                               </TooltipTrigger>
                               <TooltipContent className="max-w-sm">
                                 <p>If a throw or catch occurs during a rotation, select the appropriate type in the Throw or Catch section. Only select a rotation if it is performed under the flight.</p>
@@ -646,7 +675,7 @@ const CreateCustomRisk = () => {
                         </div>
                         <span className="text-primary font-semibold">0.1</span>
                       </div>
-                      {rotationType !== 'two' && (
+                      {!hasTwoBaseRotations && (
                         <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('two')}>
                           <div className="w-8 h-8 flex items-center justify-center">
                             {symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Base Rotations" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 bg-muted rounded" />}
@@ -689,7 +718,8 @@ const CreateCustomRisk = () => {
                         <span className="text-primary font-semibold">0.5</span>
                       </div>
                     </div>
-                  </div>}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
