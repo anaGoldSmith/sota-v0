@@ -257,6 +257,21 @@ const CreateCustomRisk = () => {
   const handleSelectCatch = (catchItem: DynamicCatch) => {
     setSelectedCatch(catchItem);
     setShowCatchDropdown(false);
+    
+    // Auto-add Cr2H when Catch3 is selected
+    if (catchItem.code === 'Catch3') {
+      const cr2h = generalCriteria.find(gc => gc.code === 'Cr2H');
+      if (cr2h && !selectedCatchCriteria.includes('Cr2H')) {
+        const newCriteria: CriteriaItem = {
+          id: `catch_${cr2h.code}`,
+          name: cr2h.name,
+          symbol: cr2h.symbol_image || undefined,
+          value: 0.1,
+          code: cr2h.code
+        };
+        setCatchCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]);
+      }
+    }
   };
 
   const handleToggleThrowCriteria = (criteria: GeneralCriteria) => {
