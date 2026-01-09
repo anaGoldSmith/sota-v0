@@ -616,8 +616,10 @@ const CreateCustomRisk = () => {
                             <span className="font-medium text-foreground">2 Base Rotations</span>
                             <TooltipProvider>
                               <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                                <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <span className="inline-flex">
+                                    <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                                  </span>
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-sm">
                                   <p>Each Risk requires two base rotations. Select '2 Base Rotations' or 'Series.'</p>
