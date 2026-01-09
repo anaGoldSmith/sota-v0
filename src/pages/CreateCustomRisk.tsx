@@ -588,12 +588,12 @@ const CreateCustomRisk = () => {
                     <ChevronDown className={`h-4 w-4 transition-transform ${showRotationDropdown ? 'rotate-180' : ''}`} />
                   </Button>
                 ) : (
-                  <div className="space-y-0 -m-4">
-                    <div className="flex items-center border-b border-border cursor-pointer hover:bg-muted/50" onClick={() => setShowRotationDropdown(!showRotationDropdown)}>
+                  <div className="space-y-0 -mx-4 -mt-4 -mb-4">
+                    <div className="flex items-center border-b border-border cursor-pointer hover:bg-muted/50" onClick={() => setShowRotationDropdown(prev => !prev)}>
                       <div className="w-16 flex justify-center py-4">
                         {rotationType === 'series' ? <span className="text-2xl font-bold text-foreground">S</span> : rotationType === 'one' ? (symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />) : (symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />)}
                       </div>
-                      <div className="flex-1 py-4 px-4">
+                      <div className="flex-1 py-4 px-4 flex items-center gap-2">
                         <span className="font-medium text-foreground">
                           {rotationType === 'one' && 'One Rotation'}
                           {rotationType === 'two' && '2 Base Rotations'}
@@ -611,6 +611,7 @@ const CreateCustomRisk = () => {
                               </div>
                             </div>}
                         </span>
+                        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showRotationDropdown ? 'rotate-180' : ''}`} />
                       </div>
                       <div className="w-20 py-4 px-2 text-center border-l border-border">
                         <p className="font-semibold text-primary">{rotationValue.toFixed(1)}</p>
@@ -624,7 +625,7 @@ const CreateCustomRisk = () => {
                   </div>
                 )}
                 
-                {showRotationDropdown && <div className="absolute left-4 right-4 top-full mt-1 bg-background border border-border rounded-lg shadow-lg z-50">
+                {showRotationDropdown && <div className="absolute left-0 right-0 top-full mt-1 bg-background border border-border rounded-lg shadow-lg z-50">
                     <div className="p-2 space-y-1">
                       <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('one')}>
                         <div className="w-8 h-8 flex items-center justify-center">
