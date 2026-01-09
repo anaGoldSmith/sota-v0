@@ -78,7 +78,10 @@ interface RiskData {
   type: 'R';
   label: string;
   value: number;
+  rLevel?: number;
   symbols: Record<string, string>;
+  throwSymbols?: string[];
+  catchSymbols?: string[];
   components: RiskComponent[];
 }
 
@@ -171,22 +174,40 @@ function SortableRow({
     </div>
   );
 
-  // Render Risk element with R₂ label and symbol
+  // Render Risk element with throw symbols, R subscript, and catch symbols
   const renderRiskSymbols = () => {
     if (element.type !== 'R' || !element.riskData) return null;
     
+    const rLevel = element.riskData.rLevel || 2;
+    const throwSymbols = element.riskData.throwSymbols || [];
+    const catchSymbols = element.riskData.catchSymbols || [];
+    
     return (
-      <div className="flex items-center gap-2">
-        <span className="text-lg font-bold text-foreground">
-          R<sub className="text-sm">2</sub>
-        </span>
-        {element.riskData.symbols["R2"] && (
+      <div className="flex items-center gap-1 flex-wrap">
+        {/* Throw symbols */}
+        {throwSymbols.map((url, idx) => (
           <img
-            src={element.riskData.symbols["R2"]}
-            alt="R2 Symbol"
-            className="h-8 w-auto object-contain filter grayscale"
+            key={`throw-${idx}`}
+            src={url}
+            alt="Throw symbol"
+            className="h-8 w-8 object-contain"
           />
-        )}
+        ))}
+        
+        {/* R with subscript */}
+        <span className="text-lg font-bold text-foreground mx-1">
+          R<sub className="text-sm">{rLevel}</sub>
+        </span>
+        
+        {/* Catch symbols */}
+        {catchSymbols.map((url, idx) => (
+          <img
+            key={`catch-${idx}`}
+            src={url}
+            alt="Catch symbol"
+            className="h-8 w-8 object-contain"
+          />
+        ))}
       </div>
     );
   };

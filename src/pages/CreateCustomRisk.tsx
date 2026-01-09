@@ -462,12 +462,26 @@ const CreateCustomRisk = () => {
     setShowCatchCriteriaDropdown(false);
   };
   const handleSave = () => {
+    // Collect throw symbols (throw symbol + criteria symbols)
+    const throwSymbols: string[] = [
+      ...(selectedThrow?.symbol_image ? [selectedThrow.symbol_image] : []),
+      ...throwCriteria.filter(t => t.symbol).map(t => t.symbol!)
+    ];
+    
+    // Collect catch symbols (catch symbol + criteria symbols)
+    const catchSymbols: string[] = [
+      ...(selectedCatch?.symbol_image ? [selectedCatch.symbol_image] : []),
+      ...catchCriteria.filter(c => c.symbol).map(c => c.symbol!)
+    ];
+    
     const riskData = {
       type: 'R' as const,
       label: `R₊`,
       rLevel: rLevel,
       value: totalValue,
       symbols: symbols,
+      throwSymbols: throwSymbols,
+      catchSymbols: catchSymbols,
       components: [...(selectedThrow ? [{
         name: selectedThrow.name,
         symbol: selectedThrow.symbol_image || '',
