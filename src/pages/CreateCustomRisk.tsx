@@ -103,8 +103,8 @@ const CreateCustomRisk = () => {
   const [catchCriteria, setCatchCriteria] = useState<CriteriaItem[]>([]);
 
   // Calculate total value
-  const throwValue = selectedThrow ? 0 : 0;
-  const catchValue = selectedCatch ? 0 : 0;
+  const throwValue = selectedThrow?.value ?? 0;
+  const catchValue = selectedCatch?.value ?? 0;
   const totalValue = 
     throwValue +
     throwCriteria.reduce((sum, item) => sum + item.value, 0) +
@@ -285,10 +285,10 @@ const CreateCustomRisk = () => {
       value: totalValue,
       symbols: symbols,
       components: [
-        ...(selectedThrow ? [{ name: selectedThrow.name, symbol: selectedThrow.symbol_image || '', value: 0 }] : []),
+        ...(selectedThrow ? [{ name: selectedThrow.name, symbol: selectedThrow.symbol_image || '', value: selectedThrow.value ?? 0 }] : []),
         ...throwCriteria.map(t => ({ name: t.name, symbol: t.symbol || '', value: t.value })),
         ...rotations.map(r => ({ name: r.name, symbol: symbols["baseRotations"], value: r.value })),
-        ...(selectedCatch ? [{ name: selectedCatch.name, symbol: selectedCatch.symbol_image || '', value: 0 }] : []),
+        ...(selectedCatch ? [{ name: selectedCatch.name, symbol: selectedCatch.symbol_image || '', value: selectedCatch.value ?? 0 }] : []),
         ...catchCriteria.map(c => ({ name: c.name, symbol: c.symbol || '', value: c.value })),
       ]
     };
