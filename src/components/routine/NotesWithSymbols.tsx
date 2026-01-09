@@ -51,7 +51,18 @@ export const NotesWithSymbols = ({ notes, symbolMap }: NotesWithSymbolsProps) =>
     <span className="inline">
       {parsedContent.map((part, index) => {
         if (typeof part === 'string') {
-          return <span key={index}>{part}</span>;
+          // Handle newlines in text parts
+          const lines = part.split('\n');
+          return (
+            <span key={index}>
+              {lines.map((line, lineIndex) => (
+                <span key={lineIndex}>
+                  {line}
+                  {lineIndex < lines.length - 1 && <br />}
+                </span>
+              ))}
+            </span>
+          );
         }
         
         // It's a symbol reference
