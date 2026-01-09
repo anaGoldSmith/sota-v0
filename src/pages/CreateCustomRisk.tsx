@@ -725,18 +725,11 @@ const CreateCustomRisk = () => {
             </CardHeader>
             <CardContent className="p-0">
               <div className="relative" ref={rotationDropdownRef}>
-                {/* Axis/Level Change row - matches rotation row styling */}
+                {/* Axis/Level Change row - matches rotation row styling exactly */}
                 {hasAxisChange && (
                   <div className="flex items-center border-b border-border bg-background">
-                    <div className="w-8 flex justify-center py-4">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => setHasAxisChange(false)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                    <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                      <GripVertical className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div className="w-12 flex justify-center py-4">
                       {symbols["axisLevelChange"] ? (
@@ -765,7 +758,11 @@ const CreateCustomRisk = () => {
                     <div className="w-20 py-4 px-2 text-center border-l border-border">
                       <p className="font-semibold text-primary">0.1</p>
                     </div>
-                    <div className="w-10" /> {/* Empty space to match X button column width */}
+                    <div className="w-10 flex justify-center">
+                      <Button variant="ghost" size="icon" onClick={() => setHasAxisChange(false)} className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 )}
                 
