@@ -835,14 +835,10 @@ const CreateCustomRisk = () => {
                         )}
                       </div>
                       <div className="flex-1 py-4 px-4">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-medium text-foreground">{item.name}</span>
-                          {item.note && (
-                            <span className="font-medium text-foreground text-sm">
-                              <NotesWithSymbols notes={item.note} symbolMap={notesSymbolMap} />
-                            </span>
-                          )}
-                        </div>
+                        <span className="font-medium text-foreground">
+                          {item.name}{item.note && ': '}
+                          {item.note && <NotesWithSymbols notes={item.note} symbolMap={notesSymbolMap} />}
+                        </span>
                       </div>
                       <div className="w-20 py-4 px-2 text-center border-l border-border">
                         <p className="font-semibold text-foreground">{item.value}</p>
