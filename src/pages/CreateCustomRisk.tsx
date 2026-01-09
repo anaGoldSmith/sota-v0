@@ -174,7 +174,7 @@ const CreateCustomRisk = () => {
       
       const { data: extraRotationData } = supabase.storage
         .from("dynamic-element-symbols")
-        .getPublicUrl("other_risks/extraRotation.png");
+        .getPublicUrl("other_risks/extraRotation.PNG");
       symbolUrls["extraRotation"] = extraRotationData.publicUrl;
       
       setSymbols(symbolUrls);
