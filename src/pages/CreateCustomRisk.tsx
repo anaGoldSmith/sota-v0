@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -9,6 +9,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ApparatusType } from "@/types/apparatus";
 import { useToast } from "@/hooks/use-toast";
+import { NotesWithSymbols } from "@/components/routine/NotesWithSymbols";
 
 interface CriteriaItem {
   id: string;
@@ -204,6 +205,34 @@ const CreateCustomRisk = () => {
   const filteredCatches = dynamicCatches.filter(c => 
     apparatusCode ? isApplicableForApparatus(c, apparatusCode) : true
   );
+
+  // Build symbol map for notes parsing (combines catches, general criteria, and throws)
+  const notesSymbolMap = useMemo(() => {
+    const map: Record<string, string | null> = {};
+    
+    // Add catch symbols
+    dynamicCatches.forEach(c => {
+      if (c.symbol_image) {
+        map[c.code] = c.symbol_image;
+      }
+    });
+    
+    // Add general criteria symbols
+    generalCriteria.forEach(gc => {
+      if (gc.symbol_image) {
+        map[gc.code] = gc.symbol_image;
+      }
+    });
+    
+    // Add throw symbols
+    dynamicThrows.forEach(t => {
+      if (t.symbol_image) {
+        map[t.code] = t.symbol_image;
+      }
+    });
+    
+    return map;
+  }, [dynamicCatches, generalCriteria, dynamicThrows]);
 
   const handleAddRotation = () => {
     const newRotation: CriteriaItem = {
@@ -707,8 +736,8 @@ const CreateCustomRisk = () => {
                                       <TooltipTrigger asChild>
                                         <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
                                       </TooltipTrigger>
-                                      <TooltipContent className="max-w-xs">
-                                        <p>{catchItem.notes}</p>
+                                      <TooltipContent className="max-w-sm">
+                                        <NotesWithSymbols notes={catchItem.notes} symbolMap={notesSymbolMap} />
                                       </TooltipContent>
                                     </Tooltip>
                                   </TooltipProvider>
@@ -748,8 +777,8 @@ const CreateCustomRisk = () => {
                             <TooltipTrigger asChild>
                               <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
                             </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
-                              <p>{selectedCatch.notes}</p>
+                            <TooltipContent className="max-w-sm">
+                              <NotesWithSymbols notes={selectedCatch.notes} symbolMap={notesSymbolMap} />
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
