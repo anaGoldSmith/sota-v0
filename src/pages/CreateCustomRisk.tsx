@@ -253,6 +253,43 @@ const CreateCustomRisk = () => {
   const handleSelectThrow = (throwItem: DynamicThrow) => {
     setSelectedThrow(throwItem);
     setShowThrowDropdown(false);
+    
+    // Auto-add Cr1V and Cr2H when Thr2 is selected
+    if (throwItem.code === 'Thr2') {
+      const cr1v = generalCriteria.find(gc => gc.code === 'Cr1V');
+      const cr2h = generalCriteria.find(gc => gc.code === 'Cr2H');
+      
+      const newCriteria: CriteriaItem[] = [];
+      
+      if (cr1v && !selectedThrowCriteria.includes('Cr1V')) {
+        newCriteria.push({
+          id: `throw_${cr1v.code}`,
+          name: cr1v.name,
+          symbol: cr1v.symbol_image || undefined,
+          value: 0.1,
+          code: cr1v.code,
+          note: 'the criterion {Cr1V} is given for throws without the help of hands'
+        });
+      }
+      
+      if (cr2h && !selectedThrowCriteria.includes('Cr2H')) {
+        newCriteria.push({
+          id: `throw_${cr2h.code}`,
+          name: cr2h.name,
+          symbol: cr2h.symbol_image || undefined,
+          value: 0.1,
+          code: cr2h.code,
+          note: 'the criterion {Cr2H} is given for catches with rebounds on the arm(s) or other body parts'
+        });
+      }
+      
+      if (newCriteria.length > 0) {
+        setThrowCriteria(prev => [
+          ...prev.filter(c => c.code !== 'Cr1V' && c.code !== 'Cr2H'),
+          ...newCriteria
+        ]);
+      }
+    }
   };
 
   const handleSelectCatch = (catchItem: DynamicCatch) => {
