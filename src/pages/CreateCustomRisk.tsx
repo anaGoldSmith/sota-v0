@@ -269,7 +269,7 @@ const CreateCustomRisk = () => {
           symbol: cr2h.symbol_image || undefined,
           value: 0.1,
           code: cr2h.code,
-          note: 'the criterion {Cr2H} is given for catches with rebounds on the arm(s) or other body parts'
+          note: 'Without Hands: the criterion {Cr2H} is given for catches with rebounds on the arm(s) or other body parts'
         };
         setCatchCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]);
       }
