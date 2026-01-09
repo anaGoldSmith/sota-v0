@@ -634,6 +634,18 @@ const CreateCustomRisk = () => {
                             <span className="text-lg font-bold text-foreground">S</span>
                           </div>
                           <span className="flex-1 font-medium text-foreground">Series (0.2 for a series + at least 0.3 for 3 selected pre-acrobatic elements)</span>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <span className="inline-flex">
+                                  <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-sm">
+                                <p>A series includes three or more identical, uninterrupted pre-acrobatic elements performed under the flight (add more pre-acrobatic elements to increase the value of series), or three turning leap DBs with a throw and catch.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           <span className="text-primary font-semibold">0.5</span>
                         </div>
                       </div>
