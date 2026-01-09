@@ -194,13 +194,19 @@ const CreateCustomRisk = () => {
     }, 0);
   };
 
-  // Calculate total rotations for R level
+  // Calculate total rotations for R level (includes Thr6/Catch8 which add 1 rotation each)
   const getTotalRotations = (): number => {
-    return rotationEntries.reduce((sum, entry) => {
+    let total = rotationEntries.reduce((sum, entry) => {
       if (entry.type === 'one') return sum + 1;
       if (entry.type === 'two') return sum + 2;
       return sum + (entry.seriesCount || 3);
     }, 0);
+    
+    // Thr6 and Catch8 are performed during rotation, each adds 1 rotation
+    if (selectedThrow?.code === 'Thr6') total += 1;
+    if (selectedCatch?.code === 'Catch8') total += 1;
+    
+    return total;
   };
   const rotationValue = getRotationValue();
   const rLevel = getTotalRotations();
