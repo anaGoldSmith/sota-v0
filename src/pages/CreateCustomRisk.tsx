@@ -172,6 +172,11 @@ const CreateCustomRisk = () => {
         .getPublicUrl("other_risks/baseRotations.png");
       symbolUrls["baseRotations"] = rotationsData.publicUrl;
       
+      const { data: seriesData } = supabase.storage
+        .from("dynamic-element-symbols")
+        .getPublicUrl("other_risks/S.png");
+      symbolUrls["series"] = seriesData.publicUrl;
+      
       setSymbols(symbolUrls);
     };
     
@@ -718,15 +723,28 @@ const CreateCustomRisk = () => {
                 <div className="space-y-0">
                   <div className="flex items-center border-b border-border">
                     <div className="w-16 flex justify-center py-4">
-                      {symbols["baseRotations"] ? (
-                        <img 
-                          src={symbols["baseRotations"]} 
-                          alt="Rotation" 
-                          className="h-8 w-8 object-contain"
-                          onError={(e) => (e.currentTarget.style.display = 'none')}
-                        />
+                      {rotationType === 'series' ? (
+                        symbols["series"] ? (
+                          <img 
+                            src={symbols["series"]} 
+                            alt="Series" 
+                            className="h-8 w-8 object-contain"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded" />
+                        )
                       ) : (
-                        <div className="h-8 w-8 bg-muted rounded" />
+                        symbols["baseRotations"] ? (
+                          <img 
+                            src={symbols["baseRotations"]} 
+                            alt="Rotation" 
+                            className="h-8 w-8 object-contain"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded" />
+                        )
                       )}
                     </div>
                     <div className="flex-1 py-4 px-4">
