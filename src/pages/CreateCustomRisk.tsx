@@ -29,6 +29,7 @@ interface DynamicThrow {
   name: string;
   apparatus: string;
   symbol_image: string | null;
+  value: number | null;
 }
 
 interface DynamicCatch {
@@ -39,6 +40,7 @@ interface DynamicCatch {
   extra_criteria: string | null;
   notes: string | null;
   symbol_image: string | null;
+  value: number | null;
 }
 
 // Map apparatus type to code
@@ -423,23 +425,32 @@ const CreateCustomRisk = () => {
                           No throws available for this apparatus
                         </div>
                       ) : (
-                        filteredThrows.map((throwItem) => (
-                          <div
-                            key={throwItem.id}
-                            className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
-                            onClick={() => handleSelectThrow(throwItem)}
-                          >
-                            {throwItem.symbol_image && (
-                              <img 
-                                src={throwItem.symbol_image} 
-                                alt={throwItem.name}
-                                className="h-8 w-8 object-contain"
-                                onError={(e) => (e.currentTarget.style.display = 'none')}
-                              />
-                            )}
-                            <span className="text-foreground">{throwItem.name}</span>
-                          </div>
-                        ))
+                        filteredThrows.map((throwItem) => {
+                          const symbolUrl = throwItem.symbol_image || 
+                            supabase.storage.from('dynamic-element-symbols').getPublicUrl(`throws/${throwItem.code}.png`).data.publicUrl;
+                          return (
+                            <div
+                              key={throwItem.id}
+                              className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                              onClick={() => handleSelectThrow(throwItem)}
+                            >
+                              <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
+                                <img 
+                                  src={symbolUrl} 
+                                  alt={throwItem.code}
+                                  className="h-8 w-8 object-contain"
+                                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-foreground text-sm">{throwItem.name}</span>
+                              </div>
+                              <div className="w-12 text-right flex-shrink-0">
+                                <span className="text-primary font-semibold">{throwItem.value ?? 0}</span>
+                              </div>
+                            </div>
+                          );
+                        })
                       )}
                     </div>
                   )}
@@ -652,23 +663,32 @@ const CreateCustomRisk = () => {
                           No catches available for this apparatus
                         </div>
                       ) : (
-                        filteredCatches.map((catchItem) => (
-                          <div
-                            key={catchItem.id}
-                            className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
-                            onClick={() => handleSelectCatch(catchItem)}
-                          >
-                            {catchItem.symbol_image && (
-                              <img 
-                                src={catchItem.symbol_image} 
-                                alt={catchItem.name}
-                                className="h-8 w-8 object-contain"
-                                onError={(e) => (e.currentTarget.style.display = 'none')}
-                              />
-                            )}
-                            <span className="text-foreground">{catchItem.name}</span>
-                          </div>
-                        ))
+                        filteredCatches.map((catchItem) => {
+                          const symbolUrl = catchItem.symbol_image || 
+                            supabase.storage.from('dynamic-element-symbols').getPublicUrl(`catches/${catchItem.code}.png`).data.publicUrl;
+                          return (
+                            <div
+                              key={catchItem.id}
+                              className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                              onClick={() => handleSelectCatch(catchItem)}
+                            >
+                              <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
+                                <img 
+                                  src={symbolUrl} 
+                                  alt={catchItem.code}
+                                  className="h-8 w-8 object-contain"
+                                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-foreground text-sm">{catchItem.name}</span>
+                              </div>
+                              <div className="w-12 text-right flex-shrink-0">
+                                <span className="text-primary font-semibold">{catchItem.value ?? 0}</span>
+                              </div>
+                            </div>
+                          );
+                        })
                       )}
                     </div>
                   )}
