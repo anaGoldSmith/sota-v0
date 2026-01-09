@@ -131,8 +131,12 @@ export default function SymbolManagement() {
             .from(bucket)
             .getPublicUrl(filePath);
 
+          // Match by symbol_image URL/filename OR by code matching filename (without extension)
+          const fileCodeWithoutExtension = file.name.replace(/\.[^/.]+$/, "");
           const linkedRecord = dbRecords.find((record: any) => 
-            record.symbol_image === publicUrl || record.symbol_image === file.name
+            record.symbol_image === publicUrl || 
+            record.symbol_image === file.name ||
+            record.code === fileCodeWithoutExtension
           );
 
           return {
