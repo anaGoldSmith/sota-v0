@@ -17,6 +17,7 @@ interface CriteriaItem {
   symbol?: string;
   value: number;
   code?: string;
+  note?: string;
 }
 
 interface GeneralCriteria {
@@ -267,7 +268,8 @@ const CreateCustomRisk = () => {
           name: cr2h.name,
           symbol: cr2h.symbol_image || undefined,
           value: 0.1,
-          code: cr2h.code
+          code: cr2h.code,
+          note: 'the criterion {Cr2H} is given for catches with rebounds on the arm(s) or other body parts'
         };
         setCatchCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]);
       }
@@ -833,7 +835,14 @@ const CreateCustomRisk = () => {
                         )}
                       </div>
                       <div className="flex-1 py-4 px-4">
-                        <span className="font-medium text-foreground">{item.name}</span>
+                        <div className="flex flex-col gap-1">
+                          <span className="font-medium text-foreground">{item.name}</span>
+                          {item.note && (
+                            <span className="text-xs text-muted-foreground">
+                              <NotesWithSymbols notes={item.note} symbolMap={notesSymbolMap} />
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="w-20 py-4 px-2 text-center border-l border-border">
                         <p className="font-semibold text-foreground">{item.value}</p>
