@@ -72,7 +72,7 @@ const isApplicableForApparatus = (item: {
 };
 
 // Sortable Rotation Row Component
-type RotationType = 'one' | 'two' | 'series';
+type RotationType = 'one' | 'two' | 'series' | 'axis';
 type RotationEntry = { id: string; type: RotationType; seriesCount?: number };
 
 interface SortableRotationRowProps {
@@ -91,45 +91,87 @@ const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount }: 
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const renderSymbol = () => {
+    if (entry.type === 'series') {
+      return <span className="text-2xl font-bold text-foreground">S</span>;
+    }
+    if (entry.type === 'one') {
+      return symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />;
+    }
+    if (entry.type === 'two') {
+      return symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />;
+    }
+    if (entry.type === 'axis') {
+      return symbols["axisLevelChange"] ? <img src={symbols["axisLevelChange"]} alt="Axis/Level Change" className="h-8 w-8 object-contain" /> : <div className="h-8 w-8 bg-muted rounded" />;
+    }
+    return null;
+  };
+
+  const renderName = () => {
+    if (entry.type === 'one') return 'One Rotation';
+    if (entry.type === 'two') return '2 Base Rotations';
+    if (entry.type === 'axis') {
+      return (
+        <span className="flex items-center gap-2">
+          Axis/Level Change
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-sm">
+                <p>For each Risk (R), only one criterion can be applied: either a change of axis or a change of level — not both. When evaluating levels, only two levels are considered: in flight or standing, and on the floor.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </span>
+      );
+    }
+    if (entry.type === 'series') {
+      return (
+        <div className="flex items-center gap-3">
+          <span>Series</span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => onUpdateSeriesCount(entry.id, Math.max(3, (entry.seriesCount || 3) - 1))} disabled={(entry.seriesCount || 3) <= 3}>
+              -
+            </Button>
+            <span className="w-6 text-center font-semibold">{entry.seriesCount || 3}</span>
+            <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => onUpdateSeriesCount(entry.id, (entry.seriesCount || 3) + 1)}>
+              +
+            </Button>
+            <span className="text-sm text-muted-foreground">rotations</span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const getValue = () => {
+    if (entry.type === 'one') return '0.1';
+    if (entry.type === 'two') return '0.2';
+    if (entry.type === 'axis') return '0.1';
+    if (entry.type === 'series') return ((entry.seriesCount || 3) * 0.1 + 0.2).toFixed(1);
+    return '0';
+  };
+
   return (
     <div ref={setNodeRef} style={style} className="flex items-center border-b border-border bg-background">
       <div {...attributes} {...listeners} className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
         <GripVertical className="h-4 w-4 text-muted-foreground" />
       </div>
       <div className="w-12 flex justify-center py-4">
-        {entry.type === 'series' ? (
-          <span className="text-2xl font-bold text-foreground">S</span>
-        ) : entry.type === 'one' ? (
-          symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />
-        ) : (
-          symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />
-        )}
+        {renderSymbol()}
       </div>
       <div className="flex-1 py-4 px-4">
         <span className="font-medium text-foreground">
-          {entry.type === 'one' && 'One Rotation'}
-          {entry.type === 'two' && '2 Base Rotations'}
-          {entry.type === 'series' && (
-            <div className="flex items-center gap-3">
-              <span>Series</span>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => onUpdateSeriesCount(entry.id, Math.max(3, (entry.seriesCount || 3) - 1))} disabled={(entry.seriesCount || 3) <= 3}>
-                  -
-                </Button>
-                <span className="w-6 text-center font-semibold">{entry.seriesCount || 3}</span>
-                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => onUpdateSeriesCount(entry.id, (entry.seriesCount || 3) + 1)}>
-                  +
-                </Button>
-                <span className="text-sm text-muted-foreground">rotations</span>
-              </div>
-            </div>
-          )}
+          {renderName()}
         </span>
       </div>
       <div className="w-20 py-4 px-2 text-center border-l border-border">
-        <p className="font-semibold text-primary">
-          {entry.type === 'one' ? '0.1' : entry.type === 'two' ? '0.2' : ((entry.seriesCount || 3) * 0.1 + 0.2).toFixed(1)}
-        </p>
+        <p className="font-semibold text-primary">{getValue()}</p>
       </div>
       <div className="w-10 flex justify-center">
         <Button variant="ghost" size="icon" onClick={() => onRemove(entry.id)} className="h-8 w-8 text-destructive hover:bg-destructive/10">
@@ -182,14 +224,17 @@ const CreateCustomRisk = () => {
   const [seriesCount, setSeriesCount] = useState<number>(3);
   const [showRotationDropdown, setShowRotationDropdown] = useState(false);
   const [catchCriteria, setCatchCriteria] = useState<CriteriaItem[]>([]);
-  const [hasAxisChange, setHasAxisChange] = useState(false);
   const rotationDropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Check if axis change already exists
+  const hasAxisChange = rotationEntries.some(e => e.type === 'axis');
 
   // Calculate rotation value based on entries
   const getRotationValue = (): number => {
     return rotationEntries.reduce((sum, entry) => {
       if (entry.type === 'one') return sum + 0.1;
       if (entry.type === 'two') return sum + 0.2;
+      if (entry.type === 'axis') return sum + 0.1;
       // Series: base rotations (0.1 each) + 0.2 series bonus
       return sum + (entry.seriesCount || 3) * 0.1 + 0.2;
     }, 0);
@@ -200,6 +245,7 @@ const CreateCustomRisk = () => {
     let total = rotationEntries.reduce((sum, entry) => {
       if (entry.type === 'one') return sum + 1;
       if (entry.type === 'two') return sum + 2;
+      if (entry.type === 'axis') return sum; // axis doesn't add rotations
       return sum + (entry.seriesCount || 3);
     }, 0);
     
@@ -215,8 +261,7 @@ const CreateCustomRisk = () => {
   // Calculate total value
   const throwValue = selectedThrow?.value ?? 0;
   const catchValue = selectedCatch?.value ?? 0;
-  const axisChangeValue = hasAxisChange ? 0.1 : 0;
-  const totalValue = throwValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + axisChangeValue + catchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
+  const totalValue = throwValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + catchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -497,18 +542,21 @@ const CreateCustomRisk = () => {
         symbol: t.symbol || '',
         value: t.value
       })),
-      // Add rotation components
-      ...rotationEntries.map(entry => ({
-        name: entry.type === 'one' ? 'One Rotation' : entry.type === 'two' ? '2 Base Rotations' : `Series (${entry.seriesCount || 3} rotations)`,
-        symbol: entry.type === 'series' ? '' : (entry.type === 'one' ? symbols["extraRotation"] : symbols["baseRotations"]) || '',
-        value: entry.type === 'one' ? 0.1 : entry.type === 'two' ? 0.2 : ((entry.seriesCount || 3) * 0.1 + 0.2)
-      })),
-      // Add axis/level change if selected
-      ...(hasAxisChange ? [{
-        name: 'Axis/Level Change',
-        symbol: symbols["axisLevelChange"] || '',
-        value: 0.1
-      }] : []),
+      // Add rotation components (including axis/level change)
+      ...rotationEntries.map(entry => {
+        if (entry.type === 'axis') {
+          return {
+            name: 'Axis/Level Change',
+            symbol: symbols["axisLevelChange"] || '',
+            value: 0.1
+          };
+        }
+        return {
+          name: entry.type === 'one' ? 'One Rotation' : entry.type === 'two' ? '2 Base Rotations' : `Series (${entry.seriesCount || 3} rotations)`,
+          symbol: entry.type === 'series' ? '' : (entry.type === 'one' ? symbols["extraRotation"] : symbols["baseRotations"]) || '',
+          value: entry.type === 'one' ? 0.1 : entry.type === 'two' ? 0.2 : ((entry.seriesCount || 3) * 0.1 + 0.2)
+        };
+      }),
       ...(selectedCatch ? [{
         name: selectedCatch.name,
         symbol: selectedCatch.symbol_image || '',
@@ -715,7 +763,10 @@ const CreateCustomRisk = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setHasAxisChange(true)}
+                  onClick={() => {
+                    const newEntry: RotationEntry = { id: crypto.randomUUID(), type: 'axis' };
+                    setRotationEntries(prev => [...prev, newEntry]);
+                  }}
                   disabled={hasAxisChange}
                   className={hasAxisChange ? "opacity-50 cursor-not-allowed" : "border-primary/30 text-primary hover:bg-primary/10"}
                 >
@@ -725,47 +776,6 @@ const CreateCustomRisk = () => {
             </CardHeader>
             <CardContent className="p-0">
               <div className="relative" ref={rotationDropdownRef}>
-                {/* Axis/Level Change row - matches rotation row styling exactly */}
-                {hasAxisChange && (
-                  <div className="flex items-center border-b border-border bg-background">
-                    <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
-                      <GripVertical className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div className="w-12 flex justify-center py-4">
-                      {symbols["axisLevelChange"] ? (
-                        <img src={symbols["axisLevelChange"]} alt="Axis/Level Change" className="h-8 w-8 object-contain" />
-                      ) : (
-                        <div className="h-8 w-8 bg-muted rounded" />
-                      )}
-                    </div>
-                    <div className="flex-1 py-4 px-4">
-                      <span className="font-medium text-foreground flex items-center gap-2">
-                        Axis/Level Change
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="inline-flex">
-                                <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-sm">
-                              <p>For each Risk (R), only one criterion can be applied: either a change of axis or a change of level — not both. When evaluating levels, only two levels are considered: in flight or standing, and on the floor.</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </span>
-                    </div>
-                    <div className="w-20 py-4 px-2 text-center border-l border-border">
-                      <p className="font-semibold text-primary">0.1</p>
-                    </div>
-                    <div className="w-10 flex justify-center">
-                      <Button variant="ghost" size="icon" onClick={() => setHasAxisChange(false)} className="h-8 w-8 text-destructive hover:bg-destructive/10">
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                
                 {/* Show existing rotation entries with drag and drop */}
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={rotationEntries.map(e => e.id)} strategy={verticalListSortingStrategy}>
