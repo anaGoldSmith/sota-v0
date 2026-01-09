@@ -268,7 +268,7 @@ const CreateCustomRisk = () => {
           symbol: cr1v.symbol_image || undefined,
           value: 0.1,
           code: cr1v.code,
-          note: 'the criterion {Cr1V} is given for throws without the help of hands'
+          note: 'Without Vision: extra criteria added to throw after rolling the hoop on the floor'
         });
       }
       
@@ -279,7 +279,7 @@ const CreateCustomRisk = () => {
           symbol: cr2h.symbol_image || undefined,
           value: 0.1,
           code: cr2h.code,
-          note: 'the criterion {Cr2H} is given for catches with rebounds on the arm(s) or other body parts'
+          note: 'Without Hands: extra criteria added to throw after rolling the hoop on the floor'
         });
       }
       
