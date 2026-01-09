@@ -724,16 +724,7 @@ const CreateCustomRisk = () => {
                   <div className="flex items-center border-b border-border">
                     <div className="w-16 flex justify-center py-4">
                       {rotationType === 'series' ? (
-                        symbols["series"] ? (
-                          <img 
-                            src={symbols["series"]} 
-                            alt="Series" 
-                            className="h-8 w-8 object-contain"
-                            onError={(e) => (e.currentTarget.style.display = 'none')}
-                          />
-                        ) : (
-                          <div className="h-8 w-8 bg-muted rounded" />
-                        )
+                        <span className="text-2xl font-bold text-foreground">S</span>
                       ) : (
                         symbols["baseRotations"] ? (
                           <img 
