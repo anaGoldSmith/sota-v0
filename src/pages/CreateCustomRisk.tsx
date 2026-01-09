@@ -726,7 +726,7 @@ const CreateCustomRisk = () => {
                           <div className="w-8 h-8 flex items-center justify-center">
                             <span className="text-lg font-bold text-foreground">S</span>
                           </div>
-                          <span className="flex-1 font-bold text-foreground">Series (0.2 for a Series + at least 0.3 for 3 selected pre-acrobatic elements)</span>
+                          <span className="flex-1 font-medium text-foreground">Series (0.2 for a Series + at least 0.3 for 3 selected pre-acrobatic elements)</span>
                           <span className="text-primary font-semibold">0.5</span>
                         </div>
                       </div>
