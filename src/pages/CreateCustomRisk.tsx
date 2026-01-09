@@ -813,14 +813,14 @@ const CreateCustomRisk = () => {
             <CardContent className="p-0">
               <div className="relative" ref={rotationDropdownRef}>
                 {/* Add rotation button - positioned above rotation entries */}
-                <div className="p-4 border-b border-border/50">
+                <div className="relative p-4 border-b border-border/50">
                   <Button variant="outline" onClick={() => setShowRotationDropdown(!showRotationDropdown)} className="w-full justify-between border-primary/30 text-foreground hover:bg-primary/5">
                     <span>{rotationEntries.length === 0 ? 'Select Rotation Type' : '+ Add More Rotations'}</span>
                     <ChevronDown className={`h-4 w-4 transition-transform ${showRotationDropdown ? 'rotate-180' : ''}`} />
                   </Button>
                   
                   {showRotationDropdown && (
-                    <div className="absolute left-4 right-4 top-full mt-1 bg-background border border-border rounded-lg shadow-lg z-50">
+                    <div className="absolute left-0 right-0 top-full mt-1 mx-4 bg-background border border-border rounded-lg shadow-xl z-[100]">
                       <div className="p-2 space-y-1">
                         <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('one')}>
                           <div className="w-8 h-8 flex items-center justify-center">
