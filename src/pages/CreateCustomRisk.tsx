@@ -593,7 +593,19 @@ const CreateCustomRisk = () => {
                           <div className="w-8 h-8 flex items-center justify-center">
                             {symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Extra Rotation" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 bg-muted rounded" />}
                           </div>
-                          <span className="flex-1 font-medium text-foreground">One Rotation</span>
+                          <div className="flex-1 flex items-center gap-2">
+                            <span className="font-medium text-foreground">One Rotation</span>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-sm">
+                                  <p>If a throw or catch occurs during a rotation, select the appropriate type in the Throw or Catch section. Only select a rotation if it is performed under the flight.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
                           <span className="text-primary font-semibold">0.1</span>
                         </div>
                         <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('two')}>
