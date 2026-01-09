@@ -799,16 +799,17 @@ const CreateCustomRisk = () => {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg text-primary">Rotations</CardTitle>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => {
                     const newEntry: RotationEntry = { id: crypto.randomUUID(), type: 'axis' };
                     setRotationEntries(prev => [...prev, newEntry]);
                   }}
                   disabled={hasAxisChange}
-                  className={hasAxisChange ? "opacity-50 cursor-not-allowed" : "border-primary/30 text-primary hover:bg-primary/10"}
+                  className={`text-primary hover:bg-primary/10 ${hasAxisChange ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  + Add Axis/Level Change
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Axis/Level Change
                 </Button>
               </div>
             </CardHeader>
