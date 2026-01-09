@@ -435,6 +435,8 @@ const CreateCustomRisk = () => {
   };
   // Check if 2 base rotations already exists
   const hasTwoBaseRotations = rotationEntries.some(e => e.type === 'two');
+  // Check if series already exists
+  const hasSeries = rotationEntries.some(e => e.type === 'series');
   
   // Drag and drop sensors
   const sensors = useSensors(
@@ -866,25 +868,27 @@ const CreateCustomRisk = () => {
                             <span className="text-primary font-semibold">0.2</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('series')}>
-                          <div className="w-8 h-8 flex items-center justify-center">
-                            <span className="text-lg font-bold text-foreground">S</span>
+                        {!hasSeries && (
+                          <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('series')}>
+                            <div className="w-8 h-8 flex items-center justify-center">
+                              <span className="text-lg font-bold text-foreground">S</span>
+                            </div>
+                            <span className="flex-1 font-medium text-foreground">Series (0.2 for a series + at least 0.3 for 3 selected pre-acrobatic elements)</span>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <span className="inline-flex">
+                                    <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-sm">
+                                  <p>A series includes three or more identical, uninterrupted pre-acrobatic elements performed under the flight (add more pre-acrobatic elements to increase the value of series), or three turning leap DBs with a throw and catch.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <span className="text-primary font-semibold">0.5</span>
                           </div>
-                          <span className="flex-1 font-medium text-foreground">Series (0.2 for a series + at least 0.3 for 3 selected pre-acrobatic elements)</span>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <span className="inline-flex">
-                                  <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-sm">
-                                <p>A series includes three or more identical, uninterrupted pre-acrobatic elements performed under the flight (add more pre-acrobatic elements to increase the value of series), or three turning leap DBs with a throw and catch.</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <span className="text-primary font-semibold">0.5</span>
-                        </div>
+                        )}
                       </div>
                     </div>
                   )}
