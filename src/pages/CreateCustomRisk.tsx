@@ -566,7 +566,9 @@ const CreateCustomRisk = () => {
                       )}
                     </div>
                     <div className="flex-1 py-4 px-4">
-                      <span className="font-medium text-foreground">{selectedThrow.name}</span>
+                      <span className="font-medium text-foreground">
+                        <NotesWithSymbols notes={selectedThrow.name} symbolMap={notesSymbolMap} />
+                      </span>
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border">
                       <p className="font-semibold text-foreground">{selectedThrow.value ?? 0}</p>
@@ -603,8 +605,11 @@ const CreateCustomRisk = () => {
                       </div>
                       <div className="flex-1 py-4 px-4">
                         <span className="font-medium text-foreground">
-                          {item.name}{item.note && ': '}
-                          {item.note && <NotesWithSymbols notes={item.note} symbolMap={notesSymbolMap} />}
+                          {item.note ? (
+                            <NotesWithSymbols notes={item.note} symbolMap={notesSymbolMap} />
+                          ) : (
+                            item.name
+                          )}
                         </span>
                       </div>
                       <div className="w-20 py-4 px-2 text-center border-l border-border">
