@@ -537,7 +537,9 @@ const CreateCustomRisk = () => {
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <span className="text-foreground text-sm">{throwItem.name}</span>
+                                <span className="text-foreground text-sm">
+                                  <NotesWithSymbols notes={throwItem.name} symbolMap={notesSymbolMap} />
+                                </span>
                               </div>
                               <div className="w-12 text-right flex-shrink-0">
                                 <span className="text-primary font-semibold">{throwItem.value ?? 0}</span>
