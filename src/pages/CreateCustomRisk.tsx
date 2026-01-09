@@ -3,9 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Plus, CheckCircle, X, ChevronDown, Info } from "lucide-react";
+import { ArrowLeft, Plus, CheckCircle, X, ChevronDown, Info, GripVertical } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate, useLocation } from "react-router-dom";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { supabase } from "@/integrations/supabase/client";
 import { ApparatusType } from "@/types/apparatus";
 import { useToast } from "@/hooks/use-toast";
@@ -67,6 +70,76 @@ const isApplicableForApparatus = (item: {
   const codes = item.apparatus.split('&').map(c => c.trim());
   return codes.includes(apparatusCode);
 };
+
+// Sortable Rotation Row Component
+type RotationType = 'one' | 'two' | 'series';
+type RotationEntry = { id: string; type: RotationType; seriesCount?: number };
+
+interface SortableRotationRowProps {
+  entry: RotationEntry;
+  symbols: Record<string, string>;
+  onRemove: (id: string) => void;
+  onUpdateSeriesCount: (id: string, count: number) => void;
+}
+
+const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount }: SortableRotationRowProps) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: entry.id });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center border-b border-border bg-background">
+      <div {...attributes} {...listeners} className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <div className="w-12 flex justify-center py-4">
+        {entry.type === 'series' ? (
+          <span className="text-2xl font-bold text-foreground">S</span>
+        ) : entry.type === 'one' ? (
+          symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />
+        ) : (
+          symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />
+        )}
+      </div>
+      <div className="flex-1 py-4 px-4">
+        <span className="font-medium text-foreground">
+          {entry.type === 'one' && 'One Rotation'}
+          {entry.type === 'two' && '2 Base Rotations'}
+          {entry.type === 'series' && (
+            <div className="flex items-center gap-3">
+              <span>Series</span>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => onUpdateSeriesCount(entry.id, Math.max(3, (entry.seriesCount || 3) - 1))} disabled={(entry.seriesCount || 3) <= 3}>
+                  -
+                </Button>
+                <span className="w-6 text-center font-semibold">{entry.seriesCount || 3}</span>
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => onUpdateSeriesCount(entry.id, (entry.seriesCount || 3) + 1)}>
+                  +
+                </Button>
+                <span className="text-sm text-muted-foreground">rotations</span>
+              </div>
+            </div>
+          )}
+        </span>
+      </div>
+      <div className="w-20 py-4 px-2 text-center border-l border-border">
+        <p className="font-semibold text-primary">
+          {entry.type === 'one' ? '0.1' : entry.type === 'two' ? '0.2' : ((entry.seriesCount || 3) * 0.1 + 0.2).toFixed(1)}
+        </p>
+      </div>
+      <div className="w-10 flex justify-center">
+        <Button variant="ghost" size="icon" onClick={() => onRemove(entry.id)} className="h-8 w-8 text-destructive hover:bg-destructive/10">
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 const CreateCustomRisk = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -102,9 +175,6 @@ const CreateCustomRisk = () => {
   const [selectedThrow, setSelectedThrow] = useState<DynamicThrow | null>(null);
   const [selectedCatch, setSelectedCatch] = useState<DynamicCatch | null>(null);
 
-  // Rotation type: 'one' | 'two' | 'series'
-  type RotationType = 'one' | 'two' | 'series';
-  type RotationEntry = { id: string; type: RotationType; seriesCount?: number };
 
   // Risk components state
   const [throwCriteria, setThrowCriteria] = useState<CriteriaItem[]>([]);
@@ -272,6 +342,23 @@ const CreateCustomRisk = () => {
   };
   // Check if 2 base rotations already exists
   const hasTwoBaseRotations = rotationEntries.some(e => e.type === 'two');
+  
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+  
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setRotationEntries((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
   const handleSelectThrow = (throwItem: DynamicThrow) => {
     setSelectedThrow(throwItem);
     setShowThrowDropdown(false);
@@ -597,51 +684,20 @@ const CreateCustomRisk = () => {
             </CardHeader>
             <CardContent className="p-0">
               <div className="relative" ref={rotationDropdownRef}>
-                {/* Show existing rotation entries */}
-                {rotationEntries.map((entry) => (
-                  <div key={entry.id} className="flex items-center border-b border-border">
-                    <div className="w-16 flex justify-center py-4">
-                      {entry.type === 'series' ? (
-                        <span className="text-2xl font-bold text-foreground">S</span>
-                      ) : entry.type === 'one' ? (
-                        symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />
-                      ) : (
-                        symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />
-                      )}
-                    </div>
-                    <div className="flex-1 py-4 px-4">
-                      <span className="font-medium text-foreground">
-                        {entry.type === 'one' && 'One Rotation'}
-                        {entry.type === 'two' && '2 Base Rotations'}
-                        {entry.type === 'series' && (
-                          <div className="flex items-center gap-3">
-                            <span>Series</span>
-                            <div className="flex items-center gap-2">
-                              <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => handleUpdateSeriesCount(entry.id, Math.max(3, (entry.seriesCount || 3) - 1))} disabled={(entry.seriesCount || 3) <= 3}>
-                                -
-                              </Button>
-                              <span className="w-6 text-center font-semibold">{entry.seriesCount || 3}</span>
-                              <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => handleUpdateSeriesCount(entry.id, (entry.seriesCount || 3) + 1)}>
-                                +
-                              </Button>
-                              <span className="text-sm text-muted-foreground">rotations</span>
-                            </div>
-                          </div>
-                        )}
-                      </span>
-                    </div>
-                    <div className="w-20 py-4 px-2 text-center border-l border-border">
-                      <p className="font-semibold text-primary">
-                        {entry.type === 'one' ? '0.1' : entry.type === 'two' ? '0.2' : ((entry.seriesCount || 3) * 0.1 + 0.2).toFixed(1)}
-                      </p>
-                    </div>
-                    <div className="w-10 flex justify-center">
-                      <Button variant="ghost" size="icon" onClick={() => handleRemoveRotation(entry.id)} className="h-8 w-8 text-destructive hover:bg-destructive/10">
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                {/* Show existing rotation entries with drag and drop */}
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={rotationEntries.map(e => e.id)} strategy={verticalListSortingStrategy}>
+                    {rotationEntries.map((entry) => (
+                      <SortableRotationRow 
+                        key={entry.id}
+                        entry={entry}
+                        symbols={symbols}
+                        onRemove={handleRemoveRotation}
+                        onUpdateSeriesCount={handleUpdateSeriesCount}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
                 
                 {/* Add rotation button */}
                 <div className="p-4">
