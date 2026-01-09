@@ -725,10 +725,10 @@ const CreateCustomRisk = () => {
             </CardHeader>
             <CardContent className="p-0">
               <div className="relative" ref={rotationDropdownRef}>
-                {/* Axis/Level Change row */}
+                {/* Axis/Level Change row - matches rotation row styling */}
                 {hasAxisChange && (
-                  <div className="flex items-center gap-3 p-4 border-b border-border/50">
-                    <div className="w-10 flex items-center justify-center">
+                  <div className="flex items-center border-b border-border bg-background">
+                    <div className="w-8 flex justify-center py-4">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -738,31 +738,34 @@ const CreateCustomRisk = () => {
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="w-10 h-10 flex items-center justify-center">
+                    <div className="w-12 flex justify-center py-4">
                       {symbols["axisLevelChange"] ? (
                         <img src={symbols["axisLevelChange"]} alt="Axis/Level Change" className="h-8 w-8 object-contain" />
                       ) : (
                         <div className="h-8 w-8 bg-muted rounded" />
                       )}
                     </div>
-                    <div className="flex-1 flex items-center gap-2">
-                      <span className="font-medium text-foreground">Axis/Level Change</span>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex">
-                              <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-sm">
-                            <p>For each Risk (R), only one criterion can be applied: either a change of axis or a change of level — not both. When evaluating levels, only two levels are considered: in flight or standing, and on the floor.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                    <div className="flex-1 py-4 px-4">
+                      <span className="font-medium text-foreground flex items-center gap-2">
+                        Axis/Level Change
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex">
+                                <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-sm">
+                              <p>For each Risk (R), only one criterion can be applied: either a change of axis or a change of level — not both. When evaluating levels, only two levels are considered: in flight or standing, and on the floor.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </span>
                     </div>
-                    <div className="w-20 text-right">
-                      <span className="text-primary font-semibold">0.1</span>
+                    <div className="w-20 py-4 px-2 text-center border-l border-border">
+                      <p className="font-semibold text-primary">0.1</p>
                     </div>
+                    <div className="w-10" /> {/* Empty space to match X button column width */}
                   </div>
                 )}
                 
