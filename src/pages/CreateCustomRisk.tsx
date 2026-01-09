@@ -612,7 +612,19 @@ const CreateCustomRisk = () => {
                           <div className="w-8 h-8 flex items-center justify-center">
                             {symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Base Rotations" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 bg-muted rounded" />}
                           </div>
-                          <span className="flex-1 font-medium text-foreground">2 Base Rotations</span>
+                          <div className="flex-1 flex items-center gap-2">
+                            <span className="font-medium text-foreground">2 Base Rotations</span>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-sm">
+                                  <p>Each Risk requires two base rotations. Select '2 Base Rotations' or 'Series.'</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
                           <span className="text-primary font-semibold">0.2</span>
                         </div>
                         <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('series')}>
