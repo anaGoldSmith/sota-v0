@@ -579,6 +579,10 @@ const CreateCustomRisk = () => {
       ...catchCriteria.filter(c => c.symbol).map(c => c.symbol!)
     ];
 
+    // Get axis/level change symbol if present
+    const hasAxisChange = rotationEntries.some(e => e.type === 'axis');
+    const axisLevelSymbol = hasAxisChange ? (symbols["axisLevelChange"] || '') : undefined;
+
     // Calculate effective values
     const effectiveThrowValue = effectiveThrow?.value ?? 0;
     const effectiveCatchValue = effectiveCatch?.value ?? 0;
@@ -602,6 +606,7 @@ const CreateCustomRisk = () => {
       symbols: symbols,
       throwSymbols: throwSymbols,
       catchSymbols: catchSymbols,
+      axisLevelSymbol: axisLevelSymbol,
       components: [...(effectiveThrow ? [{
         name: effectiveThrow.name,
         symbol: effectiveThrow.symbol_image || '',
