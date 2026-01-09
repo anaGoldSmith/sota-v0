@@ -185,7 +185,7 @@ function SortableRow({
     const axisLevelSymbol = element.riskData.axisLevelSymbol;
     
     return (
-      <div className="flex items-center gap-1 flex-wrap">
+      <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
         {/* Throw symbols */}
         {throwSymbols.map((url, idx) => (
           <img
@@ -230,7 +230,7 @@ function SortableRow({
         style={isMainRow ? style : undefined}
         className={!isMainRow ? "bg-muted/20" : ""}
       >
-        <TableCell className="w-12">
+        <TableCell className="w-8 px-1">
           {isMainRow ? (
             <div
               {...listeners}
@@ -244,31 +244,31 @@ function SortableRow({
           )}
         </TableCell>
         <TableCell 
-          className={`w-20 font-mono ${!isMainRow ? 'pl-8 text-muted-foreground' : ''} ${isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R') ? 'cursor-pointer' : ''}`}
+          className={`w-12 px-2 font-mono ${!isMainRow ? 'pl-6 text-muted-foreground' : ''} ${isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R') ? 'cursor-pointer' : ''}`}
           onClick={isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R') && onToggleExpand ? (e) => {
             e.stopPropagation();
             onToggleExpand();
           } : undefined}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R') && (
               element.isExpanded ? 
-                <ChevronDown className="h-4 w-4 text-muted-foreground" /> : 
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <ChevronDown className="h-3 w-3 text-muted-foreground" /> : 
+                <ChevronRight className="h-3 w-3 text-muted-foreground" />
             )}
             {itemNumber}
           </div>
         </TableCell>
-        <TableCell className="w-32 font-medium">
+        <TableCell className="w-12 px-2 font-medium">
           {element.type}
         </TableCell>
-        <TableCell>
+        <TableCell className="px-2">
           {element.type === 'R' ? renderRiskSymbols() : renderSymbols(element.symbolImages)}
         </TableCell>
-        <TableCell className="w-24 text-right font-mono font-semibold">
+        <TableCell className="w-16 px-2 text-right font-mono font-semibold">
           {element.value.toFixed(1)}
         </TableCell>
-        <TableCell className="w-12">
+        <TableCell className="w-8 px-1">
           {isMainRow && (
             <Button
               variant="ghost"
