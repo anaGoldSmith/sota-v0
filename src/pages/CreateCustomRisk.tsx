@@ -182,6 +182,7 @@ const CreateCustomRisk = () => {
   const [seriesCount, setSeriesCount] = useState<number>(3);
   const [showRotationDropdown, setShowRotationDropdown] = useState(false);
   const [catchCriteria, setCatchCriteria] = useState<CriteriaItem[]>([]);
+  const [hasAxisChange, setHasAxisChange] = useState(false);
   const rotationDropdownRef = useRef<HTMLDivElement>(null);
 
   // Calculate rotation value based on entries
@@ -214,7 +215,8 @@ const CreateCustomRisk = () => {
   // Calculate total value
   const throwValue = selectedThrow?.value ?? 0;
   const catchValue = selectedCatch?.value ?? 0;
-  const totalValue = throwValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + catchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
+  const axisChangeValue = hasAxisChange ? 0.1 : 0;
+  const totalValue = throwValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + axisChangeValue + catchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -249,6 +251,10 @@ const CreateCustomRisk = () => {
         data: extraRotationData
       } = supabase.storage.from("dynamic-element-symbols").getPublicUrl("other_risks/extraRotation.PNG");
       symbolUrls["extraRotation"] = extraRotationData.publicUrl;
+      const {
+        data: axisLevelChangeData
+      } = supabase.storage.from("dynamic-element-symbols").getPublicUrl("other_risks/axis_level_change.png");
+      symbolUrls["axisLevelChange"] = axisLevelChangeData.publicUrl;
       setSymbols(symbolUrls);
     };
     const loadGeneralCriteria = async () => {
@@ -497,6 +503,12 @@ const CreateCustomRisk = () => {
         symbol: entry.type === 'series' ? '' : (entry.type === 'one' ? symbols["extraRotation"] : symbols["baseRotations"]) || '',
         value: entry.type === 'one' ? 0.1 : entry.type === 'two' ? 0.2 : ((entry.seriesCount || 3) * 0.1 + 0.2)
       })),
+      // Add axis/level change if selected
+      ...(hasAxisChange ? [{
+        name: 'Axis/Level Change',
+        symbol: symbols["axisLevelChange"] || '',
+        value: 0.1
+      }] : []),
       ...(selectedCatch ? [{
         name: selectedCatch.name,
         symbol: selectedCatch.symbol_image || '',
@@ -700,6 +712,17 @@ const CreateCustomRisk = () => {
             <CardHeader className="pb-2 bg-secondary/10">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg text-primary">Rotations</CardTitle>
+                <Button
+                  variant={hasAxisChange ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setHasAxisChange(!hasAxisChange)}
+                  className={hasAxisChange ? "bg-primary text-primary-foreground" : "border-primary/30 text-primary hover:bg-primary/10"}
+                >
+                  {symbols["axisLevelChange"] && (
+                    <img src={symbols["axisLevelChange"]} alt="Axis" className="h-4 w-4 mr-1" />
+                  )}
+                  {hasAxisChange ? "Axis/Level Change Added" : "+ Add Axis/Level Change"}
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="p-0">
