@@ -581,33 +581,71 @@ const CreateCustomRisk = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {!rotationType ? <div className="relative p-4" ref={rotationDropdownRef}>
+              <div className="relative p-4" ref={rotationDropdownRef}>
+                {!rotationType ? (
                   <Button variant="outline" onClick={() => setShowRotationDropdown(!showRotationDropdown)} className="w-full justify-between border-primary/30 text-foreground hover:bg-primary/5">
                     <span>Select Rotation Type</span>
                     <ChevronDown className={`h-4 w-4 transition-transform ${showRotationDropdown ? 'rotate-180' : ''}`} />
                   </Button>
-                  
-                  {showRotationDropdown && <div className="absolute left-4 right-4 top-full mt-1 bg-background border border-border rounded-lg shadow-lg z-50">
-                      <div className="p-2 space-y-1">
-                        <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('one')}>
-                          <div className="w-8 h-8 flex items-center justify-center">
-                            {symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Extra Rotation" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 bg-muted rounded" />}
-                          </div>
-                          <div className="flex-1 flex items-center gap-2">
-                            <span className="font-medium text-foreground">One Rotation</span>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-sm">
-                                  <p>If a throw or catch occurs during a rotation, select the appropriate type in the Throw or Catch section. Only select a rotation if it is performed under the flight.</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </div>
-                          <span className="text-primary font-semibold">0.1</span>
+                ) : (
+                  <div className="space-y-0 -m-4">
+                    <div className="flex items-center border-b border-border cursor-pointer hover:bg-muted/50" onClick={() => setShowRotationDropdown(!showRotationDropdown)}>
+                      <div className="w-16 flex justify-center py-4">
+                        {rotationType === 'series' ? <span className="text-2xl font-bold text-foreground">S</span> : rotationType === 'one' ? (symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />) : (symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />)}
+                      </div>
+                      <div className="flex-1 py-4 px-4">
+                        <span className="font-medium text-foreground">
+                          {rotationType === 'one' && 'One Rotation'}
+                          {rotationType === 'two' && '2 Base Rotations'}
+                          {rotationType === 'series' && <div className="flex items-center gap-3">
+                              <span>Series</span>
+                              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => setSeriesCount(Math.max(3, seriesCount - 1))} disabled={seriesCount <= 3}>
+                                  -
+                                </Button>
+                                <span className="w-6 text-center font-semibold">{seriesCount}</span>
+                                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => setSeriesCount(seriesCount + 1)}>
+                                  +
+                                </Button>
+                                <span className="text-sm text-muted-foreground">rotations</span>
+                              </div>
+                            </div>}
+                        </span>
+                      </div>
+                      <div className="w-20 py-4 px-2 text-center border-l border-border">
+                        <p className="font-semibold text-primary">{rotationValue.toFixed(1)}</p>
+                      </div>
+                      <div className="w-10 flex justify-center" onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" onClick={handleClearRotationType} className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {showRotationDropdown && <div className="absolute left-4 right-4 top-full mt-1 bg-background border border-border rounded-lg shadow-lg z-50">
+                    <div className="p-2 space-y-1">
+                      <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('one')}>
+                        <div className="w-8 h-8 flex items-center justify-center">
+                          {symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Extra Rotation" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 bg-muted rounded" />}
                         </div>
+                        <div className="flex-1 flex items-center gap-2">
+                          <span className="font-medium text-foreground">One Rotation</span>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-sm">
+                                <p>If a throw or catch occurs during a rotation, select the appropriate type in the Throw or Catch section. Only select a rotation if it is performed under the flight.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                        <span className="text-primary font-semibold">0.1</span>
+                      </div>
+                      {rotationType !== 'two' && (
                         <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('two')}>
                           <div className="w-8 h-8 flex items-center justify-center">
                             {symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Base Rotations" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 bg-muted rounded" />}
@@ -629,61 +667,29 @@ const CreateCustomRisk = () => {
                           </div>
                           <span className="text-primary font-semibold">0.2</span>
                         </div>
-                        <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('series')}>
-                          <div className="w-8 h-8 flex items-center justify-center">
-                            <span className="text-lg font-bold text-foreground">S</span>
-                          </div>
-                          <span className="flex-1 font-medium text-foreground">Series (0.2 for a series + at least 0.3 for 3 selected pre-acrobatic elements)</span>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <span className="inline-flex">
-                                  <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-sm">
-                                <p>A series includes three or more identical, uninterrupted pre-acrobatic elements performed under the flight (add more pre-acrobatic elements to increase the value of series), or three turning leap DBs with a throw and catch.</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <span className="text-primary font-semibold">0.5</span>
+                      )}
+                      <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('series')}>
+                        <div className="w-8 h-8 flex items-center justify-center">
+                          <span className="text-lg font-bold text-foreground">S</span>
                         </div>
+                        <span className="flex-1 font-medium text-foreground">Series (0.2 for a series + at least 0.3 for 3 selected pre-acrobatic elements)</span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <span className="inline-flex">
+                                <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-sm">
+                              <p>A series includes three or more identical, uninterrupted pre-acrobatic elements performed under the flight (add more pre-acrobatic elements to increase the value of series), or three turning leap DBs with a throw and catch.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <span className="text-primary font-semibold">0.5</span>
                       </div>
-                    </div>}
-                </div> : <div className="space-y-0">
-                  <div className="flex items-center border-b border-border">
-                    <div className="w-16 flex justify-center py-4">
-                      {rotationType === 'series' ? <span className="text-2xl font-bold text-foreground">S</span> : symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />}
                     </div>
-                    <div className="flex-1 py-4 px-4">
-                      <span className="font-medium text-foreground">
-                        {rotationType === 'one' && 'One Rotation'}
-                        {rotationType === 'two' && '2 Base Rotations'}
-                        {rotationType === 'series' && <div className="flex items-center gap-3">
-                            <span>Series</span>
-                            <div className="flex items-center gap-2">
-                              <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => setSeriesCount(Math.max(3, seriesCount - 1))} disabled={seriesCount <= 3}>
-                                -
-                              </Button>
-                              <span className="w-6 text-center font-semibold">{seriesCount}</span>
-                              <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => setSeriesCount(seriesCount + 1)}>
-                                +
-                              </Button>
-                              <span className="text-sm text-muted-foreground">rotations</span>
-                            </div>
-                          </div>}
-                      </span>
-                    </div>
-                    <div className="w-20 py-4 px-2 text-center border-l border-border">
-                      <p className="font-semibold text-primary">{rotationValue.toFixed(1)}</p>
-                    </div>
-                    <div className="w-10 flex justify-center">
-                      <Button variant="ghost" size="icon" onClick={handleClearRotationType} className="h-8 w-8 text-destructive hover:bg-destructive/10">
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>}
+                  </div>}
+              </div>
             </CardContent>
           </Card>
 
