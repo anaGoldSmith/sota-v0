@@ -108,8 +108,44 @@ const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount }: 
   };
 
   const renderName = () => {
-    if (entry.type === 'one') return 'One Rotation';
-    if (entry.type === 'two') return '2 Base Rotations';
+    if (entry.type === 'one') {
+      return (
+        <span className="flex items-center gap-2">
+          One Rotation
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-sm">
+                <p>If a throw or catch occurs during a rotation, select the appropriate type in the Throw or Catch section. Only select a rotation if it is performed under the flight.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </span>
+      );
+    }
+    if (entry.type === 'two') {
+      return (
+        <span className="flex items-center gap-2">
+          2 Base Rotations
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-sm">
+                <p>Each Risk requires two base rotations. Select '2 Base Rotations' or 'Series.'</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </span>
+      );
+    }
     if (entry.type === 'axis') {
       return (
         <span className="flex items-center gap-2">
