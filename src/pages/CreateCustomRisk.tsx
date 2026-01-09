@@ -551,30 +551,61 @@ const CreateCustomRisk = () => {
     setShowCatchCriteriaDropdown(false);
   };
   const handleSave = () => {
+    // Validation: Check if user has selected either 2 Base Rotations or Series
+    const hasValidBaseRotations = rotationEntries.some(e => e.type === 'two' || e.type === 'series');
+    if (!hasValidBaseRotations) {
+      toast({
+        title: "Invalid Risk Configuration",
+        description: "A valid Risk requires at least two identical, uninterrupted rotations. Select either '2 Base Rotations' or a 'Series' of Rotations.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Default to Thr1 if no throw selected
+    const effectiveThrow = selectedThrow || dynamicThrows.find(t => t.code === 'Thr1');
+    // Default to Catch1 if no catch selected
+    const effectiveCatch = selectedCatch || dynamicCatches.find(c => c.code === 'Catch1');
+
     // Collect throw symbols (throw symbol + criteria symbols)
     const throwSymbols: string[] = [
-      ...(selectedThrow?.symbol_image ? [selectedThrow.symbol_image] : []),
+      ...(effectiveThrow?.symbol_image ? [effectiveThrow.symbol_image] : []),
       ...throwCriteria.filter(t => t.symbol).map(t => t.symbol!)
     ];
     
     // Collect catch symbols (catch symbol + criteria symbols)
     const catchSymbols: string[] = [
-      ...(selectedCatch?.symbol_image ? [selectedCatch.symbol_image] : []),
+      ...(effectiveCatch?.symbol_image ? [effectiveCatch.symbol_image] : []),
       ...catchCriteria.filter(c => c.symbol).map(c => c.symbol!)
     ];
+
+    // Calculate effective values
+    const effectiveThrowValue = effectiveThrow?.value ?? 0;
+    const effectiveCatchValue = effectiveCatch?.value ?? 0;
+    const effectiveTotalValue = effectiveThrowValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + effectiveCatchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
+
+    // Calculate effective rLevel (include Thr6/Catch8 logic)
+    let effectiveRLevel = rotationEntries.reduce((sum, entry) => {
+      if (entry.type === 'one') return sum + 1;
+      if (entry.type === 'two') return sum + 2;
+      if (entry.type === 'axis') return sum;
+      return sum + (entry.seriesCount || 3);
+    }, 0);
+    if (effectiveThrow?.code === 'Thr6') effectiveRLevel += 1;
+    if (effectiveCatch?.code === 'Catch8') effectiveRLevel += 1;
     
     const riskData = {
       type: 'R' as const,
       label: `R₊`,
-      rLevel: rLevel,
-      value: totalValue,
+      rLevel: effectiveRLevel,
+      value: effectiveTotalValue,
       symbols: symbols,
       throwSymbols: throwSymbols,
       catchSymbols: catchSymbols,
-      components: [...(selectedThrow ? [{
-        name: selectedThrow.name,
-        symbol: selectedThrow.symbol_image || '',
-        value: selectedThrow.value ?? 0
+      components: [...(effectiveThrow ? [{
+        name: effectiveThrow.name,
+        symbol: effectiveThrow.symbol_image || '',
+        value: effectiveThrow.value ?? 0
       }] : []), ...throwCriteria.map(t => ({
         name: t.name,
         symbol: t.symbol || '',
@@ -595,10 +626,10 @@ const CreateCustomRisk = () => {
           value: entry.type === 'one' ? 0.1 : entry.type === 'two' ? 0.2 : ((entry.seriesCount || 3) * 0.1 + 0.2)
         };
       }),
-      ...(selectedCatch ? [{
-        name: selectedCatch.name,
-        symbol: selectedCatch.symbol_image || '',
-        value: selectedCatch.value ?? 0
+      ...(effectiveCatch ? [{
+        name: effectiveCatch.name,
+        symbol: effectiveCatch.symbol_image || '',
+        value: effectiveCatch.value ?? 0
       }] : []), ...catchCriteria.map(c => ({
         name: c.name,
         symbol: c.symbol || '',
