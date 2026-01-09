@@ -425,9 +425,9 @@ const CreateCustomRisk = () => {
                           No throws available for this apparatus
                         </div>
                       ) : (
-                        filteredThrows.map((throwItem) => {
+                      filteredThrows.map((throwItem) => {
                           const symbolUrl = throwItem.symbol_image || 
-                            supabase.storage.from('dynamic-element-symbols').getPublicUrl(`throws/${throwItem.code}.png`).data.publicUrl;
+                            supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
                           return (
                             <div
                               key={throwItem.id}
@@ -665,7 +665,7 @@ const CreateCustomRisk = () => {
                       ) : (
                         filteredCatches.map((catchItem) => {
                           const symbolUrl = catchItem.symbol_image || 
-                            supabase.storage.from('dynamic-element-symbols').getPublicUrl(`catches/${catchItem.code}.png`).data.publicUrl;
+                            supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
                           return (
                             <div
                               key={catchItem.id}
