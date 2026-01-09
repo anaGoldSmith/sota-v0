@@ -485,7 +485,7 @@ const CreateCustomRisk = () => {
                       <span className="font-medium text-foreground">{selectedThrow.name}</span>
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border">
-                      <p className="font-semibold text-foreground">0</p>
+                      <p className="font-semibold text-foreground">{selectedThrow.value ?? 0}</p>
                     </div>
                     <div className="w-10 flex justify-center">
                       <Button
@@ -731,7 +731,7 @@ const CreateCustomRisk = () => {
                       <span className="font-medium text-foreground">{selectedCatch.name}</span>
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border">
-                      <p className="font-semibold text-foreground">0</p>
+                      <p className="font-semibold text-foreground">{selectedCatch.value ?? 0}</p>
                     </div>
                     <div className="w-10 flex justify-center">
                       <Button
