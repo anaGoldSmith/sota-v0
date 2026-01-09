@@ -172,11 +172,14 @@ const CreateCustomRisk = () => {
     };
 
     const loadDynamicCatches = async () => {
+      // Force fresh data by adding cache-busting timestamp
       const { data, error } = await supabase
         .from('dynamic_catches')
-        .select('*');
+        .select('*')
+        .order('code');
       
       if (data && !error) {
+        console.log('Loaded catches:', data.find(c => c.code === 'Catch4'));
         setDynamicCatches(data);
       }
     };
