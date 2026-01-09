@@ -172,10 +172,10 @@ const CreateCustomRisk = () => {
         .getPublicUrl("other_risks/baseRotations.png");
       symbolUrls["baseRotations"] = rotationsData.publicUrl;
       
-      const { data: seriesData } = supabase.storage
+      const { data: extraRotationData } = supabase.storage
         .from("dynamic-element-symbols")
-        .getPublicUrl("other_risks/S.png");
-      symbolUrls["series"] = seriesData.publicUrl;
+        .getPublicUrl("other_risks/extraRotation.png");
+      symbolUrls["extraRotation"] = extraRotationData.publicUrl;
       
       setSymbols(symbolUrls);
     };
@@ -692,24 +692,41 @@ const CreateCustomRisk = () => {
                     <div className="absolute left-4 right-4 top-full mt-1 bg-background border border-border rounded-lg shadow-lg z-50">
                       <div className="p-2 space-y-1">
                         <div
-                          className="flex items-center justify-between p-3 rounded hover:bg-muted cursor-pointer"
+                          className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer"
                           onClick={() => handleSelectRotationType('one')}
                         >
-                          <span className="font-medium text-foreground">One Rotation</span>
+                          <div className="w-8 h-8 flex items-center justify-center">
+                            {symbols["extraRotation"] ? (
+                              <img src={symbols["extraRotation"]} alt="Extra Rotation" className="h-6 w-6 object-contain" />
+                            ) : (
+                              <div className="h-6 w-6 bg-muted rounded" />
+                            )}
+                          </div>
+                          <span className="flex-1 font-medium text-foreground">One Rotation</span>
                           <span className="text-primary font-semibold">0.1</span>
                         </div>
                         <div
-                          className="flex items-center justify-between p-3 rounded hover:bg-muted cursor-pointer"
+                          className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer"
                           onClick={() => handleSelectRotationType('two')}
                         >
-                          <span className="font-medium text-foreground">2 Base Rotations</span>
+                          <div className="w-8 h-8 flex items-center justify-center">
+                            {symbols["baseRotations"] ? (
+                              <img src={symbols["baseRotations"]} alt="Base Rotations" className="h-6 w-6 object-contain" />
+                            ) : (
+                              <div className="h-6 w-6 bg-muted rounded" />
+                            )}
+                          </div>
+                          <span className="flex-1 font-medium text-foreground">2 Base Rotations</span>
                           <span className="text-primary font-semibold">0.2</span>
                         </div>
                         <div
-                          className="flex items-center justify-between p-3 rounded hover:bg-muted cursor-pointer"
+                          className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer"
                           onClick={() => handleSelectRotationType('series')}
                         >
-                          <div>
+                          <div className="w-8 h-8 flex items-center justify-center">
+                            <span className="text-lg font-bold text-foreground">S</span>
+                          </div>
+                          <div className="flex-1">
                             <span className="font-medium text-foreground">Series</span>
                             <p className="text-sm text-muted-foreground">3 or more identical pre-acrobatic elements</p>
                           </div>
