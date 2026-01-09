@@ -97,13 +97,37 @@ const CreateCustomRisk = () => {
   const [selectedThrow, setSelectedThrow] = useState<DynamicThrow | null>(null);
   const [selectedCatch, setSelectedCatch] = useState<DynamicCatch | null>(null);
 
+  // Rotation type: 'one' | 'two' | 'series'
+  type RotationType = 'one' | 'two' | 'series';
+  
   // Risk components state
   const [throwCriteria, setThrowCriteria] = useState<CriteriaItem[]>([]);
-  const [rotations, setRotations] = useState<CriteriaItem[]>([
-    { id: 'rot1', name: 'Base Rotation 1', value: 0.1 },
-    { id: 'rot2', name: 'Base Rotation 2', value: 0.1 }
-  ]);
+  const [rotationType, setRotationType] = useState<RotationType | null>(null);
+  const [seriesCount, setSeriesCount] = useState<number>(3);
+  const [showRotationDropdown, setShowRotationDropdown] = useState(false);
   const [catchCriteria, setCatchCriteria] = useState<CriteriaItem[]>([]);
+  
+  const rotationDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Calculate rotation value based on type
+  const getRotationValue = (): number => {
+    if (!rotationType) return 0;
+    if (rotationType === 'one') return 0.1;
+    if (rotationType === 'two') return 0.2;
+    // Series: base rotations (0.1 each) + 0.2 series bonus
+    return (seriesCount * 0.1) + 0.2;
+  };
+
+  // Calculate R level based on rotation type
+  const getRLevel = (): number => {
+    if (!rotationType) return 0;
+    if (rotationType === 'one') return 1;
+    if (rotationType === 'two') return 2;
+    return seriesCount; // Series shows number of rotations
+  };
+
+  const rotationValue = getRotationValue();
+  const rLevel = getRLevel();
 
   // Calculate total value
   const throwValue = selectedThrow?.value ?? 0;
@@ -111,12 +135,9 @@ const CreateCustomRisk = () => {
   const totalValue = 
     throwValue +
     throwCriteria.reduce((sum, item) => sum + item.value, 0) +
-    rotations.reduce((sum, item) => sum + item.value, 0) +
+    rotationValue +
     catchValue +
     catchCriteria.reduce((sum, item) => sum + item.value, 0);
-
-  // Calculate R level based on rotations count
-  const rLevel = rotations.length;
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -132,6 +153,9 @@ const CreateCustomRisk = () => {
       }
       if (catchCriteriaDropdownRef.current && !catchCriteriaDropdownRef.current.contains(event.target as Node)) {
         setShowCatchCriteriaDropdown(false);
+      }
+      if (rotationDropdownRef.current && !rotationDropdownRef.current.contains(event.target as Node)) {
+        setShowRotationDropdown(false);
       }
     };
 
@@ -238,19 +262,17 @@ const CreateCustomRisk = () => {
     return map;
   }, [dynamicCatches, generalCriteria, dynamicThrows]);
 
-  const handleAddRotation = () => {
-    const newRotation: CriteriaItem = {
-      id: `rot${rotations.length + 1}`,
-      name: `Base Rotation ${rotations.length + 1}`,
-      value: 0.1
-    };
-    setRotations([...rotations, newRotation]);
+  const handleSelectRotationType = (type: 'one' | 'two' | 'series') => {
+    setRotationType(type);
+    if (type === 'series') {
+      setSeriesCount(3); // Default to 3 for series
+    }
+    setShowRotationDropdown(false);
   };
 
-  const handleRemoveRotation = (id: string) => {
-    if (rotations.length > 2) {
-      setRotations(rotations.filter(r => r.id !== id));
-    }
+  const handleClearRotationType = () => {
+    setRotationType(null);
+    setSeriesCount(3);
   };
 
   const handleSelectThrow = (throwItem: DynamicThrow) => {
@@ -374,7 +396,12 @@ const CreateCustomRisk = () => {
       components: [
         ...(selectedThrow ? [{ name: selectedThrow.name, symbol: selectedThrow.symbol_image || '', value: selectedThrow.value ?? 0 }] : []),
         ...throwCriteria.map(t => ({ name: t.name, symbol: t.symbol || '', value: t.value })),
-        ...rotations.map(r => ({ name: r.name, symbol: symbols["baseRotations"], value: r.value })),
+        // Add rotation component based on type
+        ...(rotationType ? [{
+          name: rotationType === 'one' ? 'One Rotation' : rotationType === 'two' ? '2 Base Rotations' : `Series (${seriesCount} rotations)`,
+          symbol: symbols["baseRotations"] || '',
+          value: rotationValue
+        }] : []),
         ...(selectedCatch ? [{ name: selectedCatch.name, symbol: selectedCatch.symbol_image || '', value: selectedCatch.value ?? 0 }] : []),
         ...catchCriteria.map(c => ({ name: c.name, symbol: c.symbol || '', value: c.value })),
       ]
@@ -641,53 +668,115 @@ const CreateCustomRisk = () => {
           <Card className="border-primary/20 shadow-md">
             <CardHeader className="pb-2 bg-secondary/10">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg text-primary">Rotations (min. 2 required)</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleAddRotation}
-                  className="text-primary hover:bg-primary/10"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Rotation
-                </Button>
+                <CardTitle className="text-lg text-primary">Rotations</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {rotations.map((item) => (
-                <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
-                  <div className="w-16 flex justify-center py-4">
-                    {symbols["baseRotations"] ? (
-                      <img 
-                        src={symbols["baseRotations"]} 
-                        alt="Rotation" 
-                        className="h-8 w-8 object-contain"
-                        onError={(e) => (e.currentTarget.style.display = 'none')}
-                      />
-                    ) : (
-                      <div className="h-8 w-8 bg-muted rounded" />
-                    )}
-                  </div>
-                  <div className="flex-1 py-4 px-4">
-                    <span className="font-medium text-foreground">{item.name}</span>
-                  </div>
-                  <div className="w-20 py-4 px-2 text-center border-l border-border">
-                    <p className="font-semibold text-primary">{item.value}</p>
-                  </div>
-                  <div className="w-10 flex justify-center">
-                    {rotations.length > 2 && (
+              {!rotationType ? (
+                <div className="relative p-4" ref={rotationDropdownRef}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowRotationDropdown(!showRotationDropdown)}
+                    className="w-full justify-between border-primary/30 text-foreground hover:bg-primary/5"
+                  >
+                    <span>Select Rotation Type</span>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${showRotationDropdown ? 'rotate-180' : ''}`} />
+                  </Button>
+                  
+                  {showRotationDropdown && (
+                    <div className="absolute left-4 right-4 top-full mt-1 bg-background border border-border rounded-lg shadow-lg z-50">
+                      <div className="p-2 space-y-1">
+                        <div
+                          className="flex items-center justify-between p-3 rounded hover:bg-muted cursor-pointer"
+                          onClick={() => handleSelectRotationType('one')}
+                        >
+                          <span className="font-medium text-foreground">One Rotation</span>
+                          <span className="text-primary font-semibold">0.1</span>
+                        </div>
+                        <div
+                          className="flex items-center justify-between p-3 rounded hover:bg-muted cursor-pointer"
+                          onClick={() => handleSelectRotationType('two')}
+                        >
+                          <span className="font-medium text-foreground">2 Base Rotations</span>
+                          <span className="text-primary font-semibold">0.2</span>
+                        </div>
+                        <div
+                          className="flex items-center justify-between p-3 rounded hover:bg-muted cursor-pointer"
+                          onClick={() => handleSelectRotationType('series')}
+                        >
+                          <div>
+                            <span className="font-medium text-foreground">Series</span>
+                            <p className="text-sm text-muted-foreground">3 or more identical pre-acrobatic elements</p>
+                          </div>
+                          <span className="text-primary font-semibold">0.5+</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-0">
+                  <div className="flex items-center border-b border-border">
+                    <div className="w-16 flex justify-center py-4">
+                      {symbols["baseRotations"] ? (
+                        <img 
+                          src={symbols["baseRotations"]} 
+                          alt="Rotation" 
+                          className="h-8 w-8 object-contain"
+                          onError={(e) => (e.currentTarget.style.display = 'none')}
+                        />
+                      ) : (
+                        <div className="h-8 w-8 bg-muted rounded" />
+                      )}
+                    </div>
+                    <div className="flex-1 py-4 px-4">
+                      <span className="font-medium text-foreground">
+                        {rotationType === 'one' && 'One Rotation'}
+                        {rotationType === 'two' && '2 Base Rotations'}
+                        {rotationType === 'series' && (
+                          <div className="flex items-center gap-3">
+                            <span>Series</span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                onClick={() => setSeriesCount(Math.max(3, seriesCount - 1))}
+                                disabled={seriesCount <= 3}
+                              >
+                                -
+                              </Button>
+                              <span className="w-6 text-center font-semibold">{seriesCount}</span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                onClick={() => setSeriesCount(seriesCount + 1)}
+                              >
+                                +
+                              </Button>
+                              <span className="text-sm text-muted-foreground">rotations</span>
+                            </div>
+                          </div>
+                        )}
+                      </span>
+                    </div>
+                    <div className="w-20 py-4 px-2 text-center border-l border-border">
+                      <p className="font-semibold text-primary">{rotationValue.toFixed(1)}</p>
+                    </div>
+                    <div className="w-10 flex justify-center">
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleRemoveRotation(item.id)}
+                        onClick={handleClearRotationType}
                         className="h-8 w-8 text-destructive hover:bg-destructive/10"
                       >
                         <X className="h-4 w-4" />
                       </Button>
-                    )}
+                    </div>
                   </div>
                 </div>
-              ))}
+              )}
             </CardContent>
           </Card>
 
