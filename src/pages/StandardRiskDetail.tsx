@@ -993,8 +993,8 @@ const StandardRiskDetail = () => {
                     </div>
                   ))}
 
-                  {/* Add Specific Catch Button */}
-                  {filteredCatches.length > 0 && (
+                  {/* Add Specific Catch Button - hidden for R2 */}
+                  {filteredCatches.length > 0 && !isR2 && (
                     <div ref={catchDropdownRef} className="relative border-t border-border">
                       <Button
                         variant="ghost"
