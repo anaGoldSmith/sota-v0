@@ -9,6 +9,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ApparatusType } from "@/types/apparatus";
 import { NotesWithSymbols } from "@/components/routine/NotesWithSymbols";
+import threeRotationsSymbol from "@/assets/3rotations-symbol.png";
 
 interface RiskComponent {
   id: string;
@@ -336,8 +337,7 @@ const StandardRiskDetail = () => {
       risk_code: selectedRisk?.risk_code || '',
       risk_component_code: '3rotations',
       description: 'Points for 3 rotations in a risk',
-      symbol_image: null,
-      symbol_text: '3rot',
+      symbol_image: threeRotationsSymbol,
       value: 0.3,
     },
   ];
