@@ -46,7 +46,7 @@ const DynamicElementsRisk = () => {
   }, []);
 
   const handleSelectRisk = (risk: PrerecordedRisk) => {
-    navigate("/standard-risks", { state: { apparatus, selectedRisk: risk } });
+    navigate("/standard-risk-detail", { state: { apparatus, selectedRisk: risk } });
   };
 
   const handleCreateOwnRisk = () => {
