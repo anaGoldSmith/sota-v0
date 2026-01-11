@@ -13,10 +13,12 @@ const DynamicElementsConfiguration = () => {
   const [uploadingCatches, setUploadingCatches] = useState(false);
   const [uploadingThrows, setUploadingThrows] = useState(false);
   const [uploadingGeneralCriteria, setUploadingGeneralCriteria] = useState(false);
+  const [uploadingPrerecordedRisks, setUploadingPrerecordedRisks] = useState(false);
   
   const catchesInputRef = useRef<HTMLInputElement>(null);
   const throwsInputRef = useRef<HTMLInputElement>(null);
   const generalCriteriaInputRef = useRef<HTMLInputElement>(null);
+  const prerecordedRisksInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -114,7 +116,7 @@ const DynamicElementsConfiguration = () => {
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         {/* CSV Upload Section */}
         <h2 className="text-xl font-semibold mb-4 text-foreground">CSV Data Import</h2>
-        <div className="grid gap-6 md:grid-cols-3 mb-8">
+        <div className="grid gap-6 md:grid-cols-2 mb-8">
           {/* Catches CSV Upload */}
           <Card>
             <CardHeader>
@@ -219,6 +221,42 @@ const DynamicElementsConfiguration = () => {
               >
                 <Upload className="h-4 w-4 mr-2" />
                 {uploadingGeneralCriteria ? "Uploading..." : "Upload General Criteria CSV"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Prerecorded Risks CSV Upload */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <FileText className="h-8 w-8 text-primary" />
+                <CardTitle>Prerecorded Risk Components</CardTitle>
+              </div>
+              <CardDescription>
+                Upload CSV with columns: risk_code, risk_component_code, description, value
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <input
+                type="file"
+                accept=".csv"
+                ref={prerecordedRisksInputRef}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleCsvUpload(file, 'import-prerecorded-risks-csv', setUploadingPrerecordedRisks, 'prerecorded risk components');
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <Button
+                onClick={() => prerecordedRisksInputRef.current?.click()}
+                disabled={uploadingPrerecordedRisks}
+                className="w-full"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {uploadingPrerecordedRisks ? "Uploading..." : "Upload Prerecorded Risks CSV"}
               </Button>
             </CardContent>
           </Card>
