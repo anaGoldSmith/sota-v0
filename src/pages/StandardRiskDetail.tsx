@@ -294,10 +294,20 @@ const StandardRiskDetail = () => {
     setGeneralCatchCriteria(prev => prev.filter(c => c.id !== id));
   };
 
-  // Categorize components by prefix
-  const throwComponents = components.filter(c => c.risk_component_code.startsWith('thr_'));
-  const rotationComponents = components.filter(c => c.risk_component_code.startsWith('utf_'));
-  const catchComponents = components.filter(c => c.risk_component_code.startsWith('catch_'));
+  // Categorize components by prefix (case-insensitive, support both formats: thr_, Thr, etc.)
+  const throwComponents = components.filter(c => 
+    c.risk_component_code.toLowerCase().startsWith('thr') && 
+    !c.risk_component_code.toLowerCase().includes('base') &&
+    !c.risk_component_code.toLowerCase().includes('rotation')
+  );
+  const rotationComponents = components.filter(c => 
+    c.risk_component_code.toLowerCase().startsWith('utf') || 
+    c.risk_component_code.toLowerCase().includes('rotation') ||
+    c.risk_component_code.toLowerCase().includes('base')
+  );
+  const catchComponents = components.filter(c => 
+    c.risk_component_code.toLowerCase().startsWith('catch')
+  );
 
   // Calculate totals including extra criteria
   const baseThrowTotal = throwComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
