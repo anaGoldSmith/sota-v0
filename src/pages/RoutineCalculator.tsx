@@ -1027,7 +1027,7 @@ const RoutineCalculator = () => {
             risk_code: riskData.riskCode,
             name: riskData.riskName || 'Standard Risk',
             rotations_value: null,
-            symbol_image: null,
+            symbol_image: riskData.symbols?.main || null,
           },
           modifyingElementId: elementId,
           existingRiskData: riskData,
