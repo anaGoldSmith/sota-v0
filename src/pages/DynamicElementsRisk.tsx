@@ -137,10 +137,10 @@ const DynamicElementsRisk = () => {
                 className="w-[calc(100vw-2rem)] max-w-2xl max-h-80 overflow-y-auto bg-background z-50"
               >
                 {/* Header row */}
-                <div className="grid grid-cols-[60px_1fr_80px] gap-2 px-2 py-2 border-b bg-muted/50 text-sm font-medium text-muted-foreground sticky top-0">
+                <div className="grid grid-cols-[80px_1fr_60px] gap-3 px-3 py-2 border-b bg-muted/50 text-sm font-medium text-muted-foreground sticky top-0">
                   <span>Symbol</span>
                   <span>Risk Name</span>
-                  <span className="text-right">Value</span>
+                  <span>Value</span>
                 </div>
                 {prerecordedRisks.length === 0 ? (
                   <DropdownMenuItem disabled>No prerecorded risks available</DropdownMenuItem>
@@ -149,26 +149,23 @@ const DynamicElementsRisk = () => {
                     <DropdownMenuItem
                       key={risk.id}
                       onClick={() => handleSelectRisk(risk)}
-                      className="grid grid-cols-[60px_1fr_80px] gap-2 py-3 cursor-pointer items-center"
+                      className="grid grid-cols-[80px_1fr_60px] gap-3 py-2 px-3 cursor-pointer items-center"
                     >
                       <div className="flex justify-center">
                         {risk.symbol_image ? (
                           <img 
                             src={risk.symbol_image} 
                             alt={risk.name} 
-                            className="w-12 h-12 object-contain"
+                            className="w-16 h-16 object-contain"
                           />
                         ) : (
-                          <div className="w-12 h-12 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
-                            {risk.risk_code}
+                          <div className="w-16 h-16 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+                            —
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm">{risk.name}</span>
-                        <span className="text-xs text-muted-foreground">{risk.risk_code}</span>
-                      </div>
-                      <span className="text-right font-medium">{risk.rotations_value ?? 0.2}</span>
+                      <span className="font-medium text-sm">{risk.name}</span>
+                      <span className="font-medium">{risk.rotations_value ?? 0.2}</span>
                     </DropdownMenuItem>
                   ))
                 )}
