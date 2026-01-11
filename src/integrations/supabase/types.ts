@@ -539,6 +539,39 @@ export type Database = {
         }
         Relationships: []
       }
+      prerecorded_risk_components: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          risk_code: string
+          risk_component_code: string
+          symbol_image: string | null
+          updated_at: string
+          value: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          risk_code: string
+          risk_component_code: string
+          symbol_image?: string | null
+          updated_at?: string
+          value?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          risk_code?: string
+          risk_component_code?: string
+          symbol_image?: string | null
+          updated_at?: string
+          value?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
