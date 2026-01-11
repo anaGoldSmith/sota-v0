@@ -39,8 +39,8 @@ const DYNAMIC_ELEMENTS_CATEGORIES = [
   { name: 'Catches', bucket: 'dynamic-element-symbols', table: 'dynamic_catches' as string | null, folder: 'dynamic_catches' },
   { name: 'Throws', bucket: 'dynamic-element-symbols', table: 'dynamic_throws' as string | null, folder: 'dynamic_throws' },
   { name: 'General Criteria', bucket: 'dynamic-element-symbols', table: 'dynamic_general_criteria' as string | null, folder: 'dynamic_general_criteria' },
-  { name: 'Prerecorded Risk Components', bucket: 'dynamic-element-symbols', table: 'prerecorded_risk_components' as string | null, folder: 'prerecorded_risk_components' },
-  { name: 'Prerecorded Risks', bucket: 'dynamic-element-symbols', table: 'prerecorded_risks' as string | null, folder: 'prerecorded_risks' },
+  { name: 'Prerecorded Risk Components', bucket: 'dynamic-element-symbols', table: 'prerecorded_risk_components' as string | null, folder: 'prerecorded_risks' },
+  { name: 'Prerecorded Risks', bucket: 'dynamic-element-symbols', table: 'prerecorded_risks' as string | null, folder: 'prerecorded_risks_main' },
   { name: 'Other Risks Symbols', bucket: 'dynamic-element-symbols', table: null as string | null, folder: 'other_risks' },
 ];
 
