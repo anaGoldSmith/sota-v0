@@ -13,6 +13,7 @@ interface RiskComponent {
   risk_component_code: string;
   description: string | null;
   symbol_image: string | null;
+  symbol_text?: string;
   value: number | null;
 }
 
@@ -71,16 +72,44 @@ const StandardRiskDetail = () => {
 
   // Calculate totals
   const throwTotal = throwComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
-  const rotationTotal = rotationComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
+  const baseRotationTotal = rotationComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
   const catchTotal = catchComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
-  const totalValue = selectedRisk?.rotations_value ?? (throwTotal + rotationTotal + catchTotal);
-
-  // Extract R level from risk_code (e.g., "r1.3303" -> extract number after "r")
+  
+  // Check if the risk is R2
+  const isR2 = selectedRisk?.risk_code?.toLowerCase() === 'r2';
+  
+  // R level is 3 for all standard risks except R2
   const getRLevel = () => {
     if (!selectedRisk) return '2';
-    const match = selectedRisk.risk_code.match(/^r(\d+)/i);
-    return match ? match[1] : '2';
+    return isR2 ? '2' : '3';
   };
+
+  // Additional rotation rows for non-R2 risks
+  const additionalRotationRows: RiskComponent[] = isR2 ? [] : [
+    {
+      id: 'series-bonus',
+      risk_code: selectedRisk?.risk_code || '',
+      risk_component_code: 'series',
+      description: 'Extra points for a series of identical jumps',
+      symbol_image: null,
+      symbol_text: 'S',
+      value: 0.2,
+    },
+    {
+      id: '3rotations-bonus',
+      risk_code: selectedRisk?.risk_code || '',
+      risk_component_code: '3rotations',
+      description: 'Points for 3 rotations in a risk',
+      symbol_image: null,
+      symbol_text: '3rot',
+      value: 0.3,
+    },
+  ];
+
+  // Combined rotation components including additional rows
+  const allRotationComponents = [...rotationComponents, ...additionalRotationRows];
+  const rotationTotal = allRotationComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
+  const totalValue = selectedRisk?.rotations_value ?? (throwTotal + rotationTotal + catchTotal);
 
   const handleSave = () => {
     if (!selectedRisk) return;
@@ -150,6 +179,10 @@ const StandardRiskDetail = () => {
             className="h-8 w-auto max-w-[40px] object-contain"
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
+        ) : component.symbol_text ? (
+          <div className="h-8 w-8 bg-primary/10 rounded flex items-center justify-center text-sm font-bold text-primary">
+            {component.symbol_text}
+          </div>
         ) : (
           <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
             —
@@ -264,7 +297,7 @@ const StandardRiskDetail = () => {
               {renderSection('Throw', throwComponents, throwTotal)}
 
               {/* Rotations Section */}
-              {renderSection('Rotations', rotationComponents, rotationTotal)}
+              {renderSection('Rotations', allRotationComponents, rotationTotal)}
 
               {/* Catch Section */}
               {renderSection('Catch', catchComponents, catchTotal)}
