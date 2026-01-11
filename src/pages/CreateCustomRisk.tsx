@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Plus, CheckCircle, X, ChevronDown, Info, GripVertical } from "lucide-react";
@@ -832,125 +831,207 @@ const CreateCustomRisk = () => {
           </div>
 
           {/* Throw Section */}
-          <Card className="border-primary/20 shadow-md">
-            <CardHeader className="pb-2 bg-secondary/10">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg text-primary">Throw</CardTitle>
+          <div className="mb-6">
+            {/* Section Header */}
+            <div className="flex items-center border-b-2 border-primary/30 bg-primary/5 rounded-t-lg">
+              <div className="flex-1 py-3 px-4 flex items-center justify-between">
+                <span className="text-base font-semibold text-primary">Throw</span>
                 <div className="relative" ref={throwCriteriaDropdownRef}>
-                  <Button variant="ghost" size="sm" onClick={() => {
-                  if (!selectedThrow) {
-                    toast({
-                      title: "Selection required",
-                      description: "Please select a throw type before adding extra criteria.",
-                      variant: "destructive"
-                    });
-                    return;
-                  }
-                  setShowThrowCriteriaDropdown(!showThrowCriteriaDropdown);
-                }} className={`text-primary hover:bg-primary/10 ${!selectedThrow ? 'opacity-50' : ''}`}>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      if (!selectedThrow) {
+                        toast({
+                          title: "Selection required",
+                          description: "Please select a throw type before adding extra criteria.",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      setShowThrowCriteriaDropdown(!showThrowCriteriaDropdown);
+                    }} 
+                    className={`text-primary hover:bg-primary/10 ${!selectedThrow ? 'opacity-50' : ''}`}
+                  >
                     <Plus className="h-4 w-4 mr-1" />
                     Add Criteria
                   </Button>
                   
-                  {showThrowCriteriaDropdown && selectedThrow && <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
+                  {showThrowCriteriaDropdown && selectedThrow && (
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
                       <div className="p-3 border-b border-border">
                         <span className="font-medium text-foreground">Select Criteria (max 2)</span>
                       </div>
                       <div className="p-2 space-y-1">
-                        {generalCriteria.map(criteria => <div key={criteria.id} className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer" onClick={() => handleToggleThrowCriteria(criteria)}>
-                            <Checkbox checked={selectedThrowCriteria.includes(criteria.code)} disabled={!selectedThrowCriteria.includes(criteria.code) && selectedThrowCriteria.length >= 2} />
-                            {criteria.symbol_image && <img src={criteria.symbol_image} alt={criteria.name} className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />}
+                        {generalCriteria.map(criteria => (
+                          <div 
+                            key={criteria.id} 
+                            className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer" 
+                            onClick={() => handleToggleThrowCriteria(criteria)}
+                          >
+                            <Checkbox 
+                              checked={selectedThrowCriteria.includes(criteria.code)} 
+                              disabled={!selectedThrowCriteria.includes(criteria.code) && selectedThrowCriteria.length >= 2} 
+                            />
+                            {criteria.symbol_image && (
+                              <img 
+                                src={criteria.symbol_image} 
+                                alt={criteria.name} 
+                                className="h-6 w-6 object-contain" 
+                                onError={e => e.currentTarget.style.display = 'none'} 
+                              />
+                            )}
                             <span className="text-sm text-foreground">{criteria.name}</span>
-                          </div>)}
+                          </div>
+                        ))}
                       </div>
                       <div className="p-2 border-t border-border">
-                        <Button size="sm" className="w-full bg-primary hover:bg-primary/90" onClick={handleSaveThrowCriteriaSelection}>
+                        <Button 
+                          size="sm" 
+                          className="w-full bg-primary hover:bg-primary/90" 
+                          onClick={handleSaveThrowCriteriaSelection}
+                        >
                           Save Selection
                         </Button>
                       </div>
-                    </div>}
+                    </div>
+                  )}
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {!selectedThrow ? <div className="p-4" ref={throwDropdownRef}>
-                  <Button variant="outline" className="w-full justify-between border-dashed border-2 border-primary/30 hover:border-primary/50 h-14" onClick={() => setShowThrowDropdown(!showThrowDropdown)}>
+              <div className="w-20 py-3 px-2 text-center border-l border-primary/30">
+                <span className="text-sm font-semibold text-muted-foreground">Value</span>
+              </div>
+            </div>
+            
+            {/* Section Content */}
+            <div className="border-x border-b border-border rounded-b-lg bg-background">
+              {!selectedThrow ? (
+                <div className="p-4" ref={throwDropdownRef}>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-between border-dashed border-2 border-primary/30 hover:border-primary/50 h-14" 
+                    onClick={() => setShowThrowDropdown(!showThrowDropdown)}
+                  >
                     <span className="text-muted-foreground">Select Throw</span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </Button>
                   
-                  {showThrowDropdown && <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                      {filteredThrows.length === 0 ? <div className="p-4 text-center text-muted-foreground">
+                  {showThrowDropdown && (
+                    <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                      {filteredThrows.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground">
                           No throws available for this apparatus
-                        </div> : filteredThrows.map(throwItem => {
-                  const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
-                  return <div key={throwItem.id} className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" onClick={() => handleSelectThrow(throwItem)}>
-                              <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                                <img src={symbolUrl} alt={throwItem.code} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <span className="text-foreground text-sm">
-                                  <NotesWithSymbols notes={throwItem.name} symbolMap={notesSymbolMap} />
-                                </span>
-                              </div>
-                              <div className="w-12 text-right flex-shrink-0">
-                                <span className="text-primary font-semibold">{throwItem.value ?? 0}</span>
-                              </div>
-                            </div>;
-                })}
-                    </div>}
-                </div> : <>
+                        </div>
+                      ) : filteredThrows.map(throwItem => {
+                        const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
+                        return (
+                          <div 
+                            key={throwItem.id} 
+                            className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" 
+                            onClick={() => handleSelectThrow(throwItem)}
+                          >
+                            <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
+                              <img src={symbolUrl} alt={throwItem.code} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-foreground text-sm">
+                                <NotesWithSymbols notes={throwItem.name} symbolMap={notesSymbolMap} />
+                              </span>
+                            </div>
+                            <div className="w-12 text-right flex-shrink-0">
+                              <span className="text-primary font-semibold">{throwItem.value ?? 0}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
                   {/* Selected Throw Row */}
                   <div className="flex items-center border-b border-border">
-                    <div className="w-16 flex justify-center py-4">
-                      {selectedThrow.symbol_image ? <img src={selectedThrow.symbol_image} alt={selectedThrow.name} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />}
+                    <div className="w-10 flex justify-center py-4">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => {
+                          setSelectedThrow(null);
+                          setThrowCriteria([]);
+                        }} 
+                        className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="w-12 flex justify-center py-4">
+                      {selectedThrow.symbol_image ? (
+                        <img 
+                          src={selectedThrow.symbol_image} 
+                          alt={selectedThrow.name} 
+                          className="h-8 w-auto max-w-[40px] object-contain" 
+                          onError={e => e.currentTarget.style.display = 'none'} 
+                        />
+                      ) : (
+                        <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
+                      )}
                     </div>
                     <div className="flex-1 py-4 px-4">
-                      <span className="font-medium text-foreground">
+                      <span className="font-medium text-foreground text-sm">
                         <NotesWithSymbols notes={selectedThrow.name} symbolMap={notesSymbolMap} />
                       </span>
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border">
-                      <p className="font-semibold text-foreground">{selectedThrow.value ?? 0}</p>
-                    </div>
-                    <div className="w-10 flex justify-center">
-                      <Button variant="ghost" size="icon" onClick={() => {
-                    setSelectedThrow(null);
-                    setThrowCriteria([]);
-                  }} className="h-8 w-8 text-destructive hover:bg-destructive/10">
-                        <X className="h-4 w-4" />
-                      </Button>
+                      <p className="font-semibold text-primary">{selectedThrow.value ?? 0}</p>
                     </div>
                   </div>
                   
                   {/* Extra Throw Criteria */}
-                  {throwCriteria.map(item => <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
-                      <div className="w-16 flex justify-center py-4">
-                        {item.symbol ? <img src={item.symbol} alt={item.name} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />}
+                  {throwCriteria.map(item => (
+                    <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
+                      <div className="w-10 flex justify-center py-4">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => setThrowCriteria(throwCriteria.filter(t => t.id !== item.id))} 
+                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
+                        {item.symbol ? (
+                          <img 
+                            src={item.symbol} 
+                            alt={item.name} 
+                            className="h-8 w-auto max-w-[40px] object-contain" 
+                            onError={e => e.currentTarget.style.display = 'none'} 
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
+                        )}
                       </div>
                       <div className="flex-1 py-4 px-4">
-                        <span className="font-medium text-foreground">
+                        <span className="font-medium text-foreground text-sm">
                           {item.note ? <NotesWithSymbols notes={item.note} symbolMap={notesSymbolMap} /> : item.name}
                         </span>
                       </div>
                       <div className="w-20 py-4 px-2 text-center border-l border-border">
-                        <p className="font-semibold text-foreground">{item.value}</p>
+                        <p className="font-semibold text-primary">{item.value}</p>
                       </div>
-                      <div className="w-10 flex justify-center">
-                        <Button variant="ghost" size="icon" onClick={() => setThrowCriteria(throwCriteria.filter(t => t.id !== item.id))} className="h-8 w-8 text-destructive hover:bg-destructive/10">
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>)}
-                </>}
-            </CardContent>
-          </Card>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
 
           {/* Rotations Section */}
-          <Card className="border-primary/20 shadow-md">
-            <CardHeader className="pb-2 bg-secondary/10">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg text-primary">Rotations</CardTitle>
+          <div className="mb-6">
+            {/* Section Header */}
+            <div className="flex items-center border-b-2 border-primary/30 bg-primary/5 rounded-t-lg">
+              <div className="flex-1 py-3 px-4 flex items-center justify-between">
+                <span className="text-base font-semibold text-primary">Rotations</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -965,12 +1046,21 @@ const CreateCustomRisk = () => {
                   Add Axis/Level Change
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
+              <div className="w-20 py-3 px-2 text-center border-l border-primary/30">
+                <span className="text-sm font-semibold text-muted-foreground">Value</span>
+              </div>
+            </div>
+            
+            {/* Section Content */}
+            <div className="border-x border-b border-border rounded-b-lg bg-background">
               <div className="relative" ref={rotationDropdownRef}>
                 {/* Add rotation button - positioned above rotation entries */}
                 <div className="relative p-4 border-b border-border/50">
-                  <Button variant="outline" onClick={() => setShowRotationDropdown(!showRotationDropdown)} className="w-full justify-between border-primary/30 text-foreground hover:bg-primary/5">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowRotationDropdown(!showRotationDropdown)} 
+                    className="w-full justify-between border-primary/30 text-foreground hover:bg-primary/5"
+                  >
                     <span>{rotationEntries.length === 0 ? 'Select Rotation Type' : '+ Add More Rotations'}</span>
                     <ChevronDown className={`h-4 w-4 transition-transform ${showRotationDropdown ? 'rotate-180' : ''}`} />
                   </Button>
@@ -1063,94 +1153,169 @@ const CreateCustomRisk = () => {
                   </SortableContext>
                 </DndContext>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Catch Section */}
-          <Card className="border-primary/20 shadow-md">
-            <CardHeader className="pb-2 bg-secondary/10">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg text-primary">Catch</CardTitle>
+          <div className="mb-6">
+            {/* Section Header */}
+            <div className="flex items-center border-b-2 border-primary/30 bg-primary/5 rounded-t-lg">
+              <div className="flex-1 py-3 px-4 flex items-center justify-between">
+                <span className="text-base font-semibold text-primary">Catch</span>
                 <div className="relative" ref={catchCriteriaDropdownRef}>
-                  <Button variant="ghost" size="sm" onClick={() => {
-                  if (!selectedCatch) {
-                    toast({
-                      title: "Selection required",
-                      description: "Please select a catch type before adding extra criteria.",
-                      variant: "destructive"
-                    });
-                    return;
-                  }
-                  setShowCatchCriteriaDropdown(!showCatchCriteriaDropdown);
-                }} className={`text-primary hover:bg-primary/10 ${!selectedCatch ? 'opacity-50' : ''}`}>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      if (!selectedCatch) {
+                        toast({
+                          title: "Selection required",
+                          description: "Please select a catch type before adding extra criteria.",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      setShowCatchCriteriaDropdown(!showCatchCriteriaDropdown);
+                    }} 
+                    className={`text-primary hover:bg-primary/10 ${!selectedCatch ? 'opacity-50' : ''}`}
+                  >
                     <Plus className="h-4 w-4 mr-1" />
                     Add Criteria
                   </Button>
                   
-                  {showCatchCriteriaDropdown && selectedCatch && <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
+                  {showCatchCriteriaDropdown && selectedCatch && (
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
                       <div className="p-3 border-b border-border">
                         <span className="font-medium text-foreground">Select Criteria (max 2)</span>
                       </div>
                       <div className="p-2 space-y-1">
-                        {generalCriteria.map(criteria => <div key={criteria.id} className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer" onClick={() => handleToggleCatchCriteria(criteria)}>
-                            <Checkbox checked={selectedCatchCriteria.includes(criteria.code)} disabled={!selectedCatchCriteria.includes(criteria.code) && selectedCatchCriteria.length >= 2} />
-                            {criteria.symbol_image && <img src={criteria.symbol_image} alt={criteria.name} className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />}
+                        {generalCriteria.map(criteria => (
+                          <div 
+                            key={criteria.id} 
+                            className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer" 
+                            onClick={() => handleToggleCatchCriteria(criteria)}
+                          >
+                            <Checkbox 
+                              checked={selectedCatchCriteria.includes(criteria.code)} 
+                              disabled={!selectedCatchCriteria.includes(criteria.code) && selectedCatchCriteria.length >= 2} 
+                            />
+                            {criteria.symbol_image && (
+                              <img 
+                                src={criteria.symbol_image} 
+                                alt={criteria.name} 
+                                className="h-6 w-6 object-contain" 
+                                onError={e => e.currentTarget.style.display = 'none'} 
+                              />
+                            )}
                             <span className="text-sm text-foreground">{criteria.name}</span>
-                          </div>)}
+                          </div>
+                        ))}
                       </div>
                       <div className="p-2 border-t border-border">
-                        <Button size="sm" className="w-full bg-primary hover:bg-primary/90" onClick={handleSaveCatchCriteriaSelection}>
+                        <Button 
+                          size="sm" 
+                          className="w-full bg-primary hover:bg-primary/90" 
+                          onClick={handleSaveCatchCriteriaSelection}
+                        >
                           Save Selection
                         </Button>
                       </div>
-                    </div>}
+                    </div>
+                  )}
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {!selectedCatch ? <div className="p-4" ref={catchDropdownRef}>
-                  <Button variant="outline" className="w-full justify-between border-dashed border-2 border-primary/30 hover:border-primary/50 h-14" onClick={() => setShowCatchDropdown(!showCatchDropdown)}>
+              <div className="w-20 py-3 px-2 text-center border-l border-primary/30">
+                <span className="text-sm font-semibold text-muted-foreground">Value</span>
+              </div>
+            </div>
+            
+            {/* Section Content */}
+            <div className="border-x border-b border-border rounded-b-lg bg-background">
+              {!selectedCatch ? (
+                <div className="p-4" ref={catchDropdownRef}>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-between border-dashed border-2 border-primary/30 hover:border-primary/50 h-14" 
+                    onClick={() => setShowCatchDropdown(!showCatchDropdown)}
+                  >
                     <span className="text-muted-foreground">Select Catch</span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </Button>
                   
-                  {showCatchDropdown && <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                      {filteredCatches.length === 0 ? <div className="p-4 text-center text-muted-foreground">
+                  {showCatchDropdown && (
+                    <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                      {filteredCatches.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground">
                           No catches available for this apparatus
-                        </div> : filteredCatches.map(catchItem => {
-                  const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
-                  return <div key={catchItem.id} className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" onClick={() => handleSelectCatch(catchItem)}>
-                              <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                                <img src={symbolUrl} alt={catchItem.code} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
-                              </div>
-                              <div className="flex-1 min-w-0 flex items-center gap-2">
-                                <span className="text-foreground text-sm">{catchItem.name}</span>
-                                {catchItem.notes && <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
-                                      </TooltipTrigger>
-                                      <TooltipContent className="max-w-sm">
-                                        <NotesWithSymbols notes={catchItem.notes} symbolMap={notesSymbolMap} />
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>}
-                              </div>
-                              <div className="w-12 text-right flex-shrink-0">
-                                <span className="text-primary font-semibold">{catchItem.value ?? 0}</span>
-                              </div>
-                            </div>;
-                })}
-                    </div>}
-                </div> : <>
+                        </div>
+                      ) : filteredCatches.map(catchItem => {
+                        const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
+                        return (
+                          <div 
+                            key={catchItem.id} 
+                            className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" 
+                            onClick={() => handleSelectCatch(catchItem)}
+                          >
+                            <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
+                              <img src={symbolUrl} alt={catchItem.code} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                            </div>
+                            <div className="flex-1 min-w-0 flex items-center gap-2">
+                              <span className="text-foreground text-sm">{catchItem.name}</span>
+                              {catchItem.notes && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-sm">
+                                      <NotesWithSymbols notes={catchItem.notes} symbolMap={notesSymbolMap} />
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </div>
+                            <div className="w-12 text-right flex-shrink-0">
+                              <span className="text-primary font-semibold">{catchItem.value ?? 0}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
                   {/* Selected Catch Row */}
                   <div className="flex items-center border-b border-border">
-                    <div className="w-16 flex justify-center py-4">
-                      {selectedCatch.symbol_image ? <img src={selectedCatch.symbol_image} alt={selectedCatch.name} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />}
+                    <div className="w-10 flex justify-center py-4">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => {
+                          setSelectedCatch(null);
+                          setCatchCriteria([]);
+                        }} 
+                        className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="w-12 flex justify-center py-4">
+                      {selectedCatch.symbol_image ? (
+                        <img 
+                          src={selectedCatch.symbol_image} 
+                          alt={selectedCatch.name} 
+                          className="h-8 w-auto max-w-[40px] object-contain" 
+                          onError={e => e.currentTarget.style.display = 'none'} 
+                        />
+                      ) : (
+                        <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
+                      )}
                     </div>
                     <div className="flex-1 py-4 px-4 flex items-center gap-2">
-                      <span className="font-medium text-foreground">{selectedCatch.name}</span>
-                      {selectedCatch.notes && <TooltipProvider>
+                      <span className="font-medium text-foreground text-sm">{selectedCatch.name}</span>
+                      {selectedCatch.notes && (
+                        <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
@@ -1159,44 +1324,54 @@ const CreateCustomRisk = () => {
                               <NotesWithSymbols notes={selectedCatch.notes} symbolMap={notesSymbolMap} />
                             </TooltipContent>
                           </Tooltip>
-                        </TooltipProvider>}
+                        </TooltipProvider>
+                      )}
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border">
-                      <p className="font-semibold text-foreground">{selectedCatch.value ?? 0}</p>
-                    </div>
-                    <div className="w-10 flex justify-center">
-                      <Button variant="ghost" size="icon" onClick={() => {
-                    setSelectedCatch(null);
-                    setCatchCriteria([]);
-                  }} className="h-8 w-8 text-destructive hover:bg-destructive/10">
-                        <X className="h-4 w-4" />
-                      </Button>
+                      <p className="font-semibold text-primary">{selectedCatch.value ?? 0}</p>
                     </div>
                   </div>
                   
                   {/* Extra Catch Criteria */}
-                  {catchCriteria.map(item => <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
-                      <div className="w-16 flex justify-center py-4">
-                        {item.symbol ? <img src={item.symbol} alt={item.name} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />}
+                  {catchCriteria.map(item => (
+                    <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
+                      <div className="w-10 flex justify-center py-4">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => setCatchCriteria(catchCriteria.filter(c => c.id !== item.id))} 
+                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
+                        {item.symbol ? (
+                          <img 
+                            src={item.symbol} 
+                            alt={item.name} 
+                            className="h-8 w-auto max-w-[40px] object-contain" 
+                            onError={e => e.currentTarget.style.display = 'none'} 
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
+                        )}
                       </div>
                       <div className="flex-1 py-4 px-4">
-                        <span className="font-medium text-foreground">
+                        <span className="font-medium text-foreground text-sm">
                           {item.name}{item.note && ': '}
                           {item.note && <NotesWithSymbols notes={item.note} symbolMap={notesSymbolMap} />}
                         </span>
                       </div>
                       <div className="w-20 py-4 px-2 text-center border-l border-border">
-                        <p className="font-semibold text-foreground">{item.value}</p>
+                        <p className="font-semibold text-primary">{item.value}</p>
                       </div>
-                      <div className="w-10 flex justify-center">
-                        <Button variant="ghost" size="icon" onClick={() => setCatchCriteria(catchCriteria.filter(c => c.id !== item.id))} className="h-8 w-8 text-destructive hover:bg-destructive/10">
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>)}
-                </>}
-            </CardContent>
-          </Card>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
 
           {/* Action Buttons */}
           <div className="flex gap-4 justify-center pt-4">
