@@ -84,6 +84,7 @@ interface RiskData {
   catchSymbols?: string[];
   axisLevelSymbol?: string;
   hasSeries?: boolean;
+  hasDB?: boolean;
   isR2?: boolean;
   components: RiskComponent[];
 }
@@ -186,6 +187,7 @@ function SortableRow({
     const catchSymbols = element.riskData.catchSymbols || [];
     const axisLevelSymbol = element.riskData.axisLevelSymbol;
     const hasSeries = element.riskData.hasSeries || false;
+    const hasDB = element.riskData.hasDB || false;
     
     return (
       <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
@@ -209,7 +211,12 @@ function SortableRow({
           <span className="text-lg font-bold text-foreground">S</span>
         )}
         
-        {/* Axis/Level Change symbol (displayed after R subscript and S) */}
+        {/* DB symbol (non-R2 risks only - reminder that risk contains jumps) */}
+        {hasDB && (
+          <span className="text-lg font-bold text-foreground ml-0.5">DB</span>
+        )}
+        
+        {/* Axis/Level Change symbol (displayed after R subscript, S, and DB) */}
         {axisLevelSymbol && (
           <img
             src={axisLevelSymbol}
