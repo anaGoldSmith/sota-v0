@@ -973,11 +973,18 @@ const RoutineCalculator = () => {
       });
     } else {
       // Navigate to Standard Risk Detail page with existing data
+      // Determine the risk code - if not stored, infer from rLevel (R2 has rLevel 2, others have rLevel 3)
+      let inferredRiskCode = riskData.riskCode;
+      if (!inferredRiskCode) {
+        // If riskCode is not available, infer from rLevel
+        inferredRiskCode = riskData.rLevel === 2 ? 'r2' : 'r3'; // Default to r3 for non-R2 risks
+      }
+      
       navigate('/standard-risk-detail', {
         state: {
           apparatus: riskData.apparatus || selectedApparatus,
           selectedRisk: {
-            risk_code: riskData.riskCode || 'r2',
+            risk_code: inferredRiskCode,
             name: riskData.riskName || 'Standard Risk',
           },
           modifyingElementId: elementId,
