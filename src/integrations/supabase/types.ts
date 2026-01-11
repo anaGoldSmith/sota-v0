@@ -578,9 +578,8 @@ export type Database = {
           id: string
           name: string
           risk_code: string
-          rotations_value: number | null
-          series: string | null
           symbol_image: string | null
+          total_value: number | null
           updated_at: string
         }
         Insert: {
@@ -588,9 +587,8 @@ export type Database = {
           id?: string
           name: string
           risk_code: string
-          rotations_value?: number | null
-          series?: string | null
           symbol_image?: string | null
+          total_value?: number | null
           updated_at?: string
         }
         Update: {
@@ -598,9 +596,8 @@ export type Database = {
           id?: string
           name?: string
           risk_code?: string
-          rotations_value?: number | null
-          series?: string | null
           symbol_image?: string | null
+          total_value?: number | null
           updated_at?: string
         }
         Relationships: []

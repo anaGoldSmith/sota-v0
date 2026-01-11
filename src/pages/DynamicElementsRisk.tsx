@@ -17,7 +17,7 @@ interface PrerecordedRisk {
   id: string;
   risk_code: string;
   name: string;
-  rotations_value: number | null;
+  total_value: number | null;
   symbol_image: string | null;
 }
 
@@ -34,7 +34,7 @@ const DynamicElementsRisk = () => {
     const fetchPrerecordedRisks = async () => {
       const { data, error } = await supabase
         .from('prerecorded_risks')
-        .select('id, risk_code, name, rotations_value, symbol_image')
+        .select('id, risk_code, name, total_value, symbol_image')
         .order('risk_code');
       
       if (!error && data) {
@@ -170,7 +170,7 @@ const DynamicElementsRisk = () => {
                           )}
                         </div>
                         <span className="font-medium text-sm">{risk.name}</span>
-                        <span className="font-medium">{risk.rotations_value ?? 0.2}</span>
+                        <span className="font-medium">{risk.total_value ?? 0.2}</span>
                       </DropdownMenuItem>
                     ))
                   )}
