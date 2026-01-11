@@ -500,7 +500,7 @@ const RoutineCalculator = () => {
         
         toast({
           title: "Risk Updated",
-          description: `Risk has been updated with value ${riskData.value}.`,
+          description: `Risk has been updated with value ${Number(riskData.value.toFixed(1))}.`,
         });
       } else {
         // Adding new risk
@@ -517,7 +517,7 @@ const RoutineCalculator = () => {
         
         toast({
           title: "Risk Added",
-          description: `Risk R₊ with value ${riskData.value} has been added to your routine.`,
+          description: `Risk R₊ with value ${Number(riskData.value.toFixed(1))} has been added to your routine.`,
         });
       }
       
