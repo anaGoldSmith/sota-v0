@@ -1,26 +1,75 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ArrowLeft, Minus, Plus } from "lucide-react";
+import { ArrowLeft, Minus, Plus, ChevronDown } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ApparatusType } from "@/types/apparatus";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+interface PrerecordedRisk {
+  id: string;
+  risk_code: string;
+  name: string;
+  rotations_value: number | null;
+  symbol_image: string | null;
+}
 
 const DynamicElementsRisk = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOverviewOpen, setIsOverviewOpen] = useState(true);
+  const [prerecordedRisks, setPrerecordedRisks] = useState<PrerecordedRisk[]>([]);
+  const [symbolUrls, setSymbolUrls] = useState<Record<string, string>>({});
   
   // Get apparatus from navigation state
   const apparatus = (location.state as { apparatus?: ApparatusType })?.apparatus;
-  
-  const handleSelectStandardRisk = () => {
-    navigate("/standard-risks", { state: { apparatus } });
+
+  useEffect(() => {
+    const fetchPrerecordedRisks = async () => {
+      const { data, error } = await supabase
+        .from('prerecorded_risks')
+        .select('id, risk_code, name, rotations_value, symbol_image')
+        .order('risk_code');
+      
+      if (!error && data) {
+        setPrerecordedRisks(data);
+        
+        // Fetch symbol URLs for risks that have symbols
+        const urlMap: Record<string, string> = {};
+        for (const risk of data) {
+          if (risk.symbol_image) {
+            const { data: urlData } = supabase.storage
+              .from('dynamic-element-symbols')
+              .getPublicUrl(`prerecorded_risks_main/${risk.symbol_image}`);
+            if (urlData?.publicUrl) {
+              urlMap[risk.id] = urlData.publicUrl;
+            }
+          }
+        }
+        setSymbolUrls(urlMap);
+      }
+    };
+
+    fetchPrerecordedRisks();
+  }, []);
+
+  const handleSelectRisk = (risk: PrerecordedRisk) => {
+    navigate("/standard-risks", { state: { apparatus, selectedRisk: risk } });
   };
+
   const handleCreateOwnRisk = () => {
     navigate("/create-custom-risk", { state: { apparatus } });
   };
-  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Header */}
       <header className="border-b bg-primary text-primary-foreground shadow-lg">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -79,7 +128,6 @@ const DynamicElementsRisk = () => {
                       <li>To validate a Risk, at least two base rotations of 360° must be performed under the flight</li>
                       <li>Rotations can be performed around any axis, with or without passing to the floor</li>
                       <li>The two base rotations must be continuous, without additional steps between base rotations</li>
-                      
                     </ul>
                   </div>
                 </CardContent>
@@ -89,16 +137,60 @@ const DynamicElementsRisk = () => {
 
           {/* Action Buttons */}
           <div className="space-y-4">
-            <Button className="w-full h-16 text-lg hover:scale-[1.02] transition-transform bg-primary hover:bg-primary/90 text-primary-foreground shadow-md" onClick={handleSelectStandardRisk}>
-              <span className="flex items-baseline">
-                Add Standard Risk of 0.2 - R<sub className="text-sm">2</sub>
-              </span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="w-full h-16 text-lg hover:scale-[1.02] transition-transform bg-primary hover:bg-primary/90 text-primary-foreground shadow-md">
+                  <span className="flex items-center gap-2">
+                    Select Standard Risk
+                    <ChevronDown className="h-5 w-5" />
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-80 overflow-y-auto">
+                {prerecordedRisks.length === 0 ? (
+                  <DropdownMenuItem disabled>No prerecorded risks available</DropdownMenuItem>
+                ) : (
+                  prerecordedRisks.map((risk) => (
+                    <DropdownMenuItem
+                      key={risk.id}
+                      onClick={() => handleSelectRisk(risk)}
+                      className="flex items-center gap-3 py-3 cursor-pointer"
+                    >
+                      {symbolUrls[risk.id] ? (
+                        <img 
+                          src={symbolUrls[risk.id]} 
+                          alt={risk.name} 
+                          className="w-10 h-10 object-contain"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+                          {risk.risk_code}
+                        </div>
+                      )}
+                      <div className="flex flex-col">
+                        <span className="font-medium">{risk.name}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {risk.risk_code} • Value: {risk.rotations_value ?? 0.2}
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
             
-            <Button variant="outline" className="w-full h-16 text-lg hover:scale-[1.02] transition-transform border-secondary text-secondary hover:bg-secondary/10" onClick={handleCreateOwnRisk}>Create Risk with Extra Criteria</Button>
+            <Button 
+              variant="outline" 
+              className="w-full h-16 text-lg hover:scale-[1.02] transition-transform border-secondary text-secondary hover:bg-secondary/10" 
+              onClick={handleCreateOwnRisk}
+            >
+              Create Risk with Extra Criteria
+            </Button>
           </div>
         </div>
       </main>
-    </div>;
+    </div>
+  );
 };
+
 export default DynamicElementsRisk;
