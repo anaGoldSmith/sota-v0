@@ -91,9 +91,11 @@ interface RiskData {
   riskName?: string;
   apparatus?: ApparatusType;
   components: RiskComponent[];
+  dbCount?: number;   // Number of DB elements in the risk (3 for non-R2, 0 for R2)
+  dbValue?: number;   // Total DB value from thr_, utf_, catch_ components
 }
 
-type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'DB/TE' | 'TE' | 'R' | 'Steps';
+type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'DB/TE' | 'TE' | 'R' | 'R/DB' | 'Steps';
 
 interface RoutineElement {
   id: string;
@@ -186,7 +188,7 @@ function SortableRow({
 
   // Render Risk element with throw symbols, R subscript, axis/level symbol, and catch symbols
   const renderRiskSymbols = () => {
-    if (element.type !== 'R' || !element.riskData) return null;
+    if ((element.type !== 'R' && element.type !== 'R/DB') || !element.riskData) return null;
     
     const rLevel = element.riskData.rLevel || 2;
     const throwSymbols = element.riskData.throwSymbols || [];
@@ -265,14 +267,14 @@ function SortableRow({
           )}
         </TableCell>
         <TableCell 
-          className={`w-12 px-2 font-mono ${!isMainRow ? 'pl-6 text-muted-foreground' : ''} ${isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R') ? 'cursor-pointer' : ''}`}
-          onClick={isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R') && onToggleExpand ? (e) => {
+          className={`w-12 px-2 font-mono ${!isMainRow ? 'pl-6 text-muted-foreground' : ''} ${isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R' || element.type === 'R/DB') ? 'cursor-pointer' : ''}`}
+          onClick={isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R' || element.type === 'R/DB') && onToggleExpand ? (e) => {
             e.stopPropagation();
             onToggleExpand();
           } : undefined}
         >
           <div className="flex items-center gap-1">
-            {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R') && (
+            {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R' || element.type === 'R/DB') && (
               element.isExpanded ? 
                 <ChevronDown className="h-3 w-3 text-muted-foreground" /> : 
                 <ChevronRight className="h-3 w-3 text-muted-foreground" />
@@ -284,7 +286,7 @@ function SortableRow({
           {element.type}
         </TableCell>
         <TableCell className="px-2">
-          {element.type === 'R' ? renderRiskSymbols() : renderSymbols(element.symbolImages)}
+          {(element.type === 'R' || element.type === 'R/DB') ? renderRiskSymbols() : renderSymbols(element.symbolImages)}
         </TableCell>
         <TableCell className="w-16 px-2 text-right font-mono font-semibold">
           {element.value.toFixed(1)}
@@ -306,7 +308,7 @@ function SortableRow({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-background z-50">
-                {element.type === 'R' && onModify && (
+                {(element.type === 'R' || element.type === 'R/DB') && onModify && (
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onModify(); }}>
                     <Pencil className="h-4 w-4 mr-2" />
                     Modify
@@ -326,7 +328,7 @@ function SortableRow({
       </TableRow>
       
       {/* Expanded Risk Details Table */}
-      {element.type === 'R' && element.isExpanded && element.riskData && (
+      {(element.type === 'R' || element.type === 'R/DB') && element.isExpanded && element.riskData && (
         <TableRow className="bg-muted/10">
           <TableCell colSpan={6} className="p-4">
             <div className="ml-8 border rounded-lg overflow-hidden">
@@ -481,6 +483,9 @@ const RoutineCalculator = () => {
       const riskData = state.newRisk;
       const modifyingId = state.modifyingElementId;
       
+      // Determine element type: R/DB for non-R2 risks (which have DBs), R for R2 risks
+      const elementType: RoutineElementType = (riskData.dbCount && riskData.dbCount > 0) ? 'R/DB' : 'R';
+      
       if (modifyingId) {
         // Modifying existing risk - replace it
         setRoutineElements((prev) => 
@@ -488,6 +493,7 @@ const RoutineCalculator = () => {
             if (el.id === modifyingId) {
               return {
                 ...el,
+                type: elementType,
                 symbolImages: [riskData.symbols["R2"] || ''],
                 value: riskData.value,
                 originalData: riskData,
@@ -506,7 +512,7 @@ const RoutineCalculator = () => {
         // Adding new risk
         const newElement: RoutineElement = {
           id: `risk-${Date.now()}`,
-          type: 'R',
+          type: elementType,
           symbolImages: [riskData.symbols["R2"] || ''],
           value: riskData.value,
           originalData: riskData,
@@ -852,22 +858,50 @@ const RoutineCalculator = () => {
 
   // Calculate scores from routine elements
   const dbElements = routineElements.filter(el => el.type === 'DB' || el.type === 'DB/DA');
-  const totalDB = dbElements.reduce((sum, el) => {
+  
+  // Calculate DB values from explicit DB elements
+  const explicitDbValue = dbElements.reduce((sum, el) => {
     // For DB/DA elements, only count DB value
     if (el.type === 'DB/DA' && el.dbData) {
       return sum + el.dbData.value;
     }
     return sum + el.value;
   }, 0);
-  const countDB = dbElements.length;
   
-  const daElements = routineElements.filter(el => el.type === 'DA' || el.type === 'R' || el.type === 'DB/DA');
+  // Calculate DB count and values from risks (R/DB elements have 3 DBs for non-R2)
+  const riskDbCount = routineElements.reduce((sum, el) => {
+    if ((el.type === 'R' || el.type === 'R/DB') && el.riskData?.dbCount) {
+      return sum + el.riskData.dbCount;
+    }
+    return sum;
+  }, 0);
+  
+  const riskDbValue = routineElements.reduce((sum, el) => {
+    if ((el.type === 'R' || el.type === 'R/DB') && el.riskData?.dbValue) {
+      return sum + el.riskData.dbValue;
+    }
+    return sum;
+  }, 0);
+  
+  const totalDB = explicitDbValue + riskDbValue;
+  const countDB = dbElements.length + riskDbCount;
+  
+  const daElements = routineElements.filter(el => el.type === 'DA' || el.type === 'R' || el.type === 'R/DB' || el.type === 'DB/DA');
   const totalDA = daElements.reduce((sum, el) => {
     // For DB/DA elements, only count DA value
     if (el.type === 'DB/DA' && el.daData) {
       return sum + el.daData.value;
     }
-    if (el.type === 'DA' || el.type === 'R') {
+    // For R/DB elements, subtract dbValue to get only the DA portion (rotations + extra criteria)
+    if (el.type === 'R/DB' && el.riskData?.dbValue) {
+      return sum + (el.value - el.riskData.dbValue);
+    }
+    // For regular R elements (R2), add full value
+    if (el.type === 'R') {
+      return sum + el.value;
+    }
+    // For standalone DA elements
+    if (el.type === 'DA') {
       return sum + el.value;
     }
     return sum;
@@ -1314,8 +1348,8 @@ const RoutineCalculator = () => {
                               index={index}
                               itemNumber={itemNumber}
                               onRemove={() => handleRemoveRoutineElement(index)}
-                              onModify={element.type === 'R' ? () => handleModifyRisk(element.id) : undefined}
-                              onToggleExpand={(element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R') ? () => handleToggleExpand(index) : undefined}
+                              onModify={(element.type === 'R' || element.type === 'R/DB') ? () => handleModifyRisk(element.id) : undefined}
+                              onToggleExpand={(element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R' || element.type === 'R/DB') ? () => handleToggleExpand(index) : undefined}
                               isMainRow={true}
                             />
                           );
