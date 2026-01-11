@@ -326,6 +326,8 @@ function SortableRow({
                             alt={component.name} 
                             className="h-6 w-6 object-contain"
                           />
+                        ) : component.name.toLowerCase().includes('series') ? (
+                          <span className="text-lg font-bold text-foreground">S</span>
                         ) : (
                           <div className="h-6 w-6 bg-muted rounded" />
                         )}
