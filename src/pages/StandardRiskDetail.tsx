@@ -179,6 +179,8 @@ const StandardRiskDetail = () => {
             className="h-8 w-auto max-w-[40px] object-contain"
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
+        ) : component.symbol_text === 'S' ? (
+          <span className="text-2xl font-bold text-foreground">S</span>
         ) : component.symbol_text ? (
           <div className="h-8 w-8 bg-primary/10 rounded flex items-center justify-center text-sm font-bold text-primary">
             {component.symbol_text}
