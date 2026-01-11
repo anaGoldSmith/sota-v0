@@ -183,12 +183,14 @@ export default function SymbolManagement() {
           // Use risk_component_code for prerecorded_risk_components table, code for others
           const codeColumn = category.table === 'prerecorded_risk_components' ? 'risk_component_code' : 'code';
           
-          // Check if a record with this code exists
-          const { data: existingRecord, error: queryError } = await supabase
+          // Check if a record with this code exists (use limit(1) to handle duplicates)
+          const { data: existingRecords, error: queryError } = await supabase
             .from(category.table as any)
             .select(`id, ${codeColumn}`)
             .eq(codeColumn, code)
-            .maybeSingle();
+            .limit(1);
+          
+          const existingRecord = existingRecords?.[0] || null;
 
           if (queryError) {
             console.error(`Error checking for ${code}:`, queryError);
