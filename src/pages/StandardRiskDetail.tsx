@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, CheckCircle, Plus, X, ChevronDown, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -84,6 +85,13 @@ interface ExtraCriteria {
   notes?: string | null;
 }
 
+interface GeneralCriteria {
+  id: string;
+  code: string;
+  name: string;
+  symbol_image: string | null;
+}
+
 const StandardRiskDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -92,12 +100,19 @@ const StandardRiskDetail = () => {
   // Extra criteria state
   const [dynamicThrows, setDynamicThrows] = useState<DynamicThrow[]>([]);
   const [dynamicCatches, setDynamicCatches] = useState<DynamicCatch[]>([]);
+  const [generalCriteria, setGeneralCriteria] = useState<GeneralCriteria[]>([]);
   const [extraThrowCriteria, setExtraThrowCriteria] = useState<ExtraCriteria[]>([]);
   const [extraCatchCriteria, setExtraCatchCriteria] = useState<ExtraCriteria[]>([]);
+  const [generalThrowCriteria, setGeneralThrowCriteria] = useState<ExtraCriteria[]>([]);
+  const [generalCatchCriteria, setGeneralCatchCriteria] = useState<ExtraCriteria[]>([]);
   const [showThrowDropdown, setShowThrowDropdown] = useState(false);
   const [showCatchDropdown, setShowCatchDropdown] = useState(false);
+  const [showThrowCriteriaDropdown, setShowThrowCriteriaDropdown] = useState(false);
+  const [showCatchCriteriaDropdown, setShowCatchCriteriaDropdown] = useState(false);
   const throwDropdownRef = useRef<HTMLDivElement>(null);
   const catchDropdownRef = useRef<HTMLDivElement>(null);
+  const throwCriteriaDropdownRef = useRef<HTMLDivElement>(null);
+  const catchCriteriaDropdownRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [savedRiskData, setSavedRiskData] = useState<any>(null);
@@ -115,6 +130,12 @@ const StandardRiskDetail = () => {
       }
       if (catchDropdownRef.current && !catchDropdownRef.current.contains(event.target as Node)) {
         setShowCatchDropdown(false);
+      }
+      if (throwCriteriaDropdownRef.current && !throwCriteriaDropdownRef.current.contains(event.target as Node)) {
+        setShowThrowCriteriaDropdown(false);
+      }
+      if (catchCriteriaDropdownRef.current && !catchCriteriaDropdownRef.current.contains(event.target as Node)) {
+        setShowCatchCriteriaDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -162,9 +183,19 @@ const StandardRiskDetail = () => {
       }
     };
 
+    const loadGeneralCriteria = async () => {
+      const { data, error } = await supabase
+        .from('dynamic_general_criteria')
+        .select('*');
+      if (data && !error) {
+        setGeneralCriteria(data);
+      }
+    };
+
     fetchComponents();
     loadDynamicThrows();
     loadDynamicCatches();
+    loadGeneralCriteria();
   }, [selectedRisk, apparatus, navigate]);
 
   // Filter throws and catches based on apparatus
@@ -214,6 +245,54 @@ const StandardRiskDetail = () => {
     setExtraCatchCriteria(prev => prev.filter(c => c.id !== id));
   };
 
+  // Handler to toggle general throw criteria
+  const handleToggleGeneralThrowCriteria = (criteria: GeneralCriteria) => {
+    const isSelected = generalThrowCriteria.some(c => c.code === criteria.code);
+    if (isSelected) {
+      setGeneralThrowCriteria(prev => prev.filter(c => c.code !== criteria.code));
+    } else {
+      if (generalThrowCriteria.length < 2) {
+        const newCriteria: ExtraCriteria = {
+          id: `general_throw_${criteria.code}_${Date.now()}`,
+          code: criteria.code,
+          name: criteria.name,
+          symbol_image: criteria.symbol_image,
+          value: 0.1,
+        };
+        setGeneralThrowCriteria(prev => [...prev, newCriteria]);
+      }
+    }
+  };
+
+  // Handler to toggle general catch criteria
+  const handleToggleGeneralCatchCriteria = (criteria: GeneralCriteria) => {
+    const isSelected = generalCatchCriteria.some(c => c.code === criteria.code);
+    if (isSelected) {
+      setGeneralCatchCriteria(prev => prev.filter(c => c.code !== criteria.code));
+    } else {
+      if (generalCatchCriteria.length < 2) {
+        const newCriteria: ExtraCriteria = {
+          id: `general_catch_${criteria.code}_${Date.now()}`,
+          code: criteria.code,
+          name: criteria.name,
+          symbol_image: criteria.symbol_image,
+          value: 0.1,
+        };
+        setGeneralCatchCriteria(prev => [...prev, newCriteria]);
+      }
+    }
+  };
+
+  // Handler to remove general throw criteria
+  const handleRemoveGeneralThrowCriteria = (id: string) => {
+    setGeneralThrowCriteria(prev => prev.filter(c => c.id !== id));
+  };
+
+  // Handler to remove general catch criteria
+  const handleRemoveGeneralCatchCriteria = (id: string) => {
+    setGeneralCatchCriteria(prev => prev.filter(c => c.id !== id));
+  };
+
   // Categorize components by prefix
   const throwComponents = components.filter(c => c.risk_component_code.startsWith('thr_'));
   const rotationComponents = components.filter(c => c.risk_component_code.startsWith('utf_'));
@@ -222,13 +301,15 @@ const StandardRiskDetail = () => {
   // Calculate totals including extra criteria
   const baseThrowTotal = throwComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
   const extraThrowTotal = extraThrowCriteria.reduce((sum, c) => sum + c.value, 0);
-  const throwTotal = baseThrowTotal + extraThrowTotal;
+  const generalThrowTotal = generalThrowCriteria.reduce((sum, c) => sum + c.value, 0);
+  const throwTotal = baseThrowTotal + extraThrowTotal + generalThrowTotal;
   
   const baseRotationTotal = rotationComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
   
   const baseCatchTotal = catchComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
   const extraCatchTotal = extraCatchCriteria.reduce((sum, c) => sum + c.value, 0);
-  const catchTotal = baseCatchTotal + extraCatchTotal;
+  const generalCatchTotal = generalCatchCriteria.reduce((sum, c) => sum + c.value, 0);
+  const catchTotal = baseCatchTotal + extraCatchTotal + generalCatchTotal;
   
   // Check if the risk is R2
   const isR2 = selectedRisk?.risk_code?.toLowerCase() === 'r2';
@@ -289,6 +370,12 @@ const StandardRiskDetail = () => {
           value: c.value,
           section: 'throw'
         })),
+        ...generalThrowCriteria.map(c => ({
+          name: c.name,
+          symbol: c.symbol_image,
+          value: c.value,
+          section: 'throw'
+        })),
         ...rotationComponents.map(c => ({
           name: c.description || 'Under the Flight',
           symbol: c.symbol_image,
@@ -302,6 +389,12 @@ const StandardRiskDetail = () => {
           section: 'catch'
         })),
         ...extraCatchCriteria.map(c => ({
+          name: c.name,
+          symbol: c.symbol_image,
+          value: c.value,
+          section: 'catch'
+        })),
+        ...generalCatchCriteria.map(c => ({
           name: c.name,
           symbol: c.symbol_image,
           value: c.value,
@@ -466,8 +559,59 @@ const StandardRiskDetail = () => {
               <div className="mb-6">
                 {/* Section Header */}
                 <div className="flex items-center border-b-2 border-primary/30 bg-primary/5 rounded-t-lg">
-                  <div className="flex-1 py-3 px-4">
+                  <div className="flex-1 py-3 px-4 flex items-center justify-between">
                     <span className="text-base font-semibold text-primary">Throw</span>
+                    <div className="relative" ref={throwCriteriaDropdownRef}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowThrowCriteriaDropdown(!showThrowCriteriaDropdown)}
+                        className="text-primary hover:bg-primary/10"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Criteria
+                      </Button>
+                      
+                      {showThrowCriteriaDropdown && (
+                        <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
+                          <div className="p-3 border-b border-border">
+                            <span className="font-medium text-foreground">Select Criteria (max 2)</span>
+                          </div>
+                          <div className="p-2 space-y-1">
+                            {generalCriteria.map(criteria => (
+                              <div
+                                key={criteria.id}
+                                className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
+                                onClick={() => handleToggleGeneralThrowCriteria(criteria)}
+                              >
+                                <Checkbox
+                                  checked={generalThrowCriteria.some(c => c.code === criteria.code)}
+                                  disabled={!generalThrowCriteria.some(c => c.code === criteria.code) && generalThrowCriteria.length >= 2}
+                                />
+                                {criteria.symbol_image && (
+                                  <img
+                                    src={criteria.symbol_image}
+                                    alt={criteria.name}
+                                    className="h-6 w-6 object-contain"
+                                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                                  />
+                                )}
+                                <span className="text-sm text-foreground">{criteria.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="p-2 border-t border-border">
+                            <Button
+                              size="sm"
+                              className="w-full bg-primary hover:bg-primary/90"
+                              onClick={() => setShowThrowCriteriaDropdown(false)}
+                            >
+                              Save Selection
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="w-20 py-3 px-2 text-center border-l border-primary/30">
                     <span className="text-sm font-semibold text-muted-foreground">Value</span>
@@ -478,7 +622,7 @@ const StandardRiskDetail = () => {
                 <div className="border-x border-b border-border rounded-b-lg bg-background">
                   {throwComponents.length > 0 ? (
                     throwComponents.map((component, index) => 
-                      renderComponentRow(component, index === throwComponents.length - 1 && extraThrowCriteria.length === 0)
+                      renderComponentRow(component, index === throwComponents.length - 1 && extraThrowCriteria.length === 0 && generalThrowCriteria.length === 0)
                     )
                   ) : (
                     <div className="flex items-center py-4 px-4 text-muted-foreground text-sm">
@@ -486,7 +630,46 @@ const StandardRiskDetail = () => {
                     </div>
                   )}
                   
-                  {/* Extra Throw Criteria */}
+                  {/* General Throw Criteria */}
+                  {generalThrowCriteria.map((criteria, index) => (
+                    <div 
+                      key={criteria.id} 
+                      className="flex items-center border-b border-border"
+                    >
+                      <div className="w-10 flex justify-center py-4">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveGeneralThrowCriteria(criteria.id)}
+                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
+                        {criteria.symbol_image ? (
+                          <img 
+                            src={criteria.symbol_image} 
+                            alt={criteria.name} 
+                            className="h-8 w-auto max-w-[40px] object-contain"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+                            —
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 py-4 px-4">
+                        <span className="font-medium text-foreground text-sm">{criteria.name}</span>
+                      </div>
+                      <div className="w-20 py-4 px-2 text-center border-l border-border">
+                        <p className="font-semibold text-primary">{criteria.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Extra Throw Criteria (Specific Throws) */}
                   {extraThrowCriteria.map((criteria, index) => (
                     <div 
                       key={criteria.id} 
@@ -577,7 +760,7 @@ const StandardRiskDetail = () => {
                   )}
                   
                   {/* Section Total */}
-                  {(throwComponents.length > 0 || extraThrowCriteria.length > 0) && (
+                  {(throwComponents.length > 0 || extraThrowCriteria.length > 0 || generalThrowCriteria.length > 0) && (
                     <div className="flex items-center border-t border-border bg-muted/30">
                       <div className="w-16 py-2" />
                       <div className="flex-1 py-2 px-4">
@@ -598,8 +781,59 @@ const StandardRiskDetail = () => {
               <div className="mb-6">
                 {/* Section Header */}
                 <div className="flex items-center border-b-2 border-primary/30 bg-primary/5 rounded-t-lg">
-                  <div className="flex-1 py-3 px-4">
+                  <div className="flex-1 py-3 px-4 flex items-center justify-between">
                     <span className="text-base font-semibold text-primary">Catch</span>
+                    <div className="relative" ref={catchCriteriaDropdownRef}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowCatchCriteriaDropdown(!showCatchCriteriaDropdown)}
+                        className="text-primary hover:bg-primary/10"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Criteria
+                      </Button>
+                      
+                      {showCatchCriteriaDropdown && (
+                        <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
+                          <div className="p-3 border-b border-border">
+                            <span className="font-medium text-foreground">Select Criteria (max 2)</span>
+                          </div>
+                          <div className="p-2 space-y-1">
+                            {generalCriteria.map(criteria => (
+                              <div
+                                key={criteria.id}
+                                className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
+                                onClick={() => handleToggleGeneralCatchCriteria(criteria)}
+                              >
+                                <Checkbox
+                                  checked={generalCatchCriteria.some(c => c.code === criteria.code)}
+                                  disabled={!generalCatchCriteria.some(c => c.code === criteria.code) && generalCatchCriteria.length >= 2}
+                                />
+                                {criteria.symbol_image && (
+                                  <img
+                                    src={criteria.symbol_image}
+                                    alt={criteria.name}
+                                    className="h-6 w-6 object-contain"
+                                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                                  />
+                                )}
+                                <span className="text-sm text-foreground">{criteria.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="p-2 border-t border-border">
+                            <Button
+                              size="sm"
+                              className="w-full bg-primary hover:bg-primary/90"
+                              onClick={() => setShowCatchCriteriaDropdown(false)}
+                            >
+                              Save Selection
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="w-20 py-3 px-2 text-center border-l border-primary/30">
                     <span className="text-sm font-semibold text-muted-foreground">Value</span>
@@ -610,7 +844,7 @@ const StandardRiskDetail = () => {
                 <div className="border-x border-b border-border rounded-b-lg bg-background">
                   {catchComponents.length > 0 ? (
                     catchComponents.map((component, index) => 
-                      renderComponentRow(component, index === catchComponents.length - 1 && extraCatchCriteria.length === 0)
+                      renderComponentRow(component, index === catchComponents.length - 1 && extraCatchCriteria.length === 0 && generalCatchCriteria.length === 0)
                     )
                   ) : (
                     <div className="flex items-center py-4 px-4 text-muted-foreground text-sm">
@@ -618,7 +852,46 @@ const StandardRiskDetail = () => {
                     </div>
                   )}
                   
-                  {/* Extra Catch Criteria */}
+                  {/* General Catch Criteria */}
+                  {generalCatchCriteria.map((criteria, index) => (
+                    <div 
+                      key={criteria.id} 
+                      className="flex items-center border-b border-border"
+                    >
+                      <div className="w-10 flex justify-center py-4">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveGeneralCatchCriteria(criteria.id)}
+                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
+                        {criteria.symbol_image ? (
+                          <img 
+                            src={criteria.symbol_image} 
+                            alt={criteria.name} 
+                            className="h-8 w-auto max-w-[40px] object-contain"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+                            —
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 py-4 px-4">
+                        <span className="font-medium text-foreground text-sm">{criteria.name}</span>
+                      </div>
+                      <div className="w-20 py-4 px-2 text-center border-l border-border">
+                        <p className="font-semibold text-primary">{criteria.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Extra Catch Criteria (Specific Catches) */}
                   {extraCatchCriteria.map((criteria, index) => (
                     <div 
                       key={criteria.id} 
@@ -741,7 +1014,7 @@ const StandardRiskDetail = () => {
                   )}
                   
                   {/* Section Total */}
-                  {(catchComponents.length > 0 || extraCatchCriteria.length > 0) && (
+                  {(catchComponents.length > 0 || extraCatchCriteria.length > 0 || generalCatchCriteria.length > 0) && (
                     <div className="flex items-center border-t border-border bg-muted/30">
                       <div className="w-16 py-2" />
                       <div className="flex-1 py-2 px-4">
