@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, X, Calculator, GripVertical, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, Calculator, GripVertical, ChevronDown, ChevronRight, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbols";
 import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
@@ -86,6 +86,10 @@ interface RiskData {
   hasSeries?: boolean;
   hasDB?: boolean;
   isR2?: boolean;
+  isCustomRisk?: boolean;
+  riskCode?: string;
+  riskName?: string;
+  apparatus?: ApparatusType;
   components: RiskComponent[];
 }
 
@@ -121,6 +125,7 @@ function SortableRow({
   index, 
   itemNumber, 
   onRemove, 
+  onModify,
   onToggleExpand,
   isMainRow 
 }: { 
@@ -128,6 +133,7 @@ function SortableRow({
   index: number;
   itemNumber: string;
   onRemove: () => void;
+  onModify?: () => void;
   onToggleExpand?: () => void;
   isMainRow: boolean;
 }) {
@@ -285,27 +291,36 @@ function SortableRow({
         </TableCell>
         <TableCell className="w-8 px-1">
           {isMainRow && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              draggable={false}
-              onPointerDown={(e) => {
-                e.stopPropagation();
-              }}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-              }}
-              onTouchStart={(e) => {
-                e.stopPropagation();
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove();
-              }}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  draggable={false}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-background z-50">
+                {element.type === 'R' && onModify && (
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onModify(); }}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Modify
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem 
+                  onClick={(e) => { e.stopPropagation(); onRemove(); }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </TableCell>
       </TableRow>
@@ -461,27 +476,53 @@ const RoutineCalculator = () => {
 
   // Handle incoming risk data from StandardRisks page
   useEffect(() => {
-    const state = location.state as { newRisk?: RiskData } | null;
+    const state = location.state as { newRisk?: RiskData; modifyingElementId?: string } | null;
     if (state?.newRisk) {
       const riskData = state.newRisk;
-      const newElement: RoutineElement = {
-        id: `risk-${Date.now()}`,
-        type: 'R',
-        symbolImages: [riskData.symbols["R2"] || ''],
-        value: riskData.value,
-        originalData: riskData,
-        riskData: riskData,
-        isExpanded: false,
-      };
-      setRoutineElements((prev) => [...prev, newElement]);
+      const modifyingId = state.modifyingElementId;
+      
+      if (modifyingId) {
+        // Modifying existing risk - replace it
+        setRoutineElements((prev) => 
+          prev.map(el => {
+            if (el.id === modifyingId) {
+              return {
+                ...el,
+                symbolImages: [riskData.symbols["R2"] || ''],
+                value: riskData.value,
+                originalData: riskData,
+                riskData: riskData,
+              };
+            }
+            return el;
+          })
+        );
+        
+        toast({
+          title: "Risk Updated",
+          description: `Risk has been updated with value ${riskData.value}.`,
+        });
+      } else {
+        // Adding new risk
+        const newElement: RoutineElement = {
+          id: `risk-${Date.now()}`,
+          type: 'R',
+          symbolImages: [riskData.symbols["R2"] || ''],
+          value: riskData.value,
+          originalData: riskData,
+          riskData: riskData,
+          isExpanded: false,
+        };
+        setRoutineElements((prev) => [...prev, newElement]);
+        
+        toast({
+          title: "Risk Added",
+          description: `Risk R₊ with value ${riskData.value} has been added to your routine.`,
+        });
+      }
       
       // Clear the state to prevent re-adding on refresh
       navigate(location.pathname, { replace: true, state: {} });
-      
-      toast({
-        title: "Risk Added",
-        description: `Standard Risk R₂ with value ${riskData.value} has been added to your routine.`,
-      });
     }
   }, [location.state]);
 
@@ -913,6 +954,39 @@ const RoutineCalculator = () => {
     });
   };
 
+  // Handle modifying a risk element
+  const handleModifyRisk = (elementId: string) => {
+    const element = routineElements.find(el => el.id === elementId);
+    if (!element || element.type !== 'R' || !element.riskData) return;
+    
+    const riskData = element.riskData;
+    
+    // Navigate to the appropriate page based on whether it's a custom or standard risk
+    if (riskData.isCustomRisk) {
+      // Navigate to Create Custom Risk page with existing data
+      navigate('/create-custom-risk', {
+        state: {
+          apparatus: riskData.apparatus || selectedApparatus,
+          modifyingElementId: elementId,
+          existingRiskData: riskData,
+        },
+      });
+    } else {
+      // Navigate to Standard Risk Detail page with existing data
+      navigate('/standard-risk-detail', {
+        state: {
+          apparatus: riskData.apparatus || selectedApparatus,
+          selectedRisk: {
+            risk_code: riskData.riskCode || 'r2',
+            name: riskData.riskName || 'Standard Risk',
+          },
+          modifyingElementId: elementId,
+          existingRiskData: riskData,
+        },
+      });
+    }
+  };
+
   // Handle technical elements selection for apparatus handling
   const handleSelectTechnicalElements = (elements: Array<{
     id: string;
@@ -1225,6 +1299,7 @@ const RoutineCalculator = () => {
                               index={index}
                               itemNumber={itemNumber}
                               onRemove={() => handleRemoveRoutineElement(index)}
+                              onModify={element.type === 'R' ? () => handleModifyRisk(element.id) : undefined}
                               onToggleExpand={(element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R') ? () => handleToggleExpand(index) : undefined}
                               isMainRow={true}
                             />
