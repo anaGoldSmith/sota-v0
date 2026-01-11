@@ -396,6 +396,9 @@ const StandardRiskDetail = () => {
 
     // Include series symbol for non-R2 risks (displayed as 'S' text)
     const hasSeries = !isR2;
+    
+    // Include DB indicator for non-R2 risks (to remind user that risk contains jumps/DB elements)
+    const hasDB = !isR2;
 
     const riskData = {
       type: 'R' as const,
@@ -409,6 +412,7 @@ const StandardRiskDetail = () => {
       catchSymbols: catchSymbols,
       axisLevelSymbol: axisLevelSymbol || undefined,
       hasSeries: hasSeries,
+      hasDB: hasDB,
       isR2: isR2,
       components: [
         ...throwComponents.map(c => ({
