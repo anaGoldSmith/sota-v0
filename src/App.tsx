@@ -16,6 +16,7 @@ import GeneralConfigurations from "./pages/GeneralConfigurations";
 import SymbolManagement from "./pages/SymbolManagement";
 import DynamicElementsRisk from "./pages/DynamicElementsRisk";
 import StandardRisks from "./pages/StandardRisks";
+import StandardRiskDetail from "./pages/StandardRiskDetail";
 import CreateCustomRisk from "./pages/CreateCustomRisk";
 import DynamicElementsConfiguration from "./pages/DynamicElementsConfiguration";
 import NotFound from "./pages/NotFound";
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/routine-calculator" element={<RoutineCalculator />} />
           <Route path="/dynamic-elements-risk" element={<DynamicElementsRisk />} />
           <Route path="/standard-risks" element={<StandardRisks />} />
+          <Route path="/standard-risk-detail" element={<StandardRiskDetail />} />
           <Route path="/create-custom-risk" element={<CreateCustomRisk />} />
           <Route path="/admin/dynamic-elements-configuration" element={<DynamicElementsConfiguration />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
