@@ -350,13 +350,38 @@ const StandardRiskDetail = () => {
   const handleSave = () => {
     if (!selectedRisk) return;
 
+    // Collect throw symbols (base throw symbols + extra throw criteria + general throw criteria)
+    const throwSymbols: string[] = [
+      ...throwComponents.filter(c => c.symbol_image).map(c => c.symbol_image!),
+      ...extraThrowCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
+      ...generalThrowCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
+    ];
+
+    // Collect catch symbols (base catch symbols + extra catch criteria + general catch criteria)
+    const catchSymbols: string[] = [
+      ...catchComponents.filter(c => c.symbol_image).map(c => c.symbol_image!),
+      ...extraCatchCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
+      ...generalCatchCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
+    ];
+
+    // Check for axis/level change in rotation components
+    const hasAxisChange = rotationComponents.some(c => c.risk_component_code.includes('axis') || c.risk_component_code.includes('level'));
+    const axisLevelSymbol = hasAxisChange ? rotationComponents.find(c => c.risk_component_code.includes('axis') || c.risk_component_code.includes('level'))?.symbol_image : undefined;
+
+    // Calculate rLevel (2 for R2, 3 for others)
+    const rLevel = isR2 ? 2 : 3;
+
     const riskData = {
       type: 'R' as const,
-      label: `R₍${getRLevel()}₎`,
+      label: `R₊`,
+      rLevel: rLevel,
       value: totalValue,
       symbols: {
         main: selectedRisk.symbol_image,
       },
+      throwSymbols: throwSymbols,
+      catchSymbols: catchSymbols,
+      axisLevelSymbol: axisLevelSymbol || undefined,
       components: [
         ...throwComponents.map(c => ({
           name: c.description || 'Throw',
@@ -378,6 +403,12 @@ const StandardRiskDetail = () => {
         })),
         ...rotationComponents.map(c => ({
           name: c.description || 'Under the Flight',
+          symbol: c.symbol_image,
+          value: c.value ?? 0,
+          section: 'rotation'
+        })),
+        ...additionalRotationRows.map(c => ({
+          name: c.description || 'Rotation Bonus',
           symbol: c.symbol_image,
           value: c.value ?? 0,
           section: 'rotation'
