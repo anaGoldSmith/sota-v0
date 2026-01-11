@@ -83,6 +83,8 @@ interface RiskData {
   throwSymbols?: string[];
   catchSymbols?: string[];
   axisLevelSymbol?: string;
+  hasSeries?: boolean;
+  isR2?: boolean;
   components: RiskComponent[];
 }
 
@@ -183,10 +185,11 @@ function SortableRow({
     const throwSymbols = element.riskData.throwSymbols || [];
     const catchSymbols = element.riskData.catchSymbols || [];
     const axisLevelSymbol = element.riskData.axisLevelSymbol;
+    const hasSeries = element.riskData.hasSeries || false;
     
     return (
       <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
-        {/* Throw symbols */}
+        {/* Throw symbols (extra criteria) */}
         {throwSymbols.map((url, idx) => (
           <img
             key={`throw-${idx}`}
@@ -201,7 +204,12 @@ function SortableRow({
           R<sub className="text-sm">{rLevel}</sub>
         </span>
         
-        {/* Axis/Level Change symbol (displayed after R subscript) */}
+        {/* S symbol for Series (non-R2 risks only) */}
+        {hasSeries && (
+          <span className="text-lg font-bold text-foreground">S</span>
+        )}
+        
+        {/* Axis/Level Change symbol (displayed after R subscript and S) */}
         {axisLevelSymbol && (
           <img
             src={axisLevelSymbol}
@@ -210,7 +218,7 @@ function SortableRow({
           />
         )}
         
-        {/* Catch symbols */}
+        {/* Catch symbols (extra criteria) */}
         {catchSymbols.map((url, idx) => (
           <img
             key={`catch-${idx}`}

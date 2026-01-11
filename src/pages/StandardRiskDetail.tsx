@@ -360,19 +360,32 @@ const StandardRiskDetail = () => {
   const handleSave = () => {
     if (!selectedRisk) return;
 
-    // Collect throw symbols (base throw symbols + extra throw criteria + general throw criteria)
-    const throwSymbols: string[] = [
-      ...throwComponents.filter(c => c.symbol_image).map(c => c.symbol_image!),
-      ...extraThrowCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
-      ...generalThrowCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
-    ];
+    // For R2: Only extra criteria symbols (no base throw/catch symbols)
+    // For others: All throw criteria + specific throw symbols (but not base Thr1)
+    let throwSymbols: string[] = [];
+    let catchSymbols: string[] = [];
 
-    // Collect catch symbols (base catch symbols + extra catch criteria + general catch criteria)
-    const catchSymbols: string[] = [
-      ...catchComponents.filter(c => c.symbol_image).map(c => c.symbol_image!),
-      ...extraCatchCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
-      ...generalCatchCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
-    ];
+    if (isR2) {
+      // R2: Only extra throw/catch criteria symbols (user-added criteria)
+      throwSymbols = [
+        ...extraThrowCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
+        ...generalThrowCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
+      ];
+      catchSymbols = [
+        ...extraCatchCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
+        ...generalCatchCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
+      ];
+    } else {
+      // Non-R2: Include specific throw/catch criteria symbols (not base symbols from prerecorded components)
+      throwSymbols = [
+        ...extraThrowCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
+        ...generalThrowCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
+      ];
+      catchSymbols = [
+        ...extraCatchCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
+        ...generalCatchCriteria.filter(c => c.symbol_image).map(c => c.symbol_image!),
+      ];
+    }
 
     // Check for axis/level change in rotation components
     const hasAxisChange = rotationComponents.some(c => c.risk_component_code.includes('axis') || c.risk_component_code.includes('level'));
@@ -380,6 +393,9 @@ const StandardRiskDetail = () => {
 
     // Calculate rLevel (2 for R2, 3 for others)
     const rLevel = isR2 ? 2 : 3;
+
+    // Include series symbol for non-R2 risks (displayed as 'S' text)
+    const hasSeries = !isR2;
 
     const riskData = {
       type: 'R' as const,
@@ -392,6 +408,8 @@ const StandardRiskDetail = () => {
       throwSymbols: throwSymbols,
       catchSymbols: catchSymbols,
       axisLevelSymbol: axisLevelSymbol || undefined,
+      hasSeries: hasSeries,
+      isR2: isR2,
       components: [
         ...throwComponents.map(c => ({
           name: c.description || 'Throw',
