@@ -207,6 +207,105 @@ const StandardRiskDetail = () => {
     loadGeneralCriteria();
   }, [selectedRisk, apparatus, navigate]);
 
+  // Pre-populate extra criteria when modifying an existing risk
+  useEffect(() => {
+    if (!existingRiskData || !existingRiskData.components || dynamicThrows.length === 0 || dynamicCatches.length === 0 || generalCriteria.length === 0) {
+      return;
+    }
+
+    const components = existingRiskData.components as Array<{ name: string; symbol: string | null; value: number; section?: string }>;
+    
+    // Get names from database for matching
+    const throwNames = dynamicThrows.map(t => t.name);
+    const catchNames = dynamicCatches.map(c => c.name);
+    const generalCriteriaNames = generalCriteria.map(gc => gc.name);
+
+    const newExtraThrowCriteria: ExtraCriteria[] = [];
+    const newExtraCatchCriteria: ExtraCriteria[] = [];
+    const newGeneralThrowCriteria: ExtraCriteria[] = [];
+    const newGeneralCatchCriteria: ExtraCriteria[] = [];
+
+    components.forEach((comp) => {
+      // Skip base components (those from prerecorded_risk_components) - they will be loaded from DB
+      // Only process user-added criteria
+      
+      // Check if it's a specific throw (from dynamic_throws)
+      if (comp.section === 'throw' && throwNames.includes(comp.name)) {
+        const throwItem = dynamicThrows.find(t => t.name === comp.name);
+        if (throwItem) {
+          newExtraThrowCriteria.push({
+            id: `extra_throw_${throwItem.code}_${Date.now()}`,
+            code: throwItem.code,
+            name: throwItem.name,
+            symbol_image: throwItem.symbol_image,
+            value: comp.value,
+          });
+        }
+        return;
+      }
+
+      // Check if it's a general criteria in throw section
+      if (comp.section === 'throw' && generalCriteriaNames.includes(comp.name)) {
+        const criteria = generalCriteria.find(gc => gc.name === comp.name);
+        if (criteria) {
+          newGeneralThrowCriteria.push({
+            id: `general_throw_${criteria.code}_${Date.now()}`,
+            code: criteria.code,
+            name: criteria.name,
+            symbol_image: criteria.symbol_image,
+            value: comp.value,
+          });
+        }
+        return;
+      }
+
+      // Check if it's a specific catch (from dynamic_catches)
+      if (comp.section === 'catch' && catchNames.includes(comp.name)) {
+        const catchItem = dynamicCatches.find(c => c.name === comp.name);
+        if (catchItem) {
+          newExtraCatchCriteria.push({
+            id: `extra_catch_${catchItem.code}_${Date.now()}`,
+            code: catchItem.code,
+            name: catchItem.name,
+            symbol_image: catchItem.symbol_image,
+            value: comp.value,
+            notes: catchItem.notes,
+          });
+        }
+        return;
+      }
+
+      // Check if it's a general criteria in catch section
+      if (comp.section === 'catch' && generalCriteriaNames.includes(comp.name)) {
+        const criteria = generalCriteria.find(gc => gc.name === comp.name);
+        if (criteria) {
+          newGeneralCatchCriteria.push({
+            id: `general_catch_${criteria.code}_${Date.now()}`,
+            code: criteria.code,
+            name: criteria.name,
+            symbol_image: criteria.symbol_image,
+            value: comp.value,
+          });
+        }
+        return;
+      }
+    });
+
+    // Set all the parsed criteria
+    if (newExtraThrowCriteria.length > 0) {
+      setExtraThrowCriteria(newExtraThrowCriteria);
+    }
+    if (newExtraCatchCriteria.length > 0) {
+      setExtraCatchCriteria(newExtraCatchCriteria);
+    }
+    if (newGeneralThrowCriteria.length > 0) {
+      setGeneralThrowCriteria(newGeneralThrowCriteria);
+    }
+    if (newGeneralCatchCriteria.length > 0) {
+      setGeneralCatchCriteria(newGeneralCatchCriteria);
+    }
+  }, [existingRiskData, dynamicThrows, dynamicCatches, generalCriteria]);
+
   // Filter throws and catches based on apparatus
   const filteredThrows = dynamicThrows.filter(t => apparatusCode ? isApplicableForApparatus(t, apparatusCode) : true);
   const filteredCatches = dynamicCatches.filter(c => apparatusCode ? isApplicableForApparatus(c, apparatusCode) : true);
