@@ -228,10 +228,15 @@ const CreateCustomRisk = () => {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [savedRiskData, setSavedRiskData] = useState<any>(null);
 
-  // Get apparatus from navigation state
-  const apparatus = (location.state as {
+  // Get apparatus and modification state from navigation state
+  const locationState = location.state as {
     apparatus?: ApparatusType;
-  })?.apparatus;
+    modifyingElementId?: string;
+    existingRiskData?: any;
+  };
+  const apparatus = locationState?.apparatus;
+  const modifyingElementId = locationState?.modifyingElementId;
+  const existingRiskData = locationState?.existingRiskData;
   const apparatusCode = getApparatusCode(apparatus || null);
 
   // Dropdown states
@@ -607,6 +612,8 @@ const CreateCustomRisk = () => {
       throwSymbols: throwSymbols,
       catchSymbols: catchSymbols,
       axisLevelSymbol: axisLevelSymbol,
+      isCustomRisk: true,
+      apparatus: apparatus,
       components: [...(effectiveThrow ? [{
         name: effectiveThrow.name,
         symbol: effectiveThrow.symbol_image || '',
@@ -647,7 +654,8 @@ const CreateCustomRisk = () => {
   const handleAddMoreStandardRisks = () => {
     navigate("/routine-calculator", {
       state: {
-        newRisk: savedRiskData
+        newRisk: savedRiskData,
+        modifyingElementId: modifyingElementId
       }
     });
     setTimeout(() => navigate("/standard-risks", {
@@ -659,7 +667,8 @@ const CreateCustomRisk = () => {
   const handleCreateAnotherRisk = () => {
     navigate("/routine-calculator", {
       state: {
-        newRisk: savedRiskData
+        newRisk: savedRiskData,
+        modifyingElementId: modifyingElementId
       }
     });
     setTimeout(() => navigate("/create-custom-risk", {
@@ -671,7 +680,8 @@ const CreateCustomRisk = () => {
   const handleGoToCalculator = () => {
     navigate("/routine-calculator", {
       state: {
-        newRisk: savedRiskData
+        newRisk: savedRiskData,
+        modifyingElementId: modifyingElementId
       }
     });
   };

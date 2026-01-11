@@ -75,6 +75,12 @@ interface PrerecordedRisk {
 interface LocationState {
   apparatus?: ApparatusType;
   selectedRisk?: PrerecordedRisk;
+  modifyingElementId?: string;
+  existingRiskData?: {
+    components: Array<{ name: string; symbol: string; value: number; section?: string }>;
+    throwSymbols?: string[];
+    catchSymbols?: string[];
+  };
 }
 
 interface ExtraCriteria {
@@ -121,6 +127,8 @@ const StandardRiskDetail = () => {
   const state = location.state as LocationState;
   const apparatus = state?.apparatus;
   const selectedRisk = state?.selectedRisk;
+  const modifyingElementId = state?.modifyingElementId;
+  const existingRiskData = state?.existingRiskData;
   const apparatusCode = getApparatusCode(apparatus || null);
 
   // Close dropdowns when clicking outside
@@ -414,6 +422,8 @@ const StandardRiskDetail = () => {
       hasSeries: hasSeries,
       hasDB: hasDB,
       isR2: isR2,
+      isCustomRisk: false,
+      apparatus: apparatus,
       components: [
         ...throwComponents.map(c => ({
           name: c.description || 'Throw',
@@ -472,17 +482,32 @@ const StandardRiskDetail = () => {
   };
 
   const handleAddMoreStandardRisks = () => {
-    navigate("/routine-calculator", { state: { newRisk: savedRiskData } });
+    navigate("/routine-calculator", { 
+      state: { 
+        newRisk: savedRiskData, 
+        modifyingElementId: modifyingElementId 
+      } 
+    });
     setTimeout(() => navigate("/dynamic-elements-risk", { state: { apparatus } }), 100);
   };
 
   const handleCreateOwnRisk = () => {
-    navigate("/routine-calculator", { state: { newRisk: savedRiskData } });
+    navigate("/routine-calculator", { 
+      state: { 
+        newRisk: savedRiskData, 
+        modifyingElementId: modifyingElementId 
+      } 
+    });
     setTimeout(() => navigate("/create-custom-risk", { state: { apparatus } }), 100);
   };
 
   const handleGoToCalculator = () => {
-    navigate("/routine-calculator", { state: { newRisk: savedRiskData } });
+    navigate("/routine-calculator", { 
+      state: { 
+        newRisk: savedRiskData, 
+        modifyingElementId: modifyingElementId 
+      } 
+    });
   };
 
   const handleCancel = () => {
