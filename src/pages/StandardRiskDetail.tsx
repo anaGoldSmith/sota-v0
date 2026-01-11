@@ -755,8 +755,8 @@ const StandardRiskDetail = () => {
                     </div>
                   ))}
 
-                  {/* Add Specific Throw Button */}
-                  {filteredThrows.length > 0 && (
+                  {/* Add Specific Throw Button - hidden for R2 */}
+                  {filteredThrows.length > 0 && !isR2 && (
                     <div ref={throwDropdownRef} className="relative border-t border-border">
                       <Button
                         variant="ghost"
