@@ -39,7 +39,8 @@ const DYNAMIC_ELEMENTS_CATEGORIES = [
   { name: 'Catches', bucket: 'dynamic-element-symbols', table: 'dynamic_catches' as string | null, folder: 'dynamic_catches' },
   { name: 'Throws', bucket: 'dynamic-element-symbols', table: 'dynamic_throws' as string | null, folder: 'dynamic_throws' },
   { name: 'General Criteria', bucket: 'dynamic-element-symbols', table: 'dynamic_general_criteria' as string | null, folder: 'dynamic_general_criteria' },
-  { name: 'Prerecorded Risks Symbols', bucket: 'dynamic-element-symbols', table: 'prerecorded_risk_components' as string | null, folder: 'prerecorded_risks' },
+  { name: 'Prerecorded Risk Components', bucket: 'dynamic-element-symbols', table: 'prerecorded_risk_components' as string | null, folder: 'prerecorded_risk_components' },
+  { name: 'Prerecorded Risks', bucket: 'dynamic-element-symbols', table: 'prerecorded_risks' as string | null, folder: 'prerecorded_risks' },
   { name: 'Other Risks Symbols', bucket: 'dynamic-element-symbols', table: null as string | null, folder: 'other_risks' },
 ];
 
@@ -115,8 +116,12 @@ export default function SymbolManagement() {
       // Get all records from database table (only if table exists)
       let dbRecords: any[] = [];
       if (table) {
-        // Use risk_component_code for prerecorded_risk_components table, code for others
-        const codeColumn = table === 'prerecorded_risk_components' ? 'risk_component_code' : 'code';
+        // Use risk_component_code for prerecorded_risk_components, risk_code for prerecorded_risks, code for others
+        const codeColumn = table === 'prerecorded_risk_components' 
+          ? 'risk_component_code' 
+          : table === 'prerecorded_risks' 
+            ? 'risk_code' 
+            : 'code';
         const { data, error: dbError } = await supabase
           .from(table as any)
           .select(`${codeColumn}, symbol_image`);
@@ -180,8 +185,12 @@ export default function SymbolManagement() {
 
         // If category has a table, check if a record exists and update it
         if (category.table) {
-          // Use risk_component_code for prerecorded_risk_components table, code for others
-          const codeColumn = category.table === 'prerecorded_risk_components' ? 'risk_component_code' : 'code';
+          // Use risk_component_code for prerecorded_risk_components, risk_code for prerecorded_risks, code for others
+          const codeColumn = category.table === 'prerecorded_risk_components' 
+            ? 'risk_component_code' 
+            : category.table === 'prerecorded_risks' 
+              ? 'risk_code' 
+              : 'code';
           
           // Check if a record with this code exists (use limit(1) to handle duplicates)
           const { data: existingRecords, error: queryError } = await supabase
@@ -303,7 +312,9 @@ export default function SymbolManagement() {
         if (category) {
           const codeColumn = category.table === 'prerecorded_risk_components' 
             ? 'risk_component_code' 
-            : 'code';
+            : category.table === 'prerecorded_risks'
+              ? 'risk_code'
+              : 'code';
           await supabase
             .from(category.table as any)
             .update({ symbol_image: null })
