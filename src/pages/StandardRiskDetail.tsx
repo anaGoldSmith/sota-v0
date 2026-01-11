@@ -773,8 +773,8 @@ const StandardRiskDetail = () => {
                     </div>
                   ))}
 
-                  {/* Add Specific Throw Button - hidden for R2 */}
-                  {filteredThrows.length > 0 && !isR2 && (
+                  {/* Add Specific Throw Button - hidden for R2 and when one is already selected */}
+                  {filteredThrows.length > 0 && !isR2 && extraThrowCriteria.length === 0 && (
                     <div ref={throwDropdownRef} className="relative border-t border-border">
                       <Button
                         variant="ghost"
@@ -1011,8 +1011,8 @@ const StandardRiskDetail = () => {
                     </div>
                   ))}
 
-                  {/* Add Specific Catch Button - hidden for R2 */}
-                  {filteredCatches.length > 0 && !isR2 && (
+                  {/* Add Specific Catch Button - hidden for R2 and when one is already selected */}
+                  {filteredCatches.length > 0 && !isR2 && extraCatchCriteria.length === 0 && (
                     <div ref={catchDropdownRef} className="relative border-t border-border">
                       <Button
                         variant="ghost"
