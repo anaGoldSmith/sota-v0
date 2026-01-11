@@ -115,12 +115,18 @@ export default function SymbolManagement() {
       // Get all records from database table (only if table exists)
       let dbRecords: any[] = [];
       if (table) {
+        // Use risk_component_code for prerecorded_risk_components table, code for others
+        const codeColumn = table === 'prerecorded_risk_components' ? 'risk_component_code' : 'code';
         const { data, error: dbError } = await supabase
           .from(table as any)
-          .select('code, symbol_image');
+          .select(`${codeColumn}, symbol_image`);
 
         if (dbError) throw dbError;
-        dbRecords = data || [];
+        // Normalize to use 'code' key for consistency
+        dbRecords = (data || []).map((record: any) => ({
+          code: record[codeColumn],
+          symbol_image: record.symbol_image
+        }));
       }
 
       // Map files to their status
@@ -146,7 +152,7 @@ export default function SymbolManagement() {
               id: file.id || file.name,
               publicUrl
             },
-            linkedCode: (linkedRecord as any)?.code || null,
+            linkedCode: linkedRecord?.code || null,
             // If no table, treat as synced (standalone files)
             status: table ? (linkedRecord ? 'synced' : 'orphaned') : 'synced'
           };
@@ -174,11 +180,14 @@ export default function SymbolManagement() {
 
         // If category has a table, check if a record exists and update it
         if (category.table) {
+          // Use risk_component_code for prerecorded_risk_components table, code for others
+          const codeColumn = category.table === 'prerecorded_risk_components' ? 'risk_component_code' : 'code';
+          
           // Check if a record with this code exists
           const { data: existingRecord, error: queryError } = await supabase
             .from(category.table as any)
-            .select('id, code')
-            .eq('code', code)
+            .select(`id, ${codeColumn}`)
+            .eq(codeColumn, code)
             .maybeSingle();
 
           if (queryError) {
@@ -214,7 +223,7 @@ export default function SymbolManagement() {
           const { error: updateError } = await supabase
             .from(category.table as any)
             .update({ symbol_image: publicUrl })
-            .eq('code', code);
+            .eq(codeColumn, code);
 
           if (updateError) {
             console.error(`Error updating ${code} with symbol:`, updateError);
