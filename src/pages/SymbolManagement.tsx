@@ -299,10 +299,13 @@ export default function SymbolManagement() {
         const category = dynamicCategory || regularCategory;
         
         if (category) {
+          const codeColumn = category.table === 'prerecorded_risk_components' 
+            ? 'risk_component_code' 
+            : 'code';
           await supabase
             .from(category.table as any)
             .update({ symbol_image: null })
-            .eq('code', deleteTarget.code);
+            .eq(codeColumn, deleteTarget.code);
         }
       }
 
