@@ -378,6 +378,113 @@ const CreateCustomRisk = () => {
     loadDynamicCatches();
   }, []);
 
+  // Pre-populate form when modifying an existing risk
+  useEffect(() => {
+    if (!existingRiskData || !existingRiskData.components || dynamicThrows.length === 0 || dynamicCatches.length === 0 || generalCriteria.length === 0) {
+      return;
+    }
+
+    const components = existingRiskData.components as Array<{ name: string; symbol: string; value: number; section?: string }>;
+    
+    // Parse components to find throw, catch, rotations, and criteria
+    const throwNames = dynamicThrows.map(t => t.name);
+    const catchNames = dynamicCatches.map(c => c.name);
+    const criteriaNames = generalCriteria.map(gc => gc.name);
+
+    const newThrowCriteria: CriteriaItem[] = [];
+    const newCatchCriteria: CriteriaItem[] = [];
+    const newRotationEntries: RotationEntry[] = [];
+    let foundThrow = false;
+    let foundCatch = false;
+
+    components.forEach((comp) => {
+      // Check if it's a throw
+      if (!foundThrow && throwNames.includes(comp.name)) {
+        const throwItem = dynamicThrows.find(t => t.name === comp.name);
+        if (throwItem) {
+          setSelectedThrow(throwItem);
+          foundThrow = true;
+        }
+        return;
+      }
+
+      // Check if it's a catch
+      if (catchNames.includes(comp.name)) {
+        const catchItem = dynamicCatches.find(c => c.name === comp.name);
+        if (catchItem) {
+          setSelectedCatch(catchItem);
+          foundCatch = true;
+        }
+        return;
+      }
+
+      // Check if it's a general criteria (throw or catch section)
+      if (criteriaNames.includes(comp.name)) {
+        const criteria = generalCriteria.find(gc => gc.name === comp.name);
+        if (criteria) {
+          // Determine if it's throw or catch criteria based on position
+          // Criteria before catch are throw criteria, after are catch criteria
+          if (!foundCatch) {
+            newThrowCriteria.push({
+              id: `throw_${criteria.code}`,
+              name: criteria.name,
+              symbol: criteria.symbol_image || undefined,
+              value: comp.value,
+              code: criteria.code,
+            });
+          } else {
+            newCatchCriteria.push({
+              id: `catch_${criteria.code}`,
+              name: criteria.name,
+              symbol: criteria.symbol_image || undefined,
+              value: comp.value,
+              code: criteria.code,
+            });
+          }
+        }
+        return;
+      }
+
+      // Check if it's a rotation entry
+      if (comp.name === 'One Rotation') {
+        newRotationEntries.push({
+          id: crypto.randomUUID(),
+          type: 'one',
+        });
+      } else if (comp.name === '2 Base Rotations') {
+        newRotationEntries.push({
+          id: crypto.randomUUID(),
+          type: 'two',
+        });
+      } else if (comp.name.startsWith('Series')) {
+        // Extract series count from name like "Series (3 rotations)"
+        const match = comp.name.match(/Series \((\d+) rotations\)/);
+        const count = match ? parseInt(match[1]) : 3;
+        newRotationEntries.push({
+          id: crypto.randomUUID(),
+          type: 'series',
+          seriesCount: count,
+        });
+      } else if (comp.name === 'Axis/Level Change') {
+        newRotationEntries.push({
+          id: crypto.randomUUID(),
+          type: 'axis',
+        });
+      }
+    });
+
+    // Set all the parsed values
+    if (newThrowCriteria.length > 0) {
+      setThrowCriteria(newThrowCriteria);
+    }
+    if (newCatchCriteria.length > 0) {
+      setCatchCriteria(newCatchCriteria);
+    }
+    if (newRotationEntries.length > 0) {
+      setRotationEntries(newRotationEntries);
+    }
+  }, [existingRiskData, dynamicThrows, dynamicCatches, generalCriteria]);
+
   // Update selected criteria based on current throw/catch criteria
   useEffect(() => {
     const throwCodes = throwCriteria.filter(t => t.code).map(t => t.code!);
