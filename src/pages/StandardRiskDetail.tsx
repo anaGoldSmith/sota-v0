@@ -566,6 +566,10 @@ const StandardRiskDetail = () => {
               <span className="flex items-baseline">
                 R<sub className="text-xl">{getRLevel()}</sub>
               </span>
+              {/* S symbol for Series - shown for all risks except R2 */}
+              {!isR2 && (
+                <span className="text-2xl font-bold text-foreground">S</span>
+              )}
               {selectedRisk.symbol_image && (
                 <img 
                   src={selectedRisk.symbol_image} 
