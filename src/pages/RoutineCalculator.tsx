@@ -991,7 +991,7 @@ const RoutineCalculator = () => {
   // Handle modifying a risk element
   const handleModifyRisk = (elementId: string) => {
     const element = routineElements.find(el => el.id === elementId);
-    if (!element || element.type !== 'R' || !element.riskData) return;
+    if (!element || (element.type !== 'R' && element.type !== 'R/DB') || !element.riskData) return;
     
     const riskData = element.riskData;
     
