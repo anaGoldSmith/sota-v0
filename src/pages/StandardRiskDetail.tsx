@@ -507,6 +507,20 @@ const StandardRiskDetail = () => {
     // Include DB indicator for non-R2 risks (to remind user that risk contains jumps/DB elements)
     const hasDB = !isR2;
 
+    // Calculate DB count and value for non-R2 risks
+    // Standard risks (except R2) have 3 DBs (jumps): during throw, under flight, and during catch
+    const dbCount = isR2 ? 0 : 3;
+    
+    // Calculate dbValue as sum of thr_, utf_, catch_ component values (base jump values)
+    const dbValue = isR2 ? 0 : [...throwComponents, ...rotationComponents, ...catchComponents].reduce((sum, c) => {
+      const code = c.risk_component_code.toLowerCase();
+      // Include components that represent the jumps (thr_, utf_, catch_ prefixes)
+      if (code.startsWith('thr_') || code.startsWith('utf_') || code.startsWith('catch_')) {
+        return sum + (c.value ?? 0);
+      }
+      return sum;
+    }, 0);
+
     const riskData = {
       type: 'R' as const,
       label: `R₊`,
@@ -523,6 +537,8 @@ const StandardRiskDetail = () => {
       isR2: isR2,
       isCustomRisk: false,
       apparatus: apparatus,
+      dbCount: dbCount,
+      dbValue: dbValue,
       components: [
         ...throwComponents.map(c => ({
           name: c.description || 'Throw',
