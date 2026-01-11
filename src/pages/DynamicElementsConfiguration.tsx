@@ -13,11 +13,13 @@ const DynamicElementsConfiguration = () => {
   const [uploadingCatches, setUploadingCatches] = useState(false);
   const [uploadingThrows, setUploadingThrows] = useState(false);
   const [uploadingGeneralCriteria, setUploadingGeneralCriteria] = useState(false);
+  const [uploadingPrerecordedRiskComponents, setUploadingPrerecordedRiskComponents] = useState(false);
   const [uploadingPrerecordedRisks, setUploadingPrerecordedRisks] = useState(false);
   
   const catchesInputRef = useRef<HTMLInputElement>(null);
   const throwsInputRef = useRef<HTMLInputElement>(null);
   const generalCriteriaInputRef = useRef<HTMLInputElement>(null);
+  const prerecordedRiskComponentsInputRef = useRef<HTMLInputElement>(null);
   const prerecordedRisksInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -225,7 +227,7 @@ const DynamicElementsConfiguration = () => {
             </CardContent>
           </Card>
 
-          {/* Prerecorded Risks CSV Upload */}
+          {/* Prerecorded Risk Components CSV Upload */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -240,12 +242,48 @@ const DynamicElementsConfiguration = () => {
               <input
                 type="file"
                 accept=".csv"
+                ref={prerecordedRiskComponentsInputRef}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleCsvUpload(file, 'import-prerecorded-risks-csv', setUploadingPrerecordedRiskComponents, 'prerecorded risk components');
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <Button
+                onClick={() => prerecordedRiskComponentsInputRef.current?.click()}
+                disabled={uploadingPrerecordedRiskComponents}
+                className="w-full"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {uploadingPrerecordedRiskComponents ? "Uploading..." : "Upload Risk Components CSV"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Prerecorded Risks CSV Upload */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <FileText className="h-8 w-8 text-primary" />
+                <CardTitle>Prerecorded Risks</CardTitle>
+              </div>
+              <CardDescription>
+                Upload CSV with columns: risk_code, name, rotations_value, series
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <input
+                type="file"
+                accept=".csv"
                 ref={prerecordedRisksInputRef}
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    handleCsvUpload(file, 'import-prerecorded-risks-csv', setUploadingPrerecordedRisks, 'prerecorded risk components');
+                    handleCsvUpload(file, 'import-prerecorded-risks-main-csv', setUploadingPrerecordedRisks, 'prerecorded risks');
                     e.target.value = '';
                   }
                 }}
