@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, Plus, X, ChevronDown, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ApparatusType } from "@/types/apparatus";
+import { NotesWithSymbols } from "@/components/routine/NotesWithSymbols";
 
 interface RiskComponent {
   id: string;
@@ -16,6 +18,49 @@ interface RiskComponent {
   symbol_text?: string;
   value: number | null;
 }
+
+interface DynamicThrow {
+  id: string;
+  code: string;
+  name: string;
+  apparatus: string;
+  symbol_image: string | null;
+  value: number | null;
+}
+
+interface DynamicCatch {
+  id: string;
+  code: string;
+  name: string;
+  apparatus: string;
+  extra_criteria: string | null;
+  notes: string | null;
+  symbol_image: string | null;
+  value: number | null;
+}
+
+// Map apparatus type to code
+const getApparatusCode = (apparatus: ApparatusType | null): string => {
+  switch (apparatus) {
+    case 'hoop':
+      return 'H';
+    case 'ball':
+      return 'B';
+    case 'clubs':
+      return 'CL';
+    case 'ribbon':
+      return 'R';
+    default:
+      return '';
+  }
+};
+
+// Check if item is applicable for current apparatus
+const isApplicableForApparatus = (item: { apparatus: string }, apparatusCode: string): boolean => {
+  if (item.apparatus === 'all') return true;
+  const codes = item.apparatus.split('&').map(c => c.trim());
+  return codes.includes(apparatusCode);
+};
 
 interface PrerecordedRisk {
   id: string;
@@ -30,10 +75,29 @@ interface LocationState {
   selectedRisk?: PrerecordedRisk;
 }
 
+interface ExtraCriteria {
+  id: string;
+  code: string;
+  name: string;
+  symbol_image: string | null;
+  value: number;
+  notes?: string | null;
+}
+
 const StandardRiskDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [components, setComponents] = useState<RiskComponent[]>([]);
+  
+  // Extra criteria state
+  const [dynamicThrows, setDynamicThrows] = useState<DynamicThrow[]>([]);
+  const [dynamicCatches, setDynamicCatches] = useState<DynamicCatch[]>([]);
+  const [extraThrowCriteria, setExtraThrowCriteria] = useState<ExtraCriteria[]>([]);
+  const [extraCatchCriteria, setExtraCatchCriteria] = useState<ExtraCriteria[]>([]);
+  const [showThrowDropdown, setShowThrowDropdown] = useState(false);
+  const [showCatchDropdown, setShowCatchDropdown] = useState(false);
+  const throwDropdownRef = useRef<HTMLDivElement>(null);
+  const catchDropdownRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [savedRiskData, setSavedRiskData] = useState<any>(null);
@@ -41,6 +105,21 @@ const StandardRiskDetail = () => {
   const state = location.state as LocationState;
   const apparatus = state?.apparatus;
   const selectedRisk = state?.selectedRisk;
+  const apparatusCode = getApparatusCode(apparatus || null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (throwDropdownRef.current && !throwDropdownRef.current.contains(event.target as Node)) {
+        setShowThrowDropdown(false);
+      }
+      if (catchDropdownRef.current && !catchDropdownRef.current.contains(event.target as Node)) {
+        setShowCatchDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (!selectedRisk) {
@@ -62,18 +141,94 @@ const StandardRiskDetail = () => {
       setLoading(false);
     };
 
+    const loadDynamicThrows = async () => {
+      const { data, error } = await supabase
+        .from('dynamic_throws')
+        .select('*')
+        .eq('code', 'Thr3'); // Only Thr3 for throws
+      if (data && !error) {
+        setDynamicThrows(data);
+      }
+    };
+
+    const loadDynamicCatches = async () => {
+      const { data, error } = await supabase
+        .from('dynamic_catches')
+        .select('*')
+        .not('code', 'in', '(Catch1,Catch7,Catch8)') // Exclude Catch1, Catch7, Catch8
+        .order('code');
+      if (data && !error) {
+        setDynamicCatches(data);
+      }
+    };
+
     fetchComponents();
+    loadDynamicThrows();
+    loadDynamicCatches();
   }, [selectedRisk, apparatus, navigate]);
+
+  // Filter throws and catches based on apparatus
+  const filteredThrows = dynamicThrows.filter(t => apparatusCode ? isApplicableForApparatus(t, apparatusCode) : true);
+  const filteredCatches = dynamicCatches.filter(c => apparatusCode ? isApplicableForApparatus(c, apparatusCode) : true);
+
+  // Handler to add extra throw criteria
+  const handleAddThrowCriteria = (throwItem: DynamicThrow) => {
+    // Check if already added
+    if (extraThrowCriteria.some(c => c.code === throwItem.code)) return;
+    
+    const newCriteria: ExtraCriteria = {
+      id: `extra_throw_${throwItem.code}_${Date.now()}`,
+      code: throwItem.code,
+      name: throwItem.name,
+      symbol_image: throwItem.symbol_image,
+      value: throwItem.value ?? 0.1,
+    };
+    setExtraThrowCriteria(prev => [...prev, newCriteria]);
+    setShowThrowDropdown(false);
+  };
+
+  // Handler to add extra catch criteria
+  const handleAddCatchCriteria = (catchItem: DynamicCatch) => {
+    // Check if already added
+    if (extraCatchCriteria.some(c => c.code === catchItem.code)) return;
+    
+    const newCriteria: ExtraCriteria = {
+      id: `extra_catch_${catchItem.code}_${Date.now()}`,
+      code: catchItem.code,
+      name: catchItem.name,
+      symbol_image: catchItem.symbol_image,
+      value: catchItem.value ?? 0.1,
+      notes: catchItem.notes,
+    };
+    setExtraCatchCriteria(prev => [...prev, newCriteria]);
+    setShowCatchDropdown(false);
+  };
+
+  // Handler to remove extra throw criteria
+  const handleRemoveThrowCriteria = (id: string) => {
+    setExtraThrowCriteria(prev => prev.filter(c => c.id !== id));
+  };
+
+  // Handler to remove extra catch criteria
+  const handleRemoveCatchCriteria = (id: string) => {
+    setExtraCatchCriteria(prev => prev.filter(c => c.id !== id));
+  };
 
   // Categorize components by prefix
   const throwComponents = components.filter(c => c.risk_component_code.startsWith('thr_'));
   const rotationComponents = components.filter(c => c.risk_component_code.startsWith('utf_'));
   const catchComponents = components.filter(c => c.risk_component_code.startsWith('catch_'));
 
-  // Calculate totals
-  const throwTotal = throwComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
+  // Calculate totals including extra criteria
+  const baseThrowTotal = throwComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
+  const extraThrowTotal = extraThrowCriteria.reduce((sum, c) => sum + c.value, 0);
+  const throwTotal = baseThrowTotal + extraThrowTotal;
+  
   const baseRotationTotal = rotationComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
-  const catchTotal = catchComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
+  
+  const baseCatchTotal = catchComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
+  const extraCatchTotal = extraCatchCriteria.reduce((sum, c) => sum + c.value, 0);
+  const catchTotal = baseCatchTotal + extraCatchTotal;
   
   // Check if the risk is R2
   const isR2 = selectedRisk?.risk_code?.toLowerCase() === 'r2';
@@ -109,7 +264,7 @@ const StandardRiskDetail = () => {
   // Combined rotation components including additional rows
   const allRotationComponents = [...rotationComponents, ...additionalRotationRows];
   const rotationTotal = allRotationComponents.reduce((sum, c) => sum + (c.value ?? 0), 0);
-  const totalValue = selectedRisk?.rotations_value ?? (throwTotal + rotationTotal + catchTotal);
+  const totalValue = throwTotal + rotationTotal + catchTotal;
 
   const handleSave = () => {
     if (!selectedRisk) return;
@@ -128,6 +283,12 @@ const StandardRiskDetail = () => {
           value: c.value ?? 0,
           section: 'throw'
         })),
+        ...extraThrowCriteria.map(c => ({
+          name: c.name,
+          symbol: c.symbol_image,
+          value: c.value,
+          section: 'throw'
+        })),
         ...rotationComponents.map(c => ({
           name: c.description || 'Under the Flight',
           symbol: c.symbol_image,
@@ -138,6 +299,12 @@ const StandardRiskDetail = () => {
           name: c.description || 'Catch',
           symbol: c.symbol_image,
           value: c.value ?? 0,
+          section: 'catch'
+        })),
+        ...extraCatchCriteria.map(c => ({
+          name: c.name,
+          symbol: c.symbol_image,
+          value: c.value,
           section: 'catch'
         })),
       ],
@@ -296,13 +463,297 @@ const StandardRiskDetail = () => {
           ) : (
             <>
               {/* Throw Section */}
-              {renderSection('Throw', throwComponents, throwTotal)}
+              <div className="mb-6">
+                {/* Section Header */}
+                <div className="flex items-center border-b-2 border-primary/30 bg-primary/5 rounded-t-lg">
+                  <div className="flex-1 py-3 px-4">
+                    <span className="text-base font-semibold text-primary">Throw</span>
+                  </div>
+                  <div className="w-20 py-3 px-2 text-center border-l border-primary/30">
+                    <span className="text-sm font-semibold text-muted-foreground">Value</span>
+                  </div>
+                </div>
+                
+                {/* Section Components */}
+                <div className="border-x border-b border-border rounded-b-lg bg-background">
+                  {throwComponents.length > 0 ? (
+                    throwComponents.map((component, index) => 
+                      renderComponentRow(component, index === throwComponents.length - 1 && extraThrowCriteria.length === 0)
+                    )
+                  ) : (
+                    <div className="flex items-center py-4 px-4 text-muted-foreground text-sm">
+                      No throw components
+                    </div>
+                  )}
+                  
+                  {/* Extra Throw Criteria */}
+                  {extraThrowCriteria.map((criteria, index) => (
+                    <div 
+                      key={criteria.id} 
+                      className={`flex items-center ${index !== extraThrowCriteria.length - 1 ? 'border-b border-border' : ''}`}
+                    >
+                      <div className="w-10 flex justify-center py-4">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveThrowCriteria(criteria.id)}
+                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
+                        {criteria.symbol_image ? (
+                          <img 
+                            src={criteria.symbol_image} 
+                            alt={criteria.name} 
+                            className="h-8 w-auto max-w-[40px] object-contain"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+                            —
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 py-4 px-4">
+                        <span className="font-medium text-foreground text-sm">
+                          <NotesWithSymbols notes={criteria.name} symbolMap={{}} />
+                        </span>
+                      </div>
+                      <div className="w-20 py-4 px-2 text-center border-l border-border">
+                        <p className="font-semibold text-primary">{criteria.value}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Add Specific Throw Button */}
+                  {filteredThrows.length > 0 && (
+                    <div ref={throwDropdownRef} className="relative border-t border-border">
+                      <Button
+                        variant="ghost"
+                        className="w-full py-3 text-primary hover:bg-primary/5 flex items-center justify-center gap-2"
+                        onClick={() => setShowThrowDropdown(!showThrowDropdown)}
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Add Specific Throw</span>
+                        <ChevronDown className={`h-4 w-4 transition-transform ${showThrowDropdown ? 'rotate-180' : ''}`} />
+                      </Button>
+                      
+                      {showThrowDropdown && (
+                        <div className="absolute top-full left-0 right-0 z-50 bg-background border border-border rounded-b-lg shadow-lg max-h-60 overflow-y-auto">
+                          {filteredThrows
+                            .filter(t => !extraThrowCriteria.some(c => c.code === t.code))
+                            .map(throwItem => (
+                              <div
+                                key={throwItem.id}
+                                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 cursor-pointer border-b border-border last:border-b-0"
+                                onClick={() => handleAddThrowCriteria(throwItem)}
+                              >
+                                <div className="w-8 h-8 flex-shrink-0">
+                                  {throwItem.symbol_image ? (
+                                    <img 
+                                      src={throwItem.symbol_image} 
+                                      alt={throwItem.name} 
+                                      className="h-8 w-8 object-contain"
+                                    />
+                                  ) : (
+                                    <div className="h-8 w-8 bg-muted rounded" />
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium text-sm text-foreground">
+                                    <NotesWithSymbols notes={throwItem.name} symbolMap={{}} />
+                                  </p>
+                                </div>
+                                <div className="text-sm text-primary font-semibold">
+                                  {throwItem.value ?? 0.1}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Section Total */}
+                  {(throwComponents.length > 0 || extraThrowCriteria.length > 0) && (
+                    <div className="flex items-center border-t border-border bg-muted/30">
+                      <div className="w-16 py-2" />
+                      <div className="flex-1 py-2 px-4">
+                        <span className="font-medium text-muted-foreground text-sm">Section Total</span>
+                      </div>
+                      <div className="w-20 py-2 px-2 text-center border-l border-border">
+                        <p className="font-bold text-primary">{throwTotal.toFixed(1)}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Rotations Section */}
               {renderSection('Rotations', allRotationComponents, rotationTotal)}
 
               {/* Catch Section */}
-              {renderSection('Catch', catchComponents, catchTotal)}
+              <div className="mb-6">
+                {/* Section Header */}
+                <div className="flex items-center border-b-2 border-primary/30 bg-primary/5 rounded-t-lg">
+                  <div className="flex-1 py-3 px-4">
+                    <span className="text-base font-semibold text-primary">Catch</span>
+                  </div>
+                  <div className="w-20 py-3 px-2 text-center border-l border-primary/30">
+                    <span className="text-sm font-semibold text-muted-foreground">Value</span>
+                  </div>
+                </div>
+                
+                {/* Section Components */}
+                <div className="border-x border-b border-border rounded-b-lg bg-background">
+                  {catchComponents.length > 0 ? (
+                    catchComponents.map((component, index) => 
+                      renderComponentRow(component, index === catchComponents.length - 1 && extraCatchCriteria.length === 0)
+                    )
+                  ) : (
+                    <div className="flex items-center py-4 px-4 text-muted-foreground text-sm">
+                      No catch components
+                    </div>
+                  )}
+                  
+                  {/* Extra Catch Criteria */}
+                  {extraCatchCriteria.map((criteria, index) => (
+                    <div 
+                      key={criteria.id} 
+                      className={`flex items-center ${index !== extraCatchCriteria.length - 1 ? 'border-b border-border' : ''}`}
+                    >
+                      <div className="w-10 flex justify-center py-4">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveCatchCriteria(criteria.id)}
+                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
+                        {criteria.symbol_image ? (
+                          <img 
+                            src={criteria.symbol_image} 
+                            alt={criteria.name} 
+                            className="h-8 w-auto max-w-[40px] object-contain"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+                            —
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 py-4 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-foreground text-sm">
+                            <NotesWithSymbols notes={criteria.name} symbolMap={{}} />
+                          </span>
+                          {criteria.notes && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="inline-flex">
+                                    <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-sm">
+                                  <NotesWithSymbols notes={criteria.notes} symbolMap={{}} />
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </div>
+                      <div className="w-20 py-4 px-2 text-center border-l border-border">
+                        <p className="font-semibold text-primary">{criteria.value}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Add Specific Catch Button */}
+                  {filteredCatches.length > 0 && (
+                    <div ref={catchDropdownRef} className="relative border-t border-border">
+                      <Button
+                        variant="ghost"
+                        className="w-full py-3 text-primary hover:bg-primary/5 flex items-center justify-center gap-2"
+                        onClick={() => setShowCatchDropdown(!showCatchDropdown)}
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Add Specific Catch</span>
+                        <ChevronDown className={`h-4 w-4 transition-transform ${showCatchDropdown ? 'rotate-180' : ''}`} />
+                      </Button>
+                      
+                      {showCatchDropdown && (
+                        <div className="absolute top-full left-0 right-0 z-50 bg-background border border-border rounded-b-lg shadow-lg max-h-60 overflow-y-auto">
+                          {filteredCatches
+                            .filter(c => !extraCatchCriteria.some(ec => ec.code === c.code))
+                            .map(catchItem => (
+                              <div
+                                key={catchItem.id}
+                                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 cursor-pointer border-b border-border last:border-b-0"
+                                onClick={() => handleAddCatchCriteria(catchItem)}
+                              >
+                                <div className="w-8 h-8 flex-shrink-0">
+                                  {catchItem.symbol_image ? (
+                                    <img 
+                                      src={catchItem.symbol_image} 
+                                      alt={catchItem.name} 
+                                      className="h-8 w-8 object-contain"
+                                    />
+                                  ) : (
+                                    <div className="h-8 w-8 bg-muted rounded" />
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium text-sm text-foreground">
+                                      <NotesWithSymbols notes={catchItem.name} symbolMap={{}} />
+                                    </p>
+                                    {catchItem.notes && (
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span className="inline-flex">
+                                              <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                                            </span>
+                                          </TooltipTrigger>
+                                          <TooltipContent className="max-w-sm">
+                                            <NotesWithSymbols notes={catchItem.notes} symbolMap={{}} />
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="text-sm text-primary font-semibold">
+                                  {catchItem.value ?? 0.1}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Section Total */}
+                  {(catchComponents.length > 0 || extraCatchCriteria.length > 0) && (
+                    <div className="flex items-center border-t border-border bg-muted/30">
+                      <div className="w-16 py-2" />
+                      <div className="flex-1 py-2 px-4">
+                        <span className="font-medium text-muted-foreground text-sm">Section Total</span>
+                      </div>
+                      <div className="w-20 py-2 px-2 text-center border-l border-border">
+                        <p className="font-bold text-primary">{catchTotal.toFixed(1)}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Total Value */}
               <Card className="border-primary/20 shadow-md">
