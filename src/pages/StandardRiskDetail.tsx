@@ -171,7 +171,6 @@ const StandardRiskDetail = () => {
     <div className="mb-6">
       {/* Section Header */}
       <div className="flex items-center border-b-2 border-primary/30 bg-primary/5 rounded-t-lg">
-        <div className="w-16 py-3 px-4" />
         <div className="flex-1 py-3 px-4">
           <span className="text-base font-semibold text-primary">{title}</span>
         </div>
@@ -265,7 +264,7 @@ const StandardRiskDetail = () => {
               {renderSection('Throw', throwComponents, throwTotal)}
 
               {/* Rotations Section */}
-              {renderSection('Under the Flight (Rotations)', rotationComponents, rotationTotal)}
+              {renderSection('Rotations', rotationComponents, rotationTotal)}
 
               {/* Catch Section */}
               {renderSection('Catch', catchComponents, catchTotal)}
