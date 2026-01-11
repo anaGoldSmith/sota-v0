@@ -357,7 +357,23 @@ const RoutineCalculator = () => {
   const [technicalElementsDialogOpen, setTechnicalElementsDialogOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedApparatus, setSelectedApparatus] = useState<ApparatusType | null>(null);
-  const [routineElements, setRoutineElements] = useState<RoutineElement[]>([]);
+  // Initialize routineElements from localStorage to persist across navigation
+  const [routineElements, setRoutineElements] = useState<RoutineElement[]>(() => {
+    const saved = localStorage.getItem('routineElements');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+  
+  // Persist routineElements to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('routineElements', JSON.stringify(routineElements));
+  }, [routineElements]);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDBDASuccessDialog, setShowDBDASuccessDialog] = useState(false);
   const [showDBDAValidationDialog, setShowDBDAValidationDialog] = useState(false);
