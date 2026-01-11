@@ -137,7 +137,7 @@ const DynamicElementsRisk = () => {
                 className="w-[calc(100vw-2rem)] max-w-2xl bg-background z-50 p-0"
               >
                 {/* Header row - not scrollable */}
-                <div className="grid grid-cols-[80px_1fr_60px] gap-3 px-3 py-2 border-b bg-muted text-sm font-medium text-muted-foreground">
+                <div className="grid grid-cols-[100px_1fr_50px] gap-2 px-3 py-2 border-b bg-muted text-sm font-medium text-muted-foreground">
                   <span>Symbol</span>
                   <span>Risk Name</span>
                   <span>Value</span>
@@ -151,20 +151,20 @@ const DynamicElementsRisk = () => {
                       <DropdownMenuItem
                         key={risk.id}
                         onClick={() => handleSelectRisk(risk)}
-                        className="grid grid-cols-[80px_1fr_60px] gap-3 py-2 px-3 cursor-pointer items-center rounded-none border-b border-border/50 last:border-b-0"
+                        className="grid grid-cols-[100px_1fr_50px] gap-2 py-2 px-3 cursor-pointer items-center rounded-none border-b border-border/50 last:border-b-0"
                       >
-                        <div className="flex justify-center items-center h-14">
+                        <div className="flex justify-center items-center h-16">
                           {risk.symbol_image ? (
                             <img 
                               src={risk.symbol_image} 
                               alt={risk.name} 
                               className={risk.risk_code === 'r2' 
-                                ? "max-w-[40px] max-h-10 object-contain" 
-                                : "max-w-[70px] max-h-14 object-contain"
+                                ? "max-w-[50px] max-h-12 object-contain" 
+                                : "max-w-[90px] max-h-16 object-contain"
                               }
                             />
                           ) : (
-                            <div className="w-14 h-14 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+                            <div className="w-16 h-16 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
                               —
                             </div>
                           )}
