@@ -158,7 +158,10 @@ const DynamicElementsRisk = () => {
                             <img 
                               src={risk.symbol_image} 
                               alt={risk.name} 
-                              className="max-w-[70px] max-h-14 object-contain"
+                              className={risk.risk_code === 'r2' 
+                                ? "max-w-[40px] max-h-10 object-contain" 
+                                : "max-w-[70px] max-h-14 object-contain"
+                              }
                             />
                           ) : (
                             <div className="w-14 h-14 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
