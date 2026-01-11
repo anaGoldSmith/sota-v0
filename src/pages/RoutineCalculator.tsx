@@ -973,19 +973,27 @@ const RoutineCalculator = () => {
       });
     } else {
       // Navigate to Standard Risk Detail page with existing data
-      // Determine the risk code - if not stored, infer from rLevel (R2 has rLevel 2, others have rLevel 3)
-      let inferredRiskCode = riskData.riskCode;
-      if (!inferredRiskCode) {
-        // If riskCode is not available, infer from rLevel
-        inferredRiskCode = riskData.rLevel === 2 ? 'r2' : 'r3'; // Default to r3 for non-R2 risks
+      // Ensure we have the correct risk code
+      if (!riskData.riskCode) {
+        // If riskCode is not available, we need to redirect user to re-select the risk
+        // because we can't determine which specific standard risk it was
+        toast({
+          title: "Risk data incomplete",
+          description: "Please delete this risk and add it again to enable modification.",
+          variant: "destructive"
+        });
+        return;
       }
       
       navigate('/standard-risk-detail', {
         state: {
           apparatus: riskData.apparatus || selectedApparatus,
           selectedRisk: {
-            risk_code: inferredRiskCode,
+            id: '', // Not required for modification
+            risk_code: riskData.riskCode,
             name: riskData.riskName || 'Standard Risk',
+            rotations_value: null,
+            symbol_image: null,
           },
           modifyingElementId: elementId,
           existingRiskData: riskData,
