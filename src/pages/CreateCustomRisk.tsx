@@ -410,11 +410,26 @@ const renderSymbol = () => {
           </div>
         )}
 
+        {/* Backdrop for closing dropdown */}
+        {showSpecificationDropdown && (
+          <div className="fixed inset-0 z-[99]" onClick={() => setShowSpecificationDropdown(false)} />
+        )}
         {/* Specification dropdown (for changing type) */}
         {showSpecificationDropdown && (
-          <div className="absolute left-20 mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-[100]">
-            <div className="p-2 border-b border-border">
+          <div className="absolute left-20 top-16 w-80 bg-background border border-border rounded-lg shadow-xl z-[100]">
+            <div className="p-2 border-b border-border flex items-center justify-between">
               <span className="text-sm font-medium text-foreground">Select Rotation Type</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSpecificationDropdown(false);
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
             <div className="p-2 space-y-1">
               {ROTATION_SPECIFICATION_OPTIONS.map((option) => (
@@ -548,9 +563,23 @@ const renderSymbol = () => {
                 )}
                 
                 {showSpecificationDropdown && (
+                  <div className="fixed inset-0 z-[99]" onClick={() => setShowSpecificationDropdown(false)} />
+                )}
+                {showSpecificationDropdown && (
                   <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-[100]">
-                    <div className="p-2 border-b border-border">
+                    <div className="p-2 border-b border-border flex items-center justify-between">
                       <span className="text-sm font-medium text-foreground">Select Rotation Type</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowSpecificationDropdown(false);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                     <div className="p-2 space-y-1">
                       {ROTATION_SPECIFICATION_OPTIONS.map((option) => (
