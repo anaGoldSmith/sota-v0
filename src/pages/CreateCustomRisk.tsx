@@ -70,15 +70,41 @@ const isApplicableForApparatus = (item: {
   return codes.includes(apparatusCode);
 };
 
+import { DBRotationSelectionDialog } from "@/components/routine/DBRotationSelectionDialog";
+
+// DB Element interface for jumps/rotations
+interface DBForRisk {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  value: number | null;
+  turn_degrees: string | null;
+  symbol_image: string | null;
+}
+
 // Sortable Rotation Row Component
 type RotationType = 'one' | 'two' | 'series' | 'axis';
 type RotationSpecificationType = 'pre-acrobatic' | 'vertical' | 'db-rotation' | null;
-type RotationEntry = { id: string; type: RotationType; seriesCount?: number; specificationType?: RotationSpecificationType };
+type DBSubType = 'jumps' | 'rotations' | null;
+type RotationEntry = { 
+  id: string; 
+  type: RotationType; 
+  seriesCount?: number; 
+  specificationType?: RotationSpecificationType;
+  dbSubType?: DBSubType;
+  selectedDBElement?: DBForRisk;
+};
 
 const ROTATION_SPECIFICATION_OPTIONS = [
   { value: 'pre-acrobatic' as const, label: 'Pre-acrobatic Elements' },
   { value: 'vertical' as const, label: 'Vertical Rotations' },
   { value: 'db-rotation' as const, label: 'DB with rotation of 360° or more, value 0.20 p. or more' },
+];
+
+const DB_SUB_TYPE_OPTIONS = [
+  { value: 'jumps' as const, label: 'DBs Jumps' },
+  { value: 'rotations' as const, label: 'DBs Rotations' },
 ];
 
 interface SortableRotationRowProps {
@@ -87,11 +113,19 @@ interface SortableRotationRowProps {
   onRemove: (id: string) => void;
   onUpdateSeriesCount: (id: string, count: number) => void;
   onUpdateSpecificationType: (id: string, type: RotationSpecificationType) => void;
+  onUpdateDBSubType: (id: string, subType: DBSubType) => void;
+  onSelectDBElement: (id: string, element: DBForRisk) => void;
+  jumpsDBs: DBForRisk[];
+  rotationsDBs: DBForRisk[];
 }
 
-const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount, onUpdateSpecificationType }: SortableRotationRowProps) => {
+const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount, onUpdateSpecificationType, onUpdateDBSubType, onSelectDBElement, jumpsDBs, rotationsDBs }: SortableRotationRowProps) => {
   const [showSpecificationDropdown, setShowSpecificationDropdown] = useState(false);
+  const [showDBSubTypeDropdown, setShowDBSubTypeDropdown] = useState(false);
+  const [showJumpsDialog, setShowJumpsDialog] = useState(false);
+  const [showRotationsDialog, setShowRotationsDialog] = useState(false);
   const specDropdownRef = useRef<HTMLDivElement>(null);
+  const dbSubTypeDropdownRef = useRef<HTMLDivElement>(null);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: entry.id });
   
   const style = {
@@ -100,20 +134,39 @@ const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount, on
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const renderSymbol = () => {
-    if (entry.type === 'series') {
-      return <span className="text-2xl font-bold text-foreground">S</span>;
+const renderSymbol = () => {
+    const baseSymbol = (() => {
+      if (entry.type === 'series') {
+        return <span className="text-2xl font-bold text-foreground">S</span>;
+      }
+      if (entry.type === 'one') {
+        return symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />;
+      }
+      if (entry.type === 'two') {
+        return symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />;
+      }
+      if (entry.type === 'axis') {
+        return symbols["axisLevelChange"] ? <img src={symbols["axisLevelChange"]} alt="Axis/Level Change" className="h-8 w-8 object-contain" /> : <div className="h-8 w-8 bg-muted rounded" />;
+      }
+      return null;
+    })();
+
+    // If there's a selected DB element with a symbol, show it alongside
+    if (entry.selectedDBElement?.symbol_image) {
+      return (
+        <div className="flex items-center gap-1">
+          {baseSymbol}
+          <img 
+            src={entry.selectedDBElement.symbol_image} 
+            alt={entry.selectedDBElement.name} 
+            className="h-8 w-8 object-contain"
+            onError={e => e.currentTarget.style.display = 'none'}
+          />
+        </div>
+      );
     }
-    if (entry.type === 'one') {
-      return symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />;
-    }
-    if (entry.type === 'two') {
-      return symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />;
-    }
-    if (entry.type === 'axis') {
-      return symbols["axisLevelChange"] ? <img src={symbols["axisLevelChange"]} alt="Axis/Level Change" className="h-8 w-8 object-contain" /> : <div className="h-8 w-8 bg-muted rounded" />;
-    }
-    return null;
+
+    return baseSymbol;
   };
 
   const renderName = () => {
@@ -221,62 +274,178 @@ const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount, on
           <span className="font-medium text-foreground">
             {renderName()}
           </span>
-          {showSpecificationButton && (
-            <div className="relative" ref={specDropdownRef}>
-              {selectedSpecLabel ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground italic">{selectedSpecLabel}</span>
+{showSpecificationButton && (
+            <div className="space-y-2">
+              <div className="relative" ref={specDropdownRef}>
+                {selectedSpecLabel ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground italic">{selectedSpecLabel}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-primary hover:bg-primary/10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowSpecificationDropdown(!showSpecificationDropdown);
+                      }}
+                    >
+                      Change
+                    </Button>
+                  </div>
+                ) : (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-2 text-xs text-primary hover:bg-primary/10"
+                    className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowSpecificationDropdown(!showSpecificationDropdown);
                     }}
                   >
-                    Change
+                    <Plus className="h-3 w-3 mr-1" />
+                    Specify Rotation Type
                   </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowSpecificationDropdown(!showSpecificationDropdown);
-                  }}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Specify Rotation Type
-                </Button>
-              )}
-              
-              {showSpecificationDropdown && (
-                <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-[100]">
-                  <div className="p-2 border-b border-border">
-                    <span className="text-sm font-medium text-foreground">Select Rotation Type</span>
+                )}
+                
+                {showSpecificationDropdown && (
+                  <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-[100]">
+                    <div className="p-2 border-b border-border">
+                      <span className="text-sm font-medium text-foreground">Select Rotation Type</span>
+                    </div>
+                    <div className="p-2 space-y-1">
+                      {ROTATION_SPECIFICATION_OPTIONS.map((option) => (
+                        <div
+                          key={option.value}
+                          className={`p-3 rounded hover:bg-muted cursor-pointer ${entry.specificationType === option.value ? 'bg-primary/10' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onUpdateSpecificationType(entry.id, option.value);
+                            setShowSpecificationDropdown(false);
+                          }}
+                        >
+                          <span className="text-sm text-foreground">{option.label}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="p-2 space-y-1">
-                    {ROTATION_SPECIFICATION_OPTIONS.map((option) => (
-                      <div
-                        key={option.value}
-                        className={`p-3 rounded hover:bg-muted cursor-pointer ${entry.specificationType === option.value ? 'bg-primary/10' : ''}`}
+                )}
+              </div>
+
+              {/* DB Sub-Type Selection - only show when db-rotation is selected */}
+              {entry.specificationType === 'db-rotation' && (
+                <div className="relative ml-4" ref={dbSubTypeDropdownRef}>
+                  {entry.dbSubType ? (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm text-muted-foreground">
+                        {DB_SUB_TYPE_OPTIONS.find(o => o.value === entry.dbSubType)?.label}
+                      </span>
+                      {entry.selectedDBElement ? (
+                        <div className="flex items-center gap-2 bg-primary/5 px-2 py-1 rounded">
+                          {entry.selectedDBElement.symbol_image ? (
+                            <img 
+                              src={entry.selectedDBElement.symbol_image} 
+                              alt={entry.selectedDBElement.name} 
+                              className="h-6 w-6 object-contain"
+                              onError={(e) => (e.currentTarget.style.display = 'none')}
+                            />
+                          ) : (
+                            <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs">—</div>
+                          )}
+                          <span className="text-sm font-medium text-foreground">{entry.selectedDBElement.name}</span>
+                          <span className="text-sm text-primary font-semibold">{entry.selectedDBElement.value ?? 0}</span>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs text-primary hover:bg-primary/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (entry.dbSubType === 'jumps') {
+                              setShowJumpsDialog(true);
+                            } else {
+                              setShowRotationsDialog(true);
+                            }
+                          }}
+                        >
+                          Select Element
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs text-muted-foreground hover:bg-muted"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onUpdateSpecificationType(entry.id, option.value);
-                          setShowSpecificationDropdown(false);
+                          setShowDBSubTypeDropdown(!showDBSubTypeDropdown);
                         }}
                       >
-                        <span className="text-sm text-foreground">{option.label}</span>
+                        Change
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowDBSubTypeDropdown(!showDBSubTypeDropdown);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Select DB Type
+                    </Button>
+                  )}
+
+                  {showDBSubTypeDropdown && (
+                    <div className="absolute left-0 top-full mt-1 w-48 bg-background border border-border rounded-lg shadow-xl z-[100]">
+                      <div className="p-2 border-b border-border">
+                        <span className="text-sm font-medium text-foreground">Select DB Type</span>
                       </div>
-                    ))}
-                  </div>
+                      <div className="p-2 space-y-1">
+                        {DB_SUB_TYPE_OPTIONS.map((option) => (
+                          <div
+                            key={option.value}
+                            className={`p-3 rounded hover:bg-muted cursor-pointer ${entry.dbSubType === option.value ? 'bg-primary/10' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onUpdateDBSubType(entry.id, option.value);
+                              setShowDBSubTypeDropdown(false);
+                              // Open the appropriate dialog
+                              if (option.value === 'jumps') {
+                                setShowJumpsDialog(true);
+                              } else {
+                                setShowRotationsDialog(true);
+                              }
+                            }}
+                          >
+                            <span className="text-sm text-foreground">{option.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
+
+          {/* Dialogs for selecting DB elements */}
+          <DBRotationSelectionDialog
+            open={showJumpsDialog}
+            onOpenChange={setShowJumpsDialog}
+            elements={jumpsDBs}
+            title="Select Jump DB"
+            onSelect={(element) => onSelectDBElement(entry.id, element)}
+          />
+          <DBRotationSelectionDialog
+            open={showRotationsDialog}
+            onOpenChange={setShowRotationsDialog}
+            elements={rotationsDBs}
+            title="Select Rotation DB"
+            onSelect={(element) => onSelectDBElement(entry.id, element)}
+          />
         </div>
       </div>
       <div className="w-20 py-4 px-2 text-center border-l border-border">
@@ -337,8 +506,12 @@ const CreateCustomRisk = () => {
   const [rotationEntries, setRotationEntries] = useState<RotationEntry[]>([]);
   const [seriesCount, setSeriesCount] = useState<number>(3);
   const [showRotationDropdown, setShowRotationDropdown] = useState(false);
-  const [catchCriteria, setCatchCriteria] = useState<CriteriaItem[]>([]);
+const [catchCriteria, setCatchCriteria] = useState<CriteriaItem[]>([]);
   const rotationDropdownRef = useRef<HTMLDivElement>(null);
+
+  // State for DBs for risks
+  const [jumpsDBs, setJumpsDBs] = useState<DBForRisk[]>([]);
+  const [rotationsDBs, setRotationsDBs] = useState<DBForRisk[]>([]);
   
   // Check if axis change already exists
   const hasAxisChange = rotationEntries.some(e => e.type === 'axis');
@@ -444,11 +617,25 @@ const CreateCustomRisk = () => {
         console.log('Loaded catches:', data.find(c => c.code === 'Catch4'));
         setDynamicCatches(data);
       }
+};
+    const loadJumpsDBs = async () => {
+      const { data, error } = await supabase.from('jumps_dbs_for_risks').select('*').order('code');
+      if (data && !error) {
+        setJumpsDBs(data);
+      }
+    };
+    const loadRotationsDBs = async () => {
+      const { data, error } = await supabase.from('rotations_dbs_for_risks').select('*').order('code');
+      if (data && !error) {
+        setRotationsDBs(data);
+      }
     };
     loadSymbols();
     loadGeneralCriteria();
     loadDynamicThrows();
     loadDynamicCatches();
+    loadJumpsDBs();
+    loadRotationsDBs();
   }, []);
 
   // Pre-populate form when modifying an existing risk
@@ -618,9 +805,19 @@ const CreateCustomRisk = () => {
       e.id === id ? { ...e, seriesCount: count } : e
     ));
   };
-  const handleUpdateSpecificationType = (id: string, specificationType: RotationSpecificationType) => {
+const handleUpdateSpecificationType = (id: string, specificationType: RotationSpecificationType) => {
     setRotationEntries(prev => prev.map(e => 
-      e.id === id ? { ...e, specificationType } : e
+      e.id === id ? { ...e, specificationType, dbSubType: undefined, selectedDBElement: undefined } : e
+    ));
+  };
+  const handleUpdateDBSubType = (id: string, dbSubType: DBSubType) => {
+    setRotationEntries(prev => prev.map(e => 
+      e.id === id ? { ...e, dbSubType, selectedDBElement: undefined } : e
+    ));
+  };
+  const handleSelectDBElement = (id: string, element: DBForRisk) => {
+    setRotationEntries(prev => prev.map(e => 
+      e.id === id ? { ...e, selectedDBElement: element } : e
     ));
   };
   // Check if 2 base rotations already exists
@@ -1220,7 +1417,7 @@ const CreateCustomRisk = () => {
                 {/* Show existing rotation entries with drag and drop - below the button */}
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={rotationEntries.map(e => e.id)} strategy={verticalListSortingStrategy}>
-                    {rotationEntries.map((entry) => (
+{rotationEntries.map((entry) => (
                       <SortableRotationRow 
                         key={entry.id}
                         entry={entry}
@@ -1228,6 +1425,10 @@ const CreateCustomRisk = () => {
                         onRemove={handleRemoveRotation}
                         onUpdateSeriesCount={handleUpdateSeriesCount}
                         onUpdateSpecificationType={handleUpdateSpecificationType}
+                        onUpdateDBSubType={handleUpdateDBSubType}
+                        onSelectDBElement={handleSelectDBElement}
+                        jumpsDBs={jumpsDBs}
+                        rotationsDBs={rotationsDBs}
                       />
                     ))}
                   </SortableContext>
