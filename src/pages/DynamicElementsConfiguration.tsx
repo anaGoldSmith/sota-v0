@@ -15,12 +15,16 @@ const DynamicElementsConfiguration = () => {
   const [uploadingGeneralCriteria, setUploadingGeneralCriteria] = useState(false);
   const [uploadingPrerecordedRiskComponents, setUploadingPrerecordedRiskComponents] = useState(false);
   const [uploadingPrerecordedRisks, setUploadingPrerecordedRisks] = useState(false);
+  const [uploadingJumpsDBs, setUploadingJumpsDBs] = useState(false);
+  const [uploadingRotationsDBs, setUploadingRotationsDBs] = useState(false);
   
   const catchesInputRef = useRef<HTMLInputElement>(null);
   const throwsInputRef = useRef<HTMLInputElement>(null);
   const generalCriteriaInputRef = useRef<HTMLInputElement>(null);
   const prerecordedRiskComponentsInputRef = useRef<HTMLInputElement>(null);
   const prerecordedRisksInputRef = useRef<HTMLInputElement>(null);
+  const jumpsDBsInputRef = useRef<HTMLInputElement>(null);
+  const rotationsDBsInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -295,6 +299,78 @@ const DynamicElementsConfiguration = () => {
               >
                 <Upload className="h-4 w-4 mr-2" />
                 {uploadingPrerecordedRisks ? "Uploading..." : "Upload Prerecorded Risks CSV"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Jumps DBs for Risks CSV Upload */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <FileText className="h-8 w-8 text-primary" />
+                <CardTitle>Jumps DBs with Rotations/Turns</CardTitle>
+              </div>
+              <CardDescription>
+                Upload CSV with columns: code, name, description, value, turn_degrees
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <input
+                type="file"
+                accept=".csv"
+                ref={jumpsDBsInputRef}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleCsvUpload(file, 'import-jumps-dbs-for-risks-csv', setUploadingJumpsDBs, 'Jumps DBs for Risks');
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <Button
+                onClick={() => jumpsDBsInputRef.current?.click()}
+                disabled={uploadingJumpsDBs}
+                className="w-full"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {uploadingJumpsDBs ? "Uploading..." : "Upload Jumps DBs CSV"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Rotations DBs for Risks CSV Upload */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <FileText className="h-8 w-8 text-primary" />
+                <CardTitle>Rotations DBs</CardTitle>
+              </div>
+              <CardDescription>
+                Upload CSV with columns: code, name, description, value, turn_degrees
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <input
+                type="file"
+                accept=".csv"
+                ref={rotationsDBsInputRef}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleCsvUpload(file, 'import-rotations-dbs-for-risks-csv', setUploadingRotationsDBs, 'Rotations DBs for Risks');
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <Button
+                onClick={() => rotationsDBsInputRef.current?.click()}
+                disabled={uploadingRotationsDBs}
+                className="w-full"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {uploadingRotationsDBs ? "Uploading..." : "Upload Rotations DBs CSV"}
               </Button>
             </CardContent>
           </Card>
