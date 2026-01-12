@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Plus, CheckCircle, X, ChevronDown, Info, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, CheckCircle, X, ChevronDown, ChevronRight, Info, GripVertical } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -97,14 +97,14 @@ type RotationEntry = {
 };
 
 const ROTATION_SPECIFICATION_OPTIONS = [
-  { value: 'pre-acrobatic' as const, label: 'Pre-acrobatic Elements' },
-  { value: 'vertical' as const, label: 'Vertical Rotations' },
-  { value: 'db-rotation' as const, label: 'DB with rotation of 360° or more, value 0.20 p. or more' },
+  { value: 'pre-acrobatic' as const, label: 'Pre-acrobatic Elements', hasSubmenu: false },
+  { value: 'vertical' as const, label: 'Vertical Rotations', hasSubmenu: false },
+  { value: 'db-rotation' as const, label: 'DB with rotation of 360° or more, value 0.20 p. or more', hasSubmenu: true },
 ];
 
 const DB_SUB_TYPE_OPTIONS = [
-  { value: 'jumps' as const, label: 'DBs Jumps' },
-  { value: 'rotations' as const, label: 'DBs Rotations' },
+  { value: 'jumps' as const, label: 'Jumps DBs with Rotations/Turns' },
+  { value: 'rotations' as const, label: 'Rotations DBs' },
 ];
 
 interface SortableRotationRowProps {
@@ -121,6 +121,7 @@ interface SortableRotationRowProps {
 
 const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount, onUpdateSpecificationType, onUpdateDBSubType, onSelectDBElement, jumpsDBs, rotationsDBs }: SortableRotationRowProps) => {
   const [showSpecificationDropdown, setShowSpecificationDropdown] = useState(false);
+  const [hoveredDBOption, setHoveredDBOption] = useState(false);
   const [showJumpsDialog, setShowJumpsDialog] = useState(false);
   const [showRotationsDialog, setShowRotationsDialog] = useState(false);
   const specDropdownRef = useRef<HTMLDivElement>(null);
@@ -312,86 +313,101 @@ const renderSymbol = () => {
                     </div>
                     <div className="p-2 space-y-1">
                       {ROTATION_SPECIFICATION_OPTIONS.map((option) => (
-                        <div
-                          key={option.value}
-                          className={`p-3 rounded hover:bg-muted cursor-pointer ${entry.specificationType === option.value ? 'bg-primary/10' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onUpdateSpecificationType(entry.id, option.value);
-                            setShowSpecificationDropdown(false);
-                          }}
-                        >
-                          <span className="text-sm text-foreground">{option.label}</span>
-                        </div>
+                        option.hasSubmenu ? (
+                          <div
+                            key={option.value}
+                            className="relative"
+                            onMouseEnter={() => setHoveredDBOption(true)}
+                            onMouseLeave={() => setHoveredDBOption(false)}
+                          >
+                            <div
+                              className={`p-3 rounded hover:bg-muted cursor-pointer flex items-center justify-between ${entry.specificationType === option.value ? 'bg-primary/10' : ''}`}
+                            >
+                              <span className="text-sm text-foreground">{option.label}</span>
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            
+                            {/* Sub-menu for DB options */}
+                            {hoveredDBOption && (
+                              <div className="absolute left-full top-0 ml-1 w-64 bg-background border border-border rounded-lg shadow-xl z-[110]">
+                                <div className="p-2 space-y-1">
+                                  {DB_SUB_TYPE_OPTIONS.map((subOption) => (
+                                    <div
+                                      key={subOption.value}
+                                      className="p-3 rounded hover:bg-muted cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onUpdateSpecificationType(entry.id, 'db-rotation');
+                                        onUpdateDBSubType(entry.id, subOption.value);
+                                        setShowSpecificationDropdown(false);
+                                        setHoveredDBOption(false);
+                                        if (subOption.value === 'jumps') {
+                                          setShowJumpsDialog(true);
+                                        } else {
+                                          setShowRotationsDialog(true);
+                                        }
+                                      }}
+                                    >
+                                      <span className="text-sm text-foreground">{subOption.label}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div
+                            key={option.value}
+                            className={`p-3 rounded hover:bg-muted cursor-pointer ${entry.specificationType === option.value ? 'bg-primary/10' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onUpdateSpecificationType(entry.id, option.value);
+                              setShowSpecificationDropdown(false);
+                            }}
+                          >
+                            <span className="text-sm text-foreground">{option.label}</span>
+                          </div>
+                        )
                       ))}
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* DB Sub-Type Selection - only show when db-rotation is selected */}
-              {entry.specificationType === 'db-rotation' && (
+              {/* Show selected DB element when db-rotation is selected */}
+              {entry.specificationType === 'db-rotation' && entry.selectedDBElement && (
                 <div className="ml-4">
-                  {entry.selectedDBElement ? (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className="flex items-center gap-2 bg-primary/5 px-2 py-1 rounded">
-                        {entry.selectedDBElement.symbol_image ? (
-                          <img 
-                            src={entry.selectedDBElement.symbol_image} 
-                            alt={entry.selectedDBElement.name} 
-                            className="h-6 w-6 object-contain"
-                            onError={(e) => (e.currentTarget.style.display = 'none')}
-                          />
-                        ) : (
-                          <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs">—</div>
-                        )}
-                        <span className="text-sm font-medium text-foreground">{entry.selectedDBElement.name}</span>
-                        <span className="text-sm text-primary font-semibold">{entry.selectedDBElement.value ?? 0}</span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs text-muted-foreground hover:bg-muted"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (entry.dbSubType === 'jumps') {
-                            setShowJumpsDialog(true);
-                          } else {
-                            setShowRotationsDialog(true);
-                          }
-                        }}
-                      >
-                        Change
-                      </Button>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 bg-primary/5 px-2 py-1 rounded">
+                      {entry.selectedDBElement.symbol_image ? (
+                        <img 
+                          src={entry.selectedDBElement.symbol_image} 
+                          alt={entry.selectedDBElement.name} 
+                          className="h-6 w-6 object-contain"
+                          onError={(e) => (e.currentTarget.style.display = 'none')}
+                        />
+                      ) : (
+                        <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs">—</div>
+                      )}
+                      <span className="text-sm font-medium text-foreground">{entry.selectedDBElement.name}</span>
+                      <span className="text-sm text-primary font-semibold">{entry.selectedDBElement.value ?? 0}</span>
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-sm font-medium hover:bg-primary/10 hover:border-primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onUpdateDBSubType(entry.id, 'jumps');
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-muted-foreground hover:bg-muted"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (entry.dbSubType === 'jumps') {
                           setShowJumpsDialog(true);
-                        }}
-                      >
-                        Jumps
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-sm font-medium hover:bg-primary/10 hover:border-primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onUpdateDBSubType(entry.id, 'rotations');
+                        } else {
                           setShowRotationsDialog(true);
-                        }}
-                      >
-                        Rotations
-                      </Button>
-                    </div>
-                  )}
+                        }
+                      }}
+                    >
+                      Change
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
