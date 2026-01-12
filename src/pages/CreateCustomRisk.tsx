@@ -121,11 +121,9 @@ interface SortableRotationRowProps {
 
 const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount, onUpdateSpecificationType, onUpdateDBSubType, onSelectDBElement, jumpsDBs, rotationsDBs }: SortableRotationRowProps) => {
   const [showSpecificationDropdown, setShowSpecificationDropdown] = useState(false);
-  const [showDBSubTypeDropdown, setShowDBSubTypeDropdown] = useState(false);
   const [showJumpsDialog, setShowJumpsDialog] = useState(false);
   const [showRotationsDialog, setShowRotationsDialog] = useState(false);
   const specDropdownRef = useRef<HTMLDivElement>(null);
-  const dbSubTypeDropdownRef = useRef<HTMLDivElement>(null);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: entry.id });
   
   const style = {
@@ -333,97 +331,65 @@ const renderSymbol = () => {
 
               {/* DB Sub-Type Selection - only show when db-rotation is selected */}
               {entry.specificationType === 'db-rotation' && (
-                <div className="relative ml-4" ref={dbSubTypeDropdownRef}>
-                  {entry.dbSubType ? (
+                <div className="ml-4">
+                  {entry.selectedDBElement ? (
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm text-muted-foreground">
-                        {DB_SUB_TYPE_OPTIONS.find(o => o.value === entry.dbSubType)?.label}
-                      </span>
-                      {entry.selectedDBElement ? (
-                        <div className="flex items-center gap-2 bg-primary/5 px-2 py-1 rounded">
-                          {entry.selectedDBElement.symbol_image ? (
-                            <img 
-                              src={entry.selectedDBElement.symbol_image} 
-                              alt={entry.selectedDBElement.name} 
-                              className="h-6 w-6 object-contain"
-                              onError={(e) => (e.currentTarget.style.display = 'none')}
-                            />
-                          ) : (
-                            <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs">—</div>
-                          )}
-                          <span className="text-sm font-medium text-foreground">{entry.selectedDBElement.name}</span>
-                          <span className="text-sm text-primary font-semibold">{entry.selectedDBElement.value ?? 0}</span>
-                        </div>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 text-xs text-primary hover:bg-primary/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (entry.dbSubType === 'jumps') {
-                              setShowJumpsDialog(true);
-                            } else {
-                              setShowRotationsDialog(true);
-                            }
-                          }}
-                        >
-                          Select Element
-                        </Button>
-                      )}
+                      <div className="flex items-center gap-2 bg-primary/5 px-2 py-1 rounded">
+                        {entry.selectedDBElement.symbol_image ? (
+                          <img 
+                            src={entry.selectedDBElement.symbol_image} 
+                            alt={entry.selectedDBElement.name} 
+                            className="h-6 w-6 object-contain"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        ) : (
+                          <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs">—</div>
+                        )}
+                        <span className="text-sm font-medium text-foreground">{entry.selectedDBElement.name}</span>
+                        <span className="text-sm text-primary font-semibold">{entry.selectedDBElement.value ?? 0}</span>
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="h-6 px-2 text-xs text-muted-foreground hover:bg-muted"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setShowDBSubTypeDropdown(!showDBSubTypeDropdown);
+                          if (entry.dbSubType === 'jumps') {
+                            setShowJumpsDialog(true);
+                          } else {
+                            setShowRotationsDialog(true);
+                          }
                         }}
                       >
                         Change
                       </Button>
                     </div>
                   ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowDBSubTypeDropdown(!showDBSubTypeDropdown);
-                      }}
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Select DB Type
-                    </Button>
-                  )}
-
-                  {showDBSubTypeDropdown && (
-                    <div className="absolute left-0 top-full mt-1 w-48 bg-background border border-border rounded-lg shadow-xl z-[100]">
-                      <div className="p-2 border-b border-border">
-                        <span className="text-sm font-medium text-foreground">Select DB Type</span>
-                      </div>
-                      <div className="p-2 space-y-1">
-                        {DB_SUB_TYPE_OPTIONS.map((option) => (
-                          <div
-                            key={option.value}
-                            className={`p-3 rounded hover:bg-muted cursor-pointer ${entry.dbSubType === option.value ? 'bg-primary/10' : ''}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onUpdateDBSubType(entry.id, option.value);
-                              setShowDBSubTypeDropdown(false);
-                              // Open the appropriate dialog
-                              if (option.value === 'jumps') {
-                                setShowJumpsDialog(true);
-                              } else {
-                                setShowRotationsDialog(true);
-                              }
-                            }}
-                          >
-                            <span className="text-sm text-foreground">{option.label}</span>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-3 text-sm font-medium hover:bg-primary/10 hover:border-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onUpdateDBSubType(entry.id, 'jumps');
+                          setShowJumpsDialog(true);
+                        }}
+                      >
+                        Jumps
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-3 text-sm font-medium hover:bg-primary/10 hover:border-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onUpdateDBSubType(entry.id, 'rotations');
+                          setShowRotationsDialog(true);
+                        }}
+                      >
+                        Rotations
+                      </Button>
                     </div>
                   )}
                 </div>
