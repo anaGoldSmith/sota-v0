@@ -72,16 +72,26 @@ const isApplicableForApparatus = (item: {
 
 // Sortable Rotation Row Component
 type RotationType = 'one' | 'two' | 'series' | 'axis';
-type RotationEntry = { id: string; type: RotationType; seriesCount?: number };
+type RotationSpecificationType = 'pre-acrobatic' | 'vertical' | 'db-rotation' | null;
+type RotationEntry = { id: string; type: RotationType; seriesCount?: number; specificationType?: RotationSpecificationType };
+
+const ROTATION_SPECIFICATION_OPTIONS = [
+  { value: 'pre-acrobatic' as const, label: 'Pre-acrobatic Elements' },
+  { value: 'vertical' as const, label: 'Vertical Rotations' },
+  { value: 'db-rotation' as const, label: 'DB with rotation of 360° or more, value 0.20 p. or more' },
+];
 
 interface SortableRotationRowProps {
   entry: RotationEntry;
   symbols: Record<string, string>;
   onRemove: (id: string) => void;
   onUpdateSeriesCount: (id: string, count: number) => void;
+  onUpdateSpecificationType: (id: string, type: RotationSpecificationType) => void;
 }
 
-const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount }: SortableRotationRowProps) => {
+const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount, onUpdateSpecificationType }: SortableRotationRowProps) => {
+  const [showSpecificationDropdown, setShowSpecificationDropdown] = useState(false);
+  const specDropdownRef = useRef<HTMLDivElement>(null);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: entry.id });
   
   const style = {
@@ -192,6 +202,12 @@ const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount }: 
     return '0';
   };
 
+  // Only show specification button for actual rotations (not axis)
+  const showSpecificationButton = entry.type === 'one' || entry.type === 'two' || entry.type === 'series';
+  const selectedSpecLabel = entry.specificationType 
+    ? ROTATION_SPECIFICATION_OPTIONS.find(o => o.value === entry.specificationType)?.label 
+    : null;
+
   return (
     <div ref={setNodeRef} style={style} className="flex items-center border-b border-border bg-background">
       <div {...attributes} {...listeners} className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
@@ -201,9 +217,67 @@ const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount }: 
         {renderSymbol()}
       </div>
       <div className="flex-1 py-4 px-4">
-        <span className="font-medium text-foreground">
-          {renderName()}
-        </span>
+        <div className="flex flex-col gap-2">
+          <span className="font-medium text-foreground">
+            {renderName()}
+          </span>
+          {showSpecificationButton && (
+            <div className="relative" ref={specDropdownRef}>
+              {selectedSpecLabel ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground italic">{selectedSpecLabel}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs text-primary hover:bg-primary/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowSpecificationDropdown(!showSpecificationDropdown);
+                    }}
+                  >
+                    Change
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowSpecificationDropdown(!showSpecificationDropdown);
+                  }}
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Specify Rotation Type
+                </Button>
+              )}
+              
+              {showSpecificationDropdown && (
+                <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-[100]">
+                  <div className="p-2 border-b border-border">
+                    <span className="text-sm font-medium text-foreground">Select Rotation Type</span>
+                  </div>
+                  <div className="p-2 space-y-1">
+                    {ROTATION_SPECIFICATION_OPTIONS.map((option) => (
+                      <div
+                        key={option.value}
+                        className={`p-3 rounded hover:bg-muted cursor-pointer ${entry.specificationType === option.value ? 'bg-primary/10' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onUpdateSpecificationType(entry.id, option.value);
+                          setShowSpecificationDropdown(false);
+                        }}
+                      >
+                        <span className="text-sm text-foreground">{option.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
       <div className="w-20 py-4 px-2 text-center border-l border-border">
         <p className="font-semibold text-primary">{getValue()}</p>
@@ -542,6 +616,11 @@ const CreateCustomRisk = () => {
   const handleUpdateSeriesCount = (id: string, count: number) => {
     setRotationEntries(prev => prev.map(e => 
       e.id === id ? { ...e, seriesCount: count } : e
+    ));
+  };
+  const handleUpdateSpecificationType = (id: string, specificationType: RotationSpecificationType) => {
+    setRotationEntries(prev => prev.map(e => 
+      e.id === id ? { ...e, specificationType } : e
     ));
   };
   // Check if 2 base rotations already exists
@@ -1148,6 +1227,7 @@ const CreateCustomRisk = () => {
                         symbols={symbols}
                         onRemove={handleRemoveRotation}
                         onUpdateSeriesCount={handleUpdateSeriesCount}
+                        onUpdateSpecificationType={handleUpdateSpecificationType}
                       />
                     ))}
                   </SortableContext>
