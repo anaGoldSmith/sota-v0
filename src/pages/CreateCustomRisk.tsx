@@ -316,41 +316,46 @@ const renderSymbol = () => {
                         option.hasSubmenu ? (
                           <div
                             key={option.value}
-                            className="relative"
+                            className="relative group"
                             onMouseEnter={() => setHoveredDBOption(true)}
                             onMouseLeave={() => setHoveredDBOption(false)}
                           >
                             <div
-                              className={`p-3 rounded hover:bg-muted cursor-pointer flex items-center justify-between ${entry.specificationType === option.value ? 'bg-primary/10' : ''}`}
+                              className={`p-3 rounded hover:bg-muted cursor-default flex items-center justify-between ${hoveredDBOption ? 'bg-muted' : ''}`}
                             >
                               <span className="text-sm text-foreground">{option.label}</span>
                               <ChevronRight className="h-4 w-4 text-muted-foreground" />
                             </div>
                             
-                            {/* Sub-menu for DB options */}
+                            {/* Sub-menu for DB options - with overlap padding to prevent gap */}
                             {hoveredDBOption && (
-                              <div className="absolute left-full top-0 ml-1 w-64 bg-background border border-border rounded-lg shadow-xl z-[110]">
-                                <div className="p-2 space-y-1">
-                                  {DB_SUB_TYPE_OPTIONS.map((subOption) => (
-                                    <div
-                                      key={subOption.value}
-                                      className="p-3 rounded hover:bg-muted cursor-pointer"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onUpdateSpecificationType(entry.id, 'db-rotation');
-                                        onUpdateDBSubType(entry.id, subOption.value);
-                                        setShowSpecificationDropdown(false);
-                                        setHoveredDBOption(false);
-                                        if (subOption.value === 'jumps') {
-                                          setShowJumpsDialog(true);
-                                        } else {
-                                          setShowRotationsDialog(true);
-                                        }
-                                      }}
-                                    >
-                                      <span className="text-sm text-foreground">{subOption.label}</span>
-                                    </div>
-                                  ))}
+                              <div 
+                                className="absolute left-full top-0 pl-1 z-[110]"
+                                onMouseEnter={() => setHoveredDBOption(true)}
+                              >
+                                <div className="w-64 bg-background border border-border rounded-lg shadow-xl">
+                                  <div className="p-2 space-y-1">
+                                    {DB_SUB_TYPE_OPTIONS.map((subOption) => (
+                                      <div
+                                        key={subOption.value}
+                                        className="p-3 rounded hover:bg-muted cursor-pointer"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onUpdateSpecificationType(entry.id, 'db-rotation');
+                                          onUpdateDBSubType(entry.id, subOption.value);
+                                          setShowSpecificationDropdown(false);
+                                          setHoveredDBOption(false);
+                                          if (subOption.value === 'jumps') {
+                                            setShowJumpsDialog(true);
+                                          } else {
+                                            setShowRotationsDialog(true);
+                                          }
+                                        }}
+                                      >
+                                        <span className="text-sm text-foreground">{subOption.label}</span>
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
                               </div>
                             )}
