@@ -124,6 +124,7 @@ const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount, on
   const [hoveredDBOption, setHoveredDBOption] = useState(false);
   const [showJumpsDialog, setShowJumpsDialog] = useState(false);
   const [showRotationsDialog, setShowRotationsDialog] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const specDropdownRef = useRef<HTMLDivElement>(null);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: entry.id });
   
@@ -132,6 +133,9 @@ const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount, on
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+
+  // Check if this entry has a selected DB element (should show combined view)
+  const hasDBElement = entry.specificationType === 'db-rotation' && entry.selectedDBElement;
 
 const renderSymbol = () => {
     const baseSymbol = (() => {
@@ -246,12 +250,22 @@ const renderSymbol = () => {
     return null;
   };
 
+  const getBaseValue = () => {
+    if (entry.type === 'one') return 0.1;
+    if (entry.type === 'two') return 0.2;
+    if (entry.type === 'axis') return 0.1;
+    if (entry.type === 'series') return (entry.seriesCount || 3) * 0.1 + 0.2;
+    return 0;
+  };
+
+  const getDBValue = () => {
+    return entry.selectedDBElement?.value ?? 0;
+  };
+
   const getValue = () => {
-    if (entry.type === 'one') return '0.1';
-    if (entry.type === 'two') return '0.2';
-    if (entry.type === 'axis') return '0.1';
-    if (entry.type === 'series') return ((entry.seriesCount || 3) * 0.1 + 0.2).toFixed(1);
-    return '0';
+    const baseValue = getBaseValue();
+    const dbValue = hasDBElement ? getDBValue() : 0;
+    return (baseValue + dbValue).toFixed(1);
   };
 
   // Only show specification button for actual rotations (not axis)
@@ -260,6 +274,233 @@ const renderSymbol = () => {
     ? ROTATION_SPECIFICATION_OPTIONS.find(o => o.value === entry.specificationType)?.label 
     : null;
 
+  const getBaseTypeName = () => {
+    if (entry.type === 'one') return 'One Rotation';
+    if (entry.type === 'two') return '2 Base Rotations';
+    if (entry.type === 'axis') return 'Axis/Level Change';
+    if (entry.type === 'series') return `Series (${entry.seriesCount || 3} rotations)`;
+    return '';
+  };
+
+  // If there's a DB element selected, show combined expandable row
+  if (hasDBElement) {
+    return (
+      <div ref={setNodeRef} style={style} className="border-b border-border bg-background">
+        {/* Main combined row */}
+        <div 
+          className="flex items-center cursor-pointer hover:bg-muted/50"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <div {...attributes} {...listeners} className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="w-12 flex justify-center py-4">
+            <div className="flex items-center gap-1">
+              {renderSymbol()}
+            </div>
+          </div>
+          <div className="flex-1 py-4 px-4">
+            <div className="flex items-center gap-2">
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+              <span className="font-medium text-foreground flex items-center gap-2">
+                {renderName()}
+              </span>
+              <span className="text-sm text-muted-foreground italic">
+                {selectedSpecLabel}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs text-primary hover:bg-primary/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSpecificationDropdown(!showSpecificationDropdown);
+                }}
+              >
+                Change
+              </Button>
+            </div>
+          </div>
+          <div className="w-20 py-4 px-2 text-center border-l border-border">
+            <p className="font-semibold text-primary">{getValue()}</p>
+          </div>
+          <div className="w-10 flex justify-center">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove(entry.id);
+              }} 
+              className="h-8 w-8 text-destructive hover:bg-destructive/10"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Expanded details - two sub-rows */}
+        {isExpanded && (
+          <div className="bg-muted/30">
+            {/* First sub-row: Base rotation type */}
+            <div className="flex items-center border-t border-border/50 pl-8">
+              <div className="w-8" />
+              <div className="w-12 flex justify-center py-3">
+                {entry.type === 'series' ? (
+                  <span className="text-xl font-bold text-foreground">S</span>
+                ) : entry.type === 'one' ? (
+                  symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 bg-muted rounded" />
+                ) : entry.type === 'two' ? (
+                  symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Rotation" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 bg-muted rounded" />
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </div>
+              <div className="flex-1 py-3 px-4">
+                <span className="text-sm text-muted-foreground">{getBaseTypeName()}</span>
+              </div>
+              <div className="w-20 py-3 px-2 text-center border-l border-border/50">
+                <span className="text-sm text-muted-foreground">{getBaseValue().toFixed(1)}</span>
+              </div>
+              <div className="w-10" />
+            </div>
+
+            {/* Second sub-row: Selected DB element */}
+            <div className="flex items-center border-t border-border/50 pl-8">
+              <div className="w-8" />
+              <div className="w-12 flex justify-center py-3">
+                {entry.selectedDBElement?.symbol_image ? (
+                  <img 
+                    src={entry.selectedDBElement.symbol_image} 
+                    alt={entry.selectedDBElement.name} 
+                    className="h-6 w-6 object-contain"
+                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                  />
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </div>
+              <div className="flex-1 py-3 px-4">
+                <span className="text-sm text-muted-foreground">{entry.selectedDBElement?.name}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-2 h-5 px-2 text-xs text-primary hover:bg-primary/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (entry.dbSubType === 'jumps') {
+                      setShowJumpsDialog(true);
+                    } else {
+                      setShowRotationsDialog(true);
+                    }
+                  }}
+                >
+                  Change
+                </Button>
+              </div>
+              <div className="w-20 py-3 px-2 text-center border-l border-border/50">
+                <span className="text-sm text-muted-foreground">{getDBValue()}</span>
+              </div>
+              <div className="w-10" />
+            </div>
+          </div>
+        )}
+
+        {/* Specification dropdown (for changing type) */}
+        {showSpecificationDropdown && (
+          <div className="absolute left-20 mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-[100]">
+            <div className="p-2 border-b border-border">
+              <span className="text-sm font-medium text-foreground">Select Rotation Type</span>
+            </div>
+            <div className="p-2 space-y-1">
+              {ROTATION_SPECIFICATION_OPTIONS.map((option) => (
+                option.hasSubmenu ? (
+                  <div
+                    key={option.value}
+                    className="relative group"
+                    onMouseEnter={() => setHoveredDBOption(true)}
+                    onMouseLeave={() => setHoveredDBOption(false)}
+                  >
+                    <div
+                      className={`p-3 rounded hover:bg-muted cursor-default flex items-center justify-between ${hoveredDBOption ? 'bg-muted' : ''}`}
+                    >
+                      <span className="text-sm text-foreground">{option.label}</span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    
+                    {hoveredDBOption && (
+                      <div 
+                        className="absolute left-full top-0 pl-1 z-[110]"
+                        onMouseEnter={() => setHoveredDBOption(true)}
+                      >
+                        <div className="w-64 bg-background border border-border rounded-lg shadow-xl">
+                          <div className="p-2 space-y-1">
+                            {DB_SUB_TYPE_OPTIONS.map((subOption) => (
+                              <div
+                                key={subOption.value}
+                                className="p-3 rounded hover:bg-muted cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onUpdateDBSubType(entry.id, subOption.value);
+                                  setShowSpecificationDropdown(false);
+                                  setHoveredDBOption(false);
+                                  if (subOption.value === 'jumps') {
+                                    setShowJumpsDialog(true);
+                                  } else {
+                                    setShowRotationsDialog(true);
+                                  }
+                                }}
+                              >
+                                <span className="text-sm text-foreground">{subOption.label}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div
+                    key={option.value}
+                    className={`p-3 rounded hover:bg-muted cursor-pointer ${entry.specificationType === option.value ? 'bg-primary/10' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUpdateSpecificationType(entry.id, option.value);
+                      setShowSpecificationDropdown(false);
+                    }}
+                  >
+                    <span className="text-sm text-foreground">{option.label}</span>
+                  </div>
+                )
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Dialogs for selecting DB elements */}
+        <DBRotationSelectionDialog
+          open={showJumpsDialog}
+          onOpenChange={setShowJumpsDialog}
+          elements={jumpsDBs}
+          title="Select Jump DB"
+          onSelect={(element) => onSelectDBElement(entry.id, element)}
+        />
+        <DBRotationSelectionDialog
+          open={showRotationsDialog}
+          onOpenChange={setShowRotationsDialog}
+          elements={rotationsDBs}
+          title="Select Rotation DB"
+          onSelect={(element) => onSelectDBElement(entry.id, element)}
+        />
+      </div>
+    );
+  }
+
+  // Regular row without DB element
   return (
     <div ref={setNodeRef} style={style} className="flex items-center border-b border-border bg-background">
       <div {...attributes} {...listeners} className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
@@ -273,7 +514,7 @@ const renderSymbol = () => {
           <span className="font-medium text-foreground">
             {renderName()}
           </span>
-{showSpecificationButton && (
+          {showSpecificationButton && (
             <div className="space-y-2">
               <div className="relative" ref={specDropdownRef}>
                 {selectedSpecLabel ? (
@@ -378,43 +619,6 @@ const renderSymbol = () => {
                   </div>
                 )}
               </div>
-
-              {/* Show selected DB element when db-rotation is selected */}
-              {entry.specificationType === 'db-rotation' && entry.selectedDBElement && (
-                <div className="ml-4">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <div className="flex items-center gap-2 bg-primary/5 px-2 py-1 rounded">
-                      {entry.selectedDBElement.symbol_image ? (
-                        <img 
-                          src={entry.selectedDBElement.symbol_image} 
-                          alt={entry.selectedDBElement.name} 
-                          className="h-6 w-6 object-contain"
-                          onError={(e) => (e.currentTarget.style.display = 'none')}
-                        />
-                      ) : (
-                        <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs">—</div>
-                      )}
-                      <span className="text-sm font-medium text-foreground">{entry.selectedDBElement.name}</span>
-                      <span className="text-sm text-primary font-semibold">{entry.selectedDBElement.value ?? 0}</span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-xs text-muted-foreground hover:bg-muted"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (entry.dbSubType === 'jumps') {
-                          setShowJumpsDialog(true);
-                        } else {
-                          setShowRotationsDialog(true);
-                        }
-                      }}
-                    >
-                      Change
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -503,14 +707,18 @@ const [catchCriteria, setCatchCriteria] = useState<CriteriaItem[]>([]);
   // Check if axis change already exists
   const hasAxisChange = rotationEntries.some(e => e.type === 'axis');
 
-  // Calculate rotation value based on entries
+  // Calculate rotation value based on entries (including DB element values)
   const getRotationValue = (): number => {
     return rotationEntries.reduce((sum, entry) => {
-      if (entry.type === 'one') return sum + 0.1;
-      if (entry.type === 'two') return sum + 0.2;
-      if (entry.type === 'axis') return sum + 0.1;
-      // Series: base rotations (0.1 each) + 0.2 series bonus
-      return sum + (entry.seriesCount || 3) * 0.1 + 0.2;
+      let baseValue = 0;
+      if (entry.type === 'one') baseValue = 0.1;
+      else if (entry.type === 'two') baseValue = 0.2;
+      else if (entry.type === 'axis') baseValue = 0.1;
+      else baseValue = (entry.seriesCount || 3) * 0.1 + 0.2; // Series
+      
+      // Add DB element value if selected
+      const dbValue = entry.selectedDBElement?.value ?? 0;
+      return sum + baseValue + dbValue;
     }, 0);
   };
 
