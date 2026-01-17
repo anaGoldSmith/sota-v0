@@ -46,6 +46,7 @@ interface RotationSelectionDialogProps {
     type: string;
   }>;
   getSymbolUrl: (symbolImage: string | null, bucketName: string) => string | null;
+  onOpenElementInfo?: (rotation: Rotation, rotationCount: number, totalValue: number, modifyingElementId?: string) => void;
 }
 
 export const RotationSelectionDialog = ({
@@ -63,7 +64,8 @@ export const RotationSelectionDialog = ({
   onRemoveElement,
   routineElementsMap,
   routineElements,
-  getSymbolUrl
+  getSymbolUrl,
+  onOpenElementInfo
 }: RotationSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedRotations, setSelectedRotations] = useState<Set<string>>(selectedRotationIds || new Set());
@@ -218,8 +220,15 @@ export const RotationSelectionDialog = ({
   };
 
   const handleExistingHandling = (rotation: Rotation) => {
-    setExistingHandlingRotation(rotation);
-    setShowExistingHandling(true);
+    // Get the modifying element ID if this rotation is already in the routine
+    const modifyingElementId = routineElementsMap?.get(rotation.id);
+    // Calculate the rotation count and total value from the stored routine element
+    // For now, use base values - the ElementInformationDialog will handle the details
+    const baseRotationCount = rotation.turn_degrees === "180" ? 0.5 : 1;
+    const baseTotalValue = rotation.value;
+    if (onOpenElementInfo) {
+      onOpenElementInfo(rotation, baseRotationCount, baseTotalValue, modifyingElementId);
+    }
   };
 
   // Function to render symbol images for existing handling

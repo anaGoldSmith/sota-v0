@@ -1604,6 +1604,9 @@ const RoutineCalculator = () => {
         onRemoveElement={handleRemoveElement}
         routineElementsMap={jumpToRoutineElementMap}
         routineElements={routineElements}
+        onOpenElementInfo={(jump, modifyingElementId) => {
+          handleSelectJump(jump, false, modifyingElementId);
+        }}
       />
 
       {/* Balance Selection Dialog */}
@@ -1625,6 +1628,9 @@ const RoutineCalculator = () => {
         onRemoveElement={handleRemoveElement}
         routineElementsMap={balanceToRoutineElementMap}
         routineElements={routineElements}
+        onOpenElementInfo={(balance, modifyingElementId) => {
+          handleSelectBalance(balance, false, modifyingElementId);
+        }}
       />
 
       {/* Rotation Selection Dialog */}
@@ -1647,6 +1653,9 @@ const RoutineCalculator = () => {
         routineElementsMap={rotationToRoutineElementMap}
         routineElements={routineElements}
         getSymbolUrl={getSymbolUrl}
+        onOpenElementInfo={(rotation, rotationCount, totalValue, modifyingElementId) => {
+          handleSelectRotation(rotation, rotationCount, totalValue, false, modifyingElementId);
+        }}
       />
 
       {/* Apparatus Selection Dialog */}
