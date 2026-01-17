@@ -472,14 +472,18 @@ export const ElementInformationDialog = ({
                   <span>DB:</span>
                   <span>{totalValue.toFixed(1)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>TE:</span>
-                  <span>0.0</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>DA:</span>
-                  <span>{selectedDaElements.reduce((sum, da) => sum + da.value, 0).toFixed(1)}</span>
-                </div>
+                {selectedTechnicalElements.length > 0 && (
+                  <div className="flex justify-between">
+                    <span>TE:</span>
+                    <span>0.0</span>
+                  </div>
+                )}
+                {selectedDaElements.length > 0 && (
+                  <div className="flex justify-between">
+                    <span>DA:</span>
+                    <span>{selectedDaElements.reduce((sum, da) => sum + da.value, 0).toFixed(1)}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
