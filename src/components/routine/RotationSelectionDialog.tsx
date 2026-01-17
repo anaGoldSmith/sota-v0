@@ -470,7 +470,7 @@ export const RotationSelectionDialog = ({
                                     {rotation.turn_degrees}°
                                   </span>
                                 )}
-                                {/* Handling button - only show for selected elements */}
+                                {/* More Info button - only show for selected elements */}
                                 {(isSelected || isPreviouslySelected) && (
                                   <Button
                                     size="sm"
@@ -481,7 +481,7 @@ export const RotationSelectionDialog = ({
                                       handleExistingHandling(rotation);
                                     }}
                                   >
-                                    Handling
+                                    More Info
                                   </Button>
                                 )}
                               </div>

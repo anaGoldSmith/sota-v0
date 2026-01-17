@@ -416,7 +416,7 @@ export const BalanceSelectionDialog = ({
                                     </div>
                                   )}
                                 </div>
-                                {/* Handling button - only show for selected elements */}
+                                {/* More Info button - only show for selected elements */}
                                 {(isSelected || isPreviouslySelected) && (
                                   <Button
                                     size="sm"
@@ -427,7 +427,7 @@ export const BalanceSelectionDialog = ({
                                       handleExistingHandling(balance);
                                     }}
                                   >
-                                    Handling
+                                    More Info
                                   </Button>
                                 )}
                               </div>
