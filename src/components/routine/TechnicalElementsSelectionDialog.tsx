@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,8 @@ interface TechnicalElementsSelectionDialogProps {
   apparatus: ApparatusType | null;
   onSelectTechnicalElements: (elements: TechnicalElement[]) => void;
   onGoBack: () => void;
+  // Pre-selected elements to show as already selected
+  initialSelectedElements?: Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }>;
 }
 
 export const TechnicalElementsSelectionDialog = ({
@@ -36,10 +38,18 @@ export const TechnicalElementsSelectionDialog = ({
   onOpenChange,
   apparatus,
   onSelectTechnicalElements,
-  onGoBack
+  onGoBack,
+  initialSelectedElements = []
 }: TechnicalElementsSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedElements, setSelectedElements] = useState<Set<string>>(new Set());
+
+  // Initialize selected elements from props when dialog opens
+  useEffect(() => {
+    if (open) {
+      setSelectedElements(new Set(initialSelectedElements.map(el => el.id)));
+    }
+  }, [open, initialSelectedElements]);
 
   // Fetch technical elements for the selected apparatus
   const { data: technicalElements = [], isLoading, error } = useQuery({

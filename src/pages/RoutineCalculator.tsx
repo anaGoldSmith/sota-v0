@@ -1748,6 +1748,7 @@ const RoutineCalculator = () => {
         apparatus={selectedApparatus}
         onSelectTechnicalElements={handleSelectTechnicalElements}
         onGoBack={handleTechnicalElementsGoBack}
+        initialSelectedElements={pendingTechnicalElements}
       />
 
       {/* Element Information Dialog for configuring new or modifying existing DB/DA/TE elements */}
@@ -1791,6 +1792,12 @@ const RoutineCalculator = () => {
         selectedDaElements={pendingDaElements}
         initialRotationCount={pendingElementInfo?.rotationCount}
         isModifying={modifyingRoutineElement !== null}
+        onRemoveTechnicalElement={(id) => {
+          setPendingTechnicalElements(prev => prev.filter(te => te.id !== id));
+        }}
+        onRemoveDaElement={(id) => {
+          setPendingDaElements(prev => prev.filter(da => da.id !== id));
+        }}
       />
     </div>
   );
