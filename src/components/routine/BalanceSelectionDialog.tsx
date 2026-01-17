@@ -153,14 +153,14 @@ export const BalanceSelectionDialog = ({
       setBalanceToRemove(balance);
       setShowRemoveDialog(true);
     } else {
-      // If not selected, select it immediately and show apparatus handling dialog
+      // If not selected, select it and immediately open Element Information Dialog
       setSelectedBalances(prev => {
         const newSet = new Set(prev);
         newSet.add(balance.id);
         return newSet;
       });
-      setPendingBalance(balance);
-      setShowApparatusHandling(true);
+      // Close this dialog and open Element Information Dialog via parent
+      onSelectBalance(balance, false);
     }
   };
 
