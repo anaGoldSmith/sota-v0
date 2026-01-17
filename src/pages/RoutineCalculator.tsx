@@ -112,11 +112,28 @@ interface RoutineElement {
   dbData?: {
     symbolImages: string[];
     value: number;
+    name?: string;
   };
   daData?: {
     symbolImages: string[];
     value: number;
+    name?: string;
   };
+  // For DB/TE with multiple technical elements
+  teElements?: Array<{
+    id: string;
+    code: string;
+    name: string;
+    symbolImage: string;
+    value: number;
+  }>;
+  // For DB/DA with multiple apparatus difficulty elements
+  daElements?: Array<{
+    id: string;
+    name: string;
+    symbolImages: string[];
+    value: number;
+  }>;
   // For Risk elements
   riskData?: RiskData;
   isExpanded?: boolean;
@@ -683,6 +700,14 @@ const RoutineCalculator = () => {
       // Calculate total DA value
       const totalDaValue = daElements.reduce((sum, el) => sum + el.value, 0);
       
+      // Store individual DA elements data for expanded view
+      const daElementsData = combinations.map((combo, idx) => ({
+        id: `da-${combo.element.id}-${idx}`,
+        name: combo.element.name || combo.element.description || 'DA Element',
+        symbolImages: daElements[idx]?.symbolImages || [],
+        value: combo.calculatedValue || combo.element.value,
+      }));
+      
       // Store current DA selection and symbols for success dialog
       setCurrentDACombinations(combinations);
       setCurrentDBSymbols(dbSymbolImages);
@@ -698,11 +723,13 @@ const RoutineCalculator = () => {
         dbData: {
           symbolImages: dbSymbolImages,
           value: dbElement.value,
+          name: dbElement.description || dbElement.name || 'DB Element',
         },
         daData: {
           symbolImages: daSymbolImages,
           value: totalDaValue,
         },
+        daElements: daElementsData,
         isExpanded: false,
       };
       
@@ -1072,6 +1099,17 @@ const RoutineCalculator = () => {
       setCurrentDBSymbols(dbSymbolImages);
       setCurrentDASymbols(teSymbolImages);
       
+      // Store individual technical element data for expanded view
+      const teElementsData = elements.map(el => ({
+        id: el.id,
+        code: el.code,
+        name: el.name,
+        symbolImage: el.symbol_image && selectedApparatus 
+          ? getTechnicalElementSymbol(el.symbol_image, selectedApparatus) || ''
+          : '',
+        value: 0, // Technical elements don't have point value
+      }));
+      
       // Create combined DB/TE element
       const combinedElement: RoutineElement = {
         id: modifyingElementId || `db-te-${dbType}-${dbElement.id}-${Date.now()}`,
@@ -1082,11 +1120,13 @@ const RoutineCalculator = () => {
         dbData: {
           symbolImages: dbSymbolImages,
           value: dbElement.value,
+          name: dbElement.description || dbElement.name || 'DB Element',
         },
         daData: {
           symbolImages: teSymbolImages,
           value: 0, // Technical elements don't have point value
         },
+        teElements: teElementsData,
         isExpanded: false,
       };
       
@@ -1362,42 +1402,95 @@ const RoutineCalculator = () => {
                             />
                           );
                           
-                          // If expanded and has DB/DA or DB/TE breakdown, show sub-rows
-                          if ((element.type === 'DB/DA' || element.type === 'DB/TE') && element.isExpanded && element.dbData && element.daData) {
-                            // DB sub-row
+                          // If expanded and has DB/DA or DB/TE breakdown, show detailed sub-table
+                          if ((element.type === 'DB/DA' || element.type === 'DB/TE') && element.isExpanded && element.dbData) {
                             rows.push(
-                              <SortableRow
-                                key={`${element.id}-db-sub`}
-                                element={{
-                                  id: `${element.id}-db-sub`,
-                                  type: 'DB',
-                                  symbolImages: element.dbData.symbolImages,
-                                  value: element.dbData.value,
-                                  originalData: element.originalData,
-                                }}
-                                index={index}
-                                itemNumber={`${itemNumber}.1`}
-                                onRemove={() => {}}
-                                isMainRow={false}
-                              />
-                            );
-                            
-                            // DA or TE sub-row
-                            rows.push(
-                              <SortableRow
-                                key={`${element.id}-da-sub`}
-                                element={{
-                                  id: `${element.id}-da-sub`,
-                                  type: element.type === 'DB/TE' ? 'TE' as RoutineElementType : 'DA',
-                                  symbolImages: element.daData.symbolImages,
-                                  value: element.daData.value,
-                                  originalData: element.originalData,
-                                }}
-                                index={index}
-                                itemNumber={`${itemNumber}.2`}
-                                onRemove={() => {}}
-                                isMainRow={false}
-                              />
+                              <TableRow key={`${element.id}-expanded`} className="bg-muted/10">
+                                <TableCell colSpan={6} className="p-4">
+                                  <div className="ml-8 border rounded-lg overflow-hidden">
+                                    <table className="w-full">
+                                      <thead className="bg-muted/30">
+                                        <tr>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Symbol</th>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Name</th>
+                                          <th className="py-2 px-4 text-right text-sm font-semibold text-muted-foreground">Value</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {/* DB Element Row */}
+                                        <tr className="bg-secondary/10">
+                                          <td className="py-2 px-4">
+                                            <div className="flex items-center gap-1">
+                                              {element.dbData.symbolImages.map((url, idx) => (
+                                                url.startsWith('TEXT:') ? (
+                                                  <span key={idx} className="text-lg font-bold">{url.replace('TEXT:', '')}</span>
+                                                ) : (
+                                                  <img key={idx} src={url} alt="Symbol" className="h-6 w-6 object-contain" />
+                                                )
+                                              ))}
+                                            </div>
+                                          </td>
+                                          <td className="py-2 px-4 font-medium">{element.dbData.name || 'DB Element'}</td>
+                                          <td className="py-2 px-4 text-right font-mono">{element.dbData.value.toFixed(1)}</td>
+                                        </tr>
+                                        
+                                        {/* Technical Elements Rows (for DB/TE) */}
+                                        {element.type === 'DB/TE' && element.teElements && element.teElements.map((te, idx) => (
+                                          <tr key={te.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                            <td className="py-2 px-4">
+                                              {te.symbolImage ? (
+                                                <img src={te.symbolImage} alt={te.name} className="h-6 w-6 object-contain" />
+                                              ) : (
+                                                <div className="h-6 w-6 bg-muted rounded" />
+                                              )}
+                                            </td>
+                                            <td className="py-2 px-4 font-medium">{te.name}</td>
+                                            <td className="py-2 px-4 text-right font-mono">{te.value.toFixed(1)}</td>
+                                          </tr>
+                                        ))}
+                                        
+                                        {/* DA Elements Rows (for DB/DA) - one row per DA element */}
+                                        {element.type === 'DB/DA' && element.daElements && element.daElements.map((da, idx) => (
+                                          <tr key={da.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                            <td className="py-2 px-4">
+                                              <div className="flex items-center gap-1">
+                                                {da.symbolImages.map((url, imgIdx) => (
+                                                  url.startsWith('TEXT:') ? (
+                                                    <span key={imgIdx} className="text-lg font-bold">{url.replace('TEXT:', '')}</span>
+                                                  ) : (
+                                                    <img key={imgIdx} src={url} alt="Symbol" className="h-6 w-6 object-contain" />
+                                                  )
+                                                ))}
+                                              </div>
+                                            </td>
+                                            <td className="py-2 px-4 font-medium">{da.name}</td>
+                                            <td className="py-2 px-4 text-right font-mono">{da.value.toFixed(1)}</td>
+                                          </tr>
+                                        ))}
+                                        
+                                        {/* Fallback: Single DA row if no daElements array (for DB/DA) */}
+                                        {element.type === 'DB/DA' && !element.daElements && element.daData && (
+                                          <tr>
+                                            <td className="py-2 px-4">
+                                              <div className="flex items-center gap-1">
+                                                {element.daData.symbolImages.map((url, idx) => (
+                                                  url.startsWith('TEXT:') ? (
+                                                    <span key={idx} className="text-lg font-bold">{url.replace('TEXT:', '')}</span>
+                                                  ) : (
+                                                    <img key={idx} src={url} alt="Symbol" className="h-6 w-6 object-contain" />
+                                                  )
+                                                ))}
+                                              </div>
+                                            </td>
+                                            <td className="py-2 px-4 font-medium">{element.daData.name || 'DA Element'}</td>
+                                            <td className="py-2 px-4 text-right font-mono">{element.daData.value.toFixed(1)}</td>
+                                          </tr>
+                                        )}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
                             );
                           }
                           
