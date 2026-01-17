@@ -719,6 +719,7 @@ const RoutineCalculator = () => {
   };
 
   const handleApparatusChange = (value: string) => {
+    console.log('Apparatus changed to:', value);
     if (value === 'hoop' || value === 'ball' || value === 'clubs' || value === 'ribbon') {
       setSelectedApparatus(value);
     } else {
@@ -1277,7 +1278,7 @@ const RoutineCalculator = () => {
 
             <div className="space-y-2">
               <Label htmlFor="apparatus">Apparatus</Label>
-              <Select value={selectedApparatus || ""} onValueChange={handleApparatusChange}>
+              <Select value={selectedApparatus ?? undefined} onValueChange={handleApparatusChange}>
                 <SelectTrigger id="apparatus">
                   <SelectValue placeholder="Select apparatus" />
                 </SelectTrigger>
