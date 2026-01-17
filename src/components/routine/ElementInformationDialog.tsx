@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Minus, Plus, X } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ApparatusType } from "@/types/apparatus";
 
@@ -283,12 +284,13 @@ export const ElementInformationDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md z-[60]">
-          <DialogHeader>
+        <DialogContent className="max-w-md z-[60] max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Element Information</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <ScrollArea className="flex-1 pr-4 -mr-4">
+            <div className="space-y-4 py-4">
             {/* ==================== ELEMENT SECTION ==================== */}
             <div className="p-4 bg-muted/30 rounded-lg border">
               {/* Header row with symbol, name/description, and value */}
@@ -529,8 +531,9 @@ export const ElementInformationDialog = ({
               </div>
             </div>
           </div>
+          </ScrollArea>
 
-          <DialogFooter className="flex gap-2 sm:gap-2">
+          <DialogFooter className="flex gap-2 sm:gap-2 flex-shrink-0 pt-4 border-t">
             <Button variant="outline" onClick={handleCancel}>
               Cancel
             </Button>
