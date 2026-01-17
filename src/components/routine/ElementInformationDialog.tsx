@@ -64,6 +64,8 @@ interface ElementInformationDialogProps {
   // Callbacks for removing individual TE/DA
   onRemoveTechnicalElement?: (id: string) => void;
   onRemoveDaElement?: (id: string) => void;
+  // Callback for rotation count changes (to persist state when navigating to TE/DA dialogs)
+  onRotationCountChange?: (count: number) => void;
 }
 
 export const ElementInformationDialog = ({
@@ -84,8 +86,15 @@ export const ElementInformationDialog = ({
   isModifying = false,
   onRemoveTechnicalElement,
   onRemoveDaElement,
+  onRotationCountChange,
 }: ElementInformationDialogProps) => {
   const [rotationCount, setRotationCount] = useState<number>(1);
+  
+  // Wrap setRotationCount to also notify parent
+  const updateRotationCount = (count: number) => {
+    setRotationCount(count);
+    onRotationCountChange?.(count);
+  };
   const [showWarningDialog, setShowWarningDialog] = useState(false);
 
   // Determine if this is a rotation with 180-degree base
@@ -158,16 +167,14 @@ export const ElementInformationDialog = ({
   const handleIncrement = () => {
     if (isFixedRotation || elementType !== 'rotation') return;
     const step = is180Degrees ? 0.5 : 1;
-    setRotationCount((prev) => prev + step);
+    updateRotationCount(rotationCount + step);
   };
 
   const handleDecrement = () => {
     if (isFixedRotation || elementType !== 'rotation') return;
-    setRotationCount((prev) => {
-      if (prev <= minValue) return prev;
-      const step = is180Degrees ? 0.5 : 1;
-      return prev - step;
-    });
+    if (rotationCount <= minValue) return;
+    const step = is180Degrees ? 0.5 : 1;
+    updateRotationCount(rotationCount - step);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,16 +184,16 @@ export const ElementInformationDialog = ({
     if (isNaN(value)) return;
     
     if (value < minValue) {
-      setRotationCount(minValue);
+      updateRotationCount(minValue);
       return;
     }
     
     if (is180Degrees) {
       const roundedValue = Math.round(value * 2) / 2;
-      setRotationCount(Math.max(minValue, roundedValue));
+      updateRotationCount(Math.max(minValue, roundedValue));
     } else {
       const roundedValue = Math.round(value);
-      setRotationCount(Math.max(minValue, roundedValue));
+      updateRotationCount(Math.max(minValue, roundedValue));
     }
   };
 
