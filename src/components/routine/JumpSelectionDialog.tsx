@@ -358,8 +358,8 @@ export const JumpSelectionDialog = ({
         </div>
 
         {/* Matrix Table */}
-        <div className="border rounded-md flex-1 min-h-0 relative">
-          <div className="h-[50vh] overflow-x-auto overflow-y-auto [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
+        <div className="border rounded-md flex-1 min-h-0 overflow-hidden">
+          <div className="max-h-[45vh] overflow-x-auto overflow-y-auto [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
             <Table>
               <TableHeader className="sticky top-0 z-20 bg-background">
                 <TableRow>
@@ -441,7 +441,7 @@ export const JumpSelectionDialog = ({
           </div>
         </div>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 pt-4 border-t mt-4 flex-shrink-0">
           <Button variant="outline" onClick={() => handleDialogChange(false)}>
             Cancel
           </Button>
