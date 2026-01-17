@@ -569,11 +569,18 @@ export const ElementInformationDialog = ({
             <AlertDialogTitle>
               {isPerRotationElement ? 'Missing Apparatus Handling' : `${getElementTypeLabel()} Without Apparatus Handling`}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              {isPerRotationElement 
-                ? `A Backward Illusion requires one TE or DA for each rotation to be valid. You have added ${currentHandlingCount} of ${requiredHandlingCount} required. Would you like to add the missing apparatus handling to validate the DB?`
-                : `You have added a new ${getElementTypeLabel().toLowerCase()} to the routine. However, the ${getElementTypeLabel().toLowerCase()} is not valid without an apparatus technical element or apparatus difficulty. Do you want to add apparatus handling?`
-              }
+            <AlertDialogDescription className="space-y-3">
+              <span>
+                {isPerRotationElement 
+                  ? `A Backward Illusion requires one TE or DA for each rotation to be valid. You have added ${currentHandlingCount} of ${requiredHandlingCount} required. Would you like to add the missing apparatus handling to validate the DB?`
+                  : `You have added a new ${getElementTypeLabel().toLowerCase()} to the routine. However, the ${getElementTypeLabel().toLowerCase()} is not valid without an apparatus technical element or apparatus difficulty. Do you want to add apparatus handling?`
+                }
+              </span>
+              {isPerRotationElement && (
+                <span className="block text-xs text-muted-foreground italic">
+                  Please note that each rotation in a Backward Illusion is counted as a separate DB. Therefore, apparatus handling must be selected for each rotation to be valid.
+                </span>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
