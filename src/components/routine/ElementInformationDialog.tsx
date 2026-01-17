@@ -499,9 +499,9 @@ export const ElementInformationDialog = ({
         </DialogContent>
       </Dialog>
 
-      {/* Warning Dialog */}
+      {/* Warning Dialog - higher z-index to appear above other dialogs */}
       <AlertDialog open={showWarningDialog} onOpenChange={setShowWarningDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[100]">
           <AlertDialogHeader>
             <AlertDialogTitle>{getElementTypeLabel()} Without Apparatus Handling</AlertDialogTitle>
             <AlertDialogDescription>
