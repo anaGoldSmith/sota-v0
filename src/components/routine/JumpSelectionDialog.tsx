@@ -418,7 +418,7 @@ export const JumpSelectionDialog = ({
                                 {jump.turn_degrees && jump.turn_degrees !== "NA" && <span className="text-xs text-muted-foreground">
                                     {jump.turn_degrees}°
                                   </span>}
-                                {/* Handling button - only show for selected elements */}
+                                {/* More Info button - only show for selected elements */}
                                 {(isSelected || isPreviouslySelected) && (
                                   <Button
                                     size="sm"
@@ -429,7 +429,7 @@ export const JumpSelectionDialog = ({
                                       handleExistingHandling(jump);
                                     }}
                                   >
-                                    Handling
+                                    More Info
                                   </Button>
                                 )}
                               </div> : null}
