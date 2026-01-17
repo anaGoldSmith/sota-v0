@@ -166,20 +166,49 @@ export const RotationSelectionDialog = ({
     }
   };
 
-  // Handle rotation count confirmation
-  const handleRotationCountConfirm = (rotation: Rotation, rotationCount: number, totalValue: number) => {
+  // Handle rotation count confirmation with apparatus handling
+  const handleRotationCountConfirm = (rotation: Rotation, rotationCount: number, totalValue: number, withApparatusHandling?: boolean) => {
     // Store the count and value for later use
     setPendingRotationCount(rotationCount);
     setPendingTotalValue(totalValue);
     
-    // Now select the rotation and show apparatus handling dialog
+    // Now select the rotation
     setSelectedRotations(prev => {
       const newSet = new Set(prev);
       newSet.add(rotation.id);
       return newSet;
     });
     setShowRotationCountDialog(false);
-    setShowApparatusHandling(true);
+    
+    if (withApparatusHandling) {
+      // If apparatus handling buttons were clicked, the dialog already closed
+      // and the apparatus dialog will be opened via callbacks
+      onSelectRotation(rotation, rotationCount, totalValue, true);
+    }
+  };
+
+  // Handle adding rotation without apparatus handling
+  const handleRotationCountConfirmWithoutHandling = (rotation: Rotation, rotationCount: number, totalValue: number) => {
+    // Mark this element as saved without apparatus handling
+    onMarkWithoutApparatusHandling?.(rotation.id);
+    
+    // Add the rotation to the routine calculator without apparatus handling
+    onSelectRotation(rotation, rotationCount, totalValue, false);
+    
+    // Remove from local selected state since it's now in the calculator
+    setSelectedRotations(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(rotation.id);
+      return newSet;
+    });
+    
+    setPendingRotation(null);
+    setPendingRotationCount(1);
+    setPendingTotalValue(0);
+    setShowRotationCountDialog(false);
+    
+    // Close the main dialog
+    onOpenChange(false);
   };
 
   const handleExistingHandling = (rotation: Rotation) => {
@@ -546,7 +575,11 @@ export const RotationSelectionDialog = ({
         }}
         rotation={pendingRotation}
         onConfirm={handleRotationCountConfirm}
+        onConfirmWithoutHandling={handleRotationCountConfirmWithoutHandling}
         getSymbolUrl={getSymbolUrl}
+        apparatus={apparatus}
+        onOpenApparatusDialog={onOpenApparatusDialog}
+        onOpenTechnicalElementsDialog={onOpenTechnicalElementsDialog}
       />
     </Dialog>
   );
