@@ -799,6 +799,7 @@ export type Database = {
           code: string
           created_at: string
           description: string
+          extra_value: number | null
           id: string
           name: string | null
           symbol_image: string | null
@@ -810,6 +811,7 @@ export type Database = {
           code: string
           created_at?: string
           description: string
+          extra_value?: number | null
           id?: string
           name?: string | null
           symbol_image?: string | null
@@ -821,6 +823,7 @@ export type Database = {
           code?: string
           created_at?: string
           description?: string
+          extra_value?: number | null
           id?: string
           name?: string | null
           symbol_image?: string | null
