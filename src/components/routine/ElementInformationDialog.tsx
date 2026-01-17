@@ -99,6 +99,12 @@ export const ElementInformationDialog = ({
     return element.code === "3.2101" || element.code === "3.2202";
   }, [element, elementType]);
 
+  // Check if this is a per-rotation element (code 3.1704) - each rotation counts at full value and needs its own TE/DA
+  const isPerRotationElement = useMemo(() => {
+    if (!element?.code || elementType !== 'rotation') return false;
+    return element.code === "3.1704";
+  }, [element, elementType]);
+
   // Check if rotation count is applicable (only for rotations)
   const showRotationCount = elementType === 'rotation';
 
@@ -133,6 +139,11 @@ export const ElementInformationDialog = ({
     if (isFixedRotation) {
       return baseValue;
     }
+
+    // For 3.1704: each rotation counts at full value (no extra_value, just multiply)
+    if (isPerRotationElement) {
+      return baseValue * rotationCount;
+    }
     
     if (is180Degrees) {
       const additionalHalfRotations = (rotationCount - 0.5) / 0.5;
@@ -141,7 +152,7 @@ export const ElementInformationDialog = ({
       const additionalFullRotations = Math.floor(rotationCount) - 1;
       return baseValue + (Math.max(0, additionalFullRotations) * extraValue);
     }
-  }, [element, elementType, rotationCount, is180Degrees, isFixedRotation]);
+  }, [element, elementType, rotationCount, is180Degrees, isFixedRotation, isPerRotationElement]);
 
   const handleIncrement = () => {
     if (isFixedRotation || elementType !== 'rotation') return;
@@ -179,8 +190,19 @@ export const ElementInformationDialog = ({
   };
 
   const hasApparatusHandling = selectedTechnicalElements.length > 0 || selectedDaElements.length > 0;
+  
+  // For 3.1704: each rotation needs its own TE or DA
+  const requiredHandlingCount = isPerRotationElement ? rotationCount : 1;
+  const currentHandlingCount = selectedTechnicalElements.length + selectedDaElements.length;
+  const hasEnoughHandling = currentHandlingCount >= requiredHandlingCount;
 
   const handleSave = () => {
+    // For 3.1704: must have at least one TE/DA per rotation, no skipping allowed
+    if (isPerRotationElement && !hasEnoughHandling) {
+      setShowWarningDialog(true);
+      return;
+    }
+    
     if (!hasApparatusHandling) {
       // Show warning that element needs apparatus handling
       setShowWarningDialog(true);
@@ -207,6 +229,12 @@ export const ElementInformationDialog = ({
   };
 
   const handleWarningNo = () => {
+    // For 3.1704: cannot skip apparatus handling
+    if (isPerRotationElement) {
+      setShowWarningDialog(false);
+      return; // Stay in dialog, don't save
+    }
+    
     // Save without apparatus handling
     if (element && elementType) {
       onSave({
@@ -337,12 +365,26 @@ export const ElementInformationDialog = ({
                   </div>
                   
                   {/* Value breakdown for rotations */}
-                  {!isFixedRotation && element.extra_value && rotationCount > minValue && (
+                  {!isFixedRotation && !isPerRotationElement && element.extra_value && rotationCount > minValue && (
                     <div className="text-xs text-muted-foreground mt-2">
                       Base: {element.value.toFixed(1)} + Extra: {is180Degrees
                         ? (((rotationCount - 0.5) / 0.5) * element.extra_value).toFixed(1)
                         : ((Math.floor(rotationCount) - 1) * element.extra_value).toFixed(1)
                       }
+                    </div>
+                  )}
+                  
+                  {/* Value breakdown for per-rotation element (3.1704) */}
+                  {isPerRotationElement && rotationCount > 1 && (
+                    <div className="text-xs text-muted-foreground mt-2">
+                      {rotationCount} × {element.value.toFixed(1)} = {totalValue.toFixed(1)}
+                    </div>
+                  )}
+                  
+                  {/* Per-rotation handling requirement notice */}
+                  {isPerRotationElement && (
+                    <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded text-xs text-amber-700 dark:text-amber-300">
+                      Each rotation requires its own TE or DA ({currentHandlingCount}/{requiredHandlingCount} added)
                     </div>
                   )}
                 </div>
@@ -430,25 +472,25 @@ export const ElementInformationDialog = ({
                 </div>
               )}
 
-              {/* Buttons - Mutually exclusive */}
+              {/* Buttons - Mutually exclusive (except for 3.1704 which allows multiple) */}
               <div className="flex gap-2 pt-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleTechnicalElementsClick}
-                  disabled={!apparatus || selectedDaElements.length > 0}
+                  disabled={!apparatus || (!isPerRotationElement && selectedDaElements.length > 0)}
                   className="flex-1 text-xs"
                 >
-                  {selectedTechnicalElements.length > 0 ? 'Change TE' : '+ Technical Elements'}
+                  {selectedTechnicalElements.length > 0 ? (isPerRotationElement ? '+ More TE' : 'Change TE') : '+ Technical Elements'}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleApparatusDifficultyClick}
-                  disabled={!apparatus || selectedTechnicalElements.length > 0}
+                  disabled={!apparatus || (!isPerRotationElement && selectedTechnicalElements.length > 0)}
                   className="flex-1 text-xs"
                 >
-                  {selectedDaElements.length > 0 ? 'Change DA' : '+ Apparatus Difficulty'}
+                  {selectedDaElements.length > 0 ? (isPerRotationElement ? '+ More DA' : 'Change DA') : '+ Apparatus Difficulty'}
                 </Button>
               </div>
 
@@ -503,14 +545,19 @@ export const ElementInformationDialog = ({
       <AlertDialog open={showWarningDialog} onOpenChange={setShowWarningDialog}>
         <AlertDialogContent className="z-[100]">
           <AlertDialogHeader>
-            <AlertDialogTitle>{getElementTypeLabel()} Without Apparatus Handling</AlertDialogTitle>
+            <AlertDialogTitle>
+              {isPerRotationElement ? 'Missing Apparatus Handling' : `${getElementTypeLabel()} Without Apparatus Handling`}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              You have added a new {getElementTypeLabel().toLowerCase()} to the routine. However, the {getElementTypeLabel().toLowerCase()} is not valid without an apparatus technical element or apparatus difficulty. Do you want to add apparatus handling?
+              {isPerRotationElement 
+                ? `This rotation requires one TE or DA for each rotation. You have ${currentHandlingCount} of ${requiredHandlingCount} required. Please add ${requiredHandlingCount - currentHandlingCount} more.`
+                : `You have added a new ${getElementTypeLabel().toLowerCase()} to the routine. However, the ${getElementTypeLabel().toLowerCase()} is not valid without an apparatus technical element or apparatus difficulty. Do you want to add apparatus handling?`
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleWarningNo}>No</AlertDialogCancel>
-            <AlertDialogAction onClick={handleWarningYes}>Yes</AlertDialogAction>
+            {!isPerRotationElement && <AlertDialogCancel onClick={handleWarningNo}>No</AlertDialogCancel>}
+            <AlertDialogAction onClick={handleWarningYes}>{isPerRotationElement ? 'OK' : 'Yes'}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
