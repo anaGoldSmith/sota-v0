@@ -1113,7 +1113,7 @@ const RoutineCalculator = () => {
         dbData: {
           symbolImages: dbSymbolImages,
           value: totalValue,
-          name: element.description || element.name || 'DB Element',
+          name: element.name || element.description || 'DB Element',
         },
         daData: {
           symbolImages: teSymbolImages,
@@ -1149,7 +1149,7 @@ const RoutineCalculator = () => {
         dbData: {
           symbolImages: dbSymbolImages,
           value: totalValue,
-          name: element.description || element.name || 'DB Element',
+          name: element.name || element.description || 'DB Element',
         },
         daData: {
           symbolImages: daSymbolImages,
