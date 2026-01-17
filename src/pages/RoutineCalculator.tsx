@@ -65,6 +65,7 @@ interface SelectedRotation {
   description: string;
   value: number;
   turn_degrees: string | null;
+  extra_value: number | null;
   symbol_image: string | null;
 }
 
