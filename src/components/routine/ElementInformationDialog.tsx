@@ -237,12 +237,6 @@ export const ElementInformationDialog = ({
   };
 
   const handleWarningNo = () => {
-    // For 3.1704: cannot skip apparatus handling
-    if (isPerRotationElement) {
-      setShowWarningDialog(false);
-      return; // Stay in dialog, don't save
-    }
-    
     // Save without apparatus handling
     if (element && elementType) {
       onSave({
@@ -251,6 +245,23 @@ export const ElementInformationDialog = ({
         rotationCount,
         totalValue,
         withApparatusHandling: false,
+      });
+      setShowWarningDialog(false);
+      onOpenChange(false);
+    }
+  };
+
+  // For 3.1704: No = save with missing handling anyway
+  const handleWarningNo3_1704 = () => {
+    if (element && elementType) {
+      onSave({
+        element,
+        elementType,
+        rotationCount,
+        totalValue,
+        technicalElements: selectedTechnicalElements.length > 0 ? selectedTechnicalElements : undefined,
+        daElements: selectedDaElements.length > 0 ? selectedDaElements : undefined,
+        withApparatusHandling: hasApparatusHandling,
       });
       setShowWarningDialog(false);
       onOpenChange(false);
@@ -560,14 +571,14 @@ export const ElementInformationDialog = ({
             </AlertDialogTitle>
             <AlertDialogDescription>
               {isPerRotationElement 
-                ? `This rotation requires one TE or DA for each rotation. You have ${currentHandlingCount} of ${requiredHandlingCount} required. Please add ${requiredHandlingCount - currentHandlingCount} more.`
+                ? `A Backward Illusion requires one TE or DA for each rotation to be valid. You have added ${currentHandlingCount} of ${requiredHandlingCount} required. Would you like to add the missing apparatus handling to validate the DB?`
                 : `You have added a new ${getElementTypeLabel().toLowerCase()} to the routine. However, the ${getElementTypeLabel().toLowerCase()} is not valid without an apparatus technical element or apparatus difficulty. Do you want to add apparatus handling?`
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            {!isPerRotationElement && <AlertDialogCancel onClick={handleWarningNo}>No</AlertDialogCancel>}
-            <AlertDialogAction onClick={handleWarningYes}>{isPerRotationElement ? 'OK' : 'Yes'}</AlertDialogAction>
+            <AlertDialogCancel onClick={isPerRotationElement ? handleWarningNo3_1704 : handleWarningNo}>No</AlertDialogCancel>
+            <AlertDialogAction onClick={handleWarningYes}>Yes</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
