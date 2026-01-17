@@ -222,13 +222,15 @@ export const ElementInformationDialog = ({
   };
 
   const handleApparatusDifficultyClick = () => {
-    // Don't close this dialog - just trigger opening apparatus dialog
-    onOpenApparatusDialog();
+    // Close this dialog first, then open apparatus dialog
+    onOpenChange(false);
+    setTimeout(() => onOpenApparatusDialog(), 100);
   };
 
   const handleTechnicalElementsClick = () => {
-    // Don't close this dialog - just trigger opening technical elements dialog
-    onOpenTechnicalElementsDialog();
+    // Close this dialog first, then open technical elements dialog
+    onOpenChange(false);
+    setTimeout(() => onOpenTechnicalElementsDialog(), 100);
   };
 
   if (!element) return null;
