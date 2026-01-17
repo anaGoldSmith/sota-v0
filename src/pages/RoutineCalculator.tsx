@@ -620,11 +620,18 @@ const RoutineCalculator = () => {
     setSelectedBalances((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSelectRotation = (rotation: SelectedRotation, withApparatusHandling: boolean = false, modifyingElementId?: string) => {
+  const handleSelectRotation = (rotation: SelectedRotation, rotationCount: number, totalValue: number, withApparatusHandling: boolean = false, modifyingElementId?: string) => {
     // Only add to selectedRotations if not modifying an existing element
     if (!modifyingElementId) {
       setSelectedRotations((prev) => [...prev, rotation]);
     }
+    
+    // Store rotation count info in the rotation object for use later
+    const rotationWithCount = {
+      ...rotation,
+      rotationCount,
+      calculatedValue: totalValue,
+    };
     
     // If withApparatusHandling is true, we'll wait for DA to be added before creating the routine element
     if (!withApparatusHandling) {
@@ -633,14 +640,14 @@ const RoutineCalculator = () => {
         id: `rotation-${rotation.id}-${Date.now()}`,
         type: 'DB',
         symbolImages: rotation.symbol_image ? [getSymbolUrl(rotation.symbol_image, 'jump-symbols') || ''] : [],
-        value: rotation.value,
-        originalData: rotation,
+        value: totalValue, // Use the calculated total value
+        originalData: rotationWithCount,
       };
       setRoutineElements((prev) => [...prev, newElement]);
     } else {
       // Store as pending DB element to link with DA later
       setPendingDbElement({ 
-        element: rotation, 
+        element: rotationWithCount, 
         type: 'rotation',
         modifyingElementId 
       });
@@ -1467,6 +1474,7 @@ const RoutineCalculator = () => {
         onRemoveElement={handleRemoveElement}
         routineElementsMap={rotationToRoutineElementMap}
         routineElements={routineElements}
+        getSymbolUrl={getSymbolUrl}
       />
 
       {/* Apparatus Selection Dialog */}

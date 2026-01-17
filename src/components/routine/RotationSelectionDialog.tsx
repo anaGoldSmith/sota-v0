@@ -14,7 +14,7 @@ import { ApparatusHandlingDialog } from "./ApparatusHandlingDialog";
 import { ApparatusType } from "@/types/apparatus";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ExistingHandlingDialog } from "./ExistingHandlingDialog";
-
+import { RotationCountDialog } from "./RotationCountDialog";
 interface Rotation {
   id: string;
   code: string;
@@ -29,7 +29,7 @@ interface Rotation {
 interface RotationSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectRotation: (rotation: Rotation, withApparatusHandling?: boolean, modifyingElementId?: string) => void;
+  onSelectRotation: (rotation: Rotation, rotationCount: number, totalValue: number, withApparatusHandling?: boolean, modifyingElementId?: string) => void;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
   onOpenTechnicalElementsDialog: () => void;
@@ -45,6 +45,7 @@ interface RotationSelectionDialogProps {
     symbolImages: string[];
     type: string;
   }>;
+  getSymbolUrl: (symbolImage: string | null, bucketName: string) => string | null;
 }
 
 export const RotationSelectionDialog = ({
@@ -61,7 +62,8 @@ export const RotationSelectionDialog = ({
   onMarkWithoutApparatusHandling,
   onRemoveElement,
   routineElementsMap,
-  routineElements
+  routineElements,
+  getSymbolUrl
 }: RotationSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedRotations, setSelectedRotations] = useState<Set<string>>(selectedRotationIds || new Set());
@@ -71,6 +73,9 @@ export const RotationSelectionDialog = ({
   const [rotationToRemove, setRotationToRemove] = useState<Rotation | null>(null);
   const [showExistingHandling, setShowExistingHandling] = useState(false);
   const [existingHandlingRotation, setExistingHandlingRotation] = useState<Rotation | null>(null);
+  const [showRotationCountDialog, setShowRotationCountDialog] = useState(false);
+  const [pendingRotationCount, setPendingRotationCount] = useState<number>(1);
+  const [pendingTotalValue, setPendingTotalValue] = useState<number>(0);
 
   // Watch for signal to reopen apparatus handling dialog
   useEffect(() => {
@@ -155,15 +160,26 @@ export const RotationSelectionDialog = ({
       setRotationToRemove(rotation);
       setShowRemoveDialog(true);
     } else {
-      // If not selected, select it immediately and show apparatus handling dialog
-      setSelectedRotations(prev => {
-        const newSet = new Set(prev);
-        newSet.add(rotation.id);
-        return newSet;
-      });
+      // If not selected, first show rotation count dialog
       setPendingRotation(rotation);
-      setShowApparatusHandling(true);
+      setShowRotationCountDialog(true);
     }
+  };
+
+  // Handle rotation count confirmation
+  const handleRotationCountConfirm = (rotation: Rotation, rotationCount: number, totalValue: number) => {
+    // Store the count and value for later use
+    setPendingRotationCount(rotationCount);
+    setPendingTotalValue(totalValue);
+    
+    // Now select the rotation and show apparatus handling dialog
+    setSelectedRotations(prev => {
+      const newSet = new Set(prev);
+      newSet.add(rotation.id);
+      return newSet;
+    });
+    setShowRotationCountDialog(false);
+    setShowApparatusHandling(true);
   };
 
   const handleExistingHandling = (rotation: Rotation) => {
@@ -250,7 +266,7 @@ export const RotationSelectionDialog = ({
     if (pendingRotation) {
       if (isApparatusDifficulty || isTechnicalElements) {
         // Call onSelectRotation to set pendingDbElement in parent for both DA and TE
-        onSelectRotation(pendingRotation, true);
+        onSelectRotation(pendingRotation, pendingRotationCount, pendingTotalValue, true);
         // Don't close the dialog or clear state yet - DA/TE table will handle that
       } else {
         // For skip, reset and close
@@ -258,6 +274,8 @@ export const RotationSelectionDialog = ({
         setSearchText("");
         onOpenChange(false);
         setPendingRotation(null);
+        setPendingRotationCount(1);
+        setPendingTotalValue(0);
       }
     }
     setShowApparatusHandling(false);
@@ -269,7 +287,7 @@ export const RotationSelectionDialog = ({
       onMarkWithoutApparatusHandling?.(pendingRotation.id);
       
       // Add the rotation to the routine calculator without apparatus handling
-      onSelectRotation(pendingRotation, false);
+      onSelectRotation(pendingRotation, pendingRotationCount, pendingTotalValue, false);
       
       // Remove from local selected state since it's now in the calculator
       setSelectedRotations(prev => {
@@ -279,21 +297,14 @@ export const RotationSelectionDialog = ({
       });
       
       setPendingRotation(null);
+      setPendingRotationCount(1);
+      setPendingTotalValue(0);
     }
     setShowApparatusHandling(false);
   };
 
   const handleConfirmSelection = () => {
-    const selectedRotationObjects = rotations?.filter(r => selectedRotations.has(r.id)) || [];
-    
-    // Only add rotations that are NOT already in the routine (not being modified)
-    selectedRotationObjects.forEach(rotation => {
-      const isBeingModified = routineElementsMap?.has(rotation.id);
-      if (!isBeingModified) {
-        onSelectRotation(rotation);
-      }
-    });
-    
+    // This function is no longer used since we now require rotation count dialog first
     setSelectedRotations(new Set());
     setSearchText("");
     onOpenChange(false);
@@ -498,7 +509,8 @@ export const RotationSelectionDialog = ({
             // Get the routineElement ID for this rotation
             const routineElementId = routineElementsMap?.get(existingHandlingRotation.id);
             // Call the parent's callback to set pendingDbElement with modifying ID
-            onSelectRotation(existingHandlingRotation, true, routineElementId);
+            // Use default values for existing elements being modified
+            onSelectRotation(existingHandlingRotation, 1, existingHandlingRotation.value, true, routineElementId);
             setShowExistingHandling(false);
             // Close the rotation dialog so technical elements dialog can open
             onOpenChange(false);
@@ -511,7 +523,8 @@ export const RotationSelectionDialog = ({
             // Get the routineElement ID for this rotation
             const routineElementId = routineElementsMap?.get(existingHandlingRotation.id);
             // Call the parent's callback to set pendingDbElement with modifying ID
-            onSelectRotation(existingHandlingRotation, true, routineElementId);
+            // Use default values for existing elements being modified
+            onSelectRotation(existingHandlingRotation, 1, existingHandlingRotation.value, true, routineElementId);
             setShowExistingHandling(false);
             // Close the rotation dialog so apparatus dialog can open
             onOpenChange(false);
@@ -520,6 +533,20 @@ export const RotationSelectionDialog = ({
           }
         }}
         onCancel={() => setShowExistingHandling(false)}
+      />
+
+      {/* Rotation Count Dialog */}
+      <RotationCountDialog
+        open={showRotationCountDialog}
+        onOpenChange={(open) => {
+          setShowRotationCountDialog(open);
+          if (!open) {
+            setPendingRotation(null);
+          }
+        }}
+        rotation={pendingRotation}
+        onConfirm={handleRotationCountConfirm}
+        getSymbolUrl={getSymbolUrl}
       />
     </Dialog>
   );
