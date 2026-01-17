@@ -160,9 +160,15 @@ export const RotationSelectionDialog = ({
       setRotationToRemove(rotation);
       setShowRemoveDialog(true);
     } else {
-      // If not selected, first show rotation count dialog
-      setPendingRotation(rotation);
-      setShowRotationCountDialog(true);
+      // If not selected, select it and immediately open Element Information Dialog
+      setSelectedRotations(prev => {
+        const newSet = new Set(prev);
+        newSet.add(rotation.id);
+        return newSet;
+      });
+      // Close this dialog and open Element Information Dialog via parent
+      // Pass default rotation count of 1 (will be adjustable in Element Information Dialog)
+      onSelectRotation(rotation, 1, rotation.value, false);
     }
   };
 
