@@ -552,11 +552,11 @@ export const ElementInformationDialog = ({
           </ScrollArea>
 
           <DialogFooter className="flex gap-2 sm:gap-2 flex-shrink-0 pt-4 border-t">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
             <Button onClick={handleSave}>
               Save
+            </Button>
+            <Button variant="outline" onClick={handleCancel}>
+              Cancel
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -584,8 +584,8 @@ export const ElementInformationDialog = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={isPerRotationElement ? handleWarningNo3_1704 : handleWarningNo}>No</AlertDialogCancel>
             <AlertDialogAction onClick={handleWarningYes}>Yes</AlertDialogAction>
+            <AlertDialogCancel onClick={isPerRotationElement ? handleWarningNo3_1704 : handleWarningNo}>No</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
