@@ -840,7 +840,7 @@ const RoutineCalculator = () => {
   };
 
   // Calculate scores from routine elements
-  const dbElements = routineElements.filter(el => el.type === 'DB' || el.type === 'DB/DA');
+  const dbElements = routineElements.filter(el => el.type === 'DB' || el.type === 'DB/DA' || el.type === 'DB/TE');
   
   // Calculate DB values from explicit DB elements
   const explicitDbValue = dbElements.reduce((sum, el) => {
