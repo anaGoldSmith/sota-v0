@@ -31,6 +31,8 @@ interface TechnicalElementsSelectionDialogProps {
   onGoBack: () => void;
   // Pre-selected elements to show as already selected
   initialSelectedElements?: Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }>;
+  // Element type to filter "Under the flight" technical elements
+  elementType?: 'jump' | 'rotation' | 'balance' | null;
 }
 
 export const TechnicalElementsSelectionDialog = ({
@@ -39,7 +41,8 @@ export const TechnicalElementsSelectionDialog = ({
   apparatus,
   onSelectTechnicalElements,
   onGoBack,
-  initialSelectedElements = []
+  initialSelectedElements = [],
+  elementType
 }: TechnicalElementsSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedElements, setSelectedElements] = useState<Set<string>>(new Set());
@@ -109,20 +112,59 @@ export const TechnicalElementsSelectionDialog = ({
     return publicUrl;
   };
 
-  // Filter elements based on search
+  // Filter elements based on search and element type
+  // "Under the flight" elements should be filtered to show only the relevant type:
+  // - codes ending in .1 are for jumps (e.g., H13.1, B11.1)
+  // - codes ending in .2 are for balances (e.g., H13.2, B11.2)
+  // - codes ending in .3 are for rotations (e.g., H13.3, B11.3)
   const filteredElements = useMemo(() => {
     if (!technicalElements) return [];
     
-    if (!searchText) return technicalElements;
+    // First, filter out wrong "Under the flight" elements based on elementType
+    let typeFilteredElements = technicalElements.filter(el => {
+      const lowerName = el.name.toLowerCase();
+      const lowerParentGroup = el.parent_group.toLowerCase();
+      
+      // Check if this is an "Under the flight" element
+      const isUnderFlight = lowerName.includes('under the flight') || 
+                            lowerParentGroup.includes('under the flight') ||
+                            lowerParentGroup.includes('under flight');
+      
+      if (!isUnderFlight) {
+        // Not an "Under the flight" element, keep it
+        return true;
+      }
+      
+      // This is an "Under the flight" element, filter based on elementType
+      if (!elementType) {
+        // If no element type specified, show all
+        return true;
+      }
+      
+      // Check the code suffix to determine the type
+      // .1 = jump, .2 = balance, .3 = rotation
+      if (elementType === 'jump') {
+        return el.code.endsWith('.1');
+      } else if (elementType === 'balance') {
+        return el.code.endsWith('.2');
+      } else if (elementType === 'rotation') {
+        return el.code.endsWith('.3');
+      }
+      
+      return true;
+    });
+    
+    // Then apply search filter
+    if (!searchText) return typeFilteredElements;
     
     const lowerSearch = searchText.toLowerCase();
-    return technicalElements.filter(el => 
+    return typeFilteredElements.filter(el => 
       el.code.toLowerCase().includes(lowerSearch) ||
       el.name.toLowerCase().includes(lowerSearch) ||
       el.description.toLowerCase().includes(lowerSearch) ||
       el.parent_group.toLowerCase().includes(lowerSearch)
     );
-  }, [technicalElements, searchText]);
+  }, [technicalElements, searchText, elementType]);
 
   // Group elements by parent_group
   const groupedElements = useMemo(() => {

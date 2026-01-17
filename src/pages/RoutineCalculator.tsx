@@ -1759,6 +1759,7 @@ const RoutineCalculator = () => {
         onSelectTechnicalElements={handleSelectTechnicalElements}
         onGoBack={handleTechnicalElementsGoBack}
         initialSelectedElements={pendingTechnicalElements}
+        elementType={pendingElementInfo?.elementType || pendingDbElement?.type || null}
       />
 
       {/* Element Information Dialog for configuring new or modifying existing DB/DA/TE elements */}
