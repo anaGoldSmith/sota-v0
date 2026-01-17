@@ -102,8 +102,8 @@ export const BalanceSelectionDialog = ({
     const afterDot = parts[1];
     if (afterDot.length < 3) return null;
     const rowNumber = parseInt(afterDot.slice(0, -2));
-    const valueCode = afterDot.slice(-2);
-    const value = parseFloat(`0.${valueCode}`);
+    const valueCode = parseInt(afterDot.slice(-2));
+    const value = valueCode / 10; // "03" -> 0.3, "01" -> 0.1
     return { rowNumber, value };
   };
 
