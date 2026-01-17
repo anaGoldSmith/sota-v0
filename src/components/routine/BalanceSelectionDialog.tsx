@@ -80,6 +80,13 @@ export const BalanceSelectionDialog = ({
     }
   }, [open, shouldReopenApparatusHandling, onApparatusHandlingReopened]);
 
+  // Sync selectedBalances with parent's selectedBalanceIds when dialog opens or parent state changes
+  useEffect(() => {
+    if (open && selectedBalanceIds) {
+      setSelectedBalances(new Set(selectedBalanceIds));
+    }
+  }, [open, selectedBalanceIds]);
+
   const {
     data: balances,
     isLoading,

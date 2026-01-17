@@ -79,10 +79,10 @@ export const JumpSelectionDialog = ({
     }
   }, [open, shouldReopenApparatusHandling, onApparatusHandlingReopened]);
 
-  // Sync selectedJumps with parent's selectedJumpIds when dialog opens
+  // Sync selectedJumps with parent's selectedJumpIds when dialog opens or parent state changes
   useEffect(() => {
-    if (open) {
-      // Don't override local selections, just ensure we're aware of parent state
+    if (open && selectedJumpIds) {
+      setSelectedJumps(new Set(selectedJumpIds));
     }
   }, [open, selectedJumpIds]);
 
