@@ -114,6 +114,8 @@ interface RoutineElement {
     symbolImages: string[];
     value: number;
     name?: string;
+    elementType?: 'jump' | 'rotation' | 'balance';
+    rotationCount?: number;
   };
   daData?: {
     symbolImages: string[];
@@ -1114,6 +1116,8 @@ const RoutineCalculator = () => {
           symbolImages: dbSymbolImages,
           value: totalValue,
           name: element.name || element.description || 'DB Element',
+          elementType: elementType,
+          rotationCount: elementType === 'rotation' ? rotationCount : undefined,
         },
         daData: {
           symbolImages: teSymbolImages,
@@ -1150,6 +1154,8 @@ const RoutineCalculator = () => {
           symbolImages: dbSymbolImages,
           value: totalValue,
           name: element.name || element.description || 'DB Element',
+          elementType: elementType,
+          rotationCount: elementType === 'rotation' ? rotationCount : undefined,
         },
         daData: {
           symbolImages: daSymbolImages,
@@ -1490,6 +1496,7 @@ const RoutineCalculator = () => {
                                     <table className="w-full">
                                       <thead className="bg-muted/30">
                                         <tr>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground w-16">Type</th>
                                           <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Symbol</th>
                                           <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Name</th>
                                           <th className="py-2 px-4 text-right text-sm font-semibold text-muted-foreground">Value</th>
@@ -1498,6 +1505,9 @@ const RoutineCalculator = () => {
                                       <tbody>
                                         {/* DB Element Row */}
                                         <tr className="bg-secondary/10">
+                                          <td className="py-2 px-4">
+                                            <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">DB</span>
+                                          </td>
                                           <td className="py-2 px-4">
                                             <div className="flex items-center gap-1">
                                               {element.dbData.symbolImages.map((url, idx) => (
@@ -1509,13 +1519,25 @@ const RoutineCalculator = () => {
                                               ))}
                                             </div>
                                           </td>
-                                          <td className="py-2 px-4 font-medium">{element.dbData.name || 'DB Element'}</td>
+                                          <td className="py-2 px-4 font-medium">
+                                            <div className="flex flex-col">
+                                              <span>{element.dbData.name || 'DB Element'}</span>
+                                              {element.dbData.elementType === 'rotation' && element.dbData.rotationCount && (
+                                                <span className="text-xs text-muted-foreground">
+                                                  ({element.dbData.rotationCount} {element.dbData.rotationCount === 1 ? 'rotation' : 'rotations'})
+                                                </span>
+                                              )}
+                                            </div>
+                                          </td>
                                           <td className="py-2 px-4 text-right font-mono">{element.dbData.value.toFixed(1)}</td>
                                         </tr>
                                         
                                         {/* Technical Elements Rows (for DB/TE) */}
                                         {element.type === 'DB/TE' && element.teElements && element.teElements.map((te, idx) => (
                                           <tr key={te.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                            <td className="py-2 px-4">
+                                              <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded dark:text-green-300 dark:bg-green-900/30">TE</span>
+                                            </td>
                                             <td className="py-2 px-4">
                                               {te.symbolImage ? (
                                                 <img src={te.symbolImage} alt={te.name} className="h-6 w-6 object-contain" />
@@ -1531,6 +1553,9 @@ const RoutineCalculator = () => {
                                         {/* DA Elements Rows (for DB/DA) - one row per DA element */}
                                         {element.type === 'DB/DA' && element.daElements && element.daElements.map((da, idx) => (
                                           <tr key={da.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                            <td className="py-2 px-4">
+                                              <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
+                                            </td>
                                             <td className="py-2 px-4">
                                               <div className="flex items-center gap-1">
                                                 {da.symbolImages.map((url, imgIdx) => (
@@ -1550,6 +1575,9 @@ const RoutineCalculator = () => {
                                         {/* Fallback: Single DA row if no daElements array (for DB/DA) */}
                                         {element.type === 'DB/DA' && !element.daElements && element.daData && (
                                           <tr>
+                                            <td className="py-2 px-4">
+                                              <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
+                                            </td>
                                             <td className="py-2 px-4">
                                               <div className="flex items-center gap-1">
                                                 {element.daData.symbolImages.map((url, idx) => (
