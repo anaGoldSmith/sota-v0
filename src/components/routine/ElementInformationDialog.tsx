@@ -367,8 +367,8 @@ export const ElementInformationDialog = ({
                       {isFixedRotation
                         ? "Fixed rotation"
                         : is180Degrees 
-                          ? "Min: 0.5, step: 0.5"
-                          : "Min: 1, step: 1"
+                          ? "Min: 0.5"
+                          : "Min: 1"
                       }
                     </div>
                   </div>
