@@ -284,13 +284,13 @@ export const ElementInformationDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md z-[60] max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-md z-[60] max-h-[85vh] flex flex-col overflow-hidden">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>Element Information</DialogTitle>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 pr-4 -mr-4">
-            <div className="space-y-4 py-4">
+          <ScrollArea className="flex-1 max-h-[60vh] overflow-auto">
+            <div className="space-y-4 py-4 pr-4">
             {/* ==================== ELEMENT SECTION ==================== */}
             <div className="p-4 bg-muted/30 rounded-lg border">
               {/* Header row with symbol, name/description, and value */}
