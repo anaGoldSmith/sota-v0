@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, X } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ApparatusType } from "@/types/apparatus";
 
@@ -60,6 +60,9 @@ interface ElementInformationDialogProps {
   // For modifying existing element
   initialRotationCount?: number;
   isModifying?: boolean;
+  // Callbacks for removing individual TE/DA
+  onRemoveTechnicalElement?: (id: string) => void;
+  onRemoveDaElement?: (id: string) => void;
 }
 
 export const ElementInformationDialog = ({
@@ -78,6 +81,8 @@ export const ElementInformationDialog = ({
   selectedDaElements = [],
   initialRotationCount,
   isModifying = false,
+  onRemoveTechnicalElement,
+  onRemoveDaElement,
 }: ElementInformationDialogProps) => {
   const [rotationCount, setRotationCount] = useState<number>(1);
   const [showWarningDialog, setShowWarningDialog] = useState(false);
@@ -359,21 +364,36 @@ export const ElementInformationDialog = ({
               </div>
             </div>
 
-            {/* Selected Technical Elements */}
+            {/* Selected Technical Elements - Each in separate row with remove button */}
             {selectedTechnicalElements.length > 0 && (
               <div className="space-y-2">
                 <Label>Technical Elements</Label>
-                <div className="flex flex-wrap gap-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+                <div className="space-y-2">
                   {selectedTechnicalElements.map((te) => {
                     const teSymbolUrl = te.symbol_image && apparatus && getTechnicalElementSymbol
                       ? getTechnicalElementSymbol(te.symbol_image, apparatus)
                       : null;
                     return (
-                      <div key={te.id} className="flex items-center gap-1 bg-background rounded px-2 py-1 border">
-                        {teSymbolUrl && (
-                          <img src={teSymbolUrl} alt={te.name} className="h-6 w-6 object-contain" />
+                      <div 
+                        key={te.id} 
+                        className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          {teSymbolUrl && (
+                            <img src={teSymbolUrl} alt={te.name} className="h-8 w-8 object-contain" />
+                          )}
+                          <span className="text-sm font-medium">{te.name}</span>
+                        </div>
+                        {onRemoveTechnicalElement && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => onRemoveTechnicalElement(te.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         )}
-                        <span className="text-sm">{te.name}</span>
                       </div>
                     );
                   })}
@@ -381,34 +401,49 @@ export const ElementInformationDialog = ({
               </div>
             )}
 
-            {/* Selected DA Elements */}
+            {/* Selected DA Elements - Each in separate row with remove button */}
             {selectedDaElements.length > 0 && (
               <div className="space-y-2">
                 <Label>Apparatus Difficulty</Label>
-                <div className="flex flex-wrap gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="space-y-2">
                   {selectedDaElements.map((da) => (
-                    <div key={da.id} className="flex items-center gap-1 bg-background rounded px-2 py-1 border">
-                      {da.symbolImages.map((url, idx) => (
-                        url.startsWith('TEXT:') ? (
-                          <span key={idx} className="text-sm font-bold">{url.replace('TEXT:', '')}</span>
-                        ) : (
-                          <img key={idx} src={url} alt={da.name} className="h-6 w-6 object-contain" />
-                        )
-                      ))}
-                      <span className="text-sm">{da.name}</span>
-                      <span className="text-xs text-muted-foreground">({da.value.toFixed(1)})</span>
+                    <div 
+                      key={da.id} 
+                      className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        {da.symbolImages.map((url, idx) => (
+                          url.startsWith('TEXT:') ? (
+                            <span key={idx} className="text-sm font-bold">{url.replace('TEXT:', '')}</span>
+                          ) : (
+                            <img key={idx} src={url} alt={da.name} className="h-8 w-8 object-contain" />
+                          )
+                        ))}
+                        <span className="text-sm font-medium">{da.name}</span>
+                        <span className="text-xs text-muted-foreground">({da.value.toFixed(1)})</span>
+                      </div>
+                      {onRemoveDaElement && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => onRemoveDaElement(da.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Apparatus Handling Buttons */}
+            {/* Apparatus Handling Buttons - Mutually exclusive: TE disables DA and vice versa */}
             <div className="flex flex-col gap-2">
               <Button
                 variant="outline"
                 onClick={handleTechnicalElementsClick}
-                disabled={!apparatus}
+                disabled={!apparatus || selectedDaElements.length > 0}
                 className="w-full"
               >
                 {selectedTechnicalElements.length > 0 ? 'Change Technical Elements' : '+ Technical Elements'}
@@ -416,7 +451,7 @@ export const ElementInformationDialog = ({
               <Button
                 variant="outline"
                 onClick={handleApparatusDifficultyClick}
-                disabled={!apparatus}
+                disabled={!apparatus || selectedTechnicalElements.length > 0}
                 className="w-full"
               >
                 {selectedDaElements.length > 0 ? 'Change Apparatus Difficulty' : '+ Apparatus Difficulty'}
