@@ -87,6 +87,13 @@ export const RotationSelectionDialog = ({
     }
   }, [open, shouldReopenApparatusHandling, onApparatusHandlingReopened]);
 
+  // Sync selectedRotations with parent's selectedRotationIds when dialog opens or parent state changes
+  useEffect(() => {
+    if (open && selectedRotationIds) {
+      setSelectedRotations(new Set(selectedRotationIds));
+    }
+  }, [open, selectedRotationIds]);
+
   const {
     data: rotations,
     isLoading,
