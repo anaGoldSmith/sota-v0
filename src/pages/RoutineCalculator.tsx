@@ -11,6 +11,7 @@ import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDia
 import { RotationSelectionDialog } from "@/components/routine/RotationSelectionDialog";
 import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/routine/ApparatusSelectionDialog";
 import { TechnicalElementsSelectionDialog } from "@/components/routine/TechnicalElementsSelectionDialog";
+import { ElementInformationDialog } from "@/components/routine/ElementInformationDialog";
 import { DBSuccessDialog } from "@/components/routine/DBSuccessDialog";
 import { DBDASuccessDialog } from "@/components/routine/DBDASuccessDialog";
 import { DBDAValidationDialog } from "@/components/routine/DBDAValidationDialog";
@@ -326,7 +327,7 @@ function SortableRow({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-background z-50">
-                {(element.type === 'R' || element.type === 'R/DB') && onModify && (
+                {(element.type === 'R' || element.type === 'R/DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB') && onModify && (
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onModify(); }}>
                     <Pencil className="h-4 w-4 mr-2" />
                     Modify
@@ -494,7 +495,23 @@ const RoutineCalculator = () => {
   // Track elements saved without apparatus handling
   const [elementsWithoutApparatusHandling, setElementsWithoutApparatusHandling] = useState<Set<string>>(new Set());
 
-  // Handle incoming risk data from StandardRisks page
+  // Element Information Dialog state for modifying DB/DA/TE elements
+  const [elementInfoDialogOpen, setElementInfoDialogOpen] = useState(false);
+  const [modifyingRoutineElement, setModifyingRoutineElement] = useState<RoutineElement | null>(null);
+  const [pendingTechnicalElements, setPendingTechnicalElements] = useState<Array<{
+    id: string;
+    code: string;
+    name: string;
+    description: string;
+    symbol_image: string | null;
+  }>>([]);
+  const [pendingDaElements, setPendingDaElements] = useState<Array<{
+    id: string;
+    name: string;
+    symbolImages: string[];
+    value: number;
+    selectedCriteria: string[];
+  }>>([]);
   useEffect(() => {
     const state = location.state as { newRisk?: RiskData; modifyingElementId?: string } | null;
     if (state?.newRisk) {
@@ -1071,7 +1088,203 @@ const RoutineCalculator = () => {
     }
   };
 
-  // Handle technical elements selection for apparatus handling
+  // Handle modifying a DB/DA/TE element
+  const handleModifyElement = (elementId: string) => {
+    const element = routineElements.find(el => el.id === elementId);
+    if (!element || (element.type !== 'DB' && element.type !== 'DB/DA' && element.type !== 'DB/TE')) return;
+    
+    // Extract original element data
+    const originalData = element.originalData as SelectedJump | SelectedBalance | SelectedRotation;
+    
+    // Determine element type
+    let elementType: 'jump' | 'rotation' | 'balance' = 'jump';
+    if ('turn_degrees' in originalData && originalData.code?.startsWith('3.')) {
+      elementType = 'rotation';
+    } else if (!('turn_degrees' in originalData)) {
+      elementType = 'balance';
+    }
+    
+    // Set up pending technical elements or DA elements from existing data
+    const teElements = element.teElements?.map(te => ({
+      id: te.id,
+      code: te.code,
+      name: te.name,
+      description: te.name,
+      symbol_image: te.symbolImage,
+    })) || [];
+    
+    const daElements = element.daElements?.map(da => ({
+      id: da.id,
+      name: da.name,
+      symbolImages: da.symbolImages,
+      value: da.value,
+      selectedCriteria: [] as string[], // We don't have criteria info in the stored element
+    })) || [];
+    
+    setPendingTechnicalElements(teElements);
+    setPendingDaElements(daElements);
+    setModifyingRoutineElement(element);
+    
+    // Set pending DB element for apparatus handling
+    setPendingDbElement({
+      element: originalData,
+      type: elementType,
+      modifyingElementId: elementId,
+    });
+    
+    setElementInfoDialogOpen(true);
+  };
+
+  // Handle saving from Element Information Dialog
+  const handleElementInfoSave = (data: {
+    element: { id: string; code: string; name: string | null; description: string; value: number; turn_degrees?: string | null; extra_value?: number | null; symbol_image: string | null };
+    elementType: 'jump' | 'rotation' | 'balance';
+    rotationCount: number;
+    totalValue: number;
+    technicalElements?: Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }>;
+    daElements?: Array<{ id: string; name: string; symbolImages: string[]; value: number; selectedCriteria: string[] }>;
+    withApparatusHandling: boolean;
+  }) => {
+    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, withApparatusHandling } = data;
+    
+    // Get DB symbol images
+    const dbSymbolImages = element.symbol_image ? [
+      getSymbolUrl(element.symbol_image, 'jump-symbols') || ''
+    ] : [];
+    
+    const modifyingId = modifyingRoutineElement?.id;
+    
+    if (technicalElements && technicalElements.length > 0) {
+      // Create DB/TE element
+      const teSymbolImages = technicalElements.map(te => {
+        if (te.symbol_image && selectedApparatus) {
+          return getTechnicalElementSymbol(te.symbol_image, selectedApparatus) || '';
+        }
+        return '';
+      }).filter(Boolean);
+      
+      const teElementsData = technicalElements.map(te => ({
+        id: te.id,
+        code: te.code,
+        name: te.name,
+        symbolImage: te.symbol_image && selectedApparatus 
+          ? getTechnicalElementSymbol(te.symbol_image, selectedApparatus) || ''
+          : '',
+        value: 0,
+      }));
+      
+      const combinedElement: RoutineElement = {
+        id: modifyingId || `db-te-${elementType}-${element.id}-${Date.now()}`,
+        type: 'DB/TE',
+        symbolImages: [...dbSymbolImages, ...teSymbolImages],
+        value: totalValue,
+        originalData: element as SelectedJump | SelectedBalance | SelectedRotation,
+        dbData: {
+          symbolImages: dbSymbolImages,
+          value: totalValue,
+          name: element.description || element.name || 'DB Element',
+        },
+        daData: {
+          symbolImages: teSymbolImages,
+          value: 0,
+        },
+        teElements: teElementsData,
+        isExpanded: false,
+      };
+      
+      if (modifyingId) {
+        setRoutineElements(prev => prev.map(el => el.id === modifyingId ? combinedElement : el));
+      } else {
+        setRoutineElements(prev => [...prev, combinedElement]);
+      }
+    } else if (daElements && daElements.length > 0) {
+      // Create DB/DA element
+      const daSymbolImages = daElements.flatMap(da => da.symbolImages);
+      const totalDaValue = daElements.reduce((sum, da) => sum + da.value, 0);
+      
+      const daElementsData = daElements.map((da, idx) => ({
+        id: da.id || `da-${idx}`,
+        name: da.name,
+        symbolImages: da.symbolImages,
+        value: da.value,
+      }));
+      
+      const combinedElement: RoutineElement = {
+        id: modifyingId || `db-da-${elementType}-${element.id}-${Date.now()}`,
+        type: 'DB/DA',
+        symbolImages: [...dbSymbolImages, ...daSymbolImages],
+        value: totalValue + totalDaValue,
+        originalData: element as SelectedJump | SelectedBalance | SelectedRotation,
+        dbData: {
+          symbolImages: dbSymbolImages,
+          value: totalValue,
+          name: element.description || element.name || 'DB Element',
+        },
+        daData: {
+          symbolImages: daSymbolImages,
+          value: totalDaValue,
+        },
+        daElements: daElementsData,
+        isExpanded: false,
+      };
+      
+      if (modifyingId) {
+        setRoutineElements(prev => prev.map(el => el.id === modifyingId ? combinedElement : el));
+      } else {
+        setRoutineElements(prev => [...prev, combinedElement]);
+      }
+    } else {
+      // Create standalone DB element (without apparatus handling)
+      const newElement: RoutineElement = {
+        id: modifyingId || `db-${elementType}-${element.id}-${Date.now()}`,
+        type: 'DB',
+        symbolImages: dbSymbolImages,
+        value: totalValue,
+        originalData: element as SelectedJump | SelectedBalance | SelectedRotation,
+      };
+      
+      if (modifyingId) {
+        setRoutineElements(prev => prev.map(el => el.id === modifyingId ? newElement : el));
+      } else {
+        setRoutineElements(prev => [...prev, newElement]);
+      }
+      
+      // Mark as without apparatus handling
+      if (!withApparatusHandling) {
+        setElementsWithoutApparatusHandling(prev => new Set(prev).add(element.id));
+      }
+    }
+    
+    // Clear states
+    setModifyingRoutineElement(null);
+    setPendingTechnicalElements([]);
+    setPendingDaElements([]);
+    setPendingDbElement(null);
+    
+    toast({
+      title: modifyingId ? "Element Updated" : "Element Added",
+      description: modifyingId ? "The element has been updated." : "The element has been added to the routine.",
+    });
+  };
+
+  // Handle opening apparatus dialog from Element Information Dialog
+  const handleElementInfoOpenApparatusDialog = () => {
+    setElementInfoDialogOpen(false);
+    setTimeout(() => {
+      setSourceElementType(pendingDbElement?.type || null);
+      setApparatusDialogOpen(true);
+    }, 100);
+  };
+
+  // Handle opening technical elements dialog from Element Information Dialog
+  const handleElementInfoOpenTechnicalElementsDialog = () => {
+    setElementInfoDialogOpen(false);
+    setTimeout(() => {
+      setTechnicalElementsDialogOpen(true);
+    }, 100);
+  };
+
+
   const handleSelectTechnicalElements = (elements: Array<{
     id: string;
     code: string;
@@ -1396,7 +1609,8 @@ const RoutineCalculator = () => {
                               index={index}
                               itemNumber={itemNumber}
                               onRemove={() => handleRemoveRoutineElement(index)}
-                              onModify={(element.type === 'R' || element.type === 'R/DB') ? () => handleModifyRisk(element.id) : undefined}
+                              onModify={(element.type === 'R' || element.type === 'R/DB') ? () => handleModifyRisk(element.id) : 
+                                        (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB') ? () => handleModifyElement(element.id) : undefined}
                               onToggleExpand={(element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R' || element.type === 'R/DB') ? () => handleToggleExpand(index) : undefined}
                               isMainRow={true}
                             />
@@ -1670,6 +1884,39 @@ const RoutineCalculator = () => {
         apparatus={selectedApparatus}
         onSelectTechnicalElements={handleSelectTechnicalElements}
         onGoBack={handleTechnicalElementsGoBack}
+      />
+
+      {/* Element Information Dialog for modifying DB/DA/TE elements */}
+      <ElementInformationDialog
+        open={elementInfoDialogOpen}
+        onOpenChange={setElementInfoDialogOpen}
+        element={modifyingRoutineElement?.originalData ? {
+          id: (modifyingRoutineElement.originalData as SelectedJump | SelectedBalance | SelectedRotation).id,
+          code: (modifyingRoutineElement.originalData as SelectedJump | SelectedBalance | SelectedRotation).code,
+          name: (modifyingRoutineElement.originalData as SelectedJump | SelectedBalance | SelectedRotation).name,
+          description: (modifyingRoutineElement.originalData as SelectedJump | SelectedBalance | SelectedRotation).description,
+          value: modifyingRoutineElement.dbData?.value || (modifyingRoutineElement.originalData as SelectedJump | SelectedBalance | SelectedRotation).value,
+          turn_degrees: 'turn_degrees' in modifyingRoutineElement.originalData ? (modifyingRoutineElement.originalData as SelectedRotation).turn_degrees : undefined,
+          extra_value: 'extra_value' in modifyingRoutineElement.originalData ? (modifyingRoutineElement.originalData as SelectedRotation).extra_value : undefined,
+          symbol_image: (modifyingRoutineElement.originalData as SelectedJump | SelectedBalance | SelectedRotation).symbol_image,
+        } : null}
+        elementType={pendingDbElement?.type || null}
+        onSave={handleElementInfoSave}
+        onCancel={() => {
+          setModifyingRoutineElement(null);
+          setPendingTechnicalElements([]);
+          setPendingDaElements([]);
+          setPendingDbElement(null);
+        }}
+        getSymbolUrl={getSymbolUrl}
+        getTechnicalElementSymbol={getTechnicalElementSymbol}
+        getCriteriaSymbolUrl={getCriteriaSymbolUrl}
+        apparatus={selectedApparatus}
+        onOpenApparatusDialog={handleElementInfoOpenApparatusDialog}
+        onOpenTechnicalElementsDialog={handleElementInfoOpenTechnicalElementsDialog}
+        selectedTechnicalElements={pendingTechnicalElements}
+        selectedDaElements={pendingDaElements}
+        isModifying={modifyingRoutineElement !== null}
       />
     </div>
   );
