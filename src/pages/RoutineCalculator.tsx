@@ -114,6 +114,7 @@ interface RoutineElement {
     symbolImages: string[];
     value: number;
     name?: string;
+    code?: string;
     elementType?: 'jump' | 'rotation' | 'balance';
     rotationCount?: number;
   };
@@ -844,6 +845,15 @@ const RoutineCalculator = () => {
   // Calculate scores from routine elements
   const dbElements = routineElements.filter(el => el.type === 'DB' || el.type === 'DB/DA' || el.type === 'DB/TE');
   
+  // Calculate DB count - for 3.1704, each rotation counts as a separate DB
+  const explicitDbCount = dbElements.reduce((count, el) => {
+    // Check if this is element 3.1704 with rotation count
+    if (el.dbData?.code === '3.1704' && el.dbData?.rotationCount) {
+      return count + el.dbData.rotationCount;
+    }
+    return count + 1;
+  }, 0);
+  
   // Calculate DB values from explicit DB elements
   const explicitDbValue = dbElements.reduce((sum, el) => {
     // For DB/DA elements, only count DB value
@@ -869,7 +879,7 @@ const RoutineCalculator = () => {
   }, 0);
   
   const totalDB = explicitDbValue + riskDbValue;
-  const countDB = dbElements.length + riskDbCount;
+  const countDB = explicitDbCount + riskDbCount;
   
   const daElements = routineElements.filter(el => el.type === 'DA' || el.type === 'R' || el.type === 'R/DB' || el.type === 'DB/DA');
   const totalDA = daElements.reduce((sum, el) => {
@@ -1116,6 +1126,7 @@ const RoutineCalculator = () => {
           symbolImages: dbSymbolImages,
           value: totalValue,
           name: element.name || element.description || 'DB Element',
+          code: element.code,
           elementType: elementType,
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
         },
@@ -1154,6 +1165,7 @@ const RoutineCalculator = () => {
           symbolImages: dbSymbolImages,
           value: totalValue,
           name: element.name || element.description || 'DB Element',
+          code: element.code,
           elementType: elementType,
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
         },
