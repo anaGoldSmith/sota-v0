@@ -495,9 +495,17 @@ const RoutineCalculator = () => {
   // Track elements saved without apparatus handling
   const [elementsWithoutApparatusHandling, setElementsWithoutApparatusHandling] = useState<Set<string>>(new Set());
 
-  // Element Information Dialog state for modifying DB/DA/TE elements
+  // Element Information Dialog state for configuring new/modifying DB/DA/TE elements
   const [elementInfoDialogOpen, setElementInfoDialogOpen] = useState(false);
   const [modifyingRoutineElement, setModifyingRoutineElement] = useState<RoutineElement | null>(null);
+  
+  // Pending element being configured in ElementInformationDialog (before saving to routine)
+  const [pendingElementInfo, setPendingElementInfo] = useState<{
+    element: SelectedJump | SelectedBalance | SelectedRotation;
+    elementType: 'jump' | 'rotation' | 'balance';
+    rotationCount?: number;
+  } | null>(null);
+  
   const [pendingTechnicalElements, setPendingTechnicalElements] = useState<Array<{
     id: string;
     code: string;
@@ -592,74 +600,52 @@ const RoutineCalculator = () => {
     });
   };
 
+  // Handle when a jump is selected from the table - open Element Information Dialog
   const handleSelectJump = (jump: SelectedJump, withApparatusHandling: boolean = false, modifyingElementId?: string) => {
-    // Only add to selectedJumps if not modifying an existing element
-    if (!modifyingElementId) {
-      setSelectedJumps((prev) => [...prev, jump]);
-    }
-    
-    // If withApparatusHandling is true, we'll wait for DA to be added before creating the routine element
-    if (!withApparatusHandling) {
-      // Add to routine elements immediately (without DA)
-      const newElement: RoutineElement = {
-        id: `jump-${jump.id}-${Date.now()}`,
-        type: 'DB',
-        symbolImages: jump.symbol_image ? [getSymbolUrl(jump.symbol_image, 'jump-symbols') || ''] : [],
-        value: jump.value,
-        originalData: jump,
-      };
-      setRoutineElements((prev) => [...prev, newElement]);
-    } else {
-      // Store as pending DB element to link with DA later
-      setPendingDbElement({ 
-        element: jump, 
-        type: 'jump',
-        modifyingElementId 
-      });
-    }
+    // Set the pending element info and open ElementInformationDialog
+    setPendingElementInfo({
+      element: jump,
+      elementType: 'jump',
+    });
+    setPendingDbElement({
+      element: jump,
+      type: 'jump',
+      modifyingElementId,
+    });
+    setPendingTechnicalElements([]);
+    setPendingDaElements([]);
+    setJumpDialogOpen(false);
+    setElementInfoDialogOpen(true);
   };
 
   const handleRemoveJump = (index: number) => {
     setSelectedJumps((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Handle when a balance is selected from the table - open Element Information Dialog
   const handleSelectBalance = (balance: SelectedBalance, withApparatusHandling: boolean = false, modifyingElementId?: string) => {
-    // Only add to selectedBalances if not modifying an existing element
-    if (!modifyingElementId) {
-      setSelectedBalances((prev) => [...prev, balance]);
-    }
-    
-    // If withApparatusHandling is true, we'll wait for DA to be added before creating the routine element
-    if (!withApparatusHandling) {
-      // Add to routine elements immediately (without DA)
-      const newElement: RoutineElement = {
-        id: `balance-${balance.id}-${Date.now()}`,
-        type: 'DB',
-        symbolImages: balance.symbol_image ? [getSymbolUrl(balance.symbol_image, 'jump-symbols') || ''] : [],
-        value: balance.value,
-        originalData: balance,
-      };
-      setRoutineElements((prev) => [...prev, newElement]);
-    } else {
-      // Store as pending DB element to link with DA later
-      setPendingDbElement({ 
-        element: balance, 
-        type: 'balance',
-        modifyingElementId 
-      });
-    }
+    // Set the pending element info and open ElementInformationDialog
+    setPendingElementInfo({
+      element: balance,
+      elementType: 'balance',
+    });
+    setPendingDbElement({
+      element: balance,
+      type: 'balance',
+      modifyingElementId,
+    });
+    setPendingTechnicalElements([]);
+    setPendingDaElements([]);
+    setBalanceDialogOpen(false);
+    setElementInfoDialogOpen(true);
   };
 
   const handleRemoveBalance = (index: number) => {
     setSelectedBalances((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Handle when a rotation is selected from the table - open Element Information Dialog
   const handleSelectRotation = (rotation: SelectedRotation, rotationCount: number, totalValue: number, withApparatusHandling: boolean = false, modifyingElementId?: string) => {
-    // Only add to selectedRotations if not modifying an existing element
-    if (!modifyingElementId) {
-      setSelectedRotations((prev) => [...prev, rotation]);
-    }
-    
     // Store rotation count info in the rotation object for use later
     const rotationWithCount = {
       ...rotation,
@@ -667,25 +653,21 @@ const RoutineCalculator = () => {
       calculatedValue: totalValue,
     };
     
-    // If withApparatusHandling is true, we'll wait for DA to be added before creating the routine element
-    if (!withApparatusHandling) {
-      // Add to routine elements immediately (without DA)
-      const newElement: RoutineElement = {
-        id: `rotation-${rotation.id}-${Date.now()}`,
-        type: 'DB',
-        symbolImages: rotation.symbol_image ? [getSymbolUrl(rotation.symbol_image, 'jump-symbols') || ''] : [],
-        value: totalValue, // Use the calculated total value
-        originalData: rotationWithCount,
-      };
-      setRoutineElements((prev) => [...prev, newElement]);
-    } else {
-      // Store as pending DB element to link with DA later
-      setPendingDbElement({ 
-        element: rotationWithCount, 
-        type: 'rotation',
-        modifyingElementId 
-      });
-    }
+    // Set the pending element info and open ElementInformationDialog
+    setPendingElementInfo({
+      element: rotationWithCount,
+      elementType: 'rotation',
+      rotationCount,
+    });
+    setPendingDbElement({
+      element: rotationWithCount,
+      type: 'rotation',
+      modifyingElementId,
+    });
+    setPendingTechnicalElements([]);
+    setPendingDaElements([]);
+    setRotationDialogOpen(false);
+    setElementInfoDialogOpen(true);
   };
 
   const handleRemoveRotation = (index: number) => {
@@ -699,80 +681,28 @@ const RoutineCalculator = () => {
   const handleSelectApparatusCombinations = (combinations: ApparatusCombination[]) => {
     setSelectedApparatusCombinations((prev) => [...prev, ...combinations]);
     
-    // Check if we have a pending DB element to link this DA to
+    // Check if we have a pending DB element - if so, store DA and return to ElementInformationDialog
     if (pendingDbElement) {
-      const { element: dbElement, type: dbType, modifyingElementId } = pendingDbElement;
-      
-      // Process DA elements
+      // Process DA elements to get symbol images
       const daElements = processApparatusCombinationsToElements(combinations);
       
-      // Get DB symbol images
-      const dbSymbolImages = dbElement.symbol_image ? [
-        getSymbolUrl(dbElement.symbol_image, 'jump-symbols') || ''
-      ] : [];
-      
-      // Get DA symbol images (combine all DA elements' symbols)
-      const daSymbolImages = daElements.flatMap(el => el.symbolImages);
-      
-      // Calculate total DA value
-      const totalDaValue = daElements.reduce((sum, el) => sum + el.value, 0);
-      
-      // Store individual DA elements data for expanded view
+      // Store DA elements data for ElementInformationDialog
       const daElementsData = combinations.map((combo, idx) => ({
         id: `da-${combo.element.id}-${idx}`,
         name: combo.element.name || combo.element.description || 'DA Element',
         symbolImages: daElements[idx]?.symbolImages || [],
         value: combo.calculatedValue || combo.element.value,
+        selectedCriteria: combo.selectedCriteria,
       }));
       
-      // Store current DA selection and symbols for success dialog
-      setCurrentDACombinations(combinations);
-      setCurrentDBSymbols(dbSymbolImages);
-      setCurrentDASymbols(daSymbolImages);
+      // Store the selected DA elements
+      setPendingDaElements(daElementsData);
+      // Clear TE elements since we're using DA
+      setPendingTechnicalElements([]);
       
-      // Create combined DB/DA element
-      const combinedElement: RoutineElement = {
-        id: modifyingElementId || `db-da-${dbType}-${dbElement.id}-${Date.now()}`,
-        type: 'DB/DA',
-        symbolImages: [...dbSymbolImages, ...daSymbolImages], // DB symbols first, then DA symbols
-        value: dbElement.value + totalDaValue, // Total value
-        originalData: dbElement,
-        dbData: {
-          symbolImages: dbSymbolImages,
-          value: dbElement.value,
-          name: dbElement.description || dbElement.name || 'DB Element',
-        },
-        daData: {
-          symbolImages: daSymbolImages,
-          value: totalDaValue,
-        },
-        daElements: daElementsData,
-        isExpanded: false,
-      };
-      
-      // If modifying existing element, we'll replace it; otherwise store as pending
-      if (modifyingElementId) {
-        // Replace existing element immediately
-        setRoutineElements((prev) => 
-          prev.map(el => el.id === modifyingElementId ? combinedElement : el)
-        );
-      } else {
-        // Store as pending (don't add to routine yet - wait for "Save Combo" click)
-        setPendingCombinedElement(combinedElement);
-      }
-      
-      // Check if the DA has Cr6DB criterion
-      const hasCr6DB = combinations.some(combo => combo.selectedCriteria.includes('Cr6DB'));
-      
-      if (!hasCr6DB) {
-        // Show validation dialog if DB criterion is missing
-        setShowDBDAValidationDialog(true);
-      } else {
-        // Show success dialog directly if DB criterion is present
-        setShowDBDASuccessDialog(true);
-      }
-      
+      // Return to Element Information Dialog
       setApparatusDialogOpen(false);
+      setElementInfoDialogOpen(true);
     } else {
       // No pending DB - add DA as standalone elements (original behavior)
       const newElements = processApparatusCombinationsToElements(combinations);
@@ -1284,7 +1214,7 @@ const RoutineCalculator = () => {
     }, 100);
   };
 
-
+  // Handle technical elements selection - store and return to ElementInformationDialog
   const handleSelectTechnicalElements = (elements: Array<{
     id: string;
     code: string;
@@ -1293,74 +1223,14 @@ const RoutineCalculator = () => {
     symbol_image: string | null;
   }>) => {
     if (pendingDbElement && elements.length > 0) {
-      const { element: dbElement, type: dbType, modifyingElementId } = pendingDbElement;
+      // Store the selected technical elements
+      setPendingTechnicalElements(elements);
+      // Clear DA elements since we're using TE
+      setPendingDaElements([]);
       
-      // Get DB symbol images
-      const dbSymbolImages = dbElement.symbol_image ? [
-        getSymbolUrl(dbElement.symbol_image, 'jump-symbols') || ''
-      ] : [];
-      
-      // Get technical elements symbol images
-      const teSymbolImages = elements.map(el => {
-        if (el.symbol_image && selectedApparatus) {
-          return getTechnicalElementSymbol(el.symbol_image, selectedApparatus) || '';
-        }
-        return '';
-      }).filter(Boolean);
-      
-      // Store symbols for success display
-      setCurrentDBSymbols(dbSymbolImages);
-      setCurrentDASymbols(teSymbolImages);
-      
-      // Store individual technical element data for expanded view
-      const teElementsData = elements.map(el => ({
-        id: el.id,
-        code: el.code,
-        name: el.name,
-        symbolImage: el.symbol_image && selectedApparatus 
-          ? getTechnicalElementSymbol(el.symbol_image, selectedApparatus) || ''
-          : '',
-        value: 0, // Technical elements don't have point value
-      }));
-      
-      // Create combined DB/TE element
-      const combinedElement: RoutineElement = {
-        id: modifyingElementId || `db-te-${dbType}-${dbElement.id}-${Date.now()}`,
-        type: 'DB/TE',
-        symbolImages: [...dbSymbolImages, ...teSymbolImages],
-        value: dbElement.value, // Technical elements don't add value, just validate DB
-        originalData: dbElement,
-        dbData: {
-          symbolImages: dbSymbolImages,
-          value: dbElement.value,
-          name: dbElement.description || dbElement.name || 'DB Element',
-        },
-        daData: {
-          symbolImages: teSymbolImages,
-          value: 0, // Technical elements don't have point value
-        },
-        teElements: teElementsData,
-        isExpanded: false,
-      };
-      
-      if (modifyingElementId) {
-        // Replace existing element
-        setRoutineElements((prev) => 
-          prev.map(el => el.id === modifyingElementId ? combinedElement : el)
-        );
-      } else {
-        // Add new combined element
-        setRoutineElements((prev) => [...prev, combinedElement]);
-      }
-      
-      // Clear pending state
-      setPendingDbElement(null);
-      setSourceElementType(null);
-      
-      toast({
-        title: "Technical Elements Added",
-        description: `Added ${elements.length} technical element(s) to DB.`,
-      });
+      // Return to Element Information Dialog
+      setTechnicalElementsDialogOpen(false);
+      setElementInfoDialogOpen(true);
     }
   };
 
@@ -1369,15 +1239,9 @@ const RoutineCalculator = () => {
   };
 
   const handleTechnicalElementsGoBack = () => {
-    // Reopen appropriate element selection dialog with apparatus handling
-    setShouldReopenApparatusHandling(true);
-    if (pendingDbElement?.type === 'jump') {
-      setJumpDialogOpen(true);
-    } else if (pendingDbElement?.type === 'balance') {
-      setBalanceDialogOpen(true);
-    } else if (pendingDbElement?.type === 'rotation') {
-      setRotationDialogOpen(true);
-    }
+    // Return to Element Information Dialog
+    setTechnicalElementsDialogOpen(false);
+    setElementInfoDialogOpen(true);
   };
 
   return (
@@ -1886,11 +1750,20 @@ const RoutineCalculator = () => {
         onGoBack={handleTechnicalElementsGoBack}
       />
 
-      {/* Element Information Dialog for modifying DB/DA/TE elements */}
+      {/* Element Information Dialog for configuring new or modifying existing DB/DA/TE elements */}
       <ElementInformationDialog
         open={elementInfoDialogOpen}
         onOpenChange={setElementInfoDialogOpen}
-        element={modifyingRoutineElement?.originalData ? {
+        element={pendingElementInfo ? {
+          id: pendingElementInfo.element.id,
+          code: pendingElementInfo.element.code,
+          name: pendingElementInfo.element.name,
+          description: pendingElementInfo.element.description,
+          value: pendingElementInfo.element.value,
+          turn_degrees: 'turn_degrees' in pendingElementInfo.element ? pendingElementInfo.element.turn_degrees : undefined,
+          extra_value: 'extra_value' in pendingElementInfo.element ? (pendingElementInfo.element as SelectedRotation).extra_value : undefined,
+          symbol_image: pendingElementInfo.element.symbol_image,
+        } : modifyingRoutineElement?.originalData ? {
           id: (modifyingRoutineElement.originalData as SelectedJump | SelectedBalance | SelectedRotation).id,
           code: (modifyingRoutineElement.originalData as SelectedJump | SelectedBalance | SelectedRotation).code,
           name: (modifyingRoutineElement.originalData as SelectedJump | SelectedBalance | SelectedRotation).name,
@@ -1900,22 +1773,23 @@ const RoutineCalculator = () => {
           extra_value: 'extra_value' in modifyingRoutineElement.originalData ? (modifyingRoutineElement.originalData as SelectedRotation).extra_value : undefined,
           symbol_image: (modifyingRoutineElement.originalData as SelectedJump | SelectedBalance | SelectedRotation).symbol_image,
         } : null}
-        elementType={pendingDbElement?.type || null}
+        elementType={pendingElementInfo?.elementType || pendingDbElement?.type || null}
         onSave={handleElementInfoSave}
         onCancel={() => {
           setModifyingRoutineElement(null);
           setPendingTechnicalElements([]);
           setPendingDaElements([]);
           setPendingDbElement(null);
+          setPendingElementInfo(null);
         }}
         getSymbolUrl={getSymbolUrl}
         getTechnicalElementSymbol={getTechnicalElementSymbol}
-        getCriteriaSymbolUrl={getCriteriaSymbolUrl}
         apparatus={selectedApparatus}
         onOpenApparatusDialog={handleElementInfoOpenApparatusDialog}
         onOpenTechnicalElementsDialog={handleElementInfoOpenTechnicalElementsDialog}
         selectedTechnicalElements={pendingTechnicalElements}
         selectedDaElements={pendingDaElements}
+        initialRotationCount={pendingElementInfo?.rotationCount}
         isModifying={modifyingRoutineElement !== null}
       />
     </div>

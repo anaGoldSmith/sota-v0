@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Minus, Plus, X } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ApparatusType } from "@/types/apparatus";
 
@@ -18,7 +18,7 @@ interface ElementData {
   symbol_image: string | null;
 }
 
-interface TechnicalElement {
+export interface TechnicalElementSelection {
   id: string;
   code: string;
   name: string;
@@ -26,7 +26,7 @@ interface TechnicalElement {
   symbol_image: string | null;
 }
 
-interface DaElement {
+export interface DaElementSelection {
   id: string;
   name: string;
   symbolImages: string[];
@@ -44,20 +44,19 @@ interface ElementInformationDialogProps {
     elementType: 'jump' | 'rotation' | 'balance';
     rotationCount: number;
     totalValue: number;
-    technicalElements?: TechnicalElement[];
-    daElements?: DaElement[];
+    technicalElements?: TechnicalElementSelection[];
+    daElements?: DaElementSelection[];
     withApparatusHandling: boolean;
   }) => void;
   onCancel: () => void;
   getSymbolUrl: (symbolImage: string | null, bucketName: string) => string | null;
   getTechnicalElementSymbol?: (filename: string | null, apparatus: ApparatusType) => string | null;
-  getCriteriaSymbolUrl?: (criterionCode: string) => string;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
   onOpenTechnicalElementsDialog: () => void;
   // For showing selected TE/DA
-  selectedTechnicalElements?: TechnicalElement[];
-  selectedDaElements?: DaElement[];
+  selectedTechnicalElements?: TechnicalElementSelection[];
+  selectedDaElements?: DaElementSelection[];
   // For modifying existing element
   initialRotationCount?: number;
   isModifying?: boolean;
@@ -72,7 +71,6 @@ export const ElementInformationDialog = ({
   onCancel,
   getSymbolUrl,
   getTechnicalElementSymbol,
-  getCriteriaSymbolUrl,
   apparatus,
   onOpenApparatusDialog,
   onOpenTechnicalElementsDialog,
@@ -178,7 +176,7 @@ export const ElementInformationDialog = ({
   const hasApparatusHandling = selectedTechnicalElements.length > 0 || selectedDaElements.length > 0;
 
   const handleSave = () => {
-    if (!hasApparatusHandling && !isModifying) {
+    if (!hasApparatusHandling) {
       // Show warning that element needs apparatus handling
       setShowWarningDialog(true);
       return;
@@ -224,10 +222,12 @@ export const ElementInformationDialog = ({
   };
 
   const handleApparatusDifficultyClick = () => {
+    // Don't close this dialog - just trigger opening apparatus dialog
     onOpenApparatusDialog();
   };
 
   const handleTechnicalElementsClick = () => {
+    // Don't close this dialog - just trigger opening technical elements dialog
     onOpenTechnicalElementsDialog();
   };
 
@@ -361,7 +361,7 @@ export const ElementInformationDialog = ({
             {selectedTechnicalElements.length > 0 && (
               <div className="space-y-2">
                 <Label>Technical Elements</Label>
-                <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg">
+                <div className="flex flex-wrap gap-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
                   {selectedTechnicalElements.map((te) => {
                     const teSymbolUrl = te.symbol_image && apparatus && getTechnicalElementSymbol
                       ? getTechnicalElementSymbol(te.symbol_image, apparatus)
@@ -383,7 +383,7 @@ export const ElementInformationDialog = ({
             {selectedDaElements.length > 0 && (
               <div className="space-y-2">
                 <Label>Apparatus Difficulty</Label>
-                <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg">
+                <div className="flex flex-wrap gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
                   {selectedDaElements.map((da) => (
                     <div key={da.id} className="flex items-center gap-1 bg-background rounded px-2 py-1 border">
                       {da.symbolImages.map((url, idx) => (
@@ -422,7 +422,7 @@ export const ElementInformationDialog = ({
             </div>
 
             {!apparatus && (
-              <p className="text-xs text-center text-muted-foreground">
+              <p className="text-xs text-center text-destructive">
                 Select an apparatus in the routine calculator to enable apparatus handling.
               </p>
             )}
@@ -443,7 +443,7 @@ export const ElementInformationDialog = ({
       <AlertDialog open={showWarningDialog} onOpenChange={setShowWarningDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{getElementTypeLabel()} Added Without Apparatus Handling</AlertDialogTitle>
+            <AlertDialogTitle>{getElementTypeLabel()} Without Apparatus Handling</AlertDialogTitle>
             <AlertDialogDescription>
               You have added a new {getElementTypeLabel().toLowerCase()} to the routine. However, the {getElementTypeLabel().toLowerCase()} is not valid without an apparatus technical element or apparatus difficulty. Do you want to add apparatus handling?
             </AlertDialogDescription>
