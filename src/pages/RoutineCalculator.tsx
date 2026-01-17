@@ -1557,7 +1557,16 @@ const RoutineCalculator = () => {
                                                 <div className="h-6 w-6 bg-muted rounded" />
                                               )}
                                             </td>
-                                            <td className="py-2 px-4 font-medium">{te.name}</td>
+                                            <td className="py-2 px-4 font-medium">
+                                              <div className="flex flex-col">
+                                                <span>{te.name}</span>
+                                                {element.dbData?.code === '3.1704' && element.dbData?.rotationCount && element.dbData.rotationCount > 1 && (
+                                                  <span className="text-xs text-muted-foreground">
+                                                    (handling for {idx + 1}{idx === 0 ? 'st' : idx === 1 ? 'nd' : idx === 2 ? 'rd' : 'th'} rotation)
+                                                  </span>
+                                                )}
+                                              </div>
+                                            </td>
                                             <td className="py-2 px-4 text-right font-mono">{te.value.toFixed(1)}</td>
                                           </tr>
                                         ))}
