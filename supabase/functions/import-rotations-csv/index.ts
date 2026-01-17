@@ -85,11 +85,18 @@ Deno.serve(async (req) => {
       }
       const value = valueStr !== null ? parseFloat(valueStr) : null;
 
+      // Parse extra_value (optional column)
+      let extraValueStr = raw.extra_value != null ? raw.extra_value.toString().trim() : null;
+      if (extraValueStr && /^[0-9]+,[0-9]+$/.test(extraValueStr)) {
+        extraValueStr = extraValueStr.replace(',', '.');
+      }
+      const extra_value = extraValueStr ? parseFloat(extraValueStr) : null;
+
       if (!code) throw new Error(`Row ${idx + 2}: code is required`);
       if (!description) throw new Error(`Row ${idx + 2}: description is required`);
       if (value === null || Number.isNaN(value)) throw new Error(`Row ${idx + 2}: value is required and must be a number`);
 
-      return { code, name, description, value, turn_degrees, symbol_image };
+      return { code, name, description, value, turn_degrees, extra_value, symbol_image };
     });
 
     console.log(`✅ Parsed ${rotations.length} rotations from CSV`);
