@@ -461,15 +461,25 @@ export const ElementInformationDialog = ({
 
             {/* ==================== TOTAL VALUE SECTION ==================== */}
             <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-3">
                 <span className="font-semibold">Total Value</span>
                 <span className="text-xl font-bold text-primary">
                   {(totalValue + selectedDaElements.reduce((sum, da) => sum + da.value, 0)).toFixed(1)}
                 </span>
               </div>
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>{getElementTypeLabel()}: {totalValue.toFixed(1)}</span>
-                <span>Apparatus: {selectedDaElements.reduce((sum, da) => sum + da.value, 0).toFixed(1)}</span>
+              <div className="space-y-1 text-xs text-muted-foreground border-t pt-2">
+                <div className="flex justify-between">
+                  <span>DB:</span>
+                  <span>{totalValue.toFixed(1)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>TE:</span>
+                  <span>0.0</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>DA:</span>
+                  <span>{selectedDaElements.reduce((sum, da) => sum + da.value, 0).toFixed(1)}</span>
+                </div>
               </div>
             </div>
           </div>
