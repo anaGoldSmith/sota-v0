@@ -260,115 +260,110 @@ export const ElementInformationDialog = ({
             <DialogTitle>Element Information</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
-            {/* Symbol and Name */}
-            <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
-              <div className="h-16 w-16 flex items-center justify-center bg-background rounded-lg border">
-                {symbolUrl ? (
-                  <img
-                    src={symbolUrl}
-                    alt={element.name || element.description}
-                    className="h-12 w-12 object-contain"
-                  />
-                ) : (
-                  <div className="h-12 w-12 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
-                    Symbol
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground mb-1">{getElementTypeLabel()}</p>
-                <p className="font-medium text-foreground">
-                  {element.name || element.description}
-                </p>
-                {elementType === 'rotation' && element.turn_degrees && element.turn_degrees !== "NA" && (
-                  <p className="text-sm text-muted-foreground">
-                    Base: {element.turn_degrees}°
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Rotation Count Input (only for rotations) */}
-            {showRotationCount && (
-              <div className="space-y-3">
-                <Label htmlFor="rotation-count">Number of Rotations</Label>
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleDecrement}
-                    disabled={isFixedRotation || rotationCount <= minValue}
-                    className="h-10 w-10"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  
-                  <Input
-                    id="rotation-count"
-                    type="number"
-                    step={is180Degrees ? 0.5 : 1}
-                    min={minValue}
-                    value={rotationCount}
-                    onChange={handleInputChange}
-                    disabled={isFixedRotation}
-                    className="text-center text-lg font-semibold h-10 w-24"
-                  />
-                  
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleIncrement}
-                    disabled={isFixedRotation}
-                    className="h-10 w-10"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
+          <div className="space-y-4 py-4">
+            {/* ==================== ELEMENT SECTION ==================== */}
+            <div className="p-4 bg-muted/30 rounded-lg border">
+              {/* Header row with symbol, name/description, and value */}
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 flex-shrink-0 flex items-center justify-center bg-background rounded-lg border">
+                  {symbolUrl ? (
+                    <img
+                      src={symbolUrl}
+                      alt={element.name || element.description}
+                      className="h-10 w-10 object-contain"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+                      Symbol
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {isFixedRotation
-                    ? "This rotation has a fixed count of 1 and cannot be changed."
-                    : is180Degrees 
-                      ? "Minimum: 0.5 rotation. Increase by 0.5 increments."
-                      : "Minimum: 1 rotation. Increase by full rotations only."
-                  }
-                </p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground mb-0.5">{getElementTypeLabel()}</p>
+                  <p className="font-medium text-foreground text-sm">
+                    {element.name || element.description}
+                  </p>
+                </div>
+                <div className="flex-shrink-0 text-right">
+                  <p className="text-xs text-muted-foreground">Value</p>
+                  <p className="text-lg font-bold text-primary">{totalValue.toFixed(1)}</p>
+                </div>
               </div>
-            )}
 
-            {/* Value Calculation */}
-            <div className="p-4 bg-primary/10 rounded-lg space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Base value:</span>
-                <span>{element.value.toFixed(1)}</span>
-              </div>
-              {showRotationCount && !isFixedRotation && element.extra_value && rotationCount > minValue && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    {is180Degrees
-                      ? `Extra (${(rotationCount - 0.5) / 0.5} × ${element.extra_value.toFixed(1)}):`
-                      : `Extra (${Math.floor(rotationCount) - 1} × ${element.extra_value.toFixed(1)}):`
-                    }
-                  </span>
-                  <span>
-                    +{is180Degrees
-                      ? (((rotationCount - 0.5) / 0.5) * element.extra_value).toFixed(1)
-                      : ((Math.floor(rotationCount) - 1) * element.extra_value).toFixed(1)
-                    }
-                  </span>
+              {/* Rotation Count Input (only for rotations) */}
+              {showRotationCount && (
+                <div className="mt-4 pt-4 border-t space-y-2">
+                  <Label htmlFor="rotation-count" className="text-sm">Number of Rotations</Label>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleDecrement}
+                      disabled={isFixedRotation || rotationCount <= minValue}
+                      className="h-9 w-9"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    
+                    <Input
+                      id="rotation-count"
+                      type="number"
+                      step={is180Degrees ? 0.5 : 1}
+                      min={minValue}
+                      value={rotationCount}
+                      onChange={handleInputChange}
+                      disabled={isFixedRotation}
+                      className="text-center text-lg font-semibold h-9 w-20"
+                    />
+                    
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleIncrement}
+                      disabled={isFixedRotation}
+                      className="h-9 w-9"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                    
+                    <div className="flex-1 text-xs text-muted-foreground">
+                      {isFixedRotation
+                        ? "Fixed rotation"
+                        : is180Degrees 
+                          ? "Min: 0.5, step: 0.5"
+                          : "Min: 1, step: 1"
+                      }
+                    </div>
+                  </div>
+                  
+                  {/* Value breakdown for rotations */}
+                  {!isFixedRotation && element.extra_value && rotationCount > minValue && (
+                    <div className="text-xs text-muted-foreground mt-2">
+                      Base: {element.value.toFixed(1)} + Extra: {is180Degrees
+                        ? (((rotationCount - 0.5) / 0.5) * element.extra_value).toFixed(1)
+                        : ((Math.floor(rotationCount) - 1) * element.extra_value).toFixed(1)
+                      }
+                    </div>
+                  )}
                 </div>
               )}
-              <div className="flex justify-between font-semibold text-lg border-t pt-2">
-                <span>{getElementTypeLabel()} Value:</span>
-                <span className="text-primary">{totalValue.toFixed(1)}</span>
-              </div>
             </div>
 
-            {/* Selected Technical Elements - Each in separate row with remove button */}
-            {selectedTechnicalElements.length > 0 && (
-              <div className="space-y-2">
-                <Label>Technical Elements</Label>
+            {/* ==================== APPARATUS HANDLING SECTION ==================== */}
+            <div className="p-4 bg-secondary/30 rounded-lg border space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium text-sm">Apparatus Handling</h4>
+                {(selectedTechnicalElements.length > 0 || selectedDaElements.length > 0) && (
+                  <span className="text-xs text-muted-foreground">
+                    Value: {selectedDaElements.reduce((sum, da) => sum + da.value, 0).toFixed(1)}
+                  </span>
+                )}
+              </div>
+
+              {/* Selected Technical Elements */}
+              {selectedTechnicalElements.length > 0 && (
                 <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Technical Elements</p>
                   {selectedTechnicalElements.map((te) => {
                     const teSymbolUrl = te.symbol_image && apparatus && getTechnicalElementSymbol
                       ? getTechnicalElementSymbol(te.symbol_image, apparatus)
@@ -376,93 +371,107 @@ export const ElementInformationDialog = ({
                     return (
                       <div 
                         key={te.id} 
-                        className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg"
+                        className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-md"
                       >
                         <div className="flex items-center gap-2">
                           {teSymbolUrl && (
-                            <img src={teSymbolUrl} alt={te.name} className="h-8 w-8 object-contain" />
+                            <img src={teSymbolUrl} alt={te.name} className="h-6 w-6 object-contain" />
                           )}
-                          <span className="text-sm font-medium">{te.name}</span>
+                          <span className="text-sm">{te.name}</span>
                         </div>
                         {onRemoveTechnicalElement && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                             onClick={() => onRemoveTechnicalElement(te.id)}
                           >
-                            <X className="h-4 w-4" />
+                            <X className="h-3 w-3" />
                           </Button>
                         )}
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Selected DA Elements - Each in separate row with remove button */}
-            {selectedDaElements.length > 0 && (
-              <div className="space-y-2">
-                <Label>Apparatus Difficulty</Label>
+              {/* Selected DA Elements */}
+              {selectedDaElements.length > 0 && (
                 <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Apparatus Difficulty</p>
                   {selectedDaElements.map((da) => (
                     <div 
                       key={da.id} 
-                      className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg"
+                      className="flex items-center justify-between p-2 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-md"
                     >
                       <div className="flex items-center gap-2">
                         {da.symbolImages.map((url, idx) => (
                           url.startsWith('TEXT:') ? (
                             <span key={idx} className="text-sm font-bold">{url.replace('TEXT:', '')}</span>
                           ) : (
-                            <img key={idx} src={url} alt={da.name} className="h-8 w-8 object-contain" />
+                            <img key={idx} src={url} alt={da.name} className="h-6 w-6 object-contain" />
                           )
                         ))}
-                        <span className="text-sm font-medium">{da.name}</span>
+                        <span className="text-sm">{da.name}</span>
                         <span className="text-xs text-muted-foreground">({da.value.toFixed(1)})</span>
                       </div>
                       {onRemoveDaElement && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                           onClick={() => onRemoveDaElement(da.id)}
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </Button>
                       )}
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Apparatus Handling Buttons - Mutually exclusive: TE disables DA and vice versa */}
-            <div className="flex flex-col gap-2">
-              <Button
-                variant="outline"
-                onClick={handleTechnicalElementsClick}
-                disabled={!apparatus || selectedDaElements.length > 0}
-                className="w-full"
-              >
-                {selectedTechnicalElements.length > 0 ? 'Change Technical Elements' : '+ Technical Elements'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleApparatusDifficultyClick}
-                disabled={!apparatus || selectedTechnicalElements.length > 0}
-                className="w-full"
-              >
-                {selectedDaElements.length > 0 ? 'Change Apparatus Difficulty' : '+ Apparatus Difficulty'}
-              </Button>
+              {/* Buttons - Mutually exclusive */}
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTechnicalElementsClick}
+                  disabled={!apparatus || selectedDaElements.length > 0}
+                  className="flex-1 text-xs"
+                >
+                  {selectedTechnicalElements.length > 0 ? 'Change TE' : '+ Technical Elements'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleApparatusDifficultyClick}
+                  disabled={!apparatus || selectedTechnicalElements.length > 0}
+                  className="flex-1 text-xs"
+                >
+                  {selectedDaElements.length > 0 ? 'Change DA' : '+ Apparatus Difficulty'}
+                </Button>
+              </div>
+
+              {!apparatus && (
+                <p className="text-xs text-center text-destructive">
+                  Select an apparatus to enable handling options.
+                </p>
+              )}
             </div>
 
-            {!apparatus && (
-              <p className="text-xs text-center text-destructive">
-                Select an apparatus in the routine calculator to enable apparatus handling.
-              </p>
-            )}
+            {/* ==================== TOTAL VALUE SECTION ==================== */}
+            <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold">Total Value</span>
+                <span className="text-xl font-bold text-primary">
+                  {(totalValue + selectedDaElements.reduce((sum, da) => sum + da.value, 0)).toFixed(1)}
+                </span>
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>{getElementTypeLabel()}: {totalValue.toFixed(1)}</span>
+                <span>Apparatus: {selectedDaElements.reduce((sum, da) => sum + da.value, 0).toFixed(1)}</span>
+              </div>
+            </div>
           </div>
 
           <DialogFooter className="flex gap-2 sm:gap-2">
