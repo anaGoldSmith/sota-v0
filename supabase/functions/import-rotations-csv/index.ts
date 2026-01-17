@@ -70,34 +70,42 @@ Deno.serve(async (req) => {
       throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
     }
 
-    // Build rotations array with proper types
-    const rotations = ((result as any).data as any[]).map((raw: Record<string, unknown>, idx: number) => {
-      const code = (raw.code ?? '').toString().trim() || null;
-      const name = raw.name != null ? raw.name.toString().trim() : null;
-      const description = raw.description != null ? raw.description.toString().trim() : null;
-      const turn_degrees = raw.turn_degrees != null ? raw.turn_degrees.toString().trim() : null;
-      const symbol_image = raw.symbol_image != null ? raw.symbol_image.toString().trim() : null;
-      let valueStr = raw.value != null ? raw.value.toString().trim() : null;
+    // Build rotations array with proper types, filtering out empty rows
+    const rotations = ((result as any).data as any[])
+      .map((raw: Record<string, unknown>, idx: number) => {
+        const code = (raw.code ?? '').toString().trim() || null;
+        
+        // Skip empty rows (rows with no code)
+        if (!code) {
+          console.log(`Skipping row ${idx + 2}: empty code`);
+          return null;
+        }
+        
+        const name = raw.name != null ? raw.name.toString().trim() : null;
+        const description = raw.description != null ? raw.description.toString().trim() : null;
+        const turn_degrees = raw.turn_degrees != null ? raw.turn_degrees.toString().trim() : null;
+        const symbol_image = raw.symbol_image != null ? raw.symbol_image.toString().trim() : null;
+        let valueStr = raw.value != null ? raw.value.toString().trim() : null;
 
-      // Support comma decimals like "0,10"
-      if (valueStr && /^[0-9]+,[0-9]+$/.test(valueStr)) {
-        valueStr = valueStr.replace(',', '.');
-      }
-      const value = valueStr !== null ? parseFloat(valueStr) : null;
+        // Support comma decimals like "0,10"
+        if (valueStr && /^[0-9]+,[0-9]+$/.test(valueStr)) {
+          valueStr = valueStr.replace(',', '.');
+        }
+        const value = valueStr !== null ? parseFloat(valueStr) : null;
 
-      // Parse extra_value (optional column)
-      let extraValueStr = raw.extra_value != null ? raw.extra_value.toString().trim() : null;
-      if (extraValueStr && /^[0-9]+,[0-9]+$/.test(extraValueStr)) {
-        extraValueStr = extraValueStr.replace(',', '.');
-      }
-      const extra_value = extraValueStr ? parseFloat(extraValueStr) : null;
+        // Parse extra_value (optional column)
+        let extraValueStr = raw.extra_value != null ? raw.extra_value.toString().trim() : null;
+        if (extraValueStr && /^[0-9]+,[0-9]+$/.test(extraValueStr)) {
+          extraValueStr = extraValueStr.replace(',', '.');
+        }
+        const extra_value = extraValueStr ? parseFloat(extraValueStr) : null;
 
-      if (!code) throw new Error(`Row ${idx + 2}: code is required`);
-      if (!description) throw new Error(`Row ${idx + 2}: description is required`);
-      if (value === null || Number.isNaN(value)) throw new Error(`Row ${idx + 2}: value is required and must be a number`);
+        if (!description) throw new Error(`Row ${idx + 2}: description is required`);
+        if (value === null || Number.isNaN(value)) throw new Error(`Row ${idx + 2}: value is required and must be a number`);
 
-      return { code, name, description, value, turn_degrees, extra_value, symbol_image };
-    });
+        return { code, name, description, value, turn_degrees, extra_value, symbol_image };
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null);
 
     console.log(`✅ Parsed ${rotations.length} rotations from CSV`);
 
