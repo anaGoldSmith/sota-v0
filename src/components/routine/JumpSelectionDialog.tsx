@@ -43,6 +43,7 @@ interface JumpSelectionDialogProps {
     symbolImages: string[];
     type: string;
   }>;
+  onOpenElementInfo?: (jump: Jump, modifyingElementId?: string) => void;
 }
 export const JumpSelectionDialog = ({
   open,
@@ -58,7 +59,8 @@ export const JumpSelectionDialog = ({
   onMarkWithoutApparatusHandling,
   onRemoveElement,
   routineElementsMap,
-  routineElements
+  routineElements,
+  onOpenElementInfo
 }: JumpSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedJumps, setSelectedJumps] = useState<Set<string>>(selectedJumpIds || new Set());
@@ -189,8 +191,11 @@ export const JumpSelectionDialog = ({
   };
 
   const handleExistingHandling = (jump: Jump) => {
-    setExistingHandlingJump(jump);
-    setShowExistingHandling(true);
+    // Get the modifying element ID if this jump is already in the routine
+    const modifyingElementId = routineElementsMap?.get(jump.id);
+    if (onOpenElementInfo) {
+      onOpenElementInfo(jump, modifyingElementId);
+    }
   };
 
   // Function to render symbol images for existing handling

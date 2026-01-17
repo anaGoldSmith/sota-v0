@@ -43,6 +43,7 @@ interface BalanceSelectionDialogProps {
     symbolImages: string[];
     type: string;
   }>;
+  onOpenElementInfo?: (balance: Balance, modifyingElementId?: string) => void;
 }
 
 export const BalanceSelectionDialog = ({
@@ -59,7 +60,8 @@ export const BalanceSelectionDialog = ({
   onMarkWithoutApparatusHandling,
   onRemoveElement,
   routineElementsMap,
-  routineElements
+  routineElements,
+  onOpenElementInfo
 }: BalanceSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedBalances, setSelectedBalances] = useState<Set<string>>(selectedBalanceIds || new Set());
@@ -165,8 +167,11 @@ export const BalanceSelectionDialog = ({
   };
 
   const handleExistingHandling = (balance: Balance) => {
-    setExistingHandlingBalance(balance);
-    setShowExistingHandling(true);
+    // Get the modifying element ID if this balance is already in the routine
+    const modifyingElementId = routineElementsMap?.get(balance.id);
+    if (onOpenElementInfo) {
+      onOpenElementInfo(balance, modifyingElementId);
+    }
   };
 
   // Function to render symbol images for existing handling
