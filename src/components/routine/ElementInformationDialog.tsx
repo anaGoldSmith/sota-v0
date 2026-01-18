@@ -649,7 +649,7 @@ export const ElementInformationDialog = ({
                       value={rotationCount}
                       onChange={handleInputChange}
                       disabled={isFixedRotation}
-                      className="text-center text-sm font-semibold h-8 w-14"
+                      className="text-center text-sm font-semibold h-8 w-14 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     
                     <Button
