@@ -47,7 +47,7 @@ export interface SelectedApparatusElement extends CombinedApparatusData {
 export type DAApparatusType = 'hoop' | 'ball' | 'clubs' | 'ribbon';
 
 // All apparatus types including those without DA support
-export type ApparatusType = DAApparatusType | 'rope' | 'wa' | 'gala' | 'other';
+export type ApparatusType = DAApparatusType | 'wa' | 'other';
 
 // Helper to check if an apparatus supports DA
 export const isDAApparatus = (apparatus: ApparatusType | null): apparatus is DAApparatusType => {
