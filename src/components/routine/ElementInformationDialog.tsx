@@ -497,10 +497,10 @@ export const ElementInformationDialog = ({
                 )}
               </div>
 
-              {/* Selected Technical Elements */}
-              {selectedTechnicalElements.length > 0 && (
+              {/* Combined list of TE and DA elements in order they were added */}
+              {(selectedTechnicalElements.length > 0 || selectedDaElements.length > 0) && (
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Technical Elements</p>
+                  {/* Technical Elements with TE badge */}
                   {selectedTechnicalElements.map((te) => {
                     const teSymbolUrl = te.symbol_image && apparatus && getTechnicalElementSymbol
                       ? getTechnicalElementSymbol(te.symbol_image, apparatus)
@@ -508,9 +508,10 @@ export const ElementInformationDialog = ({
                     return (
                       <div 
                         key={te.id} 
-                        className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-md"
+                        className="flex items-center justify-between p-2 bg-background border rounded-md"
                       >
                         <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded dark:text-green-300 dark:bg-green-900/30">TE</span>
                           {teSymbolUrl && (
                             <img src={teSymbolUrl} alt={te.name} className="h-6 w-6 object-contain" />
                           )}
@@ -529,19 +530,15 @@ export const ElementInformationDialog = ({
                       </div>
                     );
                   })}
-                </div>
-              )}
-
-              {/* Selected DA Elements */}
-              {selectedDaElements.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Apparatus Difficulty</p>
+                  
+                  {/* DA Elements with DA badge */}
                   {selectedDaElements.map((da) => (
                     <div 
                       key={da.id} 
-                      className="flex items-center justify-between p-2 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-md"
+                      className="flex items-center justify-between p-2 bg-background border rounded-md"
                     >
                       <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
                         {da.symbolImages.map((url, idx) => (
                           url.startsWith('TEXT:') ? (
                             <span key={idx} className="text-sm font-bold">{url.replace('TEXT:', '')}</span>
