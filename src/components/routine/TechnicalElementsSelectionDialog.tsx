@@ -33,6 +33,8 @@ interface TechnicalElementsSelectionDialogProps {
   initialSelectedElements?: Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }>;
   // Element type to filter "Under the flight" technical elements
   elementType?: 'jump' | 'rotation' | 'balance' | null;
+  // Callback to remove an already-added element (for rotations)
+  onRemoveElement?: (id: string) => void;
 }
 
 export const TechnicalElementsSelectionDialog = ({
@@ -42,7 +44,8 @@ export const TechnicalElementsSelectionDialog = ({
   onSelectTechnicalElements,
   onGoBack,
   initialSelectedElements = [],
-  elementType
+  elementType,
+  onRemoveElement
 }: TechnicalElementsSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedElements, setSelectedElements] = useState<Set<string>>(new Set());
@@ -300,17 +303,27 @@ export const TechnicalElementsSelectionDialog = ({
                         initialSelectedElements.some(el => el.id === element.id);
                       const symbolUrl = getSymbolUrl(element.symbol_image);
                       
+                      const handleClick = () => {
+                        if (isAlreadyAdded && onRemoveElement) {
+                          // Click on already-added element removes it
+                          onRemoveElement(element.id);
+                        } else if (!isAlreadyAdded) {
+                          // Normal toggle for new selections
+                          handleElementClick(element);
+                        }
+                      };
+                      
                       return (
                         <TableRow 
                           key={element.id}
                           className={`cursor-pointer transition-colors ${
                             isAlreadyAdded
-                              ? 'bg-muted/50 opacity-60 cursor-not-allowed'
+                              ? 'bg-green-50 dark:bg-green-950/30 hover:bg-red-50 dark:hover:bg-red-950/30'
                               : isSelected 
                                 ? 'bg-primary/20 hover:bg-primary/30' 
                                 : 'hover:bg-accent/50'
                           }`}
-                          onClick={() => !isAlreadyAdded && handleElementClick(element)}
+                          onClick={handleClick}
                         >
                           <TableCell className="relative">
                             <div className="w-12 h-12 bg-muted/50 rounded flex items-center justify-center">
@@ -325,7 +338,7 @@ export const TechnicalElementsSelectionDialog = ({
                               )}
                             </div>
                             {isAlreadyAdded && (
-                              <div className="absolute -top-1 -right-1 bg-muted-foreground text-background rounded-full p-0.5 shadow-md z-10 border-2 border-background">
+                              <div className="absolute -top-1 -right-1 bg-green-600 text-white rounded-full p-0.5 shadow-md z-10 border-2 border-background">
                                 <Check className="h-3 w-3" />
                               </div>
                             )}
@@ -338,7 +351,7 @@ export const TechnicalElementsSelectionDialog = ({
                           <TableCell className="text-sm text-muted-foreground">
                             {element.description}
                             {isAlreadyAdded && (
-                              <span className="ml-2 text-xs text-muted-foreground italic">(already added)</span>
+                              <span className="ml-2 text-xs text-green-600 dark:text-green-400 italic">(click to remove)</span>
                             )}
                           </TableCell>
                         </TableRow>
