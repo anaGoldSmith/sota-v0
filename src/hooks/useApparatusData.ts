@@ -119,14 +119,15 @@ export const useApparatusData = (apparatus: ApparatusType | null) => {
     queryFn: async () => {
       if (!apparatus) return null;
 
-      const tableMap: Record<ApparatusType, 'hoop_da' | 'ball_da' | 'clubs_da' | 'ribbon_da'> = {
+      const tableMap: Record<string, 'hoop_da' | 'ball_da' | 'clubs_da' | 'ribbon_da'> = {
         hoop: 'hoop_da',
         ball: 'ball_da',
         clubs: 'clubs_da',
         ribbon: 'ribbon_da'
       };
 
-      const tableName = tableMap[apparatus] as 'hoop_da' | 'ball_da' | 'clubs_da' | 'ribbon_da';
+      const tableName = tableMap[apparatus];
+      if (!tableName) return null; // Non-DA apparatus types don't have DA tables
 
       // Fetch DA elements from the appropriate table
       const { data, error } = await supabase

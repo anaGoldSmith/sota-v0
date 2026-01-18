@@ -440,7 +440,26 @@ const RoutineCalculator = () => {
   const [apparatusDialogOpen, setApparatusDialogOpen] = useState(false);
   const [technicalElementsDialogOpen, setTechnicalElementsDialogOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [selectedApparatus, setSelectedApparatus] = useState<ApparatusType | null>(null);
+  const [selectedApparatus, setSelectedApparatus] = useState<ApparatusType | null>(() => {
+    const saved = localStorage.getItem('selectedApparatus');
+    if (saved) {
+      try {
+        return JSON.parse(saved) as ApparatusType;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+  
+  // Persist selectedApparatus to localStorage whenever it changes
+  useEffect(() => {
+    if (selectedApparatus) {
+      localStorage.setItem('selectedApparatus', JSON.stringify(selectedApparatus));
+    } else {
+      localStorage.removeItem('selectedApparatus');
+    }
+  }, [selectedApparatus]);
   // Initialize routineElements from localStorage to persist across navigation
   const [routineElements, setRoutineElements] = useState<RoutineElement[]>(() => {
     const saved = localStorage.getItem('routineElements');
@@ -841,8 +860,9 @@ const RoutineCalculator = () => {
 
   const handleApparatusChange = (value: string) => {
     console.log('Apparatus changed to:', value);
-    if (value === 'hoop' || value === 'ball' || value === 'clubs' || value === 'ribbon') {
-      setSelectedApparatus(value);
+    const validApparatus = ['hoop', 'ball', 'clubs', 'ribbon', 'rope', 'wa', 'gala', 'other'];
+    if (validApparatus.includes(value)) {
+      setSelectedApparatus(value as ApparatusType);
     } else {
       setSelectedApparatus(null);
     }
@@ -1547,85 +1567,117 @@ const RoutineCalculator = () => {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-foreground">Construct Routine</h2>
             
-            <div className="grid grid-cols-2 gap-3">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+            {/* Button enable/disable logic based on apparatus selection */}
+            {(() => {
+              // No apparatus selected: all buttons disabled
+              // WA selected: Elements (DB) and Dance Steps enabled
+              // Hoop, Ball, Clubs, Ribbon: All buttons enabled
+              // Other apparatus (rope, gala, other): Only Elements (DB) and Dance Steps enabled
+              const isApparatusSelected = selectedApparatus !== null;
+              const isDAApparatus = selectedApparatus && ['hoop', 'ball', 'clubs', 'ribbon'].includes(selectedApparatus);
+              const isWAOrOther = selectedApparatus && ['wa', 'rope', 'gala', 'other'].includes(selectedApparatus);
+              
+              const elementsEnabled = isApparatusSelected;
+              const daEnabled = isDAApparatus;
+              const dynamicElementsEnabled = isDAApparatus;
+              const danceStepsEnabled = isApparatusSelected;
+              
+              return (
+                <div className="grid grid-cols-2 gap-3">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="outline"
+                        className={`h-16 text-base ${elementsEnabled ? 'hover:scale-[1.02] transition-transform' : 'opacity-50 cursor-not-allowed'}`}
+                        disabled={!elementsEnabled}
+                      >
+                        <span className="text-lg font-semibold mr-2">+</span> Elements (DB)
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-[300px] bg-background z-50" align="start">
+                      <DropdownMenuItem 
+                        className="h-14 text-lg cursor-pointer"
+                        onClick={() => setJumpDialogOpen(true)}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-1">
+                            <span>Jumps</span>
+                            <JumpIcon className="!h-7 !w-7" />
+                          </div>
+                          <span className="text-sm">+ Add</span>
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="h-14 text-lg cursor-pointer"
+                        onClick={() => setBalanceDialogOpen(true)}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-1">
+                            <span>Balances</span>
+                            <BalanceIcon className="!h-7 !w-7" />
+                          </div>
+                          <span className="text-sm">+ Add</span>
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="h-14 text-lg cursor-pointer"
+                        onClick={() => setRotationDialogOpen(true)}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-1">
+                            <span>Rotations</span>
+                            <RotationIcon className="!h-8 !w-8" />
+                          </div>
+                          <span className="text-sm">+ Add</span>
+                        </div>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  
                   <Button 
                     variant="outline"
-                    className="h-16 text-base hover:scale-[1.02] transition-transform"
+                    className={`h-16 text-base ${daEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
+                    disabled={!daEnabled}
+                    onClick={() => {
+                      if (daEnabled) {
+                        setActiveCategory(activeCategory === "apparatus" ? null : "apparatus");
+                        if (activeCategory !== "apparatus") {
+                          handleOpenApparatusDialog();
+                        }
+                      }
+                    }}
                   >
-                    <span className="text-lg font-semibold mr-2">+</span> Elements (DB)
+                    <span className="text-lg font-semibold mr-2">+</span> Apparatus Difficulty (DA)
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-[300px] bg-background z-50" align="start">
-                  <DropdownMenuItem 
-                    className="h-14 text-lg cursor-pointer"
-                    onClick={() => setJumpDialogOpen(true)}
+                  
+                  <Button 
+                    variant="outline"
+                    className={`h-16 text-base ${dynamicElementsEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
+                    disabled={!dynamicElementsEnabled}
+                    onClick={() => {
+                      if (dynamicElementsEnabled) {
+                        navigate("/dynamic-elements-risk", { state: { apparatus: selectedApparatus } });
+                      }
+                    }}
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-1">
-                        <span>Jumps</span>
-                        <JumpIcon className="!h-7 !w-7" />
-                      </div>
-                      <span className="text-sm">+ Add</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="h-14 text-lg cursor-pointer"
-                    onClick={() => setBalanceDialogOpen(true)}
+                    <span className="text-lg font-semibold mr-2">+</span> Dynamic Element (R)
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    className={`h-16 text-base ${danceStepsEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
+                    disabled={!danceStepsEnabled}
+                    onClick={() => {
+                      if (danceStepsEnabled) {
+                        setActiveCategory(activeCategory === "dance" ? null : "dance");
+                      }
+                    }}
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-1">
-                        <span>Balances</span>
-                        <BalanceIcon className="!h-7 !w-7" />
-                      </div>
-                      <span className="text-sm">+ Add</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="h-14 text-lg cursor-pointer"
-                    onClick={() => setRotationDialogOpen(true)}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-1">
-                        <span>Rotations</span>
-                        <RotationIcon className="!h-8 !w-8" />
-                      </div>
-                      <span className="text-sm">+ Add</span>
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              <Button 
-                variant="outline"
-                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
-                onClick={() => {
-                  setActiveCategory(activeCategory === "apparatus" ? null : "apparatus");
-                  if (activeCategory !== "apparatus") {
-                    handleOpenApparatusDialog();
-                  }
-                }}
-              >
-                <span className="text-lg font-semibold mr-2">+</span> Apparatus Difficulty (DA)
-              </Button>
-              
-              <Button 
-                variant="outline"
-                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
-                onClick={() => navigate("/dynamic-elements-risk", { state: { apparatus: selectedApparatus } })}
-              >
-                <span className="text-lg font-semibold mr-2">+</span> Dynamic Element (R)
-              </Button>
-              
-              <Button 
-                variant="outline"
-                className="h-16 text-base hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600"
-                onClick={() => setActiveCategory(activeCategory === "dance" ? null : "dance")}
-              >
-                <span className="text-lg font-semibold mr-2">+</span> Dance Steps
-              </Button>
-            </div>
+                    <span className="text-lg font-semibold mr-2">+</span> Dance Steps
+                  </Button>
+                </div>
+              );
+            })()}
 
             
             {activeCategory === "dance" && (

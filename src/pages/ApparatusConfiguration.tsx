@@ -293,7 +293,7 @@ const ApparatusConfiguration = () => {
         ribbon: 'ribbon-bases-symbols'
       };
 
-      const tableMap: Record<ApparatusType, string> = {
+      const tableMap: Record<'ball' | 'hoop' | 'clubs' | 'ribbon', string> = {
         ball: 'ball_technical_elements',
         hoop: 'hoop_technical_elements',
         clubs: 'clubs_technical_elements',
