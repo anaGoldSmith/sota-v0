@@ -12,7 +12,7 @@ import { RotationSelectionDialog } from "@/components/routine/RotationSelectionD
 import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/routine/ApparatusSelectionDialog";
 import { TechnicalElementsSelectionDialog } from "@/components/routine/TechnicalElementsSelectionDialog";
 import { ElementInformationDialog } from "@/components/routine/ElementInformationDialog";
-import type { FouetteComponent, FouetteRotationHandling } from "@/components/routine/FouetteComponentsEditor";
+import type { FouetteComponent } from "@/components/routine/FouetteComponentsEditor";
 import { DBSuccessDialog } from "@/components/routine/DBSuccessDialog";
 import { DBDASuccessDialog } from "@/components/routine/DBDASuccessDialog";
 import { DBDAValidationDialog } from "@/components/routine/DBDAValidationDialog";
@@ -119,7 +119,6 @@ interface RoutineElement {
     elementType?: 'jump' | 'rotation' | 'balance';
     rotationCount?: number;
     fouetteComponents?: FouetteComponent[];
-    fouetteRotationHandlings?: FouetteRotationHandling[];
   };
   daData?: {
     symbolImages: string[];
@@ -511,7 +510,6 @@ const RoutineCalculator = () => {
     elementType: 'jump' | 'rotation' | 'balance';
     rotationCount?: number;
     fouetteComponents?: FouetteComponent[];
-    fouetteRotationHandlings?: FouetteRotationHandling[];
   } | null>(null);
   
   const [pendingTechnicalElements, setPendingTechnicalElements] = useState<Array<{
@@ -528,9 +526,6 @@ const RoutineCalculator = () => {
     value: number;
     selectedCriteria: string[];
   }>>([]);
-  
-  // For Fouetté elements - track which rotation is being assigned handling
-  const [pendingFouetteRotationIndex, setPendingFouetteRotationIndex] = useState<number | null>(null);
   useEffect(() => {
     const state = location.state as { newRisk?: RiskData; modifyingElementId?: string } | null;
     if (state?.newRisk) {
@@ -1096,9 +1091,8 @@ const RoutineCalculator = () => {
     daElements?: Array<{ id: string; name: string; symbolImages: string[]; value: number; selectedCriteria: string[] }>;
     withApparatusHandling: boolean;
     fouetteComponents?: FouetteComponent[];
-    fouetteRotationHandlings?: FouetteRotationHandling[];
   }) => {
-    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, withApparatusHandling, fouetteComponents, fouetteRotationHandlings } = data;
+    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, withApparatusHandling, fouetteComponents } = data;
     
     // Get DB symbol images
     const dbSymbolImages = element.symbol_image ? [
@@ -1140,7 +1134,6 @@ const RoutineCalculator = () => {
           elementType: elementType,
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
           fouetteComponents: fouetteComponents,
-          fouetteRotationHandlings: fouetteRotationHandlings,
         },
         daData: {
           symbolImages: teSymbolImages,
@@ -1181,7 +1174,6 @@ const RoutineCalculator = () => {
           elementType: elementType,
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
           fouetteComponents: fouetteComponents,
-          fouetteRotationHandlings: fouetteRotationHandlings,
         },
         daData: {
           symbolImages: daSymbolImages,
@@ -1255,35 +1247,6 @@ const RoutineCalculator = () => {
     description: string;
     symbol_image: string | null;
   }>) => {
-    // Check if this is for a Fouetté rotation-specific handling
-    if (pendingFouetteRotationIndex !== null && elements.length > 0) {
-      const selectedTe = elements[0]; // Take first selection for Fouetté rotation
-      const newHandling: FouetteRotationHandling = {
-        rotationIndex: pendingFouetteRotationIndex,
-        teElement: {
-          id: selectedTe.id,
-          code: selectedTe.code,
-          name: selectedTe.name,
-          description: selectedTe.description,
-          symbol_image: selectedTe.symbol_image,
-        },
-      };
-      
-      // Update the pending Fouetté rotation handlings
-      setPendingElementInfo(prev => {
-        if (!prev) return null;
-        const existingHandlings = prev.fouetteRotationHandlings || [];
-        // Replace if exists, otherwise add
-        const filtered = existingHandlings.filter(h => h.rotationIndex !== pendingFouetteRotationIndex);
-        return { ...prev, fouetteRotationHandlings: [...filtered, newHandling] };
-      });
-      
-      setPendingFouetteRotationIndex(null);
-      setTechnicalElementsDialogOpen(false);
-      setElementInfoDialogOpen(true);
-      return;
-    }
-    
     if (pendingDbElement && elements.length > 0) {
       // Store the selected technical elements
       setPendingTechnicalElements(elements);
@@ -1908,14 +1871,6 @@ const RoutineCalculator = () => {
         initialFouetteComponents={pendingElementInfo?.fouetteComponents}
         onFouetteComponentsChange={(components) => {
           setPendingElementInfo(prev => prev ? { ...prev, fouetteComponents: components } : null);
-        }}
-        fouetteRotationHandlings={pendingElementInfo?.fouetteRotationHandlings || []}
-        onFouetteRotationHandlingsChange={(handlings) => {
-          setPendingElementInfo(prev => prev ? { ...prev, fouetteRotationHandlings: handlings } : null);
-        }}
-        onOpenFouetteHandlingDialog={(rotationIndex) => {
-          setPendingFouetteRotationIndex(rotationIndex);
-          setTechnicalElementsDialogOpen(true);
         }}
       />
     </div>
