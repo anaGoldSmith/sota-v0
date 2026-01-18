@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GripVertical, Minus, Plus, X } from "lucide-react";
+import { GripVertical, Info, Minus, Plus, X } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ApparatusType } from "@/types/apparatus";
@@ -648,6 +649,34 @@ export const ElementInformationDialog = ({
                       Each rotation requires its own TE or DA ({currentHandlingCount}/{requiredHandlingCount} added)
                     </div>
                   )}
+                  
+                  {/* Series button for rotation elements */}
+                  <div className="mt-4 pt-3 border-t">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => {
+                          // TODO: Implement series selection logic
+                        }}
+                      >
+                        Series
+                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="cursor-help">
+                              <Info className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[280px] text-sm">
+                            <p>A series refers to two or more identical pivots or illusions performed consecutively with heel support. Each counts as a separate Difficulty. Each rotation should have a valid apparatus handling.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
                 </div>
               )}
               
