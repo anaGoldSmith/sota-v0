@@ -50,10 +50,16 @@ export const TechnicalElementsSelectionDialog = ({
   const [searchText, setSearchText] = useState("");
   const [selectedElements, setSelectedElements] = useState<Set<string>>(new Set());
 
+  // Track previous open state to only reset on fresh open
+  const [wasOpen, setWasOpen] = useState(false);
+  
   // For rotations: we allow adding multiple TEs, so don't pre-select existing ones
   // For jumps/balances: pre-select existing ones since they replace
+  // IMPORTANT: Only reset on dialog opening, NOT when initialSelectedElements changes
+  // (to avoid clearing new selections when removing an already-added element)
   useEffect(() => {
-    if (open) {
+    if (open && !wasOpen) {
+      // Dialog just opened
       if (elementType === 'rotation') {
         // For rotations: start fresh - don't pre-select existing elements
         setSelectedElements(new Set());
@@ -62,7 +68,8 @@ export const TechnicalElementsSelectionDialog = ({
         setSelectedElements(new Set(initialSelectedElements.map(el => el.id)));
       }
     }
-  }, [open, initialSelectedElements, elementType]);
+    setWasOpen(open);
+  }, [open, wasOpen, initialSelectedElements, elementType]);
 
   // Fetch technical elements for the selected apparatus
   const { data: technicalElements = [], isLoading, error } = useQuery({
