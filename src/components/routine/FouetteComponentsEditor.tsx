@@ -82,8 +82,7 @@ export const FouetteComponentsEditor = ({
         </span>
       </div>
 
-      <ScrollArea className="max-h-[250px]">
-        <div className="space-y-2 pr-2">
+      <div className="space-y-2">
           {components.map((component, index) => {
             const componentValue = component.rotations * 0.1;
             return (
@@ -147,8 +146,7 @@ export const FouetteComponentsEditor = ({
               </div>
             );
           })}
-        </div>
-      </ScrollArea>
+      </div>
 
       <Button
         variant="outline"
