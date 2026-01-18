@@ -963,10 +963,14 @@ const RoutineCalculator = () => {
   // Calculate scores from routine elements
   const dbElements = routineElements.filter(el => el.type === 'DB' || el.type === 'DB/DA' || el.type === 'DB/TE' || el.type === 'DB/TE/DA');
   
-  // Calculate DB count - for 3.1704, each rotation counts as a separate DB
+  // Calculate DB count - for 3.1704 and series rotations, each rotation counts as a separate DB
   const explicitDbCount = dbElements.reduce((count, el) => {
-    // Check if this is element 3.1704 with rotation count
+    // Check if this is element 3.1704 with rotation count - each rotation is a separate DB
     if (el.dbData?.code === '3.1704' && el.dbData?.rotationCount) {
+      return count + el.dbData.rotationCount;
+    }
+    // For series rotations, each rotation in the series counts as a separate DB
+    if (el.dbData?.isSeries && el.dbData?.rotationCount) {
       return count + el.dbData.rotationCount;
     }
     return count + 1;
