@@ -329,6 +329,14 @@ export const ElementInformationDialog = ({
     return element.code === "3.1601" || element.code === "3.1602";
   }, [element, elementType]);
 
+  // Check if this rotation cannot be done in series
+  // Codes: 3.1601, 3.1602 (Fouetté), 3.1801, 3.1902, 3.2003, 3.2101, 3.2202 (fixed)
+  const cannotBeSeries = useMemo(() => {
+    if (!element?.code || elementType !== 'rotation') return false;
+    const nonSeriesCodes = ["3.1601", "3.1602", "3.1801", "3.1902", "3.2003", "3.2101", "3.2202"];
+    return nonSeriesCodes.includes(element.code);
+  }, [element, elementType]);
+
   // Check if rotation count is applicable (only for rotations)
   const showRotationCount = elementType === 'rotation';
 
@@ -663,23 +671,24 @@ export const ElementInformationDialog = ({
                       }
                     </div>
                     
-                    {/* Series button - toggles series mode */}
-                    <Button
-                      variant={isSeries ? "default" : "outline"}
-                      size="sm"
-                      className={`ml-auto h-8 px-3 ${isSeries ? 'bg-primary text-primary-foreground' : ''}`}
-                      onClick={() => {
-                        const newSeriesState = !isSeries;
-                        updateIsSeries(newSeriesState);
-                        // If activating series and rotation count < 2, set to 2
-                        if (newSeriesState && rotationCount < 2) {
-                          updateRotationCount(2);
-                        }
-                      }}
-                      disabled={isFixedRotation}
-                    >
-                      Series
-                    </Button>
+                    {/* Series button - toggles series mode (hidden for rotations that cannot be series) */}
+                    {!cannotBeSeries && (
+                      <Button
+                        variant={isSeries ? "default" : "outline"}
+                        size="sm"
+                        className={`ml-auto h-8 px-3 ${isSeries ? 'bg-primary text-primary-foreground' : ''}`}
+                        onClick={() => {
+                          const newSeriesState = !isSeries;
+                          updateIsSeries(newSeriesState);
+                          // If activating series and rotation count < 2, set to 2
+                          if (newSeriesState && rotationCount < 2) {
+                            updateRotationCount(2);
+                          }
+                        }}
+                      >
+                        Series
+                      </Button>
+                    )}
                     <TooltipProvider>
                       <Tooltip delayDuration={0}>
                         <TooltipTrigger asChild>
