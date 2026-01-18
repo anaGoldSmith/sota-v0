@@ -2106,6 +2106,10 @@ const RoutineCalculator = () => {
           // Persist rotation count changes to pendingElementInfo so it's not lost when navigating to TE/DA dialogs
           setPendingElementInfo(prev => prev ? { ...prev, rotationCount: count } : null);
         }}
+        onSeriesChange={(series) => {
+          // Persist series state changes to pendingElementInfo so it's not lost when navigating to TE/DA dialogs
+          setPendingElementInfo(prev => prev ? { ...prev, isSeries: series } : null);
+        }}
         initialFouetteComponents={pendingElementInfo?.fouetteComponents}
         onFouetteComponentsChange={(components) => {
           setPendingElementInfo(prev => prev ? { ...prev, fouetteComponents: components } : null);
