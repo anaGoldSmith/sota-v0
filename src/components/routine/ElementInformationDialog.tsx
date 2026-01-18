@@ -584,13 +584,13 @@ export const ElementInformationDialog = ({
               {showRotationCount && !isFouetteElement && (
                 <div className="mt-4 pt-4 border-t space-y-2">
                   <Label htmlFor="rotation-count" className="text-sm">Number of Rotations</Label>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="icon"
                       onClick={handleDecrement}
                       disabled={isFixedRotation || rotationCount <= minValue}
-                      className="h-9 w-9"
+                      className="h-8 w-8"
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
@@ -603,7 +603,7 @@ export const ElementInformationDialog = ({
                       value={rotationCount}
                       onChange={handleInputChange}
                       disabled={isFixedRotation}
-                      className="text-center text-lg font-semibold h-9 w-20"
+                      className="text-center text-sm font-semibold h-8 w-14"
                     />
                     
                     <Button
@@ -611,19 +611,43 @@ export const ElementInformationDialog = ({
                       size="icon"
                       onClick={handleIncrement}
                       disabled={isFixedRotation}
-                      className="h-9 w-9"
+                      className="h-8 w-8"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
                     
-                    <div className="flex-1 text-xs text-muted-foreground">
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">
                       {isFixedRotation
-                        ? "Fixed rotation"
+                        ? "Fixed"
                         : is180Degrees 
                           ? "Min: 0.5"
                           : "Min: 1"
                       }
                     </div>
+                    
+                    {/* Series button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="ml-auto h-8 px-3"
+                      onClick={() => {
+                        // TODO: Implement series selection logic
+                      }}
+                    >
+                      Series
+                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="cursor-help">
+                            <Info className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[280px] text-sm">
+                          <p>A series refers to two or more identical pivots or illusions performed consecutively with heel support. Each counts as a separate Difficulty. Each rotation should have a valid apparatus handling.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   
                   {/* Value breakdown for rotations */}
@@ -649,34 +673,6 @@ export const ElementInformationDialog = ({
                       Each rotation requires its own TE or DA ({currentHandlingCount}/{requiredHandlingCount} added)
                     </div>
                   )}
-                  
-                  {/* Series button for rotation elements */}
-                  <div className="mt-4 pt-3 border-t">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => {
-                          // TODO: Implement series selection logic
-                        }}
-                      >
-                        Series
-                      </Button>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="cursor-help">
-                              <Info className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-[280px] text-sm">
-                            <p>A series refers to two or more identical pivots or illusions performed consecutively with heel support. Each counts as a separate Difficulty. Each rotation should have a valid apparatus handling.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </div>
                 </div>
               )}
               
