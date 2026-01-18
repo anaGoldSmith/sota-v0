@@ -98,6 +98,8 @@ interface ElementInformationDialogProps {
   onReorderHandlingItems?: (items: HandlingItem[]) => void;
   // Callback for rotation count changes (to persist state when navigating to TE/DA dialogs)
   onRotationCountChange?: (count: number) => void;
+  // Callback for series state changes (to persist state when navigating to TE/DA dialogs)
+  onSeriesChange?: (isSeries: boolean) => void;
   // For Fouetté elements
   initialFouetteComponents?: FouetteComponent[];
   onFouetteComponentsChange?: (components: FouetteComponent[]) => void;
@@ -226,6 +228,7 @@ export const ElementInformationDialog = ({
   onRemoveDaElement,
   onReorderHandlingItems,
   onRotationCountChange,
+  onSeriesChange,
   initialFouetteComponents,
   onFouetteComponentsChange,
 }: ElementInformationDialogProps) => {
@@ -292,6 +295,12 @@ export const ElementInformationDialog = ({
   const updateFouetteComponents = (components: FouetteComponent[]) => {
     setFouetteComponents(components);
     onFouetteComponentsChange?.(components);
+  };
+  
+  // Wrap setIsSeries to also notify parent (persist state when navigating to TE/DA dialogs)
+  const updateIsSeries = (value: boolean) => {
+    setIsSeries(value);
+    onSeriesChange?.(value);
   };
   
   const [showWarningDialog, setShowWarningDialog] = useState(false);
@@ -661,7 +670,7 @@ export const ElementInformationDialog = ({
                       className={`ml-auto h-8 px-3 ${isSeries ? 'bg-primary text-primary-foreground' : ''}`}
                       onClick={() => {
                         const newSeriesState = !isSeries;
-                        setIsSeries(newSeriesState);
+                        updateIsSeries(newSeriesState);
                         // If activating series and rotation count < 2, set to 2
                         if (newSeriesState && rotationCount < 2) {
                           updateRotationCount(2);
