@@ -82,7 +82,7 @@ export const FouetteComponentsEditor = ({
         </span>
       </div>
 
-      <ScrollArea className="max-h-[150px]">
+      <ScrollArea className="max-h-[250px]">
         <div className="space-y-2 pr-2">
           {components.map((component, index) => {
             const componentValue = component.rotations * 0.1;
