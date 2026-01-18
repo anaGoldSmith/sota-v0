@@ -637,13 +637,18 @@ export const ElementInformationDialog = ({
                       Series
                     </Button>
                     <TooltipProvider>
-                      <Tooltip>
+                      <Tooltip delayDuration={0}>
                         <TooltipTrigger asChild>
                           <div className="cursor-help">
                             <Info className="h-4 w-4 text-muted-foreground" />
                           </div>
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-[280px] text-sm">
+                        <TooltipContent 
+                          side="left" 
+                          align="center"
+                          className="max-w-[250px] text-sm z-[200]"
+                          sideOffset={8}
+                        >
                           <p>A series refers to two or more identical pivots or illusions performed consecutively with heel support. Each counts as a separate Difficulty. Each rotation should have a valid apparatus handling.</p>
                         </TooltipContent>
                       </Tooltip>
