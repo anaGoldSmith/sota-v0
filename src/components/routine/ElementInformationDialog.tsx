@@ -340,6 +340,9 @@ export const ElementInformationDialog = ({
   // Check if rotation count is applicable (only for rotations)
   const showRotationCount = elementType === 'rotation';
 
+  // Determine if this rotation has 180-degree base - computed inline for useEffect
+  const elementIs180Degrees = element?.turn_degrees === "180" || (element?.turn_degrees?.includes("180") ?? false);
+
   // Set default rotation count and series state when element changes
   useEffect(() => {
     if (element && elementType === 'rotation') {
@@ -363,13 +366,15 @@ export const ElementInformationDialog = ({
       } else if (isFixedRotation) {
         setRotationCount(1);
       } else {
-        setRotationCount(is180Degrees ? 0.5 : 1);
+        // Use 0.5 for 180-degree rotations, 1 for standard rotations
+        const defaultCount = elementIs180Degrees ? 0.5 : 1;
+        setRotationCount(defaultCount);
       }
     } else {
       setRotationCount(1);
       setIsSeries(false);
     }
-  }, [element, elementType, is180Degrees, isFixedRotation, isFouetteElement, initialRotationCount, initialFouetteComponents, initialIsSeries]);
+  }, [element, elementType, elementIs180Degrees, isFixedRotation, isFouetteElement, initialRotationCount, initialFouetteComponents, initialIsSeries]);
 
   const minValue = is180Degrees ? 0.5 : 1;
 
