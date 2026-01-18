@@ -43,7 +43,16 @@ export interface SelectedApparatusElement extends CombinedApparatusData {
   selectedAt: Date;
 }
 
-export type ApparatusType = 'hoop' | 'ball' | 'clubs' | 'ribbon';
+// Core apparatus types with DA support
+export type DAApparatusType = 'hoop' | 'ball' | 'clubs' | 'ribbon';
+
+// All apparatus types including those without DA support
+export type ApparatusType = DAApparatusType | 'rope' | 'wa' | 'gala' | 'other';
+
+// Helper to check if an apparatus supports DA
+export const isDAApparatus = (apparatus: ApparatusType | null): apparatus is DAApparatusType => {
+  return apparatus !== null && ['hoop', 'ball', 'clubs', 'ribbon'].includes(apparatus);
+};
 
 export const CRITERIA_CODES = ['Cr1V', 'Cr2H', 'Cr3L', 'Cr7R', 'Cr4F', 'Cr5W', 'Cr6DB'] as const;
 export type CriteriaCode = typeof CRITERIA_CODES[number];
