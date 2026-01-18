@@ -74,6 +74,7 @@ interface ElementInformationDialogProps {
     handlingOrder?: Array<{ type: 'te' | 'da'; id: string }>; // Preserves drag-drop order
     withApparatusHandling: boolean;
     fouetteComponents?: FouetteComponent[];
+    isSeries?: boolean; // Whether this is a series of rotations
   }) => void;
   onCancel: () => void;
   getSymbolUrl: (symbolImage: string | null, bucketName: string) => string | null;
@@ -88,6 +89,7 @@ interface ElementInformationDialogProps {
   handlingItems?: HandlingItem[];
   // For modifying existing element
   initialRotationCount?: number;
+  initialIsSeries?: boolean;
   isModifying?: boolean;
   // Callbacks for removing individual TE/DA
   onRemoveTechnicalElement?: (id: string) => void;
@@ -218,6 +220,7 @@ export const ElementInformationDialog = ({
   selectedDaElements = [],
   handlingItems: handlingItemsProp,
   initialRotationCount,
+  initialIsSeries = false,
   isModifying = false,
   onRemoveTechnicalElement,
   onRemoveDaElement,
@@ -227,6 +230,7 @@ export const ElementInformationDialog = ({
   onFouetteComponentsChange,
 }: ElementInformationDialogProps) => {
   const [rotationCount, setRotationCount] = useState<number>(1);
+  const [isSeries, setIsSeries] = useState<boolean>(false);
   
   // Fouetté components state (for 3.1601 and 3.1602)
   const [fouetteComponents, setFouetteComponents] = useState<FouetteComponent[]>([
@@ -319,9 +323,12 @@ export const ElementInformationDialog = ({
   // Check if rotation count is applicable (only for rotations)
   const showRotationCount = elementType === 'rotation';
 
-  // Set default rotation count when element changes
+  // Set default rotation count and series state when element changes
   useEffect(() => {
     if (element && elementType === 'rotation') {
+      // Reset series state
+      setIsSeries(initialIsSeries);
+      
       // For Fouetté elements, use component-based counting
       if (isFouetteElement) {
         if (initialFouetteComponents && initialFouetteComponents.length > 0) {
@@ -343,8 +350,9 @@ export const ElementInformationDialog = ({
       }
     } else {
       setRotationCount(1);
+      setIsSeries(false);
     }
-  }, [element, elementType, is180Degrees, isFixedRotation, isFouetteElement, initialRotationCount, initialFouetteComponents]);
+  }, [element, elementType, is180Degrees, isFixedRotation, isFouetteElement, initialRotationCount, initialFouetteComponents, initialIsSeries]);
 
   const minValue = is180Degrees ? 0.5 : 1;
 
@@ -418,8 +426,14 @@ export const ElementInformationDialog = ({
 
   const hasApparatusHandling = selectedTechnicalElements.length > 0 || selectedDaElements.length > 0;
   
-  // For 3.1704: each rotation needs its own TE or DA
-  const requiredHandlingCount = isPerRotationElement ? rotationCount : 1;
+  // For 3.1704 or series: each rotation needs its own TE or DA
+  // Series requires at least 2 rotations with handling for each
+  const seriesRotationCount = isSeries ? Math.max(2, Math.floor(rotationCount)) : 0;
+  const requiredHandlingCount = isPerRotationElement 
+    ? rotationCount 
+    : isSeries 
+      ? seriesRotationCount 
+      : 1;
   const currentHandlingCount = selectedTechnicalElements.length + selectedDaElements.length;
   const hasEnoughHandling = currentHandlingCount >= requiredHandlingCount;
 
@@ -430,13 +444,19 @@ export const ElementInformationDialog = ({
       return;
     }
     
+    // For series: must have handling for each rotation in the series
+    if (isSeries && !hasEnoughHandling) {
+      setShowWarningDialog(true);
+      return;
+    }
+    
     // For Fouetté elements: warn if no handling, but allow saving
     if (isFouetteElement && !hasApparatusHandling) {
       setShowWarningDialog(true);
       return;
     }
     
-    if (!hasApparatusHandling && !isFouetteElement) {
+    if (!hasApparatusHandling && !isFouetteElement && !isSeries) {
       // Show warning that element needs apparatus handling
       setShowWarningDialog(true);
       return;
@@ -458,6 +478,7 @@ export const ElementInformationDialog = ({
         handlingOrder: handlingItems.length > 0 ? handlingItems.map(item => ({ type: item.type, id: item.type === 'te' ? item.data.id : item.data.id })) : undefined,
         withApparatusHandling: hasApparatusHandling,
         fouetteComponents: isFouetteElement ? fouetteComponents : undefined,
+        isSeries: isSeries,
       });
       onOpenChange(false);
     }
@@ -486,14 +507,15 @@ export const ElementInformationDialog = ({
         handlingOrder: handlingItems.length > 0 ? handlingItems.map(item => ({ type: item.type, id: item.data.id })) : undefined,
         withApparatusHandling: hasApparatusHandling,
         fouetteComponents: isFouetteElement ? fouetteComponents : undefined,
+        isSeries: isSeries,
       });
       setShowWarningDialog(false);
       onOpenChange(false);
     }
   };
 
-  // For 3.1704: No = save with missing handling anyway
-  const handleWarningNo3_1704 = () => {
+  // For 3.1704 or series: No = save with missing handling anyway
+  const handleWarningNoSeriesOr3_1704 = () => {
     if (element && elementType) {
       onSave({
         element,
@@ -504,6 +526,7 @@ export const ElementInformationDialog = ({
         daElements: selectedDaElements.length > 0 ? selectedDaElements : undefined,
         handlingOrder: handlingItems.length > 0 ? handlingItems.map(item => ({ type: item.type, id: item.data.id })) : undefined,
         withApparatusHandling: hasApparatusHandling,
+        isSeries: isSeries,
       });
       setShowWarningDialog(false);
       onOpenChange(false);
@@ -625,14 +648,20 @@ export const ElementInformationDialog = ({
                       }
                     </div>
                     
-                    {/* Series button */}
+                    {/* Series button - toggles series mode */}
                     <Button
-                      variant="outline"
+                      variant={isSeries ? "default" : "outline"}
                       size="sm"
-                      className="ml-auto h-8 px-3"
+                      className={`ml-auto h-8 px-3 ${isSeries ? 'bg-primary text-primary-foreground' : ''}`}
                       onClick={() => {
-                        // TODO: Implement series selection logic
+                        const newSeriesState = !isSeries;
+                        setIsSeries(newSeriesState);
+                        // If activating series and rotation count < 2, set to 2
+                        if (newSeriesState && rotationCount < 2) {
+                          updateRotationCount(2);
+                        }
                       }}
+                      disabled={isFixedRotation}
                     >
                       Series
                     </Button>
@@ -655,8 +684,15 @@ export const ElementInformationDialog = ({
                     </TooltipProvider>
                   </div>
                   
+                  {/* Series handling requirement notice */}
+                  {isSeries && !isPerRotationElement && (
+                    <div className="mt-2 p-2 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded text-xs text-purple-700 dark:text-purple-300">
+                      <span className="font-medium">Series active:</span> Each rotation in the series requires its own TE or DA ({currentHandlingCount}/{seriesRotationCount} added)
+                    </div>
+                  )}
+                  
                   {/* Value breakdown for rotations */}
-                  {!isFixedRotation && !isPerRotationElement && element.extra_value && rotationCount > minValue && (
+                  {!isFixedRotation && !isPerRotationElement && !isSeries && element.extra_value && rotationCount > minValue && (
                     <div className="text-xs text-muted-foreground mt-2">
                       Base: {element.value.toFixed(1)} + Extra: {is180Degrees
                         ? (((rotationCount - 0.5) / 0.5) * element.extra_value).toFixed(1)
@@ -820,7 +856,7 @@ export const ElementInformationDialog = ({
             <AlertDialogTitle>
               {isFouetteElement 
                 ? 'Missing Apparatus Handling' 
-                : isPerRotationElement 
+                : isPerRotationElement || isSeries
                   ? 'Missing Apparatus Handling' 
                   : `${getElementTypeLabel()} Without Apparatus Handling`
               }
@@ -831,12 +867,19 @@ export const ElementInformationDialog = ({
                   ? 'To validate the element, apparatus handling must be performed within the first 2 rotations of fouetté. Do you want to add apparatus handling?'
                   : isPerRotationElement 
                     ? `A Backward Illusion requires one TE or DA for each rotation to be valid. You have added ${currentHandlingCount} of ${requiredHandlingCount} required. Would you like to add the missing apparatus handling to validate the DB?`
-                    : `You have added a new ${getElementTypeLabel().toLowerCase()} to the routine. However, the ${getElementTypeLabel().toLowerCase()} is not valid without an apparatus technical element or apparatus difficulty. Do you want to add apparatus handling?`
+                    : isSeries
+                      ? `A series requires one TE or DA for each rotation. You have added ${currentHandlingCount} of ${seriesRotationCount} required. Would you like to add the missing apparatus handling?`
+                      : `You have added a new ${getElementTypeLabel().toLowerCase()} to the routine. However, the ${getElementTypeLabel().toLowerCase()} is not valid without an apparatus technical element or apparatus difficulty. Do you want to add apparatus handling?`
                 }
               </span>
               {isPerRotationElement && (
                 <span className="block text-xs text-muted-foreground italic">
                   Please note that each rotation in a Backward Illusion is counted as a separate DB. Therefore, apparatus handling must be selected for each rotation to be valid.
+                </span>
+              )}
+              {isSeries && !isPerRotationElement && (
+                <span className="block text-xs text-muted-foreground italic">
+                  Each rotation in a series counts as a separate Difficulty and requires its own apparatus handling.
                 </span>
               )}
             </AlertDialogDescription>
@@ -845,7 +888,7 @@ export const ElementInformationDialog = ({
             <AlertDialogAction onClick={handleWarningYes}>
               Yes
             </AlertDialogAction>
-            <AlertDialogCancel onClick={isPerRotationElement ? handleWarningNo3_1704 : handleWarningNo}>No</AlertDialogCancel>
+            <AlertDialogCancel onClick={(isPerRotationElement || isSeries) ? handleWarningNoSeriesOr3_1704 : handleWarningNo}>No</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
