@@ -7,7 +7,7 @@ import { Minus, Plus, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ApparatusType } from "@/types/apparatus";
-import { FouetteComponentsEditor, FouetteComponent, FouetteRotationHandling } from "./FouetteComponentsEditor";
+import { FouetteComponentsEditor, FouetteComponent } from "./FouetteComponentsEditor";
 
 interface ElementData {
   id: string;
@@ -50,14 +50,13 @@ interface ElementInformationDialogProps {
     daElements?: DaElementSelection[];
     withApparatusHandling: boolean;
     fouetteComponents?: FouetteComponent[];
-    fouetteRotationHandlings?: FouetteRotationHandling[];
   }) => void;
   onCancel: () => void;
   getSymbolUrl: (symbolImage: string | null, bucketName: string) => string | null;
   getTechnicalElementSymbol?: (filename: string | null, apparatus: ApparatusType) => string | null;
   apparatus: ApparatusType | null;
   onOpenApparatusDialog: () => void;
-  onOpenTechnicalElementsDialog: (forFouetteRotation?: number) => void;
+  onOpenTechnicalElementsDialog: () => void;
   // For showing selected TE/DA
   selectedTechnicalElements?: TechnicalElementSelection[];
   selectedDaElements?: DaElementSelection[];
@@ -72,10 +71,6 @@ interface ElementInformationDialogProps {
   // For Fouetté elements
   initialFouetteComponents?: FouetteComponent[];
   onFouetteComponentsChange?: (components: FouetteComponent[]) => void;
-  // For Fouetté rotation handling
-  fouetteRotationHandlings?: FouetteRotationHandling[];
-  onFouetteRotationHandlingsChange?: (handlings: FouetteRotationHandling[]) => void;
-  onOpenFouetteHandlingDialog?: (rotationIndex: number) => void;
 }
 
 export const ElementInformationDialog = ({
@@ -99,9 +94,6 @@ export const ElementInformationDialog = ({
   onRotationCountChange,
   initialFouetteComponents,
   onFouetteComponentsChange,
-  fouetteRotationHandlings = [],
-  onFouetteRotationHandlingsChange,
-  onOpenFouetteHandlingDialog,
 }: ElementInformationDialogProps) => {
   const [rotationCount, setRotationCount] = useState<number>(1);
   
@@ -255,16 +247,6 @@ export const ElementInformationDialog = ({
   const currentHandlingCount = selectedTechnicalElements.length + selectedDaElements.length;
   const hasEnoughHandling = currentHandlingCount >= requiredHandlingCount;
 
-  // For Fouetté elements: first 2 rotations require handling
-  const fouetteTotalRotations = fouetteComponents.reduce((sum, c) => sum + c.rotations, 0);
-  const fouetteRequiredHandlingCount = Math.min(2, fouetteTotalRotations);
-  const fouetteCurrentHandlingCount = fouetteRotationHandlings.filter(h => h.teElement || h.daElement).length;
-  const fouetteFirst2Handled = isFouetteElement 
-    ? [0, 1].slice(0, fouetteTotalRotations).every(idx => 
-        fouetteRotationHandlings.some(h => h.rotationIndex === idx && (h.teElement || h.daElement))
-      )
-    : true;
-
   const handleSave = () => {
     // For 3.1704: must have at least one TE/DA per rotation, no skipping allowed
     if (isPerRotationElement && !hasEnoughHandling) {
@@ -272,8 +254,8 @@ export const ElementInformationDialog = ({
       return;
     }
     
-    // For Fouetté elements: first 2 rotations must have handling
-    if (isFouetteElement && !fouetteFirst2Handled) {
+    // For Fouetté elements: warn if no handling, but allow saving
+    if (isFouetteElement && !hasApparatusHandling) {
       setShowWarningDialog(true);
       return;
     }
@@ -295,11 +277,10 @@ export const ElementInformationDialog = ({
         elementType,
         rotationCount: finalRotationCount,
         totalValue,
-        technicalElements: isFouetteElement ? undefined : (selectedTechnicalElements.length > 0 ? selectedTechnicalElements : undefined),
-        daElements: isFouetteElement ? undefined : (selectedDaElements.length > 0 ? selectedDaElements : undefined),
-        withApparatusHandling: isFouetteElement ? fouetteCurrentHandlingCount > 0 : hasApparatusHandling,
+        technicalElements: selectedTechnicalElements.length > 0 ? selectedTechnicalElements : undefined,
+        daElements: selectedDaElements.length > 0 ? selectedDaElements : undefined,
+        withApparatusHandling: hasApparatusHandling,
         fouetteComponents: isFouetteElement ? fouetteComponents : undefined,
-        fouetteRotationHandlings: isFouetteElement ? fouetteRotationHandlings : undefined,
       });
       onOpenChange(false);
     }
@@ -311,12 +292,7 @@ export const ElementInformationDialog = ({
   };
 
   const handleWarningNo = () => {
-    // Save without apparatus handling (not allowed for Fouetté first 2 rotations)
-    if (isFouetteElement) {
-      // For Fouetté, user must add handling for first 2 rotations
-      return;
-    }
-    
+    // Save without apparatus handling
     if (element && elementType) {
       // Calculate final rotationCount for Fouetté elements
       const finalRotationCount = isFouetteElement 
@@ -328,27 +304,13 @@ export const ElementInformationDialog = ({
         elementType,
         rotationCount: finalRotationCount,
         totalValue,
-        withApparatusHandling: false,
+        technicalElements: selectedTechnicalElements.length > 0 ? selectedTechnicalElements : undefined,
+        daElements: selectedDaElements.length > 0 ? selectedDaElements : undefined,
+        withApparatusHandling: hasApparatusHandling,
         fouetteComponents: isFouetteElement ? fouetteComponents : undefined,
       });
       setShowWarningDialog(false);
       onOpenChange(false);
-    }
-  };
-
-  // Handle removing a Fouetté rotation handling
-  const handleRemoveFouetteHandling = (rotationIndex: number) => {
-    if (onFouetteRotationHandlingsChange) {
-      const updated = fouetteRotationHandlings.filter(h => h.rotationIndex !== rotationIndex);
-      onFouetteRotationHandlingsChange(updated);
-    }
-  };
-
-  // Handle assigning handling to a Fouetté rotation
-  const handleAssignFouetteHandling = (rotationIndex: number) => {
-    if (onOpenFouetteHandlingDialog) {
-      onOpenChange(false);
-      setTimeout(() => onOpenFouetteHandlingDialog(rotationIndex), 100);
     }
   };
 
@@ -519,18 +481,12 @@ export const ElementInformationDialog = ({
                     onChange={updateFouetteComponents}
                     baseValue={element.value}
                     maxComponents={10}
-                    rotationHandlings={fouetteRotationHandlings}
-                    onAssignHandling={handleAssignFouetteHandling}
-                    onRemoveHandling={handleRemoveFouetteHandling}
-                    getTechnicalElementSymbol={getTechnicalElementSymbol as ((filename: string | null, apparatus: string) => string | null) | undefined}
-                    apparatus={apparatus}
                   />
                 </div>
               )}
             </div>
 
-            {/* ==================== APPARATUS HANDLING SECTION (non-Fouetté) ==================== */}
-            {!isFouetteElement && (
+            {/* ==================== APPARATUS HANDLING SECTION ==================== */}
             <div className="p-4 bg-secondary/30 rounded-lg border space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium text-sm">Apparatus Handling</h4>
@@ -639,17 +595,13 @@ export const ElementInformationDialog = ({
                 </p>
               )}
             </div>
-            )}
 
             {/* ==================== TOTAL VALUE SECTION ==================== */}
             <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
               <div className="flex items-center justify-between mb-3">
                 <span className="font-semibold">Total Value</span>
                 <span className="text-xl font-bold text-primary">
-                  {isFouetteElement 
-                    ? (totalValue + fouetteRotationHandlings.reduce((sum, h) => sum + (h.daElement?.value || 0), 0)).toFixed(1)
-                    : (totalValue + selectedDaElements.reduce((sum, da) => sum + da.value, 0)).toFixed(1)
-                  }
+                  {(totalValue + selectedDaElements.reduce((sum, da) => sum + da.value, 0)).toFixed(1)}
                 </span>
               </div>
               <div className="space-y-1 text-xs text-muted-foreground border-t pt-2">
@@ -657,28 +609,16 @@ export const ElementInformationDialog = ({
                   <span>DB:</span>
                   <span>{totalValue.toFixed(1)}</span>
                 </div>
-                {!isFouetteElement && selectedTechnicalElements.length > 0 && (
+                {selectedTechnicalElements.length > 0 && (
                   <div className="flex justify-between">
                     <span>TE:</span>
                     <span>0.0</span>
                   </div>
                 )}
-                {!isFouetteElement && selectedDaElements.length > 0 && (
+                {selectedDaElements.length > 0 && (
                   <div className="flex justify-between">
                     <span>DA:</span>
                     <span>{selectedDaElements.reduce((sum, da) => sum + da.value, 0).toFixed(1)}</span>
-                  </div>
-                )}
-                {isFouetteElement && fouetteRotationHandlings.some(h => h.teElement) && (
-                  <div className="flex justify-between">
-                    <span>TE:</span>
-                    <span>0.0</span>
-                  </div>
-                )}
-                {isFouetteElement && fouetteRotationHandlings.some(h => h.daElement) && (
-                  <div className="flex justify-between">
-                    <span>DA:</span>
-                    <span>{fouetteRotationHandlings.reduce((sum, h) => sum + (h.daElement?.value || 0), 0).toFixed(1)}</span>
                   </div>
                 )}
               </div>
@@ -703,7 +643,7 @@ export const ElementInformationDialog = ({
           <AlertDialogHeader>
             <AlertDialogTitle>
               {isFouetteElement 
-                ? 'Missing Required Handling' 
+                ? 'Missing Apparatus Handling' 
                 : isPerRotationElement 
                   ? 'Missing Apparatus Handling' 
                   : `${getElementTypeLabel()} Without Apparatus Handling`
@@ -712,7 +652,7 @@ export const ElementInformationDialog = ({
             <AlertDialogDescription className="space-y-3">
               <span>
                 {isFouetteElement
-                  ? `Fouetté elements require apparatus handling (TE or DA) for the first 2 rotations. Please assign handling to the first ${fouetteRequiredHandlingCount} rotation${fouetteRequiredHandlingCount > 1 ? 's' : ''}.`
+                  ? 'To validate the element, apparatus handling must be performed within the first 2 rotations of fouetté. Do you want to add apparatus handling?'
                   : isPerRotationElement 
                     ? `A Backward Illusion requires one TE or DA for each rotation to be valid. You have added ${currentHandlingCount} of ${requiredHandlingCount} required. Would you like to add the missing apparatus handling to validate the DB?`
                     : `You have added a new ${getElementTypeLabel().toLowerCase()} to the routine. However, the ${getElementTypeLabel().toLowerCase()} is not valid without an apparatus technical element or apparatus difficulty. Do you want to add apparatus handling?`
@@ -723,20 +663,13 @@ export const ElementInformationDialog = ({
                   Please note that each rotation in a Backward Illusion is counted as a separate DB. Therefore, apparatus handling must be selected for each rotation to be valid.
                 </span>
               )}
-              {isFouetteElement && (
-                <span className="block text-xs text-muted-foreground italic">
-                  The first 2 rotations of a Fouetté must have apparatus handling assigned. Rotations 3+ have optional handling.
-                </span>
-              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction onClick={handleWarningYes}>
-              {isFouetteElement ? 'OK' : 'Yes'}
+              Yes
             </AlertDialogAction>
-            {!isFouetteElement && (
-              <AlertDialogCancel onClick={isPerRotationElement ? handleWarningNo3_1704 : handleWarningNo}>No</AlertDialogCancel>
-            )}
+            <AlertDialogCancel onClick={isPerRotationElement ? handleWarningNo3_1704 : handleWarningNo}>No</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
