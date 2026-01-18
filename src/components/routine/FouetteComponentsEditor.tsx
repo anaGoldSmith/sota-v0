@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, Trash2, Info } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface FouetteComponent {
   id: string;
@@ -63,7 +64,19 @@ export const FouetteComponentsEditor = ({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">Fouetté Components</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Fouetté Components</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                <p>A Fouetté consists of up to 10 identical components connected with heel support and is counted as one Difficulty. Each component may include one or more rotations. To be valid, apparatus handling must be performed within the first two rotations.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <span className="text-xs text-muted-foreground">
           {components.length}/{maxComponents} components
         </span>
