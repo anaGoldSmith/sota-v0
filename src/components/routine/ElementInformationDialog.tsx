@@ -7,6 +7,7 @@ import { Minus, Plus, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ApparatusType } from "@/types/apparatus";
+import { FouetteComponentsEditor, FouetteComponent } from "./FouetteComponentsEditor";
 
 interface ElementData {
   id: string;
@@ -48,6 +49,7 @@ interface ElementInformationDialogProps {
     technicalElements?: TechnicalElementSelection[];
     daElements?: DaElementSelection[];
     withApparatusHandling: boolean;
+    fouetteComponents?: FouetteComponent[];
   }) => void;
   onCancel: () => void;
   getSymbolUrl: (symbolImage: string | null, bucketName: string) => string | null;
@@ -66,6 +68,9 @@ interface ElementInformationDialogProps {
   onRemoveDaElement?: (id: string) => void;
   // Callback for rotation count changes (to persist state when navigating to TE/DA dialogs)
   onRotationCountChange?: (count: number) => void;
+  // For Fouetté elements
+  initialFouetteComponents?: FouetteComponent[];
+  onFouetteComponentsChange?: (components: FouetteComponent[]) => void;
 }
 
 export const ElementInformationDialog = ({
@@ -87,14 +92,28 @@ export const ElementInformationDialog = ({
   onRemoveTechnicalElement,
   onRemoveDaElement,
   onRotationCountChange,
+  initialFouetteComponents,
+  onFouetteComponentsChange,
 }: ElementInformationDialogProps) => {
   const [rotationCount, setRotationCount] = useState<number>(1);
+  
+  // Fouetté components state (for 3.1601 and 3.1602)
+  const [fouetteComponents, setFouetteComponents] = useState<FouetteComponent[]>([
+    { id: crypto.randomUUID(), rotations: 1 }
+  ]);
   
   // Wrap setRotationCount to also notify parent
   const updateRotationCount = (count: number) => {
     setRotationCount(count);
     onRotationCountChange?.(count);
   };
+  
+  // Wrap Fouetté components update to notify parent
+  const updateFouetteComponents = (components: FouetteComponent[]) => {
+    setFouetteComponents(components);
+    onFouetteComponentsChange?.(components);
+  };
+  
   const [showWarningDialog, setShowWarningDialog] = useState(false);
 
   // Determine if this is a rotation with 180-degree base
@@ -114,6 +133,12 @@ export const ElementInformationDialog = ({
     if (!element?.code || elementType !== 'rotation') return false;
     return element.code === "3.1704";
   }, [element, elementType]);
+  
+  // Check if this is a Fouetté element (codes 3.1601 or 3.1602) - component-based rotation counting
+  const isFouetteElement = useMemo(() => {
+    if (!element?.code || elementType !== 'rotation') return false;
+    return element.code === "3.1601" || element.code === "3.1602";
+  }, [element, elementType]);
 
   // Check if rotation count is applicable (only for rotations)
   const showRotationCount = elementType === 'rotation';
@@ -121,7 +146,19 @@ export const ElementInformationDialog = ({
   // Set default rotation count when element changes
   useEffect(() => {
     if (element && elementType === 'rotation') {
-      if (initialRotationCount !== undefined) {
+      // For Fouetté elements, use component-based counting
+      if (isFouetteElement) {
+        if (initialFouetteComponents && initialFouetteComponents.length > 0) {
+          setFouetteComponents(initialFouetteComponents);
+        } else {
+          setFouetteComponents([{ id: crypto.randomUUID(), rotations: 1 }]);
+        }
+        // Calculate total rotations from components for rotationCount state
+        const totalRotations = initialFouetteComponents 
+          ? initialFouetteComponents.reduce((sum, c) => sum + c.rotations, 0)
+          : 1;
+        setRotationCount(totalRotations);
+      } else if (initialRotationCount !== undefined) {
         setRotationCount(initialRotationCount);
       } else if (isFixedRotation) {
         setRotationCount(1);
@@ -131,7 +168,7 @@ export const ElementInformationDialog = ({
     } else {
       setRotationCount(1);
     }
-  }, [element, elementType, is180Degrees, isFixedRotation, initialRotationCount]);
+  }, [element, elementType, is180Degrees, isFixedRotation, isFouetteElement, initialRotationCount, initialFouetteComponents]);
 
   const minValue = is180Degrees ? 0.5 : 1;
 
@@ -155,6 +192,12 @@ export const ElementInformationDialog = ({
       return baseValue * rotationCount;
     }
     
+    // For Fouetté elements (3.1601, 3.1602): each rotation = 0.1 value
+    if (isFouetteElement) {
+      const totalRotations = fouetteComponents.reduce((sum, c) => sum + c.rotations, 0);
+      return totalRotations * 0.1;
+    }
+    
     if (is180Degrees) {
       const additionalHalfRotations = (rotationCount - 0.5) / 0.5;
       return baseValue + (additionalHalfRotations * extraValue);
@@ -162,7 +205,7 @@ export const ElementInformationDialog = ({
       const additionalFullRotations = Math.floor(rotationCount) - 1;
       return baseValue + (Math.max(0, additionalFullRotations) * extraValue);
     }
-  }, [element, elementType, rotationCount, is180Degrees, isFixedRotation, isPerRotationElement]);
+  }, [element, elementType, rotationCount, is180Degrees, isFixedRotation, isPerRotationElement, isFouetteElement, fouetteComponents]);
 
   const handleIncrement = () => {
     if (isFixedRotation || elementType !== 'rotation') return;
@@ -218,14 +261,20 @@ export const ElementInformationDialog = ({
     }
     
     if (element && elementType) {
+      // Calculate final rotationCount for Fouetté elements
+      const finalRotationCount = isFouetteElement 
+        ? fouetteComponents.reduce((sum, c) => sum + c.rotations, 0)
+        : rotationCount;
+      
       onSave({
         element,
         elementType,
-        rotationCount,
+        rotationCount: finalRotationCount,
         totalValue,
         technicalElements: selectedTechnicalElements.length > 0 ? selectedTechnicalElements : undefined,
         daElements: selectedDaElements.length > 0 ? selectedDaElements : undefined,
         withApparatusHandling: hasApparatusHandling,
+        fouetteComponents: isFouetteElement ? fouetteComponents : undefined,
       });
       onOpenChange(false);
     }
@@ -239,12 +288,18 @@ export const ElementInformationDialog = ({
   const handleWarningNo = () => {
     // Save without apparatus handling
     if (element && elementType) {
+      // Calculate final rotationCount for Fouetté elements
+      const finalRotationCount = isFouetteElement 
+        ? fouetteComponents.reduce((sum, c) => sum + c.rotations, 0)
+        : rotationCount;
+      
       onSave({
         element,
         elementType,
-        rotationCount,
+        rotationCount: finalRotationCount,
         totalValue,
         withApparatusHandling: false,
+        fouetteComponents: isFouetteElement ? fouetteComponents : undefined,
       });
       setShowWarningDialog(false);
       onOpenChange(false);
@@ -339,7 +394,7 @@ export const ElementInformationDialog = ({
               </div>
 
               {/* Rotation Count Input (only for rotations) */}
-              {showRotationCount && (
+              {showRotationCount && !isFouetteElement && (
                 <div className="mt-4 pt-4 border-t space-y-2">
                   <Label htmlFor="rotation-count" className="text-sm">Number of Rotations</Label>
                   <div className="flex items-center gap-3">
@@ -407,6 +462,18 @@ export const ElementInformationDialog = ({
                       Each rotation requires its own TE or DA ({currentHandlingCount}/{requiredHandlingCount} added)
                     </div>
                   )}
+                </div>
+              )}
+              
+              {/* Fouetté Component Editor (only for 3.1601 and 3.1602) */}
+              {showRotationCount && isFouetteElement && (
+                <div className="mt-4 pt-4 border-t">
+                  <FouetteComponentsEditor
+                    components={fouetteComponents}
+                    onChange={updateFouetteComponents}
+                    baseValue={element.value}
+                    maxComponents={10}
+                  />
                 </div>
               )}
             </div>
