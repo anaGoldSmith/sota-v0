@@ -12,6 +12,7 @@ import { RotationSelectionDialog } from "@/components/routine/RotationSelectionD
 import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/routine/ApparatusSelectionDialog";
 import { TechnicalElementsSelectionDialog } from "@/components/routine/TechnicalElementsSelectionDialog";
 import { ElementInformationDialog } from "@/components/routine/ElementInformationDialog";
+import type { FouetteComponent } from "@/components/routine/FouetteComponentsEditor";
 import { DBSuccessDialog } from "@/components/routine/DBSuccessDialog";
 import { DBDASuccessDialog } from "@/components/routine/DBDASuccessDialog";
 import { DBDAValidationDialog } from "@/components/routine/DBDAValidationDialog";
@@ -117,6 +118,7 @@ interface RoutineElement {
     code?: string;
     elementType?: 'jump' | 'rotation' | 'balance';
     rotationCount?: number;
+    fouetteComponents?: FouetteComponent[];
   };
   daData?: {
     symbolImages: string[];
@@ -1087,8 +1089,9 @@ const RoutineCalculator = () => {
     technicalElements?: Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }>;
     daElements?: Array<{ id: string; name: string; symbolImages: string[]; value: number; selectedCriteria: string[] }>;
     withApparatusHandling: boolean;
+    fouetteComponents?: FouetteComponent[];
   }) => {
-    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, withApparatusHandling } = data;
+    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, withApparatusHandling, fouetteComponents } = data;
     
     // Get DB symbol images
     const dbSymbolImages = element.symbol_image ? [
@@ -1129,6 +1132,7 @@ const RoutineCalculator = () => {
           code: element.code,
           elementType: elementType,
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
+          fouetteComponents: fouetteComponents,
         },
         daData: {
           symbolImages: teSymbolImages,
@@ -1168,6 +1172,7 @@ const RoutineCalculator = () => {
           code: element.code,
           elementType: elementType,
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
+          fouetteComponents: fouetteComponents,
         },
         daData: {
           symbolImages: daSymbolImages,
