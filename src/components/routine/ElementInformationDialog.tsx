@@ -662,14 +662,11 @@ export const ElementInformationDialog = ({
                       <Plus className="h-4 w-4" />
                     </Button>
                     
-                    <div className="text-xs text-muted-foreground whitespace-nowrap">
-                      {isFixedRotation
-                        ? "Fixed"
-                        : is180Degrees 
-                          ? "Min: 0.5"
-                          : "Min: 1"
-                      }
-                    </div>
+                    {!isFixedRotation && (
+                      <div className="text-xs text-muted-foreground whitespace-nowrap">
+                        {is180Degrees ? "Min: 0.5" : "Min: 1"}
+                      </div>
+                    )}
                     
                     {/* Series button - toggles series mode (hidden for rotations that cannot be series) */}
                     {!cannotBeSeries && (
@@ -689,23 +686,25 @@ export const ElementInformationDialog = ({
                         Series
                       </Button>
                     )}
-                    <TooltipProvider>
-                      <Tooltip delayDuration={0}>
-                        <TooltipTrigger asChild>
-                          <div className="cursor-help">
-                            <Info className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent 
-                          side="left" 
-                          align="center"
-                          className="max-w-[250px] text-sm z-[200]"
-                          sideOffset={8}
-                        >
-                          <p>A series refers to two or more identical pivots or illusions performed consecutively with heel support. Each counts as a separate Difficulty. Each rotation should have a valid apparatus handling.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    {!cannotBeSeries && (
+                      <TooltipProvider>
+                        <Tooltip delayDuration={0}>
+                          <TooltipTrigger asChild>
+                            <div className="cursor-help">
+                              <Info className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent 
+                            side="left" 
+                            align="center"
+                            className="max-w-[250px] text-sm z-[200]"
+                            sideOffset={8}
+                          >
+                            <p>A series refers to two or more identical pivots or illusions performed consecutively with heel support. Each counts as a separate Difficulty. Each rotation should have a valid apparatus handling.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </div>
                   
                   {/* Series handling requirement notice */}
