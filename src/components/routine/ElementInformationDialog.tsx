@@ -3,8 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GripVertical, Info, Minus, Plus, X } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { GripVertical, Minus, Plus, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ApparatusType } from "@/types/apparatus";
@@ -651,19 +650,6 @@ export const ElementInformationDialog = ({
               {/* Fouetté Component Editor (only for 3.1601 and 3.1602) */}
               {showRotationCount && isFouetteElement && (
                 <div className="mt-4 pt-4 border-t">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-sm font-medium">Fouetté Components</span>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs text-xs">
-                          <p>A Fouetté consists of up to 10 identical components connected with heel support and is counted as one Difficulty. Each component may include one or more rotations. To be valid, apparatus handling must be performed within the first two rotations.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
                   <FouetteComponentsEditor
                     components={fouetteComponents}
                     onChange={updateFouetteComponents}
