@@ -693,8 +693,10 @@ const RoutineCalculator = () => {
       const daElements = processApparatusCombinationsToElements(combinations);
       
       // Store DA elements data for ElementInformationDialog
+      // Use timestamp + index to ensure unique IDs across multiple additions
+      const timestamp = Date.now();
       const daElementsData = combinations.map((combo, idx) => ({
-        id: `da-${combo.element.id}-${idx}`,
+        id: `da-${combo.element.id}-${timestamp}-${idx}`,
         name: combo.element.name || combo.element.description || 'DA Element',
         symbolImages: daElements[idx]?.symbolImages || [],
         value: combo.calculatedValue || combo.element.value,

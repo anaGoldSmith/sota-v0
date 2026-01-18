@@ -29,7 +29,7 @@ interface TechnicalElementsSelectionDialogProps {
   apparatus: ApparatusType | null;
   onSelectTechnicalElements: (elements: TechnicalElement[]) => void;
   onGoBack: () => void;
-  // Pre-selected elements to show as already selected
+  // Pre-selected elements to show as already selected (for non-rotation elements that replace)
   initialSelectedElements?: Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }>;
   // Element type to filter "Under the flight" technical elements
   elementType?: 'jump' | 'rotation' | 'balance' | null;
@@ -47,12 +47,19 @@ export const TechnicalElementsSelectionDialog = ({
   const [searchText, setSearchText] = useState("");
   const [selectedElements, setSelectedElements] = useState<Set<string>>(new Set());
 
-  // Initialize selected elements from props when dialog opens
+  // For rotations: we allow adding multiple TEs, so don't pre-select existing ones
+  // For jumps/balances: pre-select existing ones since they replace
   useEffect(() => {
     if (open) {
-      setSelectedElements(new Set(initialSelectedElements.map(el => el.id)));
+      if (elementType === 'rotation') {
+        // For rotations: start fresh - don't pre-select existing elements
+        setSelectedElements(new Set());
+      } else {
+        // For jumps/balances: pre-select existing elements (replace mode)
+        setSelectedElements(new Set(initialSelectedElements.map(el => el.id)));
+      }
     }
-  }, [open, initialSelectedElements]);
+  }, [open, initialSelectedElements, elementType]);
 
   // Fetch technical elements for the selected apparatus
   const { data: technicalElements = [], isLoading, error } = useQuery({
@@ -249,10 +256,13 @@ export const TechnicalElementsSelectionDialog = ({
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>
             {isLoading ? "Loading..." : `${filteredElements.length} element${filteredElements.length !== 1 ? 's' : ''} found`}
+            {elementType === 'rotation' && initialSelectedElements.length > 0 && (
+              <span className="ml-2">({initialSelectedElements.length} already added)</span>
+            )}
           </span>
           {selectedElements.size > 0 && (
             <span className="font-medium text-foreground">
-              {selectedElements.size} element{selectedElements.size !== 1 ? 's' : ''} selected
+              {selectedElements.size} new element{selectedElements.size !== 1 ? 's' : ''} selected
             </span>
           )}
         </div>
@@ -285,17 +295,22 @@ export const TechnicalElementsSelectionDialog = ({
                   {Array.from(groupedElements.entries()).map(([group, elements]) => (
                     elements.map((element) => {
                       const isSelected = selectedElements.has(element.id);
+                      // For rotations, check if this element is already in the parent's saved TEs
+                      const isAlreadyAdded = elementType === 'rotation' && 
+                        initialSelectedElements.some(el => el.id === element.id);
                       const symbolUrl = getSymbolUrl(element.symbol_image);
                       
                       return (
                         <TableRow 
                           key={element.id}
                           className={`cursor-pointer transition-colors ${
-                            isSelected 
-                              ? 'bg-primary/20 hover:bg-primary/30' 
-                              : 'hover:bg-accent/50'
+                            isAlreadyAdded
+                              ? 'bg-muted/50 opacity-60 cursor-not-allowed'
+                              : isSelected 
+                                ? 'bg-primary/20 hover:bg-primary/30' 
+                                : 'hover:bg-accent/50'
                           }`}
-                          onClick={() => handleElementClick(element)}
+                          onClick={() => !isAlreadyAdded && handleElementClick(element)}
                         >
                           <TableCell className="relative">
                             <div className="w-12 h-12 bg-muted/50 rounded flex items-center justify-center">
@@ -309,7 +324,12 @@ export const TechnicalElementsSelectionDialog = ({
                                 <span className="text-xs text-muted-foreground">N/A</span>
                               )}
                             </div>
-                            {isSelected && (
+                            {isAlreadyAdded && (
+                              <div className="absolute -top-1 -right-1 bg-muted-foreground text-background rounded-full p-0.5 shadow-md z-10 border-2 border-background">
+                                <Check className="h-3 w-3" />
+                              </div>
+                            )}
+                            {isSelected && !isAlreadyAdded && (
                               <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5 shadow-md z-10 border-2 border-background">
                                 <Check className="h-3 w-3" />
                               </div>
@@ -317,6 +337,9 @@ export const TechnicalElementsSelectionDialog = ({
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {element.description}
+                            {isAlreadyAdded && (
+                              <span className="ml-2 text-xs text-muted-foreground italic">(already added)</span>
+                            )}
                           </TableCell>
                         </TableRow>
                       );
