@@ -140,6 +140,8 @@ interface RoutineElement {
     symbolImages: string[];
     value: number;
   }>;
+  // Unified handling order (preserves drag-drop order for breakdown display)
+  handlingOrder?: Array<{ type: 'te' | 'da'; id: string }>;
   // For Risk elements
   riskData?: RiskData;
   isExpanded?: boolean;
@@ -564,11 +566,36 @@ const RoutineCalculator = () => {
     });
   };
   
-  // Function to replace all handling items
-  const setAllHandlingItems = (teElements: Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }>, daElements: Array<{ id: string; name: string; symbolImages: string[]; value: number; selectedCriteria: string[] }>) => {
-    const newTeItems: HandlingItem[] = teElements.map(te => ({ type: 'te', id: `te-${te.id}`, data: te }));
-    const newDaItems: HandlingItem[] = daElements.map(da => ({ type: 'da', id: `da-${da.id}`, data: da }));
-    setPendingHandlingItems([...newTeItems, ...newDaItems]);
+  // Function to replace all handling items (optionally with a specific order)
+  const setAllHandlingItems = (
+    teElements: Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }>, 
+    daElements: Array<{ id: string; name: string; symbolImages: string[]; value: number; selectedCriteria: string[] }>,
+    handlingOrder?: Array<{ type: 'te' | 'da'; id: string }>
+  ) => {
+    const teMap = new Map(teElements.map(te => [te.id, te]));
+    const daMap = new Map(daElements.map(da => [da.id, da]));
+    
+    if (handlingOrder && handlingOrder.length > 0) {
+      // Preserve the original order
+      const orderedItems: HandlingItem[] = handlingOrder
+        .map(orderItem => {
+          if (orderItem.type === 'te') {
+            const te = teMap.get(orderItem.id);
+            if (te) return { type: 'te' as const, id: `te-${te.id}`, data: te };
+          } else {
+            const da = daMap.get(orderItem.id);
+            if (da) return { type: 'da' as const, id: `da-${da.id}`, data: da };
+          }
+          return null;
+        })
+        .filter((item): item is HandlingItem => item !== null);
+      setPendingHandlingItems(orderedItems);
+    } else {
+      // Fallback: TEs first, then DAs
+      const newTeItems: HandlingItem[] = teElements.map(te => ({ type: 'te', id: `te-${te.id}`, data: te }));
+      const newDaItems: HandlingItem[] = daElements.map(da => ({ type: 'da', id: `da-${da.id}`, data: da }));
+      setPendingHandlingItems([...newTeItems, ...newDaItems]);
+    }
   };
   
   // Function to clear all handling items
@@ -1120,7 +1147,7 @@ const RoutineCalculator = () => {
       selectedCriteria: [] as string[], // We don't have criteria info in the stored element
     })) || [];
     
-    setAllHandlingItems(teElements, daElements);
+    setAllHandlingItems(teElements, daElements, element.handlingOrder);
     setModifyingRoutineElement(element);
     
     // Set pending DB element for apparatus handling
@@ -1141,10 +1168,11 @@ const RoutineCalculator = () => {
     totalValue: number;
     technicalElements?: Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }>;
     daElements?: Array<{ id: string; name: string; symbolImages: string[]; value: number; selectedCriteria: string[] }>;
+    handlingOrder?: Array<{ type: 'te' | 'da'; id: string }>;
     withApparatusHandling: boolean;
     fouetteComponents?: FouetteComponent[];
   }) => {
-    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, withApparatusHandling, fouetteComponents } = data;
+    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, handlingOrder, withApparatusHandling, fouetteComponents } = data;
     
     // Get DB symbol images
     const dbSymbolImages = element.symbol_image ? [
@@ -1206,6 +1234,7 @@ const RoutineCalculator = () => {
         },
         teElements: teElementsData,
         daElements: daElementsData,
+        handlingOrder: handlingOrder,
         isExpanded: false,
       };
       
@@ -1253,6 +1282,7 @@ const RoutineCalculator = () => {
           value: 0,
         },
         teElements: teElementsData,
+        handlingOrder: handlingOrder,
         isExpanded: false,
       };
       
@@ -1293,6 +1323,7 @@ const RoutineCalculator = () => {
           value: totalDaValue,
         },
         daElements: daElementsData,
+        handlingOrder: handlingOrder,
         isExpanded: false,
       };
       
@@ -1667,80 +1698,140 @@ const RoutineCalculator = () => {
                                           <td className="py-2 px-4 text-right font-mono">{element.dbData.value.toFixed(1)}</td>
                                         </tr>
                                         
-                                        {/* Technical Elements Rows (for DB/TE or DB/TE/DA) */}
-                                        {(element.type === 'DB/TE' || element.type === 'DB/TE/DA') && element.teElements && element.teElements.map((te, idx) => (
-                                          <tr key={te.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
-                                            <td className="py-2 px-4">
-                                              <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded dark:text-green-300 dark:bg-green-900/30">TE</span>
-                                            </td>
-                                            <td className="py-2 px-4">
-                                              {te.symbolImage ? (
-                                                <img src={te.symbolImage} alt={te.name} className="h-6 w-6 object-contain" />
-                                              ) : (
-                                                <div className="h-6 w-6 bg-muted rounded" />
-                                              )}
-                                            </td>
-                                            <td className="py-2 px-4 font-medium">
-                                              <div className="flex flex-col">
-                                                <span>{te.name}</span>
-                                                {element.dbData?.code === '3.1704' && element.dbData?.rotationCount && element.dbData.rotationCount > 1 && (
-                                                  <span className="text-xs text-muted-foreground">
-                                                    (handling for {idx + 1}{idx === 0 ? 'st' : idx === 1 ? 'nd' : idx === 2 ? 'rd' : 'th'} rotation)
-                                                  </span>
-                                                )}
-                                              </div>
-                                            </td>
-                                            <td className="py-2 px-4 text-right font-mono">{te.value.toFixed(1)}</td>
-                                          </tr>
-                                        ))}
-                                        
-                                        {/* DA Elements Rows (for DB/DA or DB/TE/DA) - one row per DA element */}
-                                        {(element.type === 'DB/DA' || element.type === 'DB/TE/DA') && element.daElements && element.daElements.map((da, idx) => {
-                                          // Calculate alternating row color - for DB/TE/DA, account for TE rows above
-                                          const teCount = element.type === 'DB/TE/DA' && element.teElements ? element.teElements.length : 0;
-                                          const rowIndex = teCount + idx;
-                                          return (
-                                            <tr key={da.id} className={rowIndex % 2 === 0 ? "" : "bg-secondary/10"}>
-                                              <td className="py-2 px-4">
-                                                <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
-                                              </td>
-                                              <td className="py-2 px-4">
-                                                <div className="flex items-center gap-1">
-                                                  {da.symbolImages.map((url, imgIdx) => (
-                                                    url.startsWith('TEXT:') ? (
-                                                      <span key={imgIdx} className="text-lg font-bold">{url.replace('TEXT:', '')}</span>
+                                        {/* Render handling items in saved order (handlingOrder) if available, otherwise fallback to TEs then DAs */}
+                                        {element.handlingOrder ? (
+                                          // Use handlingOrder for correct drag-drop sequence
+                                          element.handlingOrder.map((orderItem, idx) => {
+                                            if (orderItem.type === 'te') {
+                                              const te = element.teElements?.find(t => t.id === orderItem.id);
+                                              if (!te) return null;
+                                              return (
+                                                <tr key={te.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                  <td className="py-2 px-4">
+                                                    <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded dark:text-green-300 dark:bg-green-900/30">TE</span>
+                                                  </td>
+                                                  <td className="py-2 px-4">
+                                                    {te.symbolImage ? (
+                                                      <img src={te.symbolImage} alt={te.name} className="h-6 w-6 object-contain" />
                                                     ) : (
-                                                      <img key={imgIdx} src={url} alt="Symbol" className="h-6 w-6 object-contain" />
-                                                    )
-                                                  ))}
-                                                </div>
-                                              </td>
-                                              <td className="py-2 px-4 font-medium">{da.name}</td>
-                                              <td className="py-2 px-4 text-right font-mono">{da.value.toFixed(1)}</td>
-                                            </tr>
-                                          );
-                                        })}
-                                        
-                                        {/* Fallback: Single DA row if no daElements array (for DB/DA) */}
-                                        {(element.type === 'DB/DA' || element.type === 'DB/TE/DA') && !element.daElements && element.daData && element.daData.value > 0 && (
-                                          <tr>
-                                            <td className="py-2 px-4">
-                                              <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
-                                            </td>
-                                            <td className="py-2 px-4">
-                                              <div className="flex items-center gap-1">
-                                                {element.daData.symbolImages.map((url, idx) => (
-                                                  url.startsWith('TEXT:') ? (
-                                                    <span key={idx} className="text-lg font-bold">{url.replace('TEXT:', '')}</span>
+                                                      <div className="h-6 w-6 bg-muted rounded" />
+                                                    )}
+                                                  </td>
+                                                  <td className="py-2 px-4 font-medium">
+                                                    <div className="flex flex-col">
+                                                      <span>{te.name}</span>
+                                                      {element.dbData?.code === '3.1704' && element.dbData?.rotationCount && element.dbData.rotationCount > 1 && (
+                                                        <span className="text-xs text-muted-foreground">
+                                                          (handling for {idx + 1}{idx === 0 ? 'st' : idx === 1 ? 'nd' : idx === 2 ? 'rd' : 'th'} rotation)
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                  </td>
+                                                  <td className="py-2 px-4 text-right font-mono">{te.value.toFixed(1)}</td>
+                                                </tr>
+                                              );
+                                            } else {
+                                              const da = element.daElements?.find(d => d.id === orderItem.id);
+                                              if (!da) return null;
+                                              return (
+                                                <tr key={da.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                  <td className="py-2 px-4">
+                                                    <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
+                                                  </td>
+                                                  <td className="py-2 px-4">
+                                                    <div className="flex items-center gap-1">
+                                                      {da.symbolImages.map((url, imgIdx) => (
+                                                        url.startsWith('TEXT:') ? (
+                                                          <span key={imgIdx} className="text-lg font-bold">{url.replace('TEXT:', '')}</span>
+                                                        ) : (
+                                                          <img key={imgIdx} src={url} alt="Symbol" className="h-6 w-6 object-contain" />
+                                                        )
+                                                      ))}
+                                                    </div>
+                                                  </td>
+                                                  <td className="py-2 px-4 font-medium">{da.name}</td>
+                                                  <td className="py-2 px-4 text-right font-mono">{da.value.toFixed(1)}</td>
+                                                </tr>
+                                              );
+                                            }
+                                          })
+                                        ) : (
+                                          <>
+                                            {/* Fallback: Technical Elements Rows (for DB/TE or DB/TE/DA) */}
+                                            {(element.type === 'DB/TE' || element.type === 'DB/TE/DA') && element.teElements && element.teElements.map((te, idx) => (
+                                              <tr key={te.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                <td className="py-2 px-4">
+                                                  <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded dark:text-green-300 dark:bg-green-900/30">TE</span>
+                                                </td>
+                                                <td className="py-2 px-4">
+                                                  {te.symbolImage ? (
+                                                    <img src={te.symbolImage} alt={te.name} className="h-6 w-6 object-contain" />
                                                   ) : (
-                                                    <img key={idx} src={url} alt="Symbol" className="h-6 w-6 object-contain" />
-                                                  )
-                                                ))}
-                                              </div>
-                                            </td>
-                                            <td className="py-2 px-4 font-medium">{element.daData.name || 'DA Element'}</td>
-                                            <td className="py-2 px-4 text-right font-mono">{element.daData.value.toFixed(1)}</td>
-                                          </tr>
+                                                    <div className="h-6 w-6 bg-muted rounded" />
+                                                  )}
+                                                </td>
+                                                <td className="py-2 px-4 font-medium">
+                                                  <div className="flex flex-col">
+                                                    <span>{te.name}</span>
+                                                    {element.dbData?.code === '3.1704' && element.dbData?.rotationCount && element.dbData.rotationCount > 1 && (
+                                                      <span className="text-xs text-muted-foreground">
+                                                        (handling for {idx + 1}{idx === 0 ? 'st' : idx === 1 ? 'nd' : idx === 2 ? 'rd' : 'th'} rotation)
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                </td>
+                                                <td className="py-2 px-4 text-right font-mono">{te.value.toFixed(1)}</td>
+                                              </tr>
+                                            ))}
+                                            
+                                            {/* Fallback: DA Elements Rows (for DB/DA or DB/TE/DA) - one row per DA element */}
+                                            {(element.type === 'DB/DA' || element.type === 'DB/TE/DA') && element.daElements && element.daElements.map((da, idx) => {
+                                              const teCount = element.type === 'DB/TE/DA' && element.teElements ? element.teElements.length : 0;
+                                              const rowIndex = teCount + idx;
+                                              return (
+                                                <tr key={da.id} className={rowIndex % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                  <td className="py-2 px-4">
+                                                    <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
+                                                  </td>
+                                                  <td className="py-2 px-4">
+                                                    <div className="flex items-center gap-1">
+                                                      {da.symbolImages.map((url, imgIdx) => (
+                                                        url.startsWith('TEXT:') ? (
+                                                          <span key={imgIdx} className="text-lg font-bold">{url.replace('TEXT:', '')}</span>
+                                                        ) : (
+                                                          <img key={imgIdx} src={url} alt="Symbol" className="h-6 w-6 object-contain" />
+                                                        )
+                                                      ))}
+                                                    </div>
+                                                  </td>
+                                                  <td className="py-2 px-4 font-medium">{da.name}</td>
+                                                  <td className="py-2 px-4 text-right font-mono">{da.value.toFixed(1)}</td>
+                                                </tr>
+                                              );
+                                            })}
+                                            
+                                            {/* Fallback: Single DA row if no daElements array (for DB/DA) */}
+                                            {(element.type === 'DB/DA' || element.type === 'DB/TE/DA') && !element.daElements && element.daData && element.daData.value > 0 && (
+                                              <tr>
+                                                <td className="py-2 px-4">
+                                                  <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
+                                                </td>
+                                                <td className="py-2 px-4">
+                                                  <div className="flex items-center gap-1">
+                                                    {element.daData.symbolImages.map((url, idx) => (
+                                                      url.startsWith('TEXT:') ? (
+                                                        <span key={idx} className="text-lg font-bold">{url.replace('TEXT:', '')}</span>
+                                                      ) : (
+                                                        <img key={idx} src={url} alt="Symbol" className="h-6 w-6 object-contain" />
+                                                      )
+                                                    ))}
+                                                  </div>
+                                                </td>
+                                                <td className="py-2 px-4 font-medium">{element.daData.name || 'DA Element'}</td>
+                                                <td className="py-2 px-4 text-right font-mono">{element.daData.value.toFixed(1)}</td>
+                                              </tr>
+                                            )}
+                                          </>
                                         )}
                                       </tbody>
                                     </table>
