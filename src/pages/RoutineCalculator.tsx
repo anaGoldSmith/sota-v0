@@ -1829,6 +1829,9 @@ const RoutineCalculator = () => {
         onGoBack={handleTechnicalElementsGoBack}
         initialSelectedElements={pendingTechnicalElements}
         elementType={pendingElementInfo?.elementType || pendingDbElement?.type || null}
+        onRemoveElement={(id) => {
+          setPendingTechnicalElements(prev => prev.filter(te => te.id !== id));
+        }}
       />
 
       {/* Element Information Dialog for configuring new or modifying existing DB/DA/TE elements */}
