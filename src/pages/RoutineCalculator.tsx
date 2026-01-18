@@ -513,6 +513,7 @@ const RoutineCalculator = () => {
     elementType: 'jump' | 'rotation' | 'balance';
     rotationCount?: number;
     fouetteComponents?: FouetteComponent[];
+    isSeries?: boolean;
   } | null>(null);
   
   // Unified handling items array - preserves insertion order for TEs and DAs
@@ -1150,6 +1151,15 @@ const RoutineCalculator = () => {
     
     setAllHandlingItems(teElements, daElements, element.handlingOrder);
     setModifyingRoutineElement(element);
+    
+    // Set pending element info with existing series and rotation data
+    setPendingElementInfo({
+      element: originalData,
+      elementType: elementType,
+      rotationCount: element.dbData?.rotationCount,
+      fouetteComponents: element.dbData?.fouetteComponents,
+      isSeries: element.dbData?.isSeries,
+    });
     
     // Set pending DB element for apparatus handling
     setPendingDbElement({
@@ -2081,6 +2091,7 @@ const RoutineCalculator = () => {
         selectedDaElements={pendingDaElements}
         handlingItems={pendingHandlingItems}
         initialRotationCount={pendingElementInfo?.rotationCount}
+        initialIsSeries={pendingElementInfo?.isSeries}
         isModifying={modifyingRoutineElement !== null}
         onRemoveTechnicalElement={(id) => {
           setPendingHandlingItems(prev => prev.filter(item => !(item.type === 'te' && item.data.id === id)));
