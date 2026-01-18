@@ -701,10 +701,16 @@ const RoutineCalculator = () => {
         selectedCriteria: combo.selectedCriteria,
       }));
       
-      // Store the selected DA elements
-      setPendingDaElements(daElementsData);
-      // Clear TE elements since we're using DA
-      setPendingTechnicalElements([]);
+      const isRotation = pendingElementInfo?.elementType === 'rotation' || pendingDbElement?.type === 'rotation';
+      
+      if (isRotation) {
+        // For rotations: APPEND new DAs to existing ones, keep TEs
+        setPendingDaElements(prev => [...prev, ...daElementsData]);
+      } else {
+        // For jumps/balances: Replace DAs and clear TEs (mutually exclusive)
+        setPendingDaElements(daElementsData);
+        setPendingTechnicalElements([]);
+      }
       
       // Return to Element Information Dialog
       setApparatusDialogOpen(false);
@@ -1248,10 +1254,16 @@ const RoutineCalculator = () => {
     symbol_image: string | null;
   }>) => {
     if (pendingDbElement && elements.length > 0) {
-      // Store the selected technical elements
-      setPendingTechnicalElements(elements);
-      // Clear DA elements since we're using TE
-      setPendingDaElements([]);
+      const isRotation = pendingElementInfo?.elementType === 'rotation' || pendingDbElement?.type === 'rotation';
+      
+      if (isRotation) {
+        // For rotations: APPEND new TEs to existing ones, keep DAs
+        setPendingTechnicalElements(prev => [...prev, ...elements]);
+      } else {
+        // For jumps/balances: Replace TEs and clear DAs (mutually exclusive)
+        setPendingTechnicalElements(elements);
+        setPendingDaElements([]);
+      }
       
       // Return to Element Information Dialog
       setTechnicalElementsDialogOpen(false);
