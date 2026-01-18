@@ -1947,6 +1947,12 @@ const RoutineCalculator = () => {
         onRemoveDaElement={(id) => {
           setPendingDaElements(prev => prev.filter(da => da.id !== id));
         }}
+        onReorderTechnicalElements={(elements) => {
+          setPendingTechnicalElements(elements);
+        }}
+        onReorderDaElements={(elements) => {
+          setPendingDaElements(elements);
+        }}
         onRotationCountChange={(count) => {
           // Persist rotation count changes to pendingElementInfo so it's not lost when navigating to TE/DA dialogs
           setPendingElementInfo(prev => prev ? { ...prev, rotationCount: count } : null);
