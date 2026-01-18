@@ -70,6 +70,7 @@ interface ElementInformationDialogProps {
     totalValue: number;
     technicalElements?: TechnicalElementSelection[];
     daElements?: DaElementSelection[];
+    handlingOrder?: Array<{ type: 'te' | 'da'; id: string }>; // Preserves drag-drop order
     withApparatusHandling: boolean;
     fouetteComponents?: FouetteComponent[];
   }) => void;
@@ -453,6 +454,7 @@ export const ElementInformationDialog = ({
         totalValue,
         technicalElements: selectedTechnicalElements.length > 0 ? selectedTechnicalElements : undefined,
         daElements: selectedDaElements.length > 0 ? selectedDaElements : undefined,
+        handlingOrder: handlingItems.length > 0 ? handlingItems.map(item => ({ type: item.type, id: item.type === 'te' ? item.data.id : item.data.id })) : undefined,
         withApparatusHandling: hasApparatusHandling,
         fouetteComponents: isFouetteElement ? fouetteComponents : undefined,
       });
@@ -480,6 +482,7 @@ export const ElementInformationDialog = ({
         totalValue,
         technicalElements: selectedTechnicalElements.length > 0 ? selectedTechnicalElements : undefined,
         daElements: selectedDaElements.length > 0 ? selectedDaElements : undefined,
+        handlingOrder: handlingItems.length > 0 ? handlingItems.map(item => ({ type: item.type, id: item.data.id })) : undefined,
         withApparatusHandling: hasApparatusHandling,
         fouetteComponents: isFouetteElement ? fouetteComponents : undefined,
       });
@@ -498,6 +501,7 @@ export const ElementInformationDialog = ({
         totalValue,
         technicalElements: selectedTechnicalElements.length > 0 ? selectedTechnicalElements : undefined,
         daElements: selectedDaElements.length > 0 ? selectedDaElements : undefined,
+        handlingOrder: handlingItems.length > 0 ? handlingItems.map(item => ({ type: item.type, id: item.data.id })) : undefined,
         withApparatusHandling: hasApparatusHandling,
       });
       setShowWarningDialog(false);
