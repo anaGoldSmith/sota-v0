@@ -176,8 +176,10 @@ export const RotationSelectionDialog = ({
         return newSet;
       });
       // Close this dialog and open Element Information Dialog via parent
-      // Pass default rotation count of 1 (will be adjustable in Element Information Dialog)
-      onSelectRotation(rotation, 1, rotation.value, false);
+      // Use 0.5 for 180-degree rotations, 1 for standard rotations
+      const is180Degrees = rotation.turn_degrees === "180" || (rotation.turn_degrees?.includes("180") ?? false);
+      const baseRotationCount = is180Degrees ? 0.5 : 1;
+      onSelectRotation(rotation, baseRotationCount, rotation.value, false);
     }
   };
 
@@ -231,7 +233,9 @@ export const RotationSelectionDialog = ({
     const modifyingElementId = routineElementsMap?.get(rotation.id);
     // Calculate the rotation count and total value from the stored routine element
     // For now, use base values - the ElementInformationDialog will handle the details
-    const baseRotationCount = rotation.turn_degrees === "180" ? 0.5 : 1;
+    // Use 0.5 for 180-degree rotations, 1 for standard rotations
+    const is180Degrees = rotation.turn_degrees === "180" || (rotation.turn_degrees?.includes("180") ?? false);
+    const baseRotationCount = is180Degrees ? 0.5 : 1;
     const baseTotalValue = rotation.value;
     if (onOpenElementInfo) {
       onOpenElementInfo(rotation, baseRotationCount, baseTotalValue, modifyingElementId);
