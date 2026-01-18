@@ -181,37 +181,49 @@ function SortableRow({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const renderSymbols = (symbolImages: string[]) => (
-    <div className="flex items-center gap-1 flex-wrap">
-      {symbolImages.map((url, imgIndex) => {
-        // Check if this is a text-based symbol (W or DB)
-        const isTextSymbol = url && url.startsWith('TEXT:');
-        
-        if (isTextSymbol) {
-          // Extract the text after 'TEXT:'
-          const text = url.replace('TEXT:', '');
-          return (
-            <div 
+  const MAX_VISIBLE_SYMBOLS = 6;
+
+  const renderSymbols = (symbolImages: string[]) => {
+    const visibleSymbols = symbolImages.slice(0, MAX_VISIBLE_SYMBOLS);
+    const hiddenCount = symbolImages.length - MAX_VISIBLE_SYMBOLS;
+    
+    return (
+      <div className="flex items-center gap-1 flex-nowrap">
+        {visibleSymbols.map((url, imgIndex) => {
+          // Check if this is a text-based symbol (W or DB)
+          const isTextSymbol = url && url.startsWith('TEXT:');
+          
+          if (isTextSymbol) {
+            // Extract the text after 'TEXT:'
+            const text = url.replace('TEXT:', '');
+            return (
+              <div 
+                key={`${element.id}-symbol-${imgIndex}`}
+                className="h-8 w-8 flex items-center justify-center flex-shrink-0"
+              >
+                <span className="text-2xl font-bold">{text}</span>
+              </div>
+            );
+          }
+          
+          // Render as image
+          return url && (
+            <img
               key={`${element.id}-symbol-${imgIndex}`}
-              className="h-8 w-8 flex items-center justify-center"
-            >
-              <span className="text-2xl font-bold">{text}</span>
-            </div>
+              src={url}
+              alt="Symbol"
+              className="h-8 w-8 object-contain flex-shrink-0"
+            />
           );
-        }
-        
-        // Render as image
-        return url && (
-          <img
-            key={`${element.id}-symbol-${imgIndex}`}
-            src={url}
-            alt="Symbol"
-            className="h-8 w-8 object-contain"
-          />
-        );
-      })}
-    </div>
-  );
+        })}
+        {hiddenCount > 0 && (
+          <span className="text-xs font-medium bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 flex-shrink-0">
+            +{hiddenCount}
+          </span>
+        )}
+      </div>
+    );
+  };
 
   // Render Risk element with throw symbols, R subscript, axis/level symbol, and catch symbols
   const renderRiskSymbols = () => {
@@ -224,51 +236,72 @@ function SortableRow({
     const hasSeries = element.riskData.hasSeries || false;
     const hasDB = element.riskData.hasDB || false;
     
+    // Build all symbol items for truncation logic
+    type SymbolItem = { type: 'image'; url: string; key: string } | { type: 'text'; text: string; key: string };
+    const allSymbols: SymbolItem[] = [];
+    
+    // Add throw symbols
+    throwSymbols.forEach((url, idx) => {
+      allSymbols.push({ type: 'image', url, key: `throw-${idx}` });
+    });
+    
+    // Add R subscript as text
+    allSymbols.push({ type: 'text', text: `R₍${rLevel}₎`, key: 'r-subscript' });
+    
+    // Add S for series
+    if (hasSeries) {
+      allSymbols.push({ type: 'text', text: 'S', key: 'series' });
+    }
+    
+    // Add DB
+    if (hasDB) {
+      allSymbols.push({ type: 'text', text: 'DB', key: 'db' });
+    }
+    
+    // Add axis/level symbol
+    if (axisLevelSymbol) {
+      allSymbols.push({ type: 'image', url: axisLevelSymbol, key: 'axis-level' });
+    }
+    
+    // Add catch symbols
+    catchSymbols.forEach((url, idx) => {
+      allSymbols.push({ type: 'image', url, key: `catch-${idx}` });
+    });
+    
+    const visibleSymbols = allSymbols.slice(0, MAX_VISIBLE_SYMBOLS);
+    const hiddenCount = allSymbols.length - MAX_VISIBLE_SYMBOLS;
+    
     return (
       <div className="flex items-center gap-1 flex-nowrap whitespace-nowrap">
-        {/* Throw symbols (extra criteria) */}
-        {throwSymbols.map((url, idx) => (
-          <img
-            key={`throw-${idx}`}
-            src={url}
-            alt="Throw symbol"
-            className="h-8 w-8 object-contain"
-          />
-        ))}
-        
-        {/* R with subscript */}
-        <span className="text-lg font-bold text-foreground mx-1">
-          R<sub className="text-sm">{rLevel}</sub>
-        </span>
-        
-        {/* S symbol for Series (non-R2 risks only) */}
-        {hasSeries && (
-          <span className="text-lg font-bold text-foreground">S</span>
+        {visibleSymbols.map((item) => {
+          if (item.type === 'text') {
+            if (item.key === 'r-subscript') {
+              return (
+                <span key={item.key} className="text-lg font-bold text-foreground mx-1 flex-shrink-0">
+                  R<sub className="text-sm">{rLevel}</sub>
+                </span>
+              );
+            }
+            return (
+              <span key={item.key} className="text-lg font-bold text-foreground flex-shrink-0">
+                {item.text}
+              </span>
+            );
+          }
+          return (
+            <img
+              key={item.key}
+              src={item.url}
+              alt="Symbol"
+              className="h-8 w-8 object-contain flex-shrink-0"
+            />
+          );
+        })}
+        {hiddenCount > 0 && (
+          <span className="text-xs font-medium bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 flex-shrink-0">
+            +{hiddenCount}
+          </span>
         )}
-        
-        {/* DB symbol (non-R2 risks only - reminder that risk contains jumps) */}
-        {hasDB && (
-          <span className="text-lg font-bold text-foreground ml-0.5">DB</span>
-        )}
-        
-        {/* Axis/Level Change symbol (displayed after R subscript, S, and DB) */}
-        {axisLevelSymbol && (
-          <img
-            src={axisLevelSymbol}
-            alt="Axis/Level Change"
-            className="h-8 w-8 object-contain"
-          />
-        )}
-        
-        {/* Catch symbols (extra criteria) */}
-        {catchSymbols.map((url, idx) => (
-          <img
-            key={`catch-${idx}`}
-            src={url}
-            alt="Catch symbol"
-            className="h-8 w-8 object-contain"
-          />
-        ))}
       </div>
     );
   };
