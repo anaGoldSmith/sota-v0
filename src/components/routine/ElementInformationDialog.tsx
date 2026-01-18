@@ -26,8 +26,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-// Unified handling item for drag-and-drop ordering
-type HandlingItem = 
+// Unified handling item for drag-and-drop ordering - exported for use in parent components
+export type HandlingItem = 
   | { type: 'te'; id: string; data: TechnicalElementSelection }
   | { type: 'da'; id: string; data: DaElementSelection };
 
@@ -82,15 +82,16 @@ interface ElementInformationDialogProps {
   // For showing selected TE/DA
   selectedTechnicalElements?: TechnicalElementSelection[];
   selectedDaElements?: DaElementSelection[];
+  // Unified handling items array (preserves insertion order for drag-and-drop)
+  handlingItems?: HandlingItem[];
   // For modifying existing element
   initialRotationCount?: number;
   isModifying?: boolean;
   // Callbacks for removing individual TE/DA
   onRemoveTechnicalElement?: (id: string) => void;
   onRemoveDaElement?: (id: string) => void;
-  // Callbacks for reordering TE/DA
-  onReorderTechnicalElements?: (elements: TechnicalElementSelection[]) => void;
-  onReorderDaElements?: (elements: DaElementSelection[]) => void;
+  // Callback for reordering unified handling items
+  onReorderHandlingItems?: (items: HandlingItem[]) => void;
   // Callback for rotation count changes (to persist state when navigating to TE/DA dialogs)
   onRotationCountChange?: (count: number) => void;
   // For Fouetté elements
@@ -213,12 +214,12 @@ export const ElementInformationDialog = ({
   onOpenTechnicalElementsDialog,
   selectedTechnicalElements = [],
   selectedDaElements = [],
+  handlingItems: handlingItemsProp,
   initialRotationCount,
   isModifying = false,
   onRemoveTechnicalElement,
   onRemoveDaElement,
-  onReorderTechnicalElements,
-  onReorderDaElements,
+  onReorderHandlingItems,
   onRotationCountChange,
   initialFouetteComponents,
   onFouetteComponentsChange,
@@ -238,8 +239,13 @@ export const ElementInformationDialog = ({
     })
   );
 
-  // Create unified handling items list for drag-and-drop
+  // Use the provided handlingItems prop if available (preserves insertion order), 
+  // otherwise fall back to constructing from separate TE/DA arrays
   const handlingItems: HandlingItem[] = useMemo(() => {
+    if (handlingItemsProp && handlingItemsProp.length > 0) {
+      return handlingItemsProp;
+    }
+    // Fallback: construct from separate arrays (TEs first, then DAs)
     const teItems: HandlingItem[] = selectedTechnicalElements.map(te => ({
       type: 'te' as const,
       id: `te-${te.id}`,
@@ -251,7 +257,7 @@ export const ElementInformationDialog = ({
       data: da,
     }));
     return [...teItems, ...daItems];
-  }, [selectedTechnicalElements, selectedDaElements]);
+  }, [handlingItemsProp, selectedTechnicalElements, selectedDaElements]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -264,20 +270,9 @@ export const ElementInformationDialog = ({
 
     const reorderedItems = arrayMove(handlingItems, oldIndex, newIndex);
     
-    // Extract the new TE and DA arrays from the reordered items
-    const newTEs = reorderedItems
-      .filter((item): item is HandlingItem & { type: 'te' } => item.type === 'te')
-      .map(item => item.data);
-    const newDAs = reorderedItems
-      .filter((item): item is HandlingItem & { type: 'da' } => item.type === 'da')
-      .map(item => item.data);
-
-    // Call the reorder callbacks
-    if (onReorderTechnicalElements) {
-      onReorderTechnicalElements(newTEs);
-    }
-    if (onReorderDaElements) {
-      onReorderDaElements(newDAs);
+    // Call the unified reorder callback if available
+    if (onReorderHandlingItems) {
+      onReorderHandlingItems(reorderedItems);
     }
   };
 
