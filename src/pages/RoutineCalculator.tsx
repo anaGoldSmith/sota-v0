@@ -119,6 +119,7 @@ interface RoutineElement {
     elementType?: 'jump' | 'rotation' | 'balance';
     rotationCount?: number;
     fouetteComponents?: FouetteComponent[];
+    isSeries?: boolean;
   };
   daData?: {
     symbolImages: string[];
@@ -1171,8 +1172,9 @@ const RoutineCalculator = () => {
     handlingOrder?: Array<{ type: 'te' | 'da'; id: string }>;
     withApparatusHandling: boolean;
     fouetteComponents?: FouetteComponent[];
+    isSeries?: boolean;
   }) => {
-    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, handlingOrder, withApparatusHandling, fouetteComponents } = data;
+    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, handlingOrder, withApparatusHandling, fouetteComponents, isSeries } = data;
     
     // Get DB symbol images
     const dbSymbolImages = element.symbol_image ? [
@@ -1227,6 +1229,7 @@ const RoutineCalculator = () => {
           elementType: elementType,
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
           fouetteComponents: fouetteComponents,
+          isSeries: isSeries,
         },
         daData: {
           symbolImages: daSymbolImages,
@@ -1276,6 +1279,7 @@ const RoutineCalculator = () => {
           elementType: elementType,
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
           fouetteComponents: fouetteComponents,
+          isSeries: isSeries,
         },
         daData: {
           symbolImages: teSymbolImages,
@@ -1317,6 +1321,7 @@ const RoutineCalculator = () => {
           elementType: elementType,
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
           fouetteComponents: fouetteComponents,
+          isSeries: isSeries,
         },
         daData: {
           symbolImages: daSymbolImages,
@@ -1690,7 +1695,10 @@ const RoutineCalculator = () => {
                                               <span>{element.dbData.name || 'DB Element'}</span>
                                               {element.dbData.elementType === 'rotation' && element.dbData.rotationCount && (
                                                 <span className="text-xs text-muted-foreground">
-                                                  ({element.dbData.rotationCount} {element.dbData.rotationCount === 1 ? 'rotation' : 'rotations'})
+                                                  {element.dbData.isSeries 
+                                                    ? `(Series of ${element.dbData.rotationCount} ${element.dbData.rotationCount === 1 ? 'rotation' : 'rotations'})`
+                                                    : `(${element.dbData.rotationCount} ${element.dbData.rotationCount === 1 ? 'rotation' : 'rotations'})`
+                                                  }
                                                 </span>
                                               )}
                                             </div>
