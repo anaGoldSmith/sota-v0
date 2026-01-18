@@ -3,11 +3,33 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Minus, Plus, X } from "lucide-react";
+import { GripVertical, Minus, Plus, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ApparatusType } from "@/types/apparatus";
 import { FouetteComponentsEditor, FouetteComponent } from "./FouetteComponentsEditor";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// Unified handling item for drag-and-drop ordering
+type HandlingItem = 
+  | { type: 'te'; id: string; data: TechnicalElementSelection }
+  | { type: 'da'; id: string; data: DaElementSelection };
 
 interface ElementData {
   id: string;
@@ -66,12 +88,116 @@ interface ElementInformationDialogProps {
   // Callbacks for removing individual TE/DA
   onRemoveTechnicalElement?: (id: string) => void;
   onRemoveDaElement?: (id: string) => void;
+  // Callbacks for reordering TE/DA
+  onReorderTechnicalElements?: (elements: TechnicalElementSelection[]) => void;
+  onReorderDaElements?: (elements: DaElementSelection[]) => void;
   // Callback for rotation count changes (to persist state when navigating to TE/DA dialogs)
   onRotationCountChange?: (count: number) => void;
   // For Fouetté elements
   initialFouetteComponents?: FouetteComponent[];
   onFouetteComponentsChange?: (components: FouetteComponent[]) => void;
 }
+
+// Sortable handling item component
+interface SortableHandlingItemProps {
+  item: HandlingItem;
+  apparatus: ApparatusType | null;
+  getTechnicalElementSymbol?: (filename: string | null, apparatus: ApparatusType) => string | null;
+  onRemove: () => void;
+}
+
+const SortableHandlingItem = ({ item, apparatus, getTechnicalElementSymbol, onRemove }: SortableHandlingItemProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  if (item.type === 'te') {
+    const te = item.data;
+    const teSymbolUrl = te.symbol_image && apparatus && getTechnicalElementSymbol
+      ? getTechnicalElementSymbol(te.symbol_image, apparatus)
+      : null;
+    
+    return (
+      <div 
+        ref={setNodeRef}
+        style={style}
+        className="flex items-center justify-between p-2 bg-background border rounded-md"
+      >
+        <div className="flex items-center gap-2">
+          <div
+            {...listeners}
+            {...attributes}
+            className="cursor-grab active:cursor-grabbing flex items-center justify-center"
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded dark:text-green-300 dark:bg-green-900/30">TE</span>
+          {teSymbolUrl && (
+            <img src={teSymbolUrl} alt={te.name} className="h-6 w-6 object-contain" />
+          )}
+          <span className="text-sm">{te.name}</span>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          onClick={onRemove}
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+    );
+  } else {
+    const da = item.data;
+    
+    return (
+      <div 
+        ref={setNodeRef}
+        style={style}
+        className="flex items-center justify-between p-2 bg-background border rounded-md"
+      >
+        <div className="flex items-center gap-2">
+          <div
+            {...listeners}
+            {...attributes}
+            className="cursor-grab active:cursor-grabbing flex items-center justify-center"
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
+          {da.symbolImages.map((url, idx) => (
+            url.startsWith('TEXT:') ? (
+              <span key={idx} className="text-sm font-bold">{url.replace('TEXT:', '')}</span>
+            ) : (
+              <img key={idx} src={url} alt={da.name} className="h-6 w-6 object-contain" />
+            )
+          ))}
+          <span className="text-sm">{da.name}</span>
+          <span className="text-xs text-muted-foreground">({da.value.toFixed(1)})</span>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          onClick={onRemove}
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+    );
+  }
+};
 
 export const ElementInformationDialog = ({
   open,
@@ -91,6 +217,8 @@ export const ElementInformationDialog = ({
   isModifying = false,
   onRemoveTechnicalElement,
   onRemoveDaElement,
+  onReorderTechnicalElements,
+  onReorderDaElements,
   onRotationCountChange,
   initialFouetteComponents,
   onFouetteComponentsChange,
@@ -102,6 +230,57 @@ export const ElementInformationDialog = ({
     { id: crypto.randomUUID(), rotations: 1 }
   ]);
   
+  // Drag and drop sensors for handling items
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Create unified handling items list for drag-and-drop
+  const handlingItems: HandlingItem[] = useMemo(() => {
+    const teItems: HandlingItem[] = selectedTechnicalElements.map(te => ({
+      type: 'te' as const,
+      id: `te-${te.id}`,
+      data: te,
+    }));
+    const daItems: HandlingItem[] = selectedDaElements.map(da => ({
+      type: 'da' as const,
+      id: `da-${da.id}`,
+      data: da,
+    }));
+    return [...teItems, ...daItems];
+  }, [selectedTechnicalElements, selectedDaElements]);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = handlingItems.findIndex(item => item.id === active.id);
+    const newIndex = handlingItems.findIndex(item => item.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reorderedItems = arrayMove(handlingItems, oldIndex, newIndex);
+    
+    // Extract the new TE and DA arrays from the reordered items
+    const newTEs = reorderedItems
+      .filter((item): item is HandlingItem & { type: 'te' } => item.type === 'te')
+      .map(item => item.data);
+    const newDAs = reorderedItems
+      .filter((item): item is HandlingItem & { type: 'da' } => item.type === 'da')
+      .map(item => item.data);
+
+    // Call the reorder callbacks
+    if (onReorderTechnicalElements) {
+      onReorderTechnicalElements(newTEs);
+    }
+    if (onReorderDaElements) {
+      onReorderDaElements(newDAs);
+    }
+  };
+
   // Wrap setRotationCount to also notify parent
   const updateRotationCount = (count: number) => {
     setRotationCount(count);
@@ -497,71 +676,36 @@ export const ElementInformationDialog = ({
                 )}
               </div>
 
-              {/* Combined list of TE and DA elements in order they were added */}
-              {(selectedTechnicalElements.length > 0 || selectedDaElements.length > 0) && (
-                <div className="space-y-2">
-                  {/* Technical Elements with TE badge */}
-                  {selectedTechnicalElements.map((te) => {
-                    const teSymbolUrl = te.symbol_image && apparatus && getTechnicalElementSymbol
-                      ? getTechnicalElementSymbol(te.symbol_image, apparatus)
-                      : null;
-                    return (
-                      <div 
-                        key={te.id} 
-                        className="flex items-center justify-between p-2 bg-background border rounded-md"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded dark:text-green-300 dark:bg-green-900/30">TE</span>
-                          {teSymbolUrl && (
-                            <img src={teSymbolUrl} alt={te.name} className="h-6 w-6 object-contain" />
-                          )}
-                          <span className="text-sm">{te.name}</span>
-                        </div>
-                        {onRemoveTechnicalElement && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => onRemoveTechnicalElement(te.id)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    );
-                  })}
-                  
-                  {/* DA Elements with DA badge */}
-                  {selectedDaElements.map((da) => (
-                    <div 
-                      key={da.id} 
-                      className="flex items-center justify-between p-2 bg-background border rounded-md"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
-                        {da.symbolImages.map((url, idx) => (
-                          url.startsWith('TEXT:') ? (
-                            <span key={idx} className="text-sm font-bold">{url.replace('TEXT:', '')}</span>
-                          ) : (
-                            <img key={idx} src={url} alt={da.name} className="h-6 w-6 object-contain" />
-                          )
-                        ))}
-                        <span className="text-sm">{da.name}</span>
-                        <span className="text-xs text-muted-foreground">({da.value.toFixed(1)})</span>
-                      </div>
-                      {onRemoveDaElement && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => onRemoveDaElement(da.id)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      )}
+              {/* Combined list of TE and DA elements with drag-and-drop reordering */}
+              {handlingItems.length > 0 && (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={handlingItems.map(item => item.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2">
+                      {handlingItems.map((item) => (
+                        <SortableHandlingItem
+                          key={item.id}
+                          item={item}
+                          apparatus={apparatus}
+                          getTechnicalElementSymbol={getTechnicalElementSymbol}
+                          onRemove={() => {
+                            if (item.type === 'te' && onRemoveTechnicalElement) {
+                              onRemoveTechnicalElement(item.data.id);
+                            } else if (item.type === 'da' && onRemoveDaElement) {
+                              onRemoveDaElement(item.data.id);
+                            }
+                          }}
+                        />
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                </DndContext>
               )}
 
               {/* Buttons - For rotations, both TE and DA are allowed (multiple); for jumps/balances they are mutually exclusive */}
