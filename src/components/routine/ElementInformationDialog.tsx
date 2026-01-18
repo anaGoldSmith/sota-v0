@@ -382,6 +382,12 @@ export const ElementInformationDialog = ({
       return totalRotations * 0.1;
     }
     
+    // For series: each rotation counts at base value (no extra_value progression)
+    if (isSeries) {
+      return baseValue * Math.floor(rotationCount);
+    }
+    
+    // Default: base value + extra_value for additional rotations
     if (is180Degrees) {
       const additionalHalfRotations = (rotationCount - 0.5) / 0.5;
       return baseValue + (additionalHalfRotations * extraValue);
@@ -389,7 +395,7 @@ export const ElementInformationDialog = ({
       const additionalFullRotations = Math.floor(rotationCount) - 1;
       return baseValue + (Math.max(0, additionalFullRotations) * extraValue);
     }
-  }, [element, elementType, rotationCount, is180Degrees, isFixedRotation, isPerRotationElement, isFouetteElement, fouetteComponents]);
+  }, [element, elementType, rotationCount, is180Degrees, isFixedRotation, isPerRotationElement, isFouetteElement, fouetteComponents, isSeries]);
 
   const handleIncrement = () => {
     if (isFixedRotation || elementType !== 'rotation') return;
@@ -687,11 +693,14 @@ export const ElementInformationDialog = ({
                   {/* Series handling requirement notice */}
                   {isSeries && !isPerRotationElement && (
                     <div className="mt-2 p-2 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded text-xs text-purple-700 dark:text-purple-300">
-                      <span className="font-medium">Series active:</span> Each rotation in the series requires its own TE or DA ({currentHandlingCount}/{seriesRotationCount} added)
+                      <div className="flex justify-between items-center">
+                        <span><span className="font-medium">Series active:</span> {Math.floor(rotationCount)} × {element.value.toFixed(1)} = {totalValue.toFixed(1)}</span>
+                        <span className="text-purple-600 dark:text-purple-400">({currentHandlingCount}/{seriesRotationCount} handling)</span>
+                      </div>
                     </div>
                   )}
                   
-                  {/* Value breakdown for rotations */}
+                  {/* Value breakdown for rotations (non-series) */}
                   {!isFixedRotation && !isPerRotationElement && !isSeries && element.extra_value && rotationCount > minValue && (
                     <div className="text-xs text-muted-foreground mt-2">
                       Base: {element.value.toFixed(1)} + Extra: {is180Degrees
