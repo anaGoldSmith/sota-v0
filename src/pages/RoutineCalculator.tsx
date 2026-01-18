@@ -98,7 +98,7 @@ interface RiskData {
   dbValue?: number;   // Total DB value from thr_, utf_, catch_ components
 }
 
-type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'DB/TE' | 'TE' | 'R' | 'R/DB' | 'Steps';
+type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'DB/TE' | 'DB/TE/DA' | 'TE' | 'R' | 'R/DB' | 'Steps';
 
 interface RoutineElement {
   id: string;
@@ -291,14 +291,14 @@ function SortableRow({
           )}
         </TableCell>
         <TableCell 
-          className={`w-12 px-2 font-mono ${!isMainRow ? 'pl-6 text-muted-foreground' : ''} ${isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R' || element.type === 'R/DB') ? 'cursor-pointer' : ''}`}
-          onClick={isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R' || element.type === 'R/DB') && onToggleExpand ? (e) => {
+          className={`w-12 px-2 font-mono ${!isMainRow ? 'pl-6 text-muted-foreground' : ''} ${isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB') ? 'cursor-pointer' : ''}`}
+          onClick={isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB') && onToggleExpand ? (e) => {
             e.stopPropagation();
             onToggleExpand();
           } : undefined}
         >
           <div className="flex items-center gap-1">
-            {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R' || element.type === 'R/DB') && (
+            {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB') && (
               element.isExpanded ? 
                 <ChevronDown className="h-3 w-3 text-muted-foreground" /> : 
                 <ChevronRight className="h-3 w-3 text-muted-foreground" />
@@ -332,7 +332,7 @@ function SortableRow({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-background z-50">
-                {(element.type === 'R' || element.type === 'R/DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB') && onModify && (
+                {(element.type === 'R' || element.type === 'R/DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB') && onModify && (
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onModify(); }}>
                     <Pencil className="h-4 w-4 mr-2" />
                     Modify
@@ -854,7 +854,7 @@ const RoutineCalculator = () => {
   };
 
   // Calculate scores from routine elements
-  const dbElements = routineElements.filter(el => el.type === 'DB' || el.type === 'DB/DA' || el.type === 'DB/TE');
+  const dbElements = routineElements.filter(el => el.type === 'DB' || el.type === 'DB/DA' || el.type === 'DB/TE' || el.type === 'DB/TE/DA');
   
   // Calculate DB count - for 3.1704, each rotation counts as a separate DB
   const explicitDbCount = dbElements.reduce((count, el) => {
@@ -867,8 +867,8 @@ const RoutineCalculator = () => {
   
   // Calculate DB values from explicit DB elements
   const explicitDbValue = dbElements.reduce((sum, el) => {
-    // For DB/DA elements, only count DB value
-    if (el.type === 'DB/DA' && el.dbData) {
+    // For DB/DA or DB/TE/DA elements, only count DB value
+    if ((el.type === 'DB/DA' || el.type === 'DB/TE/DA') && el.dbData) {
       return sum + el.dbData.value;
     }
     return sum + el.value;
@@ -892,10 +892,10 @@ const RoutineCalculator = () => {
   const totalDB = explicitDbValue + riskDbValue;
   const countDB = explicitDbCount + riskDbCount;
   
-  const daElements = routineElements.filter(el => el.type === 'DA' || el.type === 'R' || el.type === 'R/DB' || el.type === 'DB/DA');
+  const daElements = routineElements.filter(el => el.type === 'DA' || el.type === 'R' || el.type === 'R/DB' || el.type === 'DB/DA' || el.type === 'DB/TE/DA');
   const totalDA = daElements.reduce((sum, el) => {
-    // For DB/DA elements, only count DA value
-    if (el.type === 'DB/DA' && el.daData) {
+    // For DB/DA or DB/TE/DA elements, only count DA value
+    if ((el.type === 'DB/DA' || el.type === 'DB/TE/DA') && el.daData) {
       return sum + el.daData.value;
     }
     // For R/DB elements, subtract dbValue to get only the DA portion (rotations + extra criteria)
@@ -1045,7 +1045,7 @@ const RoutineCalculator = () => {
   // Handle modifying a DB/DA/TE element
   const handleModifyElement = (elementId: string) => {
     const element = routineElements.find(el => el.id === elementId);
-    if (!element || (element.type !== 'DB' && element.type !== 'DB/DA' && element.type !== 'DB/TE')) return;
+    if (!element || (element.type !== 'DB' && element.type !== 'DB/DA' && element.type !== 'DB/TE' && element.type !== 'DB/TE/DA')) return;
     
     // Extract original element data
     const originalData = element.originalData as SelectedJump | SelectedBalance | SelectedRotation;
@@ -1109,7 +1109,68 @@ const RoutineCalculator = () => {
     
     const modifyingId = modifyingRoutineElement?.id;
     
-    if (technicalElements && technicalElements.length > 0) {
+    const hasTEs = technicalElements && technicalElements.length > 0;
+    const hasDAs = daElements && daElements.length > 0;
+    
+    if (hasTEs && hasDAs) {
+      // Create DB/TE/DA element (both technical elements AND apparatus difficulty)
+      const teSymbolImages = technicalElements.map(te => {
+        if (te.symbol_image && selectedApparatus) {
+          return getTechnicalElementSymbol(te.symbol_image, selectedApparatus) || '';
+        }
+        return '';
+      }).filter(Boolean);
+      
+      const teElementsData = technicalElements.map(te => ({
+        id: te.id,
+        code: te.code,
+        name: te.name,
+        symbolImage: te.symbol_image && selectedApparatus 
+          ? getTechnicalElementSymbol(te.symbol_image, selectedApparatus) || ''
+          : '',
+        value: 0,
+      }));
+      
+      const daSymbolImages = daElements.flatMap(da => da.symbolImages);
+      const totalDaValue = daElements.reduce((sum, da) => sum + da.value, 0);
+      
+      const daElementsData = daElements.map((da, idx) => ({
+        id: da.id || `da-${idx}`,
+        name: da.name,
+        symbolImages: da.symbolImages,
+        value: da.value,
+      }));
+      
+      const combinedElement: RoutineElement = {
+        id: modifyingId || `db-te-da-${elementType}-${element.id}-${Date.now()}`,
+        type: 'DB/TE/DA',
+        symbolImages: [...dbSymbolImages, ...teSymbolImages, ...daSymbolImages],
+        value: totalValue + totalDaValue,
+        originalData: element as SelectedJump | SelectedBalance | SelectedRotation,
+        dbData: {
+          symbolImages: dbSymbolImages,
+          value: totalValue,
+          name: element.name || element.description || 'DB Element',
+          code: element.code,
+          elementType: elementType,
+          rotationCount: elementType === 'rotation' ? rotationCount : undefined,
+          fouetteComponents: fouetteComponents,
+        },
+        daData: {
+          symbolImages: daSymbolImages,
+          value: totalDaValue,
+        },
+        teElements: teElementsData,
+        daElements: daElementsData,
+        isExpanded: false,
+      };
+      
+      if (modifyingId) {
+        setRoutineElements(prev => prev.map(el => el.id === modifyingId ? combinedElement : el));
+      } else {
+        setRoutineElements(prev => [...prev, combinedElement]);
+      }
+    } else if (hasTEs) {
       // Create DB/TE element
       const teSymbolImages = technicalElements.map(te => {
         if (te.symbol_image && selectedApparatus) {
@@ -1156,7 +1217,7 @@ const RoutineCalculator = () => {
       } else {
         setRoutineElements(prev => [...prev, combinedElement]);
       }
-    } else if (daElements && daElements.length > 0) {
+    } else if (hasDAs) {
       // Create DB/DA element
       const daSymbolImages = daElements.flatMap(da => da.symbolImages);
       const totalDaValue = daElements.reduce((sum, da) => sum + da.value, 0);
@@ -1513,14 +1574,14 @@ const RoutineCalculator = () => {
                               itemNumber={itemNumber}
                               onRemove={() => handleRemoveRoutineElement(index)}
                               onModify={(element.type === 'R' || element.type === 'R/DB') ? () => handleModifyRisk(element.id) : 
-                                        (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB') ? () => handleModifyElement(element.id) : undefined}
-                              onToggleExpand={(element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'R' || element.type === 'R/DB') ? () => handleToggleExpand(index) : undefined}
+                                        (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB') ? () => handleModifyElement(element.id) : undefined}
+                              onToggleExpand={(element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB') ? () => handleToggleExpand(index) : undefined}
                               isMainRow={true}
                             />
                           );
                           
-                          // If expanded and has DB/DA or DB/TE breakdown, show detailed sub-table
-                          if ((element.type === 'DB/DA' || element.type === 'DB/TE') && element.isExpanded && element.dbData) {
+                          // If expanded and has DB/DA or DB/TE or DB/TE/DA breakdown, show detailed sub-table
+                          if ((element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA') && element.isExpanded && element.dbData) {
                             rows.push(
                               <TableRow key={`${element.id}-expanded`} className="bg-muted/10">
                                 <TableCell colSpan={6} className="p-4">
@@ -1564,8 +1625,8 @@ const RoutineCalculator = () => {
                                           <td className="py-2 px-4 text-right font-mono">{element.dbData.value.toFixed(1)}</td>
                                         </tr>
                                         
-                                        {/* Technical Elements Rows (for DB/TE) */}
-                                        {element.type === 'DB/TE' && element.teElements && element.teElements.map((te, idx) => (
+                                        {/* Technical Elements Rows (for DB/TE or DB/TE/DA) */}
+                                        {(element.type === 'DB/TE' || element.type === 'DB/TE/DA') && element.teElements && element.teElements.map((te, idx) => (
                                           <tr key={te.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
                                             <td className="py-2 px-4">
                                               <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded dark:text-green-300 dark:bg-green-900/30">TE</span>
@@ -1591,30 +1652,35 @@ const RoutineCalculator = () => {
                                           </tr>
                                         ))}
                                         
-                                        {/* DA Elements Rows (for DB/DA) - one row per DA element */}
-                                        {element.type === 'DB/DA' && element.daElements && element.daElements.map((da, idx) => (
-                                          <tr key={da.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
-                                            <td className="py-2 px-4">
-                                              <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
-                                            </td>
-                                            <td className="py-2 px-4">
-                                              <div className="flex items-center gap-1">
-                                                {da.symbolImages.map((url, imgIdx) => (
-                                                  url.startsWith('TEXT:') ? (
-                                                    <span key={imgIdx} className="text-lg font-bold">{url.replace('TEXT:', '')}</span>
-                                                  ) : (
-                                                    <img key={imgIdx} src={url} alt="Symbol" className="h-6 w-6 object-contain" />
-                                                  )
-                                                ))}
-                                              </div>
-                                            </td>
-                                            <td className="py-2 px-4 font-medium">{da.name}</td>
-                                            <td className="py-2 px-4 text-right font-mono">{da.value.toFixed(1)}</td>
-                                          </tr>
-                                        ))}
+                                        {/* DA Elements Rows (for DB/DA or DB/TE/DA) - one row per DA element */}
+                                        {(element.type === 'DB/DA' || element.type === 'DB/TE/DA') && element.daElements && element.daElements.map((da, idx) => {
+                                          // Calculate alternating row color - for DB/TE/DA, account for TE rows above
+                                          const teCount = element.type === 'DB/TE/DA' && element.teElements ? element.teElements.length : 0;
+                                          const rowIndex = teCount + idx;
+                                          return (
+                                            <tr key={da.id} className={rowIndex % 2 === 0 ? "" : "bg-secondary/10"}>
+                                              <td className="py-2 px-4">
+                                                <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
+                                              </td>
+                                              <td className="py-2 px-4">
+                                                <div className="flex items-center gap-1">
+                                                  {da.symbolImages.map((url, imgIdx) => (
+                                                    url.startsWith('TEXT:') ? (
+                                                      <span key={imgIdx} className="text-lg font-bold">{url.replace('TEXT:', '')}</span>
+                                                    ) : (
+                                                      <img key={imgIdx} src={url} alt="Symbol" className="h-6 w-6 object-contain" />
+                                                    )
+                                                  ))}
+                                                </div>
+                                              </td>
+                                              <td className="py-2 px-4 font-medium">{da.name}</td>
+                                              <td className="py-2 px-4 text-right font-mono">{da.value.toFixed(1)}</td>
+                                            </tr>
+                                          );
+                                        })}
                                         
                                         {/* Fallback: Single DA row if no daElements array (for DB/DA) */}
-                                        {element.type === 'DB/DA' && !element.daElements && element.daData && (
+                                        {(element.type === 'DB/DA' || element.type === 'DB/TE/DA') && !element.daElements && element.daData && element.daData.value > 0 && (
                                           <tr>
                                             <td className="py-2 px-4">
                                               <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
