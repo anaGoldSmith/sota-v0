@@ -1531,9 +1531,7 @@ const RoutineCalculator = () => {
                   <SelectItem value="ball">Ball</SelectItem>
                   <SelectItem value="clubs">Clubs</SelectItem>
                   <SelectItem value="ribbon">Ribbon</SelectItem>
-                  <SelectItem value="rope">Rope</SelectItem>
                   <SelectItem value="wa">WA</SelectItem>
-                  <SelectItem value="gala">Gala</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
@@ -1574,12 +1572,12 @@ const RoutineCalculator = () => {
               // Hoop, Ball, Clubs, Ribbon: All buttons enabled
               // Other apparatus (rope, gala, other): Only Elements (DB) and Dance Steps enabled
               const isApparatusSelected = selectedApparatus !== null;
-              const isDAApparatus = selectedApparatus && ['hoop', 'ball', 'clubs', 'ribbon'].includes(selectedApparatus);
-              const isWAOrOther = selectedApparatus && ['wa', 'rope', 'gala', 'other'].includes(selectedApparatus);
+              const isFullApparatus = selectedApparatus && ['hoop', 'ball', 'clubs', 'ribbon', 'other'].includes(selectedApparatus);
+              const isWA = selectedApparatus === 'wa';
               
               const elementsEnabled = isApparatusSelected;
-              const daEnabled = isDAApparatus;
-              const dynamicElementsEnabled = isDAApparatus;
+              const daEnabled = isFullApparatus;
+              const dynamicElementsEnabled = isFullApparatus;
               const danceStepsEnabled = isApparatusSelected;
               
               return (
