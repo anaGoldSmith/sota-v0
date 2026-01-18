@@ -11,7 +11,7 @@ import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDia
 import { RotationSelectionDialog } from "@/components/routine/RotationSelectionDialog";
 import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/routine/ApparatusSelectionDialog";
 import { TechnicalElementsSelectionDialog } from "@/components/routine/TechnicalElementsSelectionDialog";
-import { ElementInformationDialog } from "@/components/routine/ElementInformationDialog";
+import { ElementInformationDialog, type HandlingItem } from "@/components/routine/ElementInformationDialog";
 import type { FouetteComponent } from "@/components/routine/FouetteComponentsEditor";
 import { DBSuccessDialog } from "@/components/routine/DBSuccessDialog";
 import { DBDASuccessDialog } from "@/components/routine/DBDASuccessDialog";
@@ -512,20 +512,69 @@ const RoutineCalculator = () => {
     fouetteComponents?: FouetteComponent[];
   } | null>(null);
   
-  const [pendingTechnicalElements, setPendingTechnicalElements] = useState<Array<{
-    id: string;
-    code: string;
-    name: string;
-    description: string;
-    symbol_image: string | null;
-  }>>([]);
-  const [pendingDaElements, setPendingDaElements] = useState<Array<{
-    id: string;
-    name: string;
-    symbolImages: string[];
-    value: number;
-    selectedCriteria: string[];
-  }>>([]);
+  // Unified handling items array - preserves insertion order for TEs and DAs
+  const [pendingHandlingItems, setPendingHandlingItems] = useState<HandlingItem[]>([]);
+  
+  // Helper getters to extract TEs and DAs from unified array
+  const pendingTechnicalElements = pendingHandlingItems
+    .filter((item): item is HandlingItem & { type: 'te' } => item.type === 'te')
+    .map(item => item.data);
+  
+  const pendingDaElements = pendingHandlingItems
+    .filter((item): item is HandlingItem & { type: 'da' } => item.type === 'da')
+    .map(item => item.data);
+  
+  // Helper setters for backwards compatibility
+  const setPendingTechnicalElements = (updater: Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }> | ((prev: Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }>) => Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }>)) => {
+    setPendingHandlingItems(prev => {
+      const existingTeItems = prev.filter((item): item is HandlingItem & { type: 'te' } => item.type === 'te');
+      const currentTEs = existingTeItems.map(item => item.data);
+      const newTEs = typeof updater === 'function' ? updater(currentTEs) : updater;
+      const newTeItems: HandlingItem[] = newTEs.map(te => ({ type: 'te', id: `te-${te.id}`, data: te }));
+      // Keep existing order: remove old TEs from positions and append new ones at the end
+      const nonTeItems = prev.filter(item => item.type !== 'te');
+      return [...nonTeItems, ...newTeItems];
+    });
+  };
+  
+  const setPendingDaElements = (updater: Array<{ id: string; name: string; symbolImages: string[]; value: number; selectedCriteria: string[] }> | ((prev: Array<{ id: string; name: string; symbolImages: string[]; value: number; selectedCriteria: string[] }>) => Array<{ id: string; name: string; symbolImages: string[]; value: number; selectedCriteria: string[] }>)) => {
+    setPendingHandlingItems(prev => {
+      const existingDaItems = prev.filter((item): item is HandlingItem & { type: 'da' } => item.type === 'da');
+      const currentDAs = existingDaItems.map(item => item.data);
+      const newDAs = typeof updater === 'function' ? updater(currentDAs) : updater;
+      const newDaItems: HandlingItem[] = newDAs.map(da => ({ type: 'da', id: `da-${da.id}`, data: da }));
+      // Keep existing order: remove old DAs from positions and append new ones at the end
+      const nonDaItems = prev.filter(item => item.type !== 'da');
+      return [...nonDaItems, ...newDaItems];
+    });
+  };
+  
+  // Function to add handling items while preserving order (for rotation appends)
+  const appendHandlingTEs = (teElements: Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }>) => {
+    setPendingHandlingItems(prev => {
+      const newTeItems: HandlingItem[] = teElements.map(te => ({ type: 'te', id: `te-${te.id}`, data: te }));
+      return [...prev, ...newTeItems];
+    });
+  };
+  
+  const appendHandlingDAs = (daElements: Array<{ id: string; name: string; symbolImages: string[]; value: number; selectedCriteria: string[] }>) => {
+    setPendingHandlingItems(prev => {
+      const newDaItems: HandlingItem[] = daElements.map(da => ({ type: 'da', id: `da-${da.id}`, data: da }));
+      return [...prev, ...newDaItems];
+    });
+  };
+  
+  // Function to replace all handling items
+  const setAllHandlingItems = (teElements: Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }>, daElements: Array<{ id: string; name: string; symbolImages: string[]; value: number; selectedCriteria: string[] }>) => {
+    const newTeItems: HandlingItem[] = teElements.map(te => ({ type: 'te', id: `te-${te.id}`, data: te }));
+    const newDaItems: HandlingItem[] = daElements.map(da => ({ type: 'da', id: `da-${da.id}`, data: da }));
+    setPendingHandlingItems([...newTeItems, ...newDaItems]);
+  };
+  
+  // Function to clear all handling items
+  const clearPendingHandlingItems = () => {
+    setPendingHandlingItems([]);
+  };
   useEffect(() => {
     const state = location.state as { newRisk?: RiskData; modifyingElementId?: string } | null;
     if (state?.newRisk) {
@@ -618,8 +667,7 @@ const RoutineCalculator = () => {
       type: 'jump',
       modifyingElementId,
     });
-    setPendingTechnicalElements([]);
-    setPendingDaElements([]);
+    clearPendingHandlingItems();
     setJumpDialogOpen(false);
     setElementInfoDialogOpen(true);
   };
@@ -640,8 +688,7 @@ const RoutineCalculator = () => {
       type: 'balance',
       modifyingElementId,
     });
-    setPendingTechnicalElements([]);
-    setPendingDaElements([]);
+    clearPendingHandlingItems();
     setBalanceDialogOpen(false);
     setElementInfoDialogOpen(true);
   };
@@ -670,8 +717,7 @@ const RoutineCalculator = () => {
       type: 'rotation',
       modifyingElementId,
     });
-    setPendingTechnicalElements([]);
-    setPendingDaElements([]);
+    clearPendingHandlingItems();
     setRotationDialogOpen(false);
     setElementInfoDialogOpen(true);
   };
@@ -706,12 +752,11 @@ const RoutineCalculator = () => {
       const isRotation = pendingElementInfo?.elementType === 'rotation' || pendingDbElement?.type === 'rotation';
       
       if (isRotation) {
-        // For rotations: APPEND new DAs to existing ones, keep TEs
-        setPendingDaElements(prev => [...prev, ...daElementsData]);
+        // For rotations: APPEND new DAs to existing ones in order
+        appendHandlingDAs(daElementsData);
       } else {
         // For jumps/balances: Replace DAs and clear TEs (mutually exclusive)
-        setPendingDaElements(daElementsData);
-        setPendingTechnicalElements([]);
+        setPendingHandlingItems(daElementsData.map(da => ({ type: 'da', id: `da-${da.id}`, data: da })));
       }
       
       // Return to Element Information Dialog
@@ -1075,8 +1120,7 @@ const RoutineCalculator = () => {
       selectedCriteria: [] as string[], // We don't have criteria info in the stored element
     })) || [];
     
-    setPendingTechnicalElements(teElements);
-    setPendingDaElements(daElements);
+    setAllHandlingItems(teElements, daElements);
     setModifyingRoutineElement(element);
     
     // Set pending DB element for apparatus handling
@@ -1281,8 +1325,7 @@ const RoutineCalculator = () => {
     
     // Clear states
     setModifyingRoutineElement(null);
-    setPendingTechnicalElements([]);
-    setPendingDaElements([]);
+    clearPendingHandlingItems();
     setPendingDbElement(null);
     
     toast({
@@ -1320,12 +1363,11 @@ const RoutineCalculator = () => {
       const isRotation = pendingElementInfo?.elementType === 'rotation' || pendingDbElement?.type === 'rotation';
       
       if (isRotation) {
-        // For rotations: APPEND new TEs to existing ones, keep DAs
-        setPendingTechnicalElements(prev => [...prev, ...elements]);
+        // For rotations: APPEND new TEs to existing ones in order
+        appendHandlingTEs(elements);
       } else {
         // For jumps/balances: Replace TEs and clear DAs (mutually exclusive)
-        setPendingTechnicalElements(elements);
-        setPendingDaElements([]);
+        setPendingHandlingItems(elements.map(te => ({ type: 'te', id: `te-${te.id}`, data: te })));
       }
       
       // Return to Element Information Dialog
@@ -1927,8 +1969,7 @@ const RoutineCalculator = () => {
         onSave={handleElementInfoSave}
         onCancel={() => {
           setModifyingRoutineElement(null);
-          setPendingTechnicalElements([]);
-          setPendingDaElements([]);
+          clearPendingHandlingItems();
           setPendingDbElement(null);
           setPendingElementInfo(null);
         }}
@@ -1939,19 +1980,17 @@ const RoutineCalculator = () => {
         onOpenTechnicalElementsDialog={handleElementInfoOpenTechnicalElementsDialog}
         selectedTechnicalElements={pendingTechnicalElements}
         selectedDaElements={pendingDaElements}
+        handlingItems={pendingHandlingItems}
         initialRotationCount={pendingElementInfo?.rotationCount}
         isModifying={modifyingRoutineElement !== null}
         onRemoveTechnicalElement={(id) => {
-          setPendingTechnicalElements(prev => prev.filter(te => te.id !== id));
+          setPendingHandlingItems(prev => prev.filter(item => !(item.type === 'te' && item.data.id === id)));
         }}
         onRemoveDaElement={(id) => {
-          setPendingDaElements(prev => prev.filter(da => da.id !== id));
+          setPendingHandlingItems(prev => prev.filter(item => !(item.type === 'da' && item.data.id === id)));
         }}
-        onReorderTechnicalElements={(elements) => {
-          setPendingTechnicalElements(elements);
-        }}
-        onReorderDaElements={(elements) => {
-          setPendingDaElements(elements);
+        onReorderHandlingItems={(items) => {
+          setPendingHandlingItems(items);
         }}
         onRotationCountChange={(count) => {
           // Persist rotation count changes to pendingElementInfo so it's not lost when navigating to TE/DA dialogs
