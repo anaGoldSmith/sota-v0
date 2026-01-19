@@ -375,7 +375,7 @@ function SortableRow({
                 {(element.type === 'R' || element.type === 'R/DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB') && onModify && (
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onModify(); }}>
                     <Pencil className="h-4 w-4 mr-2" />
-                    Modify
+                    View / Edit
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem 
