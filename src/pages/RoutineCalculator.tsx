@@ -1812,13 +1812,15 @@ const RoutineCalculator = () => {
                                                   }
                                                 </span>
                                               )}
-                                              {element.dbData.elementType === 'balance' && (element.dbData.isFlatFoot || element.dbData.isSlowTurn) && (
+                                              {element.dbData.elementType === 'balance' && (
                                                 <span className="text-xs text-muted-foreground">
                                                   {element.dbData.isSlowTurn && element.dbData.isFlatFoot
                                                     ? '(slow turn on flat foot)'
                                                     : element.dbData.isSlowTurn
                                                     ? '(slow turn on relevé)'
-                                                    : '(on flat foot)'
+                                                    : element.dbData.isFlatFoot
+                                                    ? '(balance on flat foot)'
+                                                    : '(balance on relevé)'
                                                   }
                                                 </span>
                                               )}
