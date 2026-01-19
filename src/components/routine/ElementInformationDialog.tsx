@@ -865,7 +865,7 @@ export const ElementInformationDialog = ({
                           className="max-w-[280px] text-sm z-[200]"
                           sideOffset={8}
                         >
-                          <p>A series refers to two or more identical jumps performed consecutively. Each jump counts as a separate Difficulty and requires its own TE or DA. The same TE can be used for multiple jumps, but each DA must be unique.</p>
+                          <p>A series consists of two or more identical jumps or leaps performed consecutively, with or without an intermediate step. Each element is evaluated separately, counts as one DB, and requires valid apparatus handling. Apparatus handling may be repeated in a series of jumps.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
