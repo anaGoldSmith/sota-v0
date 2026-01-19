@@ -424,10 +424,28 @@ export const ElementInformationDialog = ({
 
   const minValue = is180Degrees ? 0.5 : 1;
 
+  // Calculate balance value adjustments
+  const balanceAdjustments = useMemo(() => {
+    if (elementType !== 'balance') return { flatFootAdjust: 0, slowTurnAdjust: 0 };
+    
+    // Flat Foot: -0.1 from base value
+    const flatFootAdjust = isFlatFoot ? -0.1 : 0;
+    
+    // Slow Turn: +0.2 on relevé (Flat Foot NOT active), +0.1 on flat foot (Flat Foot IS active)
+    const slowTurnAdjust = isSlowTurn ? (isFlatFoot ? 0.1 : 0.2) : 0;
+    
+    return { flatFootAdjust, slowTurnAdjust };
+  }, [elementType, isFlatFoot, isSlowTurn]);
+
   // Calculate total value based on element type
   const totalValue = useMemo(() => {
     if (!element) return 0;
     const baseValue = element.value;
+    
+    // For balances: apply flat foot and slow turn adjustments
+    if (elementType === 'balance') {
+      return baseValue + balanceAdjustments.flatFootAdjust + balanceAdjustments.slowTurnAdjust;
+    }
     
     if (elementType !== 'rotation') {
       return baseValue;
@@ -463,7 +481,7 @@ export const ElementInformationDialog = ({
       const additionalFullRotations = Math.floor(rotationCount) - 1;
       return baseValue + (Math.max(0, additionalFullRotations) * extraValue);
     }
-  }, [element, elementType, rotationCount, is180Degrees, isFixedRotation, isPerRotationElement, isFouetteElement, fouetteComponents, isSeries]);
+  }, [element, elementType, rotationCount, is180Degrees, isFixedRotation, isPerRotationElement, isFouetteElement, fouetteComponents, isSeries, balanceAdjustments]);
 
   const handleIncrement = () => {
     if (isFixedRotation || elementType !== 'rotation') return;
@@ -876,6 +894,34 @@ export const ElementInformationDialog = ({
                       </div>
                     )}
                   </div>
+                  
+                  {/* Balance value breakdown */}
+                  {(isFlatFoot || isSlowTurn) && (
+                    <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300">
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span>Base value:</span>
+                          <span>{element.value.toFixed(1)}</span>
+                        </div>
+                        {isFlatFoot && (
+                          <div className="flex justify-between">
+                            <span>Flat Foot:</span>
+                            <span className="text-red-600 dark:text-red-400">-0.1</span>
+                          </div>
+                        )}
+                        {isSlowTurn && (
+                          <div className="flex justify-between">
+                            <span>Slow Turn {isFlatFoot ? '(on flat)' : '(on relevé)'}:</span>
+                            <span className="text-green-600 dark:text-green-400">+{isFlatFoot ? '0.1' : '0.2'}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between font-medium border-t border-blue-300 dark:border-blue-700 pt-1 mt-1">
+                          <span>Total:</span>
+                          <span>{totalValue.toFixed(1)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
