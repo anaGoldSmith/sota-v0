@@ -78,19 +78,23 @@ export const FouetteShapesSelector = ({
   const isValid = selectedShapes.length === 3 && primaryLevelCount >= 2;
   const hasThreeShapes = selectedShapes.length === 3;
 
-  // Toggle shape selection
-  const toggleShape = (shape: FouetteShape) => {
-    const isSelected = selectedShapes.some(s => s.id === shape.id);
-    
-    if (isSelected) {
-      // Remove
-      onChange(selectedShapes.filter(s => s.id !== shape.id));
-    } else {
-      // Add (max 3)
-      if (selectedShapes.length < 3) {
-        onChange([...selectedShapes, shape]);
-      }
+  // Count how many times a shape is selected
+  const getShapeCount = (shapeId: string) => {
+    return selectedShapes.filter(s => s.id === shapeId).length;
+  };
+
+  // Add a shape (allows duplicates, max 3 total)
+  const addShape = (shape: FouetteShape) => {
+    if (selectedShapes.length < 3) {
+      onChange([...selectedShapes, shape]);
     }
+  };
+
+  // Remove one instance of a shape (by index in selected array)
+  const removeShapeAtIndex = (index: number) => {
+    const newShapes = [...selectedShapes];
+    newShapes.splice(index, 1);
+    onChange(newShapes);
   };
 
   if (isLoading) {
@@ -135,7 +139,7 @@ export const FouetteShapesSelector = ({
               const isPrimary = shape.leg_level?.toUpperCase() === requiredLegLevel;
               return (
                 <div 
-                  key={shape.id}
+                  key={`${shape.id}-${index}`}
                   className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs border ${
                     isPrimary 
                       ? 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800' 
@@ -151,7 +155,7 @@ export const FouetteShapesSelector = ({
                     variant="ghost"
                     size="icon"
                     className="h-4 w-4 p-0 hover:bg-destructive/10"
-                    onClick={() => toggleShape(shape)}
+                    onClick={() => removeShapeAtIndex(index)}
                   >
                     <X className="h-3 w-3" />
                   </Button>
@@ -201,9 +205,9 @@ export const FouetteShapesSelector = ({
               </div>
               <div className="grid gap-1">
                 {primaryShapes.map(shape => {
-                  const isSelected = selectedShapes.some(s => s.id === shape.id);
+                  const shapeCount = getShapeCount(shape.id);
                   const symbolUrl = getSymbolUrl(shape.symbol_image, 'balance-symbols');
-                  const isDisabled = !isSelected && selectedShapes.length >= 3;
+                  const isDisabled = selectedShapes.length >= 3;
                   
                   return (
                     <button
@@ -212,7 +216,7 @@ export const FouetteShapesSelector = ({
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        toggleShape(shape);
+                        addShape(shape);
                       }}
                       disabled={isDisabled}
                       className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors ${
@@ -221,11 +225,11 @@ export const FouetteShapesSelector = ({
                           : 'bg-muted/30 hover:bg-muted/50'
                       }`}
                     >
-                      {/* Circle selection indicator */}
+                      {/* Circle with count indicator */}
                       <div className="flex-shrink-0">
-                        {isSelected ? (
+                        {shapeCount > 0 ? (
                           <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
-                            <Check className="h-3 w-3 text-white" />
+                            <span className="text-[10px] font-bold text-white">{shapeCount}</span>
                           </div>
                         ) : (
                           <Circle className={`h-5 w-5 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
@@ -252,9 +256,9 @@ export const FouetteShapesSelector = ({
               </div>
               <div className="grid gap-1">
                 {universalShapes.map(shape => {
-                  const isSelected = selectedShapes.some(s => s.id === shape.id);
+                  const shapeCount = getShapeCount(shape.id);
                   const symbolUrl = getSymbolUrl(shape.symbol_image, 'balance-symbols');
-                  const isDisabled = !isSelected && selectedShapes.length >= 3;
+                  const isDisabled = selectedShapes.length >= 3;
                   
                   return (
                     <button
@@ -263,7 +267,7 @@ export const FouetteShapesSelector = ({
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        toggleShape(shape);
+                        addShape(shape);
                       }}
                       disabled={isDisabled}
                       className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors ${
@@ -272,11 +276,11 @@ export const FouetteShapesSelector = ({
                           : 'bg-muted/30 hover:bg-muted/50'
                       }`}
                     >
-                      {/* Circle selection indicator */}
+                      {/* Circle with count indicator */}
                       <div className="flex-shrink-0">
-                        {isSelected ? (
+                        {shapeCount > 0 ? (
                           <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
-                            <Check className="h-3 w-3 text-white" />
+                            <span className="text-[10px] font-bold text-white">{shapeCount}</span>
                           </div>
                         ) : (
                           <Circle className={`h-5 w-5 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
