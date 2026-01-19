@@ -816,50 +816,65 @@ export const ElementInformationDialog = ({
               {elementType === 'balance' && (canBeFlatFoot || canBeSlowTurn) && (
                 <div className="mt-4 pt-4 border-t space-y-2">
                   <Label className="text-sm">Balance Options</Label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-4">
                     {canBeFlatFoot && (
-                      <Button
-                        variant={isFlatFoot ? "default" : "outline"}
-                        size="sm"
-                        className={`h-8 px-3 ${isFlatFoot ? 'bg-primary text-primary-foreground' : ''}`}
-                        onClick={() => updateFlatFoot(!isFlatFoot)}
-                      >
-                        Flat Foot
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant={isFlatFoot ? "default" : "outline"}
+                          size="sm"
+                          className={`h-8 px-3 ${isFlatFoot ? 'bg-primary text-primary-foreground' : ''}`}
+                          onClick={() => updateFlatFoot(!isFlatFoot)}
+                        >
+                          Flat Foot
+                        </Button>
+                        <TooltipProvider>
+                          <Tooltip delayDuration={0}>
+                            <TooltipTrigger asChild>
+                              <div className="cursor-help">
+                                <Info className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent 
+                              side="top" 
+                              align="center"
+                              className="max-w-[250px] text-sm z-[200]"
+                              sideOffset={8}
+                            >
+                              <p>Balance is performed on flat foot.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     )}
                     {canBeSlowTurn && (
-                      <Button
-                        variant={isSlowTurn ? "default" : "outline"}
-                        size="sm"
-                        className={`h-8 px-3 ${isSlowTurn ? 'bg-primary text-primary-foreground' : ''}`}
-                        onClick={() => updateSlowTurn(!isSlowTurn)}
-                      >
-                        Slow Turn
-                      </Button>
-                    )}
-                    <TooltipProvider>
-                      <Tooltip delayDuration={0}>
-                        <TooltipTrigger asChild>
-                          <div className="cursor-help">
-                            <Info className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent 
-                          side="left" 
-                          align="center"
-                          className="max-w-[250px] text-sm z-[200]"
-                          sideOffset={8}
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant={isSlowTurn ? "default" : "outline"}
+                          size="sm"
+                          className={`h-8 px-3 ${isSlowTurn ? 'bg-primary text-primary-foreground' : ''}`}
+                          onClick={() => updateSlowTurn(!isSlowTurn)}
                         >
-                          <p>
-                            {canBeFlatFoot && canBeSlowTurn 
-                              ? 'Flat Foot: Balance performed on flat foot. Slow Turn: Balance performed with slow rotation.'
-                              : canBeFlatFoot 
-                                ? 'Flat Foot: Balance performed on flat foot instead of relevé.'
-                                : 'Slow Turn: Balance performed with slow rotation.'}
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                          Slow Turn
+                        </Button>
+                        <TooltipProvider>
+                          <Tooltip delayDuration={0}>
+                            <TooltipTrigger asChild>
+                              <div className="cursor-help">
+                                <Info className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent 
+                              side="top" 
+                              align="center"
+                              className="max-w-[280px] text-sm z-[200]"
+                              sideOffset={8}
+                            >
+                              <p>A balance is performed with slow turn of 180° or more. Only 2 Difficulties with "slow turn" are allowed in an exercise: 1 performed on relevé and 1 on flat foot. These Difficulties must be from different boxes.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
