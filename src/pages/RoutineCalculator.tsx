@@ -1799,38 +1799,25 @@ const RoutineCalculator = () => {
                                           const hasFouetteShapes = element.dbData.fouetteShapes && element.dbData.fouetteShapes.length > 0;
                                           const shapesExpanded = element.dbData.shapesExpanded || false;
                                           
+                                          const toggleShapesExpanded = (e: React.MouseEvent) => {
+                                            e.stopPropagation();
+                                            setRoutineElements(prev => prev.map(el => 
+                                              el.id === element.id 
+                                                ? { 
+                                                    ...el, 
+                                                    dbData: el.dbData 
+                                                      ? { ...el.dbData, shapesExpanded: !shapesExpanded }
+                                                      : el.dbData 
+                                                  }
+                                                : el
+                                            ));
+                                          };
+                                          
                                           return (
                                             <>
                                               <tr className="bg-secondary/10">
                                                 <td className="py-2 px-4">
-                                                  <div className="flex items-center gap-1">
-                                                    {hasFouetteShapes && (
-                                                      <button
-                                                        type="button"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          setRoutineElements(prev => prev.map(el => 
-                                                            el.id === element.id 
-                                                              ? { 
-                                                                  ...el, 
-                                                                  dbData: el.dbData 
-                                                                    ? { ...el.dbData, shapesExpanded: !shapesExpanded }
-                                                                    : el.dbData 
-                                                                }
-                                                              : el
-                                                          ));
-                                                        }}
-                                                        className="p-0.5 hover:bg-muted rounded"
-                                                      >
-                                                        {shapesExpanded ? (
-                                                          <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                                                        ) : (
-                                                          <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                                                        )}
-                                                      </button>
-                                                    )}
-                                                    <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">DB</span>
-                                                  </div>
+                                                  <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">DB</span>
                                                 </td>
                                                 <td className="py-2 px-4">
                                                   <div className="flex items-center gap-1">
@@ -1855,61 +1842,53 @@ const RoutineCalculator = () => {
                                                       </span>
                                                     )}
                                                     {element.dbData.elementType === 'balance' && (
-                                                      <span className="text-xs text-muted-foreground">
-                                                        {element.dbData.isSlowTurn && element.dbData.isFlatFoot
-                                                          ? '(slow turn on flat foot)'
-                                                          : element.dbData.isSlowTurn
-                                                          ? '(slow turn on relevé)'
-                                                          : element.dbData.isFlatFoot
-                                                          ? '(balance on flat foot)'
-                                                          : '(balance on relevé)'
-                                                        }
-                                                      </span>
-                                                    )}
-                                                    {hasFouetteShapes && (
-                                                      <span className="text-xs text-purple-600 dark:text-purple-400">
-                                                        ({element.dbData.fouetteShapes!.length} shapes selected)
-                                                      </span>
+                                                      <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-muted-foreground">
+                                                          {element.dbData.isSlowTurn && element.dbData.isFlatFoot
+                                                            ? '(slow turn on flat foot)'
+                                                            : element.dbData.isSlowTurn
+                                                            ? '(slow turn on relevé)'
+                                                            : element.dbData.isFlatFoot
+                                                            ? '(balance on flat foot)'
+                                                            : '(balance on relevé)'
+                                                          }
+                                                        </span>
+                                                        {hasFouetteShapes && (
+                                                          <button
+                                                            type="button"
+                                                            onClick={toggleShapesExpanded}
+                                                            className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+                                                          >
+                                                            {shapesExpanded ? (
+                                                              <ChevronDown className="h-3 w-3" />
+                                                            ) : (
+                                                              <ChevronRight className="h-3 w-3" />
+                                                            )}
+                                                            <span>View Shapes</span>
+                                                          </button>
+                                                        )}
+                                                      </div>
                                                     )}
                                                   </div>
                                                 </td>
                                                 <td className="py-2 px-4 text-right font-mono">{element.dbData.value.toFixed(1)}</td>
                                               </tr>
                                               
-                                              {/* Expanded Fouetté Shapes Rows */}
+                                              {/* Expanded Fouetté Shapes Rows - simplified to just number and name */}
                                               {hasFouetteShapes && shapesExpanded && (
                                                 element.dbData.fouetteShapes!.map((shape, shapeIdx) => (
                                                   <tr key={`shape-${shapeIdx}`} className="bg-purple-50 dark:bg-purple-900/10">
-                                                    <td className="py-1.5 px-4 pl-8">
-                                                      <span className="text-[10px] font-medium text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded dark:text-purple-300 dark:bg-purple-900/30">
-                                                        Shape {shapeIdx + 1}
+                                                    <td colSpan={2} className="py-1.5 px-4 pl-8">
+                                                      <span className="text-xs text-purple-700 dark:text-purple-300">
+                                                        Shape {shapeIdx + 1}:
                                                       </span>
                                                     </td>
-                                                    <td className="py-1.5 px-4">
-                                                      {shape.symbol_image ? (
-                                                        <img 
-                                                          src={getSymbolUrl(shape.symbol_image, 'balance-symbols') || ''} 
-                                                          alt={shape.name || 'Shape'} 
-                                                          className="h-5 w-5 object-contain" 
-                                                        />
-                                                      ) : (
-                                                        <div className="h-5 w-5" />
+                                                    <td colSpan={2} className="py-1.5 px-4 text-sm">
+                                                      <span>{shape.name || shape.code}</span>
+                                                      {shape.isCustom && (
+                                                        <span className="ml-2 text-[9px] text-orange-600 bg-orange-100 px-1 rounded dark:text-orange-400 dark:bg-orange-900/30">custom</span>
                                                       )}
                                                     </td>
-                                                    <td className="py-1.5 px-4 text-sm">
-                                                      <div className="flex items-center gap-2">
-                                                        <span>{shape.name || shape.code}</span>
-                                                        {shape.isCustom && (
-                                                          <span className="text-[9px] text-orange-600 bg-orange-100 px-1 rounded dark:text-orange-400 dark:bg-orange-900/30">custom</span>
-                                                        )}
-                                                        {shape.leg_level && (
-                                                          <span className="text-[9px] text-muted-foreground">
-                                                            ({shape.leg_level})
-                                                          </span>
-                                                        )}
-                                                      </div>
-                                                    </td>
-                                                    <td className="py-1.5 px-4 text-right font-mono text-muted-foreground">-</td>
                                                   </tr>
                                                 ))
                                               )}
