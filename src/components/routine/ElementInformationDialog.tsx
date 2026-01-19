@@ -860,7 +860,7 @@ export const ElementInformationDialog = ({
                           </div>
                         </TooltipTrigger>
                         <TooltipContent 
-                          side="left" 
+                          side="right" 
                           align="center"
                           className="max-w-[280px] text-sm z-[200]"
                           sideOffset={8}
