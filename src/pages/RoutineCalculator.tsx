@@ -575,6 +575,8 @@ const RoutineCalculator = () => {
     rotationCount?: number;
     fouetteComponents?: FouetteComponent[];
     isSeries?: boolean;
+    isJumpSeries?: boolean;
+    jumpCount?: number;
     isFlatFoot?: boolean;
     isSlowTurn?: boolean;
   } | null>(null);
@@ -2239,6 +2241,7 @@ const RoutineCalculator = () => {
         onRemoveElement={(id) => {
           setPendingTechnicalElements(prev => prev.filter(te => te.id !== id));
         }}
+        isJumpSeries={pendingElementInfo?.isJumpSeries || false}
       />
 
       {/* Element Information Dialog for configuring new or modifying existing DB/DA/TE elements */}
@@ -2303,6 +2306,16 @@ const RoutineCalculator = () => {
         onSeriesChange={(series) => {
           // Persist series state changes to pendingElementInfo so it's not lost when navigating to TE/DA dialogs
           setPendingElementInfo(prev => prev ? { ...prev, isSeries: series } : null);
+        }}
+        initialIsJumpSeries={pendingElementInfo?.isJumpSeries}
+        initialJumpCount={pendingElementInfo?.jumpCount}
+        onJumpSeriesChange={(isJumpSeries) => {
+          // Persist jump series state changes to pendingElementInfo so it's not lost when navigating to TE/DA dialogs
+          setPendingElementInfo(prev => prev ? { ...prev, isJumpSeries } : null);
+        }}
+        onJumpCountChange={(jumpCount) => {
+          // Persist jump count changes to pendingElementInfo so it's not lost when navigating to TE/DA dialogs
+          setPendingElementInfo(prev => prev ? { ...prev, jumpCount } : null);
         }}
         initialFouetteComponents={pendingElementInfo?.fouetteComponents}
         onFouetteComponentsChange={(components) => {

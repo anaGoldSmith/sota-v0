@@ -35,6 +35,8 @@ interface TechnicalElementsSelectionDialogProps {
   elementType?: 'jump' | 'rotation' | 'balance' | null;
   // Callback to remove an already-added element (for rotations)
   onRemoveElement?: (id: string) => void;
+  // Whether this is a jump series (allows selecting same TE multiple times)
+  isJumpSeries?: boolean;
 }
 
 export const TechnicalElementsSelectionDialog = ({
@@ -45,31 +47,37 @@ export const TechnicalElementsSelectionDialog = ({
   onGoBack,
   initialSelectedElements = [],
   elementType,
-  onRemoveElement
+  onRemoveElement,
+  isJumpSeries = false
 }: TechnicalElementsSelectionDialogProps) => {
   const [searchText, setSearchText] = useState("");
   const [selectedElements, setSelectedElements] = useState<Set<string>>(new Set());
+  // For jump series: track how many times each element is selected (allows duplicates)
+  const [jumpSeriesSelections, setJumpSeriesSelections] = useState<string[]>([]);
 
   // Track previous open state to only reset on fresh open
   const [wasOpen, setWasOpen] = useState(false);
   
   // For rotations and balances: we allow adding multiple TEs, so don't pre-select existing ones
   // For jumps: pre-select existing ones since they replace
+  // For jump series: start fresh - user adds TEs one by one
   // IMPORTANT: Only reset on dialog opening, NOT when initialSelectedElements changes
   // (to avoid clearing new selections when removing an already-added element)
   useEffect(() => {
     if (open && !wasOpen) {
       // Dialog just opened
-      if (elementType === 'rotation' || elementType === 'balance') {
-        // For rotations and balances: start fresh - don't pre-select existing elements
+      if (elementType === 'rotation' || elementType === 'balance' || isJumpSeries) {
+        // For rotations, balances, and jump series: start fresh - don't pre-select existing elements
         setSelectedElements(new Set());
+        setJumpSeriesSelections([]);
       } else {
-        // For jumps: pre-select existing elements (replace mode)
+        // For regular jumps: pre-select existing elements (replace mode)
         setSelectedElements(new Set(initialSelectedElements.map(el => el.id)));
+        setJumpSeriesSelections([]);
       }
     }
     setWasOpen(open);
-  }, [open, wasOpen, initialSelectedElements, elementType]);
+  }, [open, wasOpen, initialSelectedElements, elementType, isJumpSeries]);
 
   // Fetch technical elements for the selected apparatus
   const { data: technicalElements = [], isLoading, error } = useQuery({
@@ -199,21 +207,37 @@ export const TechnicalElementsSelectionDialog = ({
   }, [filteredElements]);
 
   const handleElementClick = (element: TechnicalElement) => {
-    setSelectedElements(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(element.id)) {
-        newSet.delete(element.id);
-      } else {
-        newSet.add(element.id);
-      }
-      return newSet;
-    });
+    if (isJumpSeries) {
+      // For jump series: add to array (allows duplicates)
+      setJumpSeriesSelections(prev => [...prev, element.id]);
+    } else {
+      // For non-jump-series: toggle in Set
+      setSelectedElements(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(element.id)) {
+          newSet.delete(element.id);
+        } else {
+          newSet.add(element.id);
+        }
+        return newSet;
+      });
+    }
   };
 
   const handleConfirmSelection = () => {
-    const selected = technicalElements.filter(el => selectedElements.has(el.id));
-    onSelectTechnicalElements(selected);
-    setSelectedElements(new Set());
+    if (isJumpSeries) {
+      // For jump series: map array of IDs to element objects (preserves duplicates)
+      const selected = jumpSeriesSelections.map(id => 
+        technicalElements.find(el => el.id === id)
+      ).filter((el): el is TechnicalElement => el !== undefined);
+      onSelectTechnicalElements(selected);
+      setJumpSeriesSelections([]);
+    } else {
+      // For non-jump-series: use Set as before
+      const selected = technicalElements.filter(el => selectedElements.has(el.id));
+      onSelectTechnicalElements(selected);
+      setSelectedElements(new Set());
+    }
     setSearchText("");
     onOpenChange(false);
   };
@@ -221,6 +245,7 @@ export const TechnicalElementsSelectionDialog = ({
   const handleDialogChange = (isOpen: boolean) => {
     if (!isOpen) {
       setSelectedElements(new Set());
+      setJumpSeriesSelections([]);
       setSearchText("");
     }
     onOpenChange(isOpen);
@@ -228,6 +253,7 @@ export const TechnicalElementsSelectionDialog = ({
 
   const handleGoBack = () => {
     setSelectedElements(new Set());
+    setJumpSeriesSelections([]);
     setSearchText("");
     onOpenChange(false);
     onGoBack();
@@ -266,13 +292,21 @@ export const TechnicalElementsSelectionDialog = ({
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>
             {isLoading ? "Loading..." : `${filteredElements.length} element${filteredElements.length !== 1 ? 's' : ''} found`}
-            {elementType === 'rotation' && initialSelectedElements.length > 0 && (
+            {(elementType === 'rotation' || elementType === 'balance') && initialSelectedElements.length > 0 && (
+              <span className="ml-2">({initialSelectedElements.length} already added)</span>
+            )}
+            {isJumpSeries && initialSelectedElements.length > 0 && (
               <span className="ml-2">({initialSelectedElements.length} already added)</span>
             )}
           </span>
-          {selectedElements.size > 0 && (
+          {!isJumpSeries && selectedElements.size > 0 && (
             <span className="font-medium text-foreground">
               {selectedElements.size} new element{selectedElements.size !== 1 ? 's' : ''} selected
+            </span>
+          )}
+          {isJumpSeries && jumpSeriesSelections.length > 0 && (
+            <span className="font-medium text-foreground">
+              {jumpSeriesSelections.length} new element{jumpSeriesSelections.length !== 1 ? 's' : ''} selected
             </span>
           )}
         </div>
@@ -305,14 +339,22 @@ export const TechnicalElementsSelectionDialog = ({
                   {Array.from(groupedElements.entries()).map(([group, elements]) => (
                     elements.map((element) => {
                       const isSelected = selectedElements.has(element.id);
-                      // For rotations and balances, check if this element is already in the parent's saved TEs
-                      const isAlreadyAdded = (elementType === 'rotation' || elementType === 'balance') && 
+                      // For rotations and balances (not jump series), check if this element is already in the parent's saved TEs
+                      const isAlreadyAdded = (elementType === 'rotation' || elementType === 'balance' || (elementType === 'jump' && isJumpSeries)) && 
                         initialSelectedElements.some(el => el.id === element.id);
+                      // Count how many times this element is already added (for jump series display)
+                      const addedCount = isJumpSeries ? initialSelectedElements.filter(el => el.id === element.id).length : 0;
+                      // Count how many times this element has been selected in current session (for jump series)
+                      const newSelectionCount = isJumpSeries ? jumpSeriesSelections.filter(id => id === element.id).length : 0;
+                      const totalCount = addedCount + newSelectionCount;
                       const symbolUrl = getSymbolUrl(element.symbol_image);
                       
                       const handleClick = () => {
-                        if (isAlreadyAdded && onRemoveElement) {
-                          // Click on already-added element removes it
+                        if (isJumpSeries) {
+                          // In jump series mode, always allow selecting (even if already added)
+                          handleElementClick(element);
+                        } else if (isAlreadyAdded && onRemoveElement) {
+                          // Click on already-added element removes it (for rotations/balances)
                           onRemoveElement(element.id);
                         } else if (!isAlreadyAdded) {
                           // Normal toggle for new selections
@@ -324,11 +366,13 @@ export const TechnicalElementsSelectionDialog = ({
                         <TableRow 
                           key={element.id}
                           className={`cursor-pointer transition-colors ${
-                            isAlreadyAdded
+                            isAlreadyAdded && !isJumpSeries
                               ? 'bg-green-50 dark:bg-green-950/30 hover:bg-red-50 dark:hover:bg-red-950/30'
-                              : isSelected 
-                                ? 'bg-primary/20 hover:bg-primary/30' 
-                                : 'hover:bg-accent/50'
+                              : (isAlreadyAdded || newSelectionCount > 0) && isJumpSeries
+                                ? 'bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-900/40'
+                                : isSelected 
+                                  ? 'bg-primary/20 hover:bg-primary/30' 
+                                  : 'hover:bg-accent/50'
                           }`}
                           onClick={handleClick}
                         >
@@ -344,12 +388,17 @@ export const TechnicalElementsSelectionDialog = ({
                                 <span className="text-xs text-muted-foreground">N/A</span>
                               )}
                             </div>
-                            {isAlreadyAdded && (
-                              <div className="absolute -top-1 -right-1 bg-green-600 text-white rounded-full p-0.5 shadow-md z-10 border-2 border-background">
+                            {isJumpSeries && totalCount > 0 && (
+                              <div className="absolute -top-1 -right-1 bg-green-600 text-white rounded-full p-0.5 shadow-md z-10 border-2 border-background flex items-center justify-center min-w-[18px] min-h-[18px]">
+                                <span className="text-[10px] font-bold">{totalCount}</span>
+                              </div>
+                            )}
+                            {!isJumpSeries && isAlreadyAdded && (
+                              <div className="absolute -top-1 -right-1 bg-green-600 text-white rounded-full p-0.5 shadow-md z-10 border-2 border-background flex items-center justify-center min-w-[18px] min-h-[18px]">
                                 <Check className="h-3 w-3" />
                               </div>
                             )}
-                            {isSelected && !isAlreadyAdded && (
+                            {!isJumpSeries && isSelected && !isAlreadyAdded && (
                               <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5 shadow-md z-10 border-2 border-background">
                                 <Check className="h-3 w-3" />
                               </div>
@@ -357,8 +406,14 @@ export const TechnicalElementsSelectionDialog = ({
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {element.description}
-                            {isAlreadyAdded && (
+                            {isAlreadyAdded && !isJumpSeries && (
                               <span className="ml-2 text-xs text-green-600 dark:text-green-400 italic">(click to remove)</span>
+                            )}
+                            {isJumpSeries && totalCount > 0 && (
+                              <span className="ml-2 text-xs text-green-600 dark:text-green-400 italic">(selected {totalCount}× - click to add again)</span>
+                            )}
+                            {isJumpSeries && totalCount === 0 && (
+                              <span className="ml-2 text-xs text-muted-foreground italic">(click to add)</span>
                             )}
                           </TableCell>
                         </TableRow>
@@ -377,7 +432,7 @@ export const TechnicalElementsSelectionDialog = ({
           </Button>
           <Button 
             onClick={handleConfirmSelection}
-            disabled={selectedElements.size === 0}
+            disabled={isJumpSeries ? jumpSeriesSelections.length === 0 : selectedElements.size === 0}
           >
             Save
           </Button>
