@@ -93,9 +93,6 @@ export const FouetteShapesSelector = ({
     }
   };
 
-  // Calculate total value from selected shapes
-  const totalValue = selectedShapes.reduce((sum, s) => sum + s.value, 0);
-
   if (isLoading) {
     return (
       <div className="p-4 text-center text-sm text-muted-foreground">
@@ -150,7 +147,6 @@ export const FouetteShapesSelector = ({
                     <img src={symbolUrl} alt={shape.name || ''} className="h-5 w-5 object-contain" />
                   )}
                   <span className="max-w-[120px] truncate">{shape.name || shape.code}</span>
-                  <span className="text-muted-foreground">({shape.value.toFixed(1)})</span>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -236,9 +232,6 @@ export const FouetteShapesSelector = ({
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">{shape.name || shape.code}</div>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <div className="font-mono text-muted-foreground">{shape.value.toFixed(1)}</div>
-                      </div>
                     </button>
                   );
                 })}
@@ -285,9 +278,6 @@ export const FouetteShapesSelector = ({
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">{shape.name || shape.code}</div>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <div className="font-mono text-muted-foreground">{shape.value.toFixed(1)}</div>
-                      </div>
                     </button>
                   );
                 })}
@@ -304,16 +294,10 @@ export const FouetteShapesSelector = ({
             <span>Shapes Selected:</span>
             <span className="font-medium">{selectedShapes.length}/3</span>
           </div>
-          <div className="flex justify-between text-xs text-muted-foreground mb-1">
+          <div className="flex justify-between text-xs text-muted-foreground">
             <span>{requiredLegLevelLabel} Level:</span>
             <span className={`font-medium ${primaryLevelCount >= 2 ? 'text-green-600' : 'text-amber-600'}`}>
               {primaryLevelCount}/2 minimum
-            </span>
-          </div>
-          <div className="flex justify-between text-sm pt-1 border-t">
-            <span className="font-medium">Shapes Value:</span>
-            <span className="font-bold text-primary">
-              {selectedShapes.map(s => s.value.toFixed(1)).join(' + ')} = {totalValue.toFixed(1)}
             </span>
           </div>
         </div>
