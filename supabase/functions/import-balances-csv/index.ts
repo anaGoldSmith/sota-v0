@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     const result = Papa.parse(csvContent, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (h: string) => h.trim().toLowerCase(),
+      transformHeader: (h: string) => h.trim().toLowerCase().replace(/\s+/g, '_'),
     });
 
     if ((result as any).errors && (result as any).errors.length > 0) {
