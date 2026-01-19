@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Info, X, Check, AlertTriangle, Circle } from "lucide-react";
+import { Info, X, Check, AlertTriangle, Circle, Plus } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,6 +16,7 @@ export interface FouetteShape {
   value: number;
   leg_level: string | null;
   symbol_image: string | null;
+  isCustom?: boolean; // Flag for user-entered custom shapes
 }
 
 interface FouetteShapesSelectorProps {
@@ -30,6 +32,9 @@ export const FouetteShapesSelector = ({
   onChange,
   getSymbolUrl,
 }: FouetteShapesSelectorProps) => {
+  const [customShapeInput, setCustomShapeInput] = useState("");
+  const [showCustomInput, setShowCustomInput] = useState(false);
+
   // Determine which leg level is required (primary)
   const requiredLegLevel = elementCode === "2.1803" ? "HOR" : "HIGH";
   const requiredLegLevelLabel = elementCode === "2.1803" ? "Horizontal" : "High (split)";
@@ -68,18 +73,40 @@ export const FouetteShapesSelector = ({
     [availableShapes]
   );
 
-  // Validation
-  const primaryLevelCount = selectedShapes.filter(
+  // Validation - custom shapes don't count toward leg level requirement
+  const nonCustomShapes = selectedShapes.filter(s => !s.isCustom);
+  const customShapesCount = selectedShapes.filter(s => s.isCustom).length;
+  const primaryLevelCount = nonCustomShapes.filter(
     s => s.leg_level?.toUpperCase() === requiredLegLevel
   ).length;
   
-  const isValid = selectedShapes.length === 3 && primaryLevelCount >= 2;
+  // Valid if 3 shapes AND (at least 2 primary level OR has custom shapes which bypass the check)
+  const hasAllCustom = customShapesCount === 3;
+  const isValid = selectedShapes.length === 3 && (primaryLevelCount >= 2 || customShapesCount > 0);
 
-  const getShapeCount = (shapeId: string) => selectedShapes.filter(s => s.id === shapeId).length;
+  const getShapeCount = (shapeId: string) => selectedShapes.filter(s => s.id === shapeId && !s.isCustom).length;
 
   const addShape = (shape: FouetteShape) => {
     if (selectedShapes.length < 3) {
       onChange([...selectedShapes, shape]);
+    }
+  };
+
+  const addCustomShape = () => {
+    if (customShapeInput.trim() && selectedShapes.length < 3) {
+      const customShape: FouetteShape = {
+        id: `custom-${Date.now()}`,
+        code: 'CUSTOM',
+        name: customShapeInput.trim(),
+        description: customShapeInput.trim(),
+        value: 0,
+        leg_level: null,
+        symbol_image: null,
+        isCustom: true,
+      };
+      onChange([...selectedShapes, customShape]);
+      setCustomShapeInput("");
+      setShowCustomInput(false);
     }
   };
 
@@ -105,7 +132,7 @@ export const FouetteShapesSelector = ({
               </div>
             </TooltipTrigger>
             <TooltipContent side="top" align="center" className="max-w-[280px] text-sm z-[200]" sideOffset={8}>
-              <p>Select exactly 3 shapes. At least 2 must be {requiredLegLevelLabel} level.</p>
+              <p>Select exactly 3 shapes. At least 2 must be {requiredLegLevelLabel} level, or use "Other" to enter custom shapes.</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -120,10 +147,13 @@ export const FouetteShapesSelector = ({
           {selectedShapes.map((shape, index) => (
             <div 
               key={`${shape.id}-${index}`}
-              className="flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-muted/50 border"
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs border ${
+                shape.isCustom ? 'bg-orange-100 dark:bg-orange-900/30 border-orange-300' : 'bg-muted/50'
+              }`}
             >
               <span className="font-medium text-muted-foreground">#{index + 1}</span>
               <span className="truncate max-w-[100px]">{shape.name || shape.code}</span>
+              {shape.isCustom && <span className="text-[9px] text-orange-600">(custom)</span>}
               <button type="button" onClick={() => removeShapeAtIndex(index)} className="hover:text-destructive">
                 <X className="h-3 w-3" />
               </button>
@@ -210,6 +240,62 @@ export const FouetteShapesSelector = ({
               </div>
             </div>
           )}
+
+          {/* Other (custom) option */}
+          <div>
+            <div className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">Other</div>
+            {showCustomInput ? (
+              <div className="flex items-center gap-1">
+                <Input
+                  type="text"
+                  value={customShapeInput}
+                  onChange={(e) => setCustomShapeInput(e.target.value)}
+                  placeholder="Enter shape name..."
+                  className="h-7 text-xs flex-1"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addCustomShape();
+                    }
+                  }}
+                  disabled={selectedShapes.length >= 3}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={addCustomShape}
+                  disabled={!customShapeInput.trim() || selectedShapes.length >= 3}
+                  className="h-7 px-2 text-xs"
+                >
+                  Add
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowCustomInput(false);
+                    setCustomShapeInput("");
+                  }}
+                  className="h-7 px-2"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowCustomInput(true)}
+                disabled={selectedShapes.length >= 3}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-xs transition-colors ${
+                  selectedShapes.length >= 3 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted'
+                }`}
+              >
+                <Plus className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                <span className="text-muted-foreground">Enter custom shape...</span>
+              </button>
+            )}
+          </div>
         </div>
       </ScrollArea>
     </div>
