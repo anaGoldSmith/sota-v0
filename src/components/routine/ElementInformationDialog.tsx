@@ -737,7 +737,7 @@ export const ElementInformationDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg z-[60] max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogContent className="max-w-xl z-[60] max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>Element Information</DialogTitle>
           </DialogHeader>
