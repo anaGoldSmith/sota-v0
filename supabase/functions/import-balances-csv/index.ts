@@ -73,11 +73,11 @@ Deno.serve(async (req) => {
       throw new Error(`Missing required headers: ${missingHeaders.join(', ')}. Found headers: ${headers.join(', ')}`);
     }
 
-    // Helper to parse boolean values
+    // Helper to parse boolean values (accepts Y/N, Yes/No, true/false, 1/0)
     const parseBool = (val: unknown): boolean => {
       if (val === null || val === undefined || val === '') return false;
       const str = val.toString().trim().toLowerCase();
-      return str === 'true' || str === '1' || str === 'yes';
+      return str === 'true' || str === '1' || str === 'yes' || str === 'y';
     };
 
     // Build balances array with proper types
