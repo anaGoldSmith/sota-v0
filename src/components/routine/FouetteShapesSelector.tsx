@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Info, X, Check, AlertTriangle, Circle } from "lucide-react";
+import { Info, X, Check, AlertTriangle, Circle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 export interface FouetteShape {
   id: string;
@@ -194,112 +194,122 @@ export const FouetteShapesSelector = ({
         </div>
       )}
 
-      {/* Available Shapes */}
-      <ScrollArea className="h-[200px] rounded border">
-        <div className="p-2 space-y-3">
-          {/* Primary Level Shapes */}
-          {primaryShapes.length > 0 && (
-            <div className="space-y-1">
-              <div className="text-xs font-medium text-green-700 dark:text-green-400 px-1">
-                {requiredLegLevelLabel} Level Shapes
-              </div>
-              <div className="grid gap-1">
-                {primaryShapes.map(shape => {
-                  const shapeCount = getShapeCount(shape.id);
-                  const symbolUrl = getSymbolUrl(shape.symbol_image, 'balance-symbols');
-                  const isDisabled = selectedShapes.length >= 3;
-                  
-                  return (
-                    <button
-                      type="button"
-                      key={shape.id}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        addShape(shape);
-                      }}
-                      disabled={isDisabled}
-                      className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors ${
-                        isDisabled
-                          ? 'bg-muted/30 opacity-50 cursor-not-allowed'
-                          : 'bg-muted/30 hover:bg-muted/50'
-                      }`}
-                    >
-                      {/* Circle with count indicator */}
-                      <div className="flex-shrink-0">
-                        {shapeCount > 0 ? (
-                          <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
-                            <span className="text-[10px] font-bold text-white">{shapeCount}</span>
-                          </div>
-                        ) : (
-                          <Circle className={`h-5 w-5 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
-                        )}
+      {/* Available Shapes with horizontal scroll */}
+      <div className="rounded border">
+        <ScrollArea className="h-[220px]">
+          <div className="p-2 space-y-3">
+            {/* Primary Level Shapes */}
+            {primaryShapes.length > 0 && (
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-green-700 dark:text-green-400 px-1">
+                  {requiredLegLevelLabel} Level Shapes
+                </div>
+                <div className="space-y-1">
+                  {primaryShapes.map(shape => {
+                    const shapeCount = getShapeCount(shape.id);
+                    const symbolUrl = getSymbolUrl(shape.symbol_image, 'balance-symbols');
+                    const isDisabled = selectedShapes.length >= 3;
+                    
+                    return (
+                      <div key={shape.id} className="relative group">
+                        <ScrollArea className="w-full" type="scroll">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              addShape(shape);
+                            }}
+                            disabled={isDisabled}
+                            className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors w-max min-w-full ${
+                              isDisabled
+                                ? 'bg-muted/30 opacity-50 cursor-not-allowed'
+                                : 'bg-muted/30 hover:bg-muted/50'
+                            }`}
+                          >
+                            {/* Circle with count indicator */}
+                            <div className="flex-shrink-0">
+                              {shapeCount > 0 ? (
+                                <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
+                                  <span className="text-[10px] font-bold text-white">{shapeCount}</span>
+                                </div>
+                              ) : (
+                                <Circle className={`h-5 w-5 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
+                              )}
+                            </div>
+                            {symbolUrl && (
+                              <img src={symbolUrl} alt={shape.name || ''} className="h-6 w-6 object-contain flex-shrink-0" />
+                            )}
+                            <div className="flex-shrink-0 whitespace-nowrap">
+                              <div className="font-medium">{shape.name || shape.code}</div>
+                            </div>
+                          </button>
+                          <ScrollBar orientation="horizontal" className="h-1.5" />
+                        </ScrollArea>
                       </div>
-                      {symbolUrl && (
-                        <img src={symbolUrl} alt={shape.name || ''} className="h-6 w-6 object-contain flex-shrink-0" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{shape.name || shape.code}</div>
-                      </div>
-                    </button>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Universal Shapes (NA leg level) */}
-          {universalShapes.length > 0 && (
-            <div className="space-y-1">
-              <div className="text-xs font-medium text-muted-foreground px-1">
-                Universal Shapes
-              </div>
-              <div className="grid gap-1">
-                {universalShapes.map(shape => {
-                  const shapeCount = getShapeCount(shape.id);
-                  const symbolUrl = getSymbolUrl(shape.symbol_image, 'balance-symbols');
-                  const isDisabled = selectedShapes.length >= 3;
-                  
-                  return (
-                    <button
-                      type="button"
-                      key={shape.id}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        addShape(shape);
-                      }}
-                      disabled={isDisabled}
-                      className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors ${
-                        isDisabled
-                          ? 'bg-muted/30 opacity-50 cursor-not-allowed'
-                          : 'bg-muted/30 hover:bg-muted/50'
-                      }`}
-                    >
-                      {/* Circle with count indicator */}
-                      <div className="flex-shrink-0">
-                        {shapeCount > 0 ? (
-                          <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
-                            <span className="text-[10px] font-bold text-white">{shapeCount}</span>
-                          </div>
-                        ) : (
-                          <Circle className={`h-5 w-5 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
-                        )}
+            {/* Universal Shapes (NA leg level) */}
+            {universalShapes.length > 0 && (
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-muted-foreground px-1">
+                  Universal Shapes
+                </div>
+                <div className="space-y-1">
+                  {universalShapes.map(shape => {
+                    const shapeCount = getShapeCount(shape.id);
+                    const symbolUrl = getSymbolUrl(shape.symbol_image, 'balance-symbols');
+                    const isDisabled = selectedShapes.length >= 3;
+                    
+                    return (
+                      <div key={shape.id} className="relative group">
+                        <ScrollArea className="w-full" type="scroll">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              addShape(shape);
+                            }}
+                            disabled={isDisabled}
+                            className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors w-max min-w-full ${
+                              isDisabled
+                                ? 'bg-muted/30 opacity-50 cursor-not-allowed'
+                                : 'bg-muted/30 hover:bg-muted/50'
+                            }`}
+                          >
+                            {/* Circle with count indicator */}
+                            <div className="flex-shrink-0">
+                              {shapeCount > 0 ? (
+                                <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
+                                  <span className="text-[10px] font-bold text-white">{shapeCount}</span>
+                                </div>
+                              ) : (
+                                <Circle className={`h-5 w-5 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
+                              )}
+                            </div>
+                            {symbolUrl && (
+                              <img src={symbolUrl} alt={shape.name || ''} className="h-6 w-6 object-contain flex-shrink-0" />
+                            )}
+                            <div className="flex-shrink-0 whitespace-nowrap">
+                              <div className="font-medium">{shape.name || shape.code}</div>
+                            </div>
+                          </button>
+                          <ScrollBar orientation="horizontal" className="h-1.5" />
+                        </ScrollArea>
                       </div>
-                      {symbolUrl && (
-                        <img src={symbolUrl} alt={shape.name || ''} className="h-6 w-6 object-contain flex-shrink-0" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{shape.name || shape.code}</div>
-                      </div>
-                    </button>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
 
       {/* Summary */}
       {selectedShapes.length > 0 && (
