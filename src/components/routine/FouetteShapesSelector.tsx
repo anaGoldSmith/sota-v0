@@ -117,7 +117,7 @@ export const FouetteShapesSelector = ({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Fouetté Shapes</span>
@@ -128,231 +128,157 @@ export const FouetteShapesSelector = ({
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs text-xs">
                 <p>
-                  Select exactly 3 shapes for this fouetté balance. 
-                  At least 2 shapes must be at {requiredLegLevelLabel.toLowerCase()} level.
+                  Select exactly 3 shapes. At least 2 must be at {requiredLegLevelLabel.toLowerCase()} level.
                 </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
         <span className={`text-xs ${hasThreeShapes ? 'text-green-600' : 'text-muted-foreground'}`}>
-          {selectedShapes.length}/3 selected
+          {selectedShapes.length}/3
         </span>
       </div>
 
-      {/* Selected Shapes Display */}
+      {/* Selected Shapes - compact display */}
       {selectedShapes.length > 0 && (
-        <div className="space-y-1">
-          <span className="text-xs text-muted-foreground">Selected shapes:</span>
-          <div className="flex flex-wrap gap-1">
-            {selectedShapes.map((shape, index) => {
-              const symbolUrl = getSymbolUrl(shape.symbol_image, 'balance-symbols');
-              const isPrimary = shape.leg_level?.toUpperCase() === requiredLegLevel;
-              return (
-                <div 
-                  key={`${shape.id}-${index}`}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs border ${
-                    isPrimary 
-                      ? 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800' 
-                      : 'bg-muted/50 border-muted'
-                  }`}
+        <div className="flex flex-wrap gap-1">
+          {selectedShapes.map((shape, index) => {
+            const isPrimary = shape.leg_level?.toUpperCase() === requiredLegLevel;
+            return (
+              <div 
+                key={`${shape.id}-${index}`}
+                className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border ${
+                  isPrimary 
+                    ? 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800' 
+                    : 'bg-muted/50 border-muted'
+                }`}
+              >
+                <span className="font-medium">#{index + 1}</span>
+                <span className="max-w-[80px] truncate">{shape.name || shape.code}</span>
+                <button
+                  type="button"
+                  className="hover:text-destructive"
+                  onClick={() => removeShapeAtIndex(index)}
                 >
-                  <span className="font-medium">#{index + 1}</span>
-                  {symbolUrl && (
-                    <img src={symbolUrl} alt={shape.name || ''} className="h-5 w-5 object-contain" />
-                  )}
-                  <span className="max-w-[120px] truncate">{shape.name || shape.code}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-4 w-4 p-0 hover:bg-destructive/10"
-                    onClick={() => removeShapeAtIndex(index)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* Validation Status */}
-      {selectedShapes.length > 0 && (
-        <div className={`p-2 rounded text-xs flex items-center gap-2 ${
-          isValid 
-            ? 'bg-green-50 border border-green-200 text-green-700 dark:bg-green-950/30 dark:border-green-800 dark:text-green-300'
-            : hasThreeShapes 
-              ? 'bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/30 dark:border-red-800 dark:text-red-300'
-              : 'bg-amber-50 border border-amber-200 text-amber-700 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300'
+      {/* Validation - inline */}
+      {selectedShapes.length > 0 && !isValid && (
+        <div className={`p-1.5 rounded text-[10px] flex items-center gap-1 ${
+          hasThreeShapes 
+            ? 'bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/30'
+            : 'bg-amber-50 border border-amber-200 text-amber-700 dark:bg-amber-950/30'
         }`}>
-          {isValid ? (
-            <>
-              <Check className="h-4 w-4" />
-              <span>Valid: {primaryLevelCount} {requiredLegLevelLabel} shapes selected</span>
-            </>
-          ) : hasThreeShapes ? (
-            <>
-              <AlertTriangle className="h-4 w-4" />
-              <span>Invalid: Need at least 2 {requiredLegLevelLabel} shapes (currently {primaryLevelCount})</span>
-            </>
+          {hasThreeShapes ? (
+            <><AlertTriangle className="h-3 w-3" /><span>Need 2+ {requiredLegLevelLabel} shapes ({primaryLevelCount}/2)</span></>
           ) : (
-            <>
-              <Info className="h-4 w-4" />
-              <span>Select {3 - selectedShapes.length} more shape{3 - selectedShapes.length !== 1 ? 's' : ''}</span>
-            </>
+            <><Info className="h-3 w-3" /><span>Select {3 - selectedShapes.length} more</span></>
           )}
         </div>
       )}
 
-      {/* Available Shapes with global horizontal scroll buttons */}
+      {isValid && (
+        <div className="p-1.5 rounded text-[10px] flex items-center gap-1 bg-green-50 border border-green-200 text-green-700 dark:bg-green-950/30">
+          <Check className="h-3 w-3" /><span>Valid selection</span>
+        </div>
+      )}
+
+      {/* Available Shapes - compact scrollable list with scroll buttons */}
       <div className="rounded border">
-        {/* Scroll buttons header */}
         <div className="flex items-center justify-between px-2 py-1 border-b bg-muted/30">
-          <span className="text-xs font-medium text-muted-foreground">Available Shapes</span>
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={scrollLeft}
-            >
-              <ChevronLeft className="h-4 w-4" />
+          <span className="text-[10px] font-medium text-muted-foreground">Available Shapes</span>
+          <div className="flex items-center gap-0.5">
+            <Button type="button" variant="ghost" size="icon" className="h-5 w-5" onClick={scrollLeft}>
+              <ChevronLeft className="h-3 w-3" />
             </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={scrollRight}
-            >
-              <ChevronRight className="h-4 w-4" />
+            <Button type="button" variant="ghost" size="icon" className="h-5 w-5" onClick={scrollRight}>
+              <ChevronRight className="h-3 w-3" />
             </Button>
           </div>
         </div>
 
-        {/* Scrollable content */}
         <div 
           ref={scrollContainerRef}
-          className="overflow-x-auto"
+          className="overflow-x-auto max-h-[120px] overflow-y-auto"
           style={{ scrollbarWidth: 'thin' }}
         >
-          <div className="min-w-max p-2 space-y-3">
+          <div className="min-w-max p-1.5 space-y-2">
             {/* Primary Level Shapes */}
             {primaryShapes.length > 0 && (
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-green-700 dark:text-green-400 px-1">
-                  {requiredLegLevelLabel} Level Shapes
+              <div className="space-y-0.5">
+                <div className="text-[10px] font-medium text-green-700 dark:text-green-400 px-1">
+                  {requiredLegLevelLabel} Level
                 </div>
-                <div className="space-y-1">
-                  {primaryShapes.map(shape => {
-                    const shapeCount = getShapeCount(shape.id);
-                    const symbolUrl = getSymbolUrl(shape.symbol_image, 'balance-symbols');
-                    const isDisabled = selectedShapes.length >= 3;
-                    
-                    return (
-                      <button
-                        type="button"
-                        key={shape.id}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          addShape(shape);
-                        }}
-                        disabled={isDisabled}
-                        className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors whitespace-nowrap w-full ${
-                          isDisabled
-                            ? 'bg-muted/30 opacity-50 cursor-not-allowed'
-                            : 'bg-muted/30 hover:bg-muted/50'
-                        }`}
-                      >
-                        <div className="flex-shrink-0">
-                          {shapeCount > 0 ? (
-                            <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
-                              <span className="text-[10px] font-bold text-white">{shapeCount}</span>
-                            </div>
-                          ) : (
-                            <Circle className={`h-5 w-5 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
-                          )}
-                        </div>
-                        {symbolUrl && (
-                          <img src={symbolUrl} alt={shape.name || ''} className="h-6 w-6 object-contain flex-shrink-0" />
+                {primaryShapes.map(shape => {
+                  const shapeCount = getShapeCount(shape.id);
+                  const isDisabled = selectedShapes.length >= 3;
+                  return (
+                    <button
+                      type="button"
+                      key={shape.id}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); addShape(shape); }}
+                      disabled={isDisabled}
+                      className={`flex items-center gap-1.5 px-1.5 py-1 rounded text-left text-[11px] transition-colors whitespace-nowrap w-full ${
+                        isDisabled ? 'bg-muted/30 opacity-50 cursor-not-allowed' : 'bg-muted/30 hover:bg-muted/50'
+                      }`}
+                    >
+                      <div className="flex-shrink-0">
+                        {shapeCount > 0 ? (
+                          <div className="h-4 w-4 rounded-full bg-green-500 flex items-center justify-center">
+                            <span className="text-[9px] font-bold text-white">{shapeCount}</span>
+                          </div>
+                        ) : (
+                          <Circle className={`h-4 w-4 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
                         )}
-                        <span className="font-medium">{shape.name || shape.code}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                      </div>
+                      <span className="font-medium">{shape.name || shape.code}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
 
-            {/* Universal Shapes (NA leg level) */}
+            {/* Universal Shapes */}
             {universalShapes.length > 0 && (
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground px-1">
-                  Universal Shapes
-                </div>
-                <div className="space-y-1">
-                  {universalShapes.map(shape => {
-                    const shapeCount = getShapeCount(shape.id);
-                    const symbolUrl = getSymbolUrl(shape.symbol_image, 'balance-symbols');
-                    const isDisabled = selectedShapes.length >= 3;
-                    
-                    return (
-                      <button
-                        type="button"
-                        key={shape.id}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          addShape(shape);
-                        }}
-                        disabled={isDisabled}
-                        className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors whitespace-nowrap w-full ${
-                          isDisabled
-                            ? 'bg-muted/30 opacity-50 cursor-not-allowed'
-                            : 'bg-muted/30 hover:bg-muted/50'
-                        }`}
-                      >
-                        <div className="flex-shrink-0">
-                          {shapeCount > 0 ? (
-                            <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
-                              <span className="text-[10px] font-bold text-white">{shapeCount}</span>
-                            </div>
-                          ) : (
-                            <Circle className={`h-5 w-5 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
-                          )}
-                        </div>
-                        {symbolUrl && (
-                          <img src={symbolUrl} alt={shape.name || ''} className="h-6 w-6 object-contain flex-shrink-0" />
+              <div className="space-y-0.5">
+                <div className="text-[10px] font-medium text-muted-foreground px-1">Universal</div>
+                {universalShapes.map(shape => {
+                  const shapeCount = getShapeCount(shape.id);
+                  const isDisabled = selectedShapes.length >= 3;
+                  return (
+                    <button
+                      type="button"
+                      key={shape.id}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); addShape(shape); }}
+                      disabled={isDisabled}
+                      className={`flex items-center gap-1.5 px-1.5 py-1 rounded text-left text-[11px] transition-colors whitespace-nowrap w-full ${
+                        isDisabled ? 'bg-muted/30 opacity-50 cursor-not-allowed' : 'bg-muted/30 hover:bg-muted/50'
+                      }`}
+                    >
+                      <div className="flex-shrink-0">
+                        {shapeCount > 0 ? (
+                          <div className="h-4 w-4 rounded-full bg-blue-500 flex items-center justify-center">
+                            <span className="text-[9px] font-bold text-white">{shapeCount}</span>
+                          </div>
+                        ) : (
+                          <Circle className={`h-4 w-4 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
                         )}
-                        <span className="font-medium">{shape.name || shape.code}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                      </div>
+                      <span className="font-medium">{shape.name || shape.code}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
         </div>
       </div>
-
-      {/* Summary */}
-      {selectedShapes.length > 0 && (
-        <div className="p-3 bg-secondary/50 rounded-md border">
-          <div className="flex justify-between text-xs text-muted-foreground mb-1">
-            <span>Shapes Selected:</span>
-            <span className="font-medium">{selectedShapes.length}/3</span>
-          </div>
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{requiredLegLevelLabel} Level:</span>
-            <span className={`font-medium ${primaryLevelCount >= 2 ? 'text-green-600' : 'text-amber-600'}`}>
-              {primaryLevelCount}/2 minimum
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
