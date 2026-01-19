@@ -63,12 +63,19 @@ Deno.serve(async (req) => {
     }
 
     // Validate headers
-    const requiredHeaders = ['code', 'name', 'description', 'value', 'symbol_image'];
+    const requiredHeaders = ['code', 'name', 'description', 'value', 'turn_degrees', 'fouette', 'leg_level', 'flat', 'slow_turn', 'symbol_image'];
     const headers = Object.keys(((result as any).data?.[0]) || {});
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
     if (missingHeaders.length > 0) {
       throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
     }
+
+    // Helper to parse boolean values
+    const parseBool = (val: unknown): boolean => {
+      if (val === null || val === undefined || val === '') return false;
+      const str = val.toString().trim().toLowerCase();
+      return str === 'true' || str === '1' || str === 'yes';
+    };
 
     // Build balances array with proper types
     const balances = ((result as any).data as any[]).map((raw: Record<string, unknown>, idx: number) => {
@@ -76,6 +83,12 @@ Deno.serve(async (req) => {
       const name = raw.name != null ? raw.name.toString().trim() : null;
       const description = raw.description != null ? raw.description.toString().trim() : null;
       const symbol_image = raw.symbol_image != null ? raw.symbol_image.toString().trim() : null;
+      const turn_degrees = raw.turn_degrees != null ? raw.turn_degrees.toString().trim() : null;
+      const leg_level = raw.leg_level != null ? raw.leg_level.toString().trim() : null;
+      const fouette = parseBool(raw.fouette);
+      const flat = parseBool(raw.flat);
+      const slow_turn = parseBool(raw.slow_turn);
+      
       let valueStr = raw.value != null ? raw.value.toString().trim() : null;
 
       // Support comma decimals like "0,10"
@@ -88,7 +101,7 @@ Deno.serve(async (req) => {
       if (!description) throw new Error(`Row ${idx + 2}: description is required`);
       if (value === null || Number.isNaN(value)) throw new Error(`Row ${idx + 2}: value is required and must be a number`);
 
-      return { code, name, description, value, symbol_image };
+      return { code, name, description, value, turn_degrees, fouette, leg_level, flat, slow_turn, symbol_image };
     });
 
     console.log(`✅ Parsed ${balances.length} balances from CSV`);
