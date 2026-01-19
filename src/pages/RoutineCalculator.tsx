@@ -13,6 +13,7 @@ import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/rou
 import { TechnicalElementsSelectionDialog } from "@/components/routine/TechnicalElementsSelectionDialog";
 import { ElementInformationDialog, type HandlingItem } from "@/components/routine/ElementInformationDialog";
 import type { FouetteComponent } from "@/components/routine/FouetteComponentsEditor";
+import type { FouetteShape } from "@/components/routine/FouetteShapesSelector";
 import { DBSuccessDialog } from "@/components/routine/DBSuccessDialog";
 import { DBDASuccessDialog } from "@/components/routine/DBDASuccessDialog";
 import { DBDAValidationDialog } from "@/components/routine/DBDAValidationDialog";
@@ -121,9 +122,11 @@ interface RoutineElement {
     elementType?: 'jump' | 'rotation' | 'balance';
     rotationCount?: number;
     fouetteComponents?: FouetteComponent[];
+    fouetteShapes?: FouetteShape[];
     isSeries?: boolean;
     isFlatFoot?: boolean;
     isSlowTurn?: boolean;
+    shapesExpanded?: boolean; // Track if shapes are expanded in breakdown
   };
   daData?: {
     symbolImages: string[];
@@ -1251,8 +1254,9 @@ const RoutineCalculator = () => {
     isSeries?: boolean;
     isFlatFoot?: boolean;
     isSlowTurn?: boolean;
+    fouetteShapes?: FouetteShape[];
   }) => {
-    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, handlingOrder, withApparatusHandling, fouetteComponents, isSeries, isFlatFoot, isSlowTurn } = data;
+    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, handlingOrder, withApparatusHandling, fouetteComponents, isSeries, isFlatFoot, isSlowTurn, fouetteShapes } = data;
     
     // Get DB symbol images
     const dbSymbolImages = element.symbol_image ? [
@@ -1307,6 +1311,7 @@ const RoutineCalculator = () => {
           elementType: elementType,
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
           fouetteComponents: fouetteComponents,
+          fouetteShapes: elementType === 'balance' ? fouetteShapes : undefined,
           isSeries: isSeries,
           isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
           isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
@@ -1359,6 +1364,7 @@ const RoutineCalculator = () => {
           elementType: elementType,
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
           fouetteComponents: fouetteComponents,
+          fouetteShapes: elementType === 'balance' ? fouetteShapes : undefined,
           isSeries: isSeries,
           isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
           isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
@@ -1403,6 +1409,7 @@ const RoutineCalculator = () => {
           elementType: elementType,
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
           fouetteComponents: fouetteComponents,
+          fouetteShapes: elementType === 'balance' ? fouetteShapes : undefined,
           isSeries: isSeries,
           isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
           isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
@@ -1787,49 +1794,128 @@ const RoutineCalculator = () => {
                                         </tr>
                                       </thead>
                                       <tbody>
-                                        {/* DB Element Row */}
-                                        <tr className="bg-secondary/10">
-                                          <td className="py-2 px-4">
-                                            <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">DB</span>
-                                          </td>
-                                          <td className="py-2 px-4">
-                                            <div className="flex items-center gap-1">
-                                              {element.dbData.symbolImages.map((url, idx) => (
-                                                url.startsWith('TEXT:') ? (
-                                                  <span key={idx} className="text-lg font-bold">{url.replace('TEXT:', '')}</span>
-                                                ) : (
-                                                  <img key={idx} src={url} alt="Symbol" className="h-6 w-6 object-contain" />
-                                                )
-                                              ))}
-                                            </div>
-                                          </td>
-                                          <td className="py-2 px-4 font-medium">
-                                            <div className="flex flex-col">
-                                              <span>{element.dbData.name || 'DB Element'}</span>
-                                              {element.dbData.elementType === 'rotation' && element.dbData.rotationCount && (
-                                                <span className="text-xs text-muted-foreground">
-                                                  {element.dbData.isSeries 
-                                                    ? `(Series of ${element.dbData.rotationCount} ${element.dbData.rotationCount === 1 ? 'rotation' : 'rotations'})`
-                                                    : `(${element.dbData.rotationCount} ${element.dbData.rotationCount === 1 ? 'rotation' : 'rotations'})`
-                                                  }
-                                                </span>
+                                        {/* DB Element Row - with expandable shapes for fouetté balances */}
+                                        {(() => {
+                                          const hasFouetteShapes = element.dbData.fouetteShapes && element.dbData.fouetteShapes.length > 0;
+                                          const shapesExpanded = element.dbData.shapesExpanded || false;
+                                          
+                                          return (
+                                            <>
+                                              <tr className="bg-secondary/10">
+                                                <td className="py-2 px-4">
+                                                  <div className="flex items-center gap-1">
+                                                    {hasFouetteShapes && (
+                                                      <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          setRoutineElements(prev => prev.map(el => 
+                                                            el.id === element.id 
+                                                              ? { 
+                                                                  ...el, 
+                                                                  dbData: el.dbData 
+                                                                    ? { ...el.dbData, shapesExpanded: !shapesExpanded }
+                                                                    : el.dbData 
+                                                                }
+                                                              : el
+                                                          ));
+                                                        }}
+                                                        className="p-0.5 hover:bg-muted rounded"
+                                                      >
+                                                        {shapesExpanded ? (
+                                                          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                                                        ) : (
+                                                          <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                                                        )}
+                                                      </button>
+                                                    )}
+                                                    <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">DB</span>
+                                                  </div>
+                                                </td>
+                                                <td className="py-2 px-4">
+                                                  <div className="flex items-center gap-1">
+                                                    {element.dbData.symbolImages.map((url, idx) => (
+                                                      url.startsWith('TEXT:') ? (
+                                                        <span key={idx} className="text-lg font-bold">{url.replace('TEXT:', '')}</span>
+                                                      ) : (
+                                                        <img key={idx} src={url} alt="Symbol" className="h-6 w-6 object-contain" />
+                                                      )
+                                                    ))}
+                                                  </div>
+                                                </td>
+                                                <td className="py-2 px-4 font-medium">
+                                                  <div className="flex flex-col">
+                                                    <span>{element.dbData.name || 'DB Element'}</span>
+                                                    {element.dbData.elementType === 'rotation' && element.dbData.rotationCount && (
+                                                      <span className="text-xs text-muted-foreground">
+                                                        {element.dbData.isSeries 
+                                                          ? `(Series of ${element.dbData.rotationCount} ${element.dbData.rotationCount === 1 ? 'rotation' : 'rotations'})`
+                                                          : `(${element.dbData.rotationCount} ${element.dbData.rotationCount === 1 ? 'rotation' : 'rotations'})`
+                                                        }
+                                                      </span>
+                                                    )}
+                                                    {element.dbData.elementType === 'balance' && (
+                                                      <span className="text-xs text-muted-foreground">
+                                                        {element.dbData.isSlowTurn && element.dbData.isFlatFoot
+                                                          ? '(slow turn on flat foot)'
+                                                          : element.dbData.isSlowTurn
+                                                          ? '(slow turn on relevé)'
+                                                          : element.dbData.isFlatFoot
+                                                          ? '(balance on flat foot)'
+                                                          : '(balance on relevé)'
+                                                        }
+                                                      </span>
+                                                    )}
+                                                    {hasFouetteShapes && (
+                                                      <span className="text-xs text-purple-600 dark:text-purple-400">
+                                                        ({element.dbData.fouetteShapes!.length} shapes selected)
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                </td>
+                                                <td className="py-2 px-4 text-right font-mono">{element.dbData.value.toFixed(1)}</td>
+                                              </tr>
+                                              
+                                              {/* Expanded Fouetté Shapes Rows */}
+                                              {hasFouetteShapes && shapesExpanded && (
+                                                element.dbData.fouetteShapes!.map((shape, shapeIdx) => (
+                                                  <tr key={`shape-${shapeIdx}`} className="bg-purple-50 dark:bg-purple-900/10">
+                                                    <td className="py-1.5 px-4 pl-8">
+                                                      <span className="text-[10px] font-medium text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded dark:text-purple-300 dark:bg-purple-900/30">
+                                                        Shape {shapeIdx + 1}
+                                                      </span>
+                                                    </td>
+                                                    <td className="py-1.5 px-4">
+                                                      {shape.symbol_image ? (
+                                                        <img 
+                                                          src={getSymbolUrl(shape.symbol_image, 'balance-symbols') || ''} 
+                                                          alt={shape.name || 'Shape'} 
+                                                          className="h-5 w-5 object-contain" 
+                                                        />
+                                                      ) : (
+                                                        <div className="h-5 w-5" />
+                                                      )}
+                                                    </td>
+                                                    <td className="py-1.5 px-4 text-sm">
+                                                      <div className="flex items-center gap-2">
+                                                        <span>{shape.name || shape.code}</span>
+                                                        {shape.isCustom && (
+                                                          <span className="text-[9px] text-orange-600 bg-orange-100 px-1 rounded dark:text-orange-400 dark:bg-orange-900/30">custom</span>
+                                                        )}
+                                                        {shape.leg_level && (
+                                                          <span className="text-[9px] text-muted-foreground">
+                                                            ({shape.leg_level})
+                                                          </span>
+                                                        )}
+                                                      </div>
+                                                    </td>
+                                                    <td className="py-1.5 px-4 text-right font-mono text-muted-foreground">-</td>
+                                                  </tr>
+                                                ))
                                               )}
-                                              {element.dbData.elementType === 'balance' && (
-                                                <span className="text-xs text-muted-foreground">
-                                                  {element.dbData.isSlowTurn && element.dbData.isFlatFoot
-                                                    ? '(slow turn on flat foot)'
-                                                    : element.dbData.isSlowTurn
-                                                    ? '(slow turn on relevé)'
-                                                    : element.dbData.isFlatFoot
-                                                    ? '(balance on flat foot)'
-                                                    : '(balance on relevé)'
-                                                  }
-                                                </span>
-                                              )}
-                                            </div>
-                                          </td>
-                                          <td className="py-2 px-4 text-right font-mono">{element.dbData.value.toFixed(1)}</td>
-                                        </tr>
+                                            </>
+                                          );
+                                        })()}
                                         
                                         {/* Render handling items in saved order (handlingOrder) if available, otherwise fallback to TEs then DAs */}
                                         {element.handlingOrder ? (
