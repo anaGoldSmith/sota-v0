@@ -1,10 +1,10 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Info, X, Check, AlertTriangle, Circle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface FouetteShape {
   id: string;
@@ -23,131 +23,14 @@ interface FouetteShapesSelectorProps {
   getSymbolUrl: (symbolImage: string | null, bucketName: string) => string | null;
 }
 
-// Scrollable row component with left/right buttons
-const ScrollableShapeRow = ({ 
-  shape, 
-  shapeCount, 
-  symbolUrl, 
-  isDisabled, 
-  colorClass,
-  onAdd 
-}: { 
-  shape: FouetteShape; 
-  shapeCount: number; 
-  symbolUrl: string | null; 
-  isDisabled: boolean;
-  colorClass: string;
-  onAdd: () => void;
-}) => {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const checkScrollability = () => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      setCanScrollLeft(container.scrollLeft > 0);
-      setCanScrollRight(container.scrollLeft < container.scrollWidth - container.clientWidth - 1);
-    }
-  };
-
-  useEffect(() => {
-    checkScrollability();
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', checkScrollability);
-      window.addEventListener('resize', checkScrollability);
-      return () => {
-        container.removeEventListener('scroll', checkScrollability);
-        window.removeEventListener('resize', checkScrollability);
-      };
-    }
-  }, []);
-
-  const scrollLeft = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    scrollContainerRef.current?.scrollBy({ left: -100, behavior: 'smooth' });
-  };
-
-  const scrollRight = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    scrollContainerRef.current?.scrollBy({ left: 100, behavior: 'smooth' });
-  };
-
-  return (
-    <div className="flex items-center gap-1">
-      {/* Left scroll button */}
-      <button
-        type="button"
-        onClick={scrollLeft}
-        className={`flex-shrink-0 p-1 rounded hover:bg-muted transition-colors ${
-          canScrollLeft ? 'text-foreground' : 'text-muted-foreground/30 cursor-default'
-        }`}
-        disabled={!canScrollLeft}
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </button>
-
-      {/* Scrollable content */}
-      <div 
-        ref={scrollContainerRef}
-        className="flex-1 overflow-x-auto scrollbar-hide"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onAdd();
-          }}
-          disabled={isDisabled}
-          className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors whitespace-nowrap ${
-            isDisabled
-              ? 'bg-muted/30 opacity-50 cursor-not-allowed'
-              : 'bg-muted/30 hover:bg-muted/50'
-          }`}
-        >
-          {/* Circle with count indicator */}
-          <div className="flex-shrink-0">
-            {shapeCount > 0 ? (
-              <div className={`h-5 w-5 rounded-full ${colorClass} flex items-center justify-center`}>
-                <span className="text-[10px] font-bold text-white">{shapeCount}</span>
-              </div>
-            ) : (
-              <Circle className={`h-5 w-5 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
-            )}
-          </div>
-          {symbolUrl && (
-            <img src={symbolUrl} alt={shape.name || ''} className="h-6 w-6 object-contain flex-shrink-0" />
-          )}
-          <span className="font-medium">{shape.name || shape.code}</span>
-        </button>
-      </div>
-
-      {/* Right scroll button */}
-      <button
-        type="button"
-        onClick={scrollRight}
-        className={`flex-shrink-0 p-1 rounded hover:bg-muted transition-colors ${
-          canScrollRight ? 'text-foreground' : 'text-muted-foreground/30 cursor-default'
-        }`}
-        disabled={!canScrollRight}
-      >
-        <ChevronRight className="h-4 w-4" />
-      </button>
-    </div>
-  );
-};
-
 export const FouetteShapesSelector = ({
   elementCode,
   selectedShapes,
   onChange,
   getSymbolUrl,
 }: FouetteShapesSelectorProps) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
   // Determine which leg level is required (primary)
   const requiredLegLevel = elementCode === "2.1803" ? "HOR" : "HIGH";
   const requiredLegLevelLabel = elementCode === "2.1803" ? "Horizontal" : "High (split)";
@@ -214,6 +97,15 @@ export const FouetteShapesSelector = ({
     const newShapes = [...selectedShapes];
     newShapes.splice(index, 1);
     onChange(newShapes);
+  };
+
+  // Scroll handlers for the main container
+  const scrollLeft = () => {
+    scrollContainerRef.current?.scrollBy({ left: -150, behavior: 'smooth' });
+  };
+
+  const scrollRight = () => {
+    scrollContainerRef.current?.scrollBy({ left: 150, behavior: 'smooth' });
   };
 
   if (isLoading) {
@@ -313,10 +205,40 @@ export const FouetteShapesSelector = ({
         </div>
       )}
 
-      {/* Available Shapes with horizontal scroll buttons */}
+      {/* Available Shapes with global horizontal scroll buttons */}
       <div className="rounded border">
-        <ScrollArea className="h-[220px]">
-          <div className="p-2 space-y-3">
+        {/* Scroll buttons header */}
+        <div className="flex items-center justify-between px-2 py-1 border-b bg-muted/30">
+          <span className="text-xs font-medium text-muted-foreground">Available Shapes</span>
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={scrollLeft}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={scrollRight}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Scrollable content */}
+        <div 
+          ref={scrollContainerRef}
+          className="overflow-x-auto"
+          style={{ scrollbarWidth: 'thin' }}
+        >
+          <div className="min-w-max p-2 space-y-3">
             {/* Primary Level Shapes */}
             {primaryShapes.length > 0 && (
               <div className="space-y-1">
@@ -324,17 +246,43 @@ export const FouetteShapesSelector = ({
                   {requiredLegLevelLabel} Level Shapes
                 </div>
                 <div className="space-y-1">
-                  {primaryShapes.map(shape => (
-                    <ScrollableShapeRow
-                      key={shape.id}
-                      shape={shape}
-                      shapeCount={getShapeCount(shape.id)}
-                      symbolUrl={getSymbolUrl(shape.symbol_image, 'balance-symbols')}
-                      isDisabled={selectedShapes.length >= 3}
-                      colorClass="bg-green-500"
-                      onAdd={() => addShape(shape)}
-                    />
-                  ))}
+                  {primaryShapes.map(shape => {
+                    const shapeCount = getShapeCount(shape.id);
+                    const symbolUrl = getSymbolUrl(shape.symbol_image, 'balance-symbols');
+                    const isDisabled = selectedShapes.length >= 3;
+                    
+                    return (
+                      <button
+                        type="button"
+                        key={shape.id}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          addShape(shape);
+                        }}
+                        disabled={isDisabled}
+                        className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors whitespace-nowrap w-full ${
+                          isDisabled
+                            ? 'bg-muted/30 opacity-50 cursor-not-allowed'
+                            : 'bg-muted/30 hover:bg-muted/50'
+                        }`}
+                      >
+                        <div className="flex-shrink-0">
+                          {shapeCount > 0 ? (
+                            <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
+                              <span className="text-[10px] font-bold text-white">{shapeCount}</span>
+                            </div>
+                          ) : (
+                            <Circle className={`h-5 w-5 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
+                          )}
+                        </div>
+                        {symbolUrl && (
+                          <img src={symbolUrl} alt={shape.name || ''} className="h-6 w-6 object-contain flex-shrink-0" />
+                        )}
+                        <span className="font-medium">{shape.name || shape.code}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -346,22 +294,48 @@ export const FouetteShapesSelector = ({
                   Universal Shapes
                 </div>
                 <div className="space-y-1">
-                  {universalShapes.map(shape => (
-                    <ScrollableShapeRow
-                      key={shape.id}
-                      shape={shape}
-                      shapeCount={getShapeCount(shape.id)}
-                      symbolUrl={getSymbolUrl(shape.symbol_image, 'balance-symbols')}
-                      isDisabled={selectedShapes.length >= 3}
-                      colorClass="bg-blue-500"
-                      onAdd={() => addShape(shape)}
-                    />
-                  ))}
+                  {universalShapes.map(shape => {
+                    const shapeCount = getShapeCount(shape.id);
+                    const symbolUrl = getSymbolUrl(shape.symbol_image, 'balance-symbols');
+                    const isDisabled = selectedShapes.length >= 3;
+                    
+                    return (
+                      <button
+                        type="button"
+                        key={shape.id}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          addShape(shape);
+                        }}
+                        disabled={isDisabled}
+                        className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors whitespace-nowrap w-full ${
+                          isDisabled
+                            ? 'bg-muted/30 opacity-50 cursor-not-allowed'
+                            : 'bg-muted/30 hover:bg-muted/50'
+                        }`}
+                      >
+                        <div className="flex-shrink-0">
+                          {shapeCount > 0 ? (
+                            <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
+                              <span className="text-[10px] font-bold text-white">{shapeCount}</span>
+                            </div>
+                          ) : (
+                            <Circle className={`h-5 w-5 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
+                          )}
+                        </div>
+                        {symbolUrl && (
+                          <img src={symbolUrl} alt={shape.name || ''} className="h-6 w-6 object-contain flex-shrink-0" />
+                        )}
+                        <span className="font-medium">{shape.name || shape.code}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </div>
 
       {/* Summary */}
@@ -382,5 +356,3 @@ export const FouetteShapesSelector = ({
     </div>
   );
 };
-
-
