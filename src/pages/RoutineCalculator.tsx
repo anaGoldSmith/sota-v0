@@ -1238,7 +1238,7 @@ const RoutineCalculator = () => {
 
   // Handle saving from Element Information Dialog
   const handleElementInfoSave = (data: {
-    element: { id: string; code: string; name: string | null; description: string; value: number; turn_degrees?: string | null; extra_value?: number | null; symbol_image: string | null };
+    element: { id: string; code: string; name: string | null; description: string; value: number; turn_degrees?: string | null; extra_value?: number | null; symbol_image: string | null; flat?: boolean; slow_turn?: boolean };
     elementType: 'jump' | 'rotation' | 'balance';
     rotationCount: number;
     totalValue: number;
