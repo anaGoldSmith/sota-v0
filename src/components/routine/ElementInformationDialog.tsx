@@ -468,12 +468,6 @@ export const ElementInformationDialog = ({
     return { flatFootAdjust, slowTurnAdjust };
   }, [elementType, isFlatFoot, isSlowTurn]);
   
-  // Calculate fouetté shapes value (sum of selected shapes)
-  const fouetteShapesValue = useMemo(() => {
-    if (!isFouetteBalanceElement) return 0;
-    return fouetteShapes.reduce((sum, s) => sum + s.value, 0);
-  }, [isFouetteBalanceElement, fouetteShapes]);
-  
   // Validate fouetté balance shapes
   const fouetteShapesValidation = useMemo(() => {
     if (!isFouetteBalanceElement || !element?.code) return { isValid: true, message: '' };
@@ -496,9 +490,10 @@ export const ElementInformationDialog = ({
     if (!element) return 0;
     const baseValue = element.value;
     
-    // For fouetté balance elements: value comes from selected shapes
+    // For fouetté balance elements: value is fixed (base value), shapes don't add extra points
+    // Apply flat foot and slow turn adjustments if applicable
     if (isFouetteBalanceElement) {
-      return fouetteShapesValue + balanceAdjustments.flatFootAdjust + balanceAdjustments.slowTurnAdjust;
+      return baseValue + balanceAdjustments.flatFootAdjust + balanceAdjustments.slowTurnAdjust;
     }
     
     // For regular balances: apply flat foot and slow turn adjustments
