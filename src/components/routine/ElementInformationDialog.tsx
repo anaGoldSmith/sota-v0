@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ApparatusType } from "@/types/apparatus";
 import { FouetteComponentsEditor, FouetteComponent } from "./FouetteComponentsEditor";
+import { FouetteShapesSelector, FouetteShape } from "./FouetteShapesSelector";
 import {
   DndContext,
   closestCenter,
@@ -80,6 +81,7 @@ interface ElementInformationDialogProps {
     isSeries?: boolean; // Whether this is a series of rotations
     isFlatFoot?: boolean; // Whether balance is performed at flat foot
     isSlowTurn?: boolean; // Whether balance is performed in slow turn mode
+    fouetteShapes?: FouetteShape[]; // For fouetté balance elements (2.1803, 2.1805)
   }) => void;
   onCancel: () => void;
   getSymbolUrl: (symbolImage: string | null, bucketName: string) => string | null;
@@ -113,6 +115,9 @@ interface ElementInformationDialogProps {
   initialSlowTurn?: boolean;
   onFlatFootChange?: (isFlatFoot: boolean) => void;
   onSlowTurnChange?: (isSlowTurn: boolean) => void;
+  // For fouetté balance elements (2.1803, 2.1805)
+  initialFouetteShapes?: FouetteShape[];
+  onFouetteShapesChange?: (shapes: FouetteShape[]) => void;
 }
 
 // Sortable handling item component
@@ -245,6 +250,8 @@ export const ElementInformationDialog = ({
   initialSlowTurn = false,
   onFlatFootChange,
   onSlowTurnChange,
+  initialFouetteShapes = [],
+  onFouetteShapesChange,
 }: ElementInformationDialogProps) => {
   const [rotationCount, setRotationCount] = useState<number>(1);
   const [isSeries, setIsSeries] = useState<boolean>(false);
@@ -253,10 +260,13 @@ export const ElementInformationDialog = ({
   const [isFlatFoot, setIsFlatFoot] = useState<boolean>(false);
   const [isSlowTurn, setIsSlowTurn] = useState<boolean>(false);
   
-  // Fouetté components state (for 3.1601 and 3.1602)
+  // Fouetté components state (for 3.1601 and 3.1602 rotations)
   const [fouetteComponents, setFouetteComponents] = useState<FouetteComponent[]>([
     { id: crypto.randomUUID(), rotations: 1 }
   ]);
+  
+  // Fouetté shapes state (for 2.1803 and 2.1805 balances)
+  const [fouetteShapes, setFouetteShapes] = useState<FouetteShape[]>([]);
   
   // Drag and drop sensors for handling items
   const sensors = useSensors(
@@ -334,6 +344,12 @@ export const ElementInformationDialog = ({
     onSlowTurnChange?.(value);
   };
   
+  // Wrap fouetté shapes update to notify parent
+  const updateFouetteShapes = (shapes: FouetteShape[]) => {
+    setFouetteShapes(shapes);
+    onFouetteShapesChange?.(shapes);
+  };
+  
   const [showWarningDialog, setShowWarningDialog] = useState(false);
 
   // Determine if this is a rotation with 180-degree base
@@ -354,10 +370,16 @@ export const ElementInformationDialog = ({
     return element.code === "3.1704";
   }, [element, elementType]);
   
-  // Check if this is a Fouetté element (codes 3.1601 or 3.1602) - component-based rotation counting
+  // Check if this is a Fouetté rotation element (codes 3.1601 or 3.1602) - component-based rotation counting
   const isFouetteElement = useMemo(() => {
     if (!element?.code || elementType !== 'rotation') return false;
     return element.code === "3.1601" || element.code === "3.1602";
+  }, [element, elementType]);
+  
+  // Check if this is a Fouetté balance element (codes 2.1803 or 2.1805) - requires 3 shapes selection
+  const isFouetteBalanceElement = useMemo(() => {
+    if (!element?.code || elementType !== 'balance') return false;
+    return element.code === "2.1803" || element.code === "2.1805";
   }, [element, elementType]);
 
   // Check if this rotation cannot be done in series
@@ -417,6 +439,15 @@ export const ElementInformationDialog = ({
       setIsSlowTurn(false);
     }
   }, [element, elementType, initialFlatFoot, initialSlowTurn]);
+  
+  // Set fouetté shapes state when element changes (for 2.1803 and 2.1805)
+  useEffect(() => {
+    if (element && isFouetteBalanceElement) {
+      setFouetteShapes(initialFouetteShapes);
+    } else {
+      setFouetteShapes([]);
+    }
+  }, [element, isFouetteBalanceElement, initialFouetteShapes]);
 
   // Check if balance supports flat foot / slow turn
   const canBeFlatFoot = elementType === 'balance' && element?.flat === true;
@@ -436,13 +467,41 @@ export const ElementInformationDialog = ({
     
     return { flatFootAdjust, slowTurnAdjust };
   }, [elementType, isFlatFoot, isSlowTurn]);
+  
+  // Calculate fouetté shapes value (sum of selected shapes)
+  const fouetteShapesValue = useMemo(() => {
+    if (!isFouetteBalanceElement) return 0;
+    return fouetteShapes.reduce((sum, s) => sum + s.value, 0);
+  }, [isFouetteBalanceElement, fouetteShapes]);
+  
+  // Validate fouetté balance shapes
+  const fouetteShapesValidation = useMemo(() => {
+    if (!isFouetteBalanceElement || !element?.code) return { isValid: true, message: '' };
+    
+    const requiredLegLevel = element.code === "2.1803" ? "HOR" : "HIGH";
+    const requiredLabel = element.code === "2.1803" ? "Horizontal" : "High (split)";
+    const primaryCount = fouetteShapes.filter(s => s.leg_level?.toUpperCase() === requiredLegLevel).length;
+    
+    if (fouetteShapes.length !== 3) {
+      return { isValid: false, message: `Select exactly 3 shapes (${fouetteShapes.length}/3)` };
+    }
+    if (primaryCount < 2) {
+      return { isValid: false, message: `Need at least 2 ${requiredLabel} level shapes (${primaryCount}/2)` };
+    }
+    return { isValid: true, message: '' };
+  }, [isFouetteBalanceElement, element?.code, fouetteShapes]);
 
   // Calculate total value based on element type
   const totalValue = useMemo(() => {
     if (!element) return 0;
     const baseValue = element.value;
     
-    // For balances: apply flat foot and slow turn adjustments
+    // For fouetté balance elements: value comes from selected shapes
+    if (isFouetteBalanceElement) {
+      return fouetteShapesValue + balanceAdjustments.flatFootAdjust + balanceAdjustments.slowTurnAdjust;
+    }
+    
+    // For regular balances: apply flat foot and slow turn adjustments
     if (elementType === 'balance') {
       return baseValue + balanceAdjustments.flatFootAdjust + balanceAdjustments.slowTurnAdjust;
     }
@@ -530,6 +589,12 @@ export const ElementInformationDialog = ({
   const hasEnoughHandling = currentHandlingCount >= requiredHandlingCount;
 
   const handleSave = () => {
+    // For fouetté balance elements: validate shapes selection
+    if (isFouetteBalanceElement && !fouetteShapesValidation.isValid) {
+      setShowWarningDialog(true);
+      return;
+    }
+    
     // For 3.1704: must have at least one TE/DA per rotation, no skipping allowed
     if (isPerRotationElement && !hasEnoughHandling) {
       setShowWarningDialog(true);
@@ -542,51 +607,20 @@ export const ElementInformationDialog = ({
       return;
     }
     
-    // For Fouetté elements: warn if no handling, but allow saving
+    // For Fouetté rotation elements: warn if no handling, but allow saving
     if (isFouetteElement && !hasApparatusHandling) {
       setShowWarningDialog(true);
       return;
     }
     
-    if (!hasApparatusHandling && !isFouetteElement && !isSeries) {
+    if (!hasApparatusHandling && !isFouetteElement && !isSeries && !isFouetteBalanceElement) {
       // Show warning that element needs apparatus handling
       setShowWarningDialog(true);
       return;
     }
     
     if (element && elementType) {
-      // Calculate final rotationCount for Fouetté elements
-      const finalRotationCount = isFouetteElement 
-        ? fouetteComponents.reduce((sum, c) => sum + c.rotations, 0)
-        : rotationCount;
-      
-      onSave({
-        element,
-        elementType,
-        rotationCount: finalRotationCount,
-        totalValue,
-        technicalElements: selectedTechnicalElements.length > 0 ? selectedTechnicalElements : undefined,
-        daElements: selectedDaElements.length > 0 ? selectedDaElements : undefined,
-        handlingOrder: handlingItems.length > 0 ? handlingItems.map(item => ({ type: item.type, id: item.type === 'te' ? item.data.id : item.data.id })) : undefined,
-        withApparatusHandling: hasApparatusHandling,
-        fouetteComponents: isFouetteElement ? fouetteComponents : undefined,
-        isSeries: isSeries,
-        isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
-        isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
-      });
-      onOpenChange(false);
-    }
-  };
-
-  const handleWarningYes = () => {
-    setShowWarningDialog(false);
-    // Stay in dialog so user can add apparatus handling
-  };
-
-  const handleWarningNo = () => {
-    // Save without apparatus handling
-    if (element && elementType) {
-      // Calculate final rotationCount for Fouetté elements
+      // Calculate final rotationCount for Fouetté rotation elements
       const finalRotationCount = isFouetteElement 
         ? fouetteComponents.reduce((sum, c) => sum + c.rotations, 0)
         : rotationCount;
@@ -604,6 +638,39 @@ export const ElementInformationDialog = ({
         isSeries: isSeries,
         isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
         isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
+        fouetteShapes: isFouetteBalanceElement ? fouetteShapes : undefined,
+      });
+      onOpenChange(false);
+    }
+  };
+
+  const handleWarningYes = () => {
+    setShowWarningDialog(false);
+    // Stay in dialog so user can add apparatus handling
+  };
+
+  const handleWarningNo = () => {
+    // Save without apparatus handling (or with invalid fouetté shapes)
+    if (element && elementType) {
+      // Calculate final rotationCount for Fouetté rotation elements
+      const finalRotationCount = isFouetteElement 
+        ? fouetteComponents.reduce((sum, c) => sum + c.rotations, 0)
+        : rotationCount;
+      
+      onSave({
+        element,
+        elementType,
+        rotationCount: finalRotationCount,
+        totalValue,
+        technicalElements: selectedTechnicalElements.length > 0 ? selectedTechnicalElements : undefined,
+        daElements: selectedDaElements.length > 0 ? selectedDaElements : undefined,
+        handlingOrder: handlingItems.length > 0 ? handlingItems.map(item => ({ type: item.type, id: item.data.id })) : undefined,
+        withApparatusHandling: hasApparatusHandling,
+        fouetteComponents: isFouetteElement ? fouetteComponents : undefined,
+        isSeries: isSeries,
+        isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
+        isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
+        fouetteShapes: isFouetteBalanceElement ? fouetteShapes : undefined,
       });
       setShowWarningDialog(false);
       onOpenChange(false);
@@ -625,6 +692,7 @@ export const ElementInformationDialog = ({
         isSeries: isSeries,
         isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
         isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
+        fouetteShapes: isFouetteBalanceElement ? fouetteShapes : undefined,
       });
       setShowWarningDialog(false);
       onOpenChange(false);
@@ -826,6 +894,18 @@ export const ElementInformationDialog = ({
                     onChange={updateFouetteComponents}
                     baseValue={element.value}
                     maxComponents={10}
+                  />
+                </div>
+              )}
+              
+              {/* Fouetté Shapes Selector (only for 2.1803 and 2.1805 balance elements) */}
+              {isFouetteBalanceElement && element && (
+                <div className="mt-4 pt-4 border-t">
+                  <FouetteShapesSelector
+                    elementCode={element.code}
+                    selectedShapes={fouetteShapes}
+                    onChange={updateFouetteShapes}
+                    getSymbolUrl={getSymbolUrl}
                   />
                 </div>
               )}
@@ -1050,22 +1130,26 @@ export const ElementInformationDialog = ({
         <AlertDialogContent className="z-[100]">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {isFouetteElement 
-                ? 'Missing Apparatus Handling' 
-                : isPerRotationElement || isSeries
+              {isFouetteBalanceElement && !fouetteShapesValidation.isValid
+                ? 'Invalid Fouetté Shapes'
+                : isFouetteElement 
                   ? 'Missing Apparatus Handling' 
-                  : `${getElementTypeLabel()} Without Apparatus Handling`
+                  : isPerRotationElement || isSeries
+                    ? 'Missing Apparatus Handling' 
+                    : `${getElementTypeLabel()} Without Apparatus Handling`
               }
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               <span>
-                {isFouetteElement
-                  ? 'To validate the element, apparatus handling must be performed within the first 2 rotations of fouetté. Do you want to add apparatus handling?'
-                  : isPerRotationElement 
-                    ? `A Backward Illusion requires one TE or DA for each rotation to be valid. You have added ${currentHandlingCount} of ${requiredHandlingCount} required. Would you like to add the missing apparatus handling to validate the DB?`
-                    : isSeries
-                      ? `A series requires one TE or DA for each rotation. You have added ${currentHandlingCount} of ${seriesRotationCount} required. Would you like to add the missing apparatus handling?`
-                      : `You have added a new ${getElementTypeLabel().toLowerCase()} to the routine. However, the ${getElementTypeLabel().toLowerCase()} is not valid without an apparatus technical element or apparatus difficulty. Do you want to add apparatus handling?`
+                {isFouetteBalanceElement && !fouetteShapesValidation.isValid
+                  ? `${fouetteShapesValidation.message}. The fouetté balance requires exactly 3 shapes with at least 2 at the required leg level. Do you want to fix the shapes selection?`
+                  : isFouetteElement
+                    ? 'To validate the element, apparatus handling must be performed within the first 2 rotations of fouetté. Do you want to add apparatus handling?'
+                    : isPerRotationElement 
+                      ? `A Backward Illusion requires one TE or DA for each rotation to be valid. You have added ${currentHandlingCount} of ${requiredHandlingCount} required. Would you like to add the missing apparatus handling to validate the DB?`
+                      : isSeries
+                        ? `A series requires one TE or DA for each rotation. You have added ${currentHandlingCount} of ${seriesRotationCount} required. Would you like to add the missing apparatus handling?`
+                        : `You have added a new ${getElementTypeLabel().toLowerCase()} to the routine. However, the ${getElementTypeLabel().toLowerCase()} is not valid without an apparatus technical element or apparatus difficulty. Do you want to add apparatus handling?`
                 }
               </span>
               {isPerRotationElement && (
