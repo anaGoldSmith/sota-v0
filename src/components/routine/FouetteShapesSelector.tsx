@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Info, X, Check, AlertTriangle } from "lucide-react";
+import { Info, X, Check, AlertTriangle, Circle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -215,24 +215,30 @@ export const FouetteShapesSelector = ({
                       onClick={() => !isDisabled && toggleShape(shape)}
                       disabled={isDisabled}
                       className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors ${
-                        isSelected 
-                          ? 'bg-green-100 border-2 border-green-500 dark:bg-green-900/50'
-                          : isDisabled
-                            ? 'bg-muted/30 opacity-50 cursor-not-allowed'
-                            : 'bg-muted/30 hover:bg-muted/50 border border-transparent'
+                        isDisabled
+                          ? 'bg-muted/30 opacity-50 cursor-not-allowed'
+                          : 'bg-muted/30 hover:bg-muted/50'
                       }`}
                     >
+                      {/* Circle selection indicator */}
+                      <div className="flex-shrink-0">
+                        {isSelected ? (
+                          <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
+                            <Check className="h-3 w-3 text-white" />
+                          </div>
+                        ) : (
+                          <Circle className={`h-5 w-5 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
+                        )}
+                      </div>
                       {symbolUrl && (
                         <img src={symbolUrl} alt={shape.name || ''} className="h-6 w-6 object-contain flex-shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">{shape.name || shape.code}</div>
-                        <div className="text-muted-foreground truncate text-[10px]">{shape.description}</div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <div className="font-mono">{shape.value.toFixed(1)}</div>
+                        <div className="font-mono text-muted-foreground">{shape.value.toFixed(1)}</div>
                       </div>
-                      {isSelected && <Check className="h-4 w-4 text-green-600 flex-shrink-0" />}
                     </button>
                   );
                 })}
@@ -244,7 +250,7 @@ export const FouetteShapesSelector = ({
           {universalShapes.length > 0 && (
             <div className="space-y-1">
               <div className="text-xs font-medium text-muted-foreground px-1">
-                Universal Shapes (Any Level)
+                Universal Shapes
               </div>
               <div className="grid gap-1">
                 {universalShapes.map(shape => {
@@ -258,24 +264,30 @@ export const FouetteShapesSelector = ({
                       onClick={() => !isDisabled && toggleShape(shape)}
                       disabled={isDisabled}
                       className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors ${
-                        isSelected 
-                          ? 'bg-blue-100 border-2 border-blue-500 dark:bg-blue-900/50'
-                          : isDisabled
-                            ? 'bg-muted/30 opacity-50 cursor-not-allowed'
-                            : 'bg-muted/30 hover:bg-muted/50 border border-transparent'
+                        isDisabled
+                          ? 'bg-muted/30 opacity-50 cursor-not-allowed'
+                          : 'bg-muted/30 hover:bg-muted/50'
                       }`}
                     >
+                      {/* Circle selection indicator */}
+                      <div className="flex-shrink-0">
+                        {isSelected ? (
+                          <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
+                            <Check className="h-3 w-3 text-white" />
+                          </div>
+                        ) : (
+                          <Circle className={`h-5 w-5 ${isDisabled ? 'text-muted-foreground/30' : 'text-muted-foreground'}`} />
+                        )}
+                      </div>
                       {symbolUrl && (
                         <img src={symbolUrl} alt={shape.name || ''} className="h-6 w-6 object-contain flex-shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">{shape.name || shape.code}</div>
-                        <div className="text-muted-foreground truncate text-[10px]">{shape.description}</div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <div className="font-mono">{shape.value.toFixed(1)}</div>
+                        <div className="font-mono text-muted-foreground">{shape.value.toFixed(1)}</div>
                       </div>
-                      {isSelected && <Check className="h-4 w-4 text-blue-600 flex-shrink-0" />}
                     </button>
                   );
                 })}
