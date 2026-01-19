@@ -58,6 +58,8 @@ interface SelectedBalance {
   description: string;
   value: number;
   symbol_image: string | null;
+  flat: boolean;
+  slow_turn: boolean;
 }
 
 interface SelectedRotation {
@@ -566,6 +568,8 @@ const RoutineCalculator = () => {
     rotationCount?: number;
     fouetteComponents?: FouetteComponent[];
     isSeries?: boolean;
+    isFlatFoot?: boolean;
+    isSlowTurn?: boolean;
   } | null>(null);
   
   // Unified handling items array - preserves insertion order for TEs and DAs
@@ -2149,6 +2153,8 @@ const RoutineCalculator = () => {
           turn_degrees: 'turn_degrees' in pendingElementInfo.element ? pendingElementInfo.element.turn_degrees : undefined,
           extra_value: 'extra_value' in pendingElementInfo.element ? (pendingElementInfo.element as SelectedRotation).extra_value : undefined,
           symbol_image: pendingElementInfo.element.symbol_image,
+          flat: 'flat' in pendingElementInfo.element ? (pendingElementInfo.element as SelectedBalance).flat : undefined,
+          slow_turn: 'slow_turn' in pendingElementInfo.element ? (pendingElementInfo.element as SelectedBalance).slow_turn : undefined,
         } : modifyingRoutineElement?.originalData ? {
           id: (modifyingRoutineElement.originalData as SelectedJump | SelectedBalance | SelectedRotation).id,
           code: (modifyingRoutineElement.originalData as SelectedJump | SelectedBalance | SelectedRotation).code,
@@ -2158,6 +2164,8 @@ const RoutineCalculator = () => {
           turn_degrees: 'turn_degrees' in modifyingRoutineElement.originalData ? (modifyingRoutineElement.originalData as SelectedRotation).turn_degrees : undefined,
           extra_value: 'extra_value' in modifyingRoutineElement.originalData ? (modifyingRoutineElement.originalData as SelectedRotation).extra_value : undefined,
           symbol_image: (modifyingRoutineElement.originalData as SelectedJump | SelectedBalance | SelectedRotation).symbol_image,
+          flat: 'flat' in modifyingRoutineElement.originalData ? (modifyingRoutineElement.originalData as SelectedBalance).flat : undefined,
+          slow_turn: 'slow_turn' in modifyingRoutineElement.originalData ? (modifyingRoutineElement.originalData as SelectedBalance).slow_turn : undefined,
         } : null}
         elementType={pendingElementInfo?.elementType || pendingDbElement?.type || null}
         onSave={handleElementInfoSave}
@@ -2198,6 +2206,14 @@ const RoutineCalculator = () => {
         initialFouetteComponents={pendingElementInfo?.fouetteComponents}
         onFouetteComponentsChange={(components) => {
           setPendingElementInfo(prev => prev ? { ...prev, fouetteComponents: components } : null);
+        }}
+        initialFlatFoot={pendingElementInfo?.isFlatFoot}
+        initialSlowTurn={pendingElementInfo?.isSlowTurn}
+        onFlatFootChange={(flatFoot) => {
+          setPendingElementInfo(prev => prev ? { ...prev, isFlatFoot: flatFoot } : null);
+        }}
+        onSlowTurnChange={(slowTurn) => {
+          setPendingElementInfo(prev => prev ? { ...prev, isSlowTurn: slowTurn } : null);
         }}
       />
     </div>

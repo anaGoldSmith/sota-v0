@@ -22,6 +22,8 @@ interface Balance {
   description: string;
   value: number;
   symbol_image: string | null;
+  flat: boolean;
+  slow_turn: boolean;
 }
 
 interface BalanceSelectionDialogProps {
