@@ -851,13 +851,14 @@ const RoutineCalculator = () => {
       
       const isRotationOrBalance = pendingElementInfo?.elementType === 'rotation' || pendingDbElement?.type === 'rotation' ||
                                   pendingElementInfo?.elementType === 'balance' || pendingDbElement?.type === 'balance';
+      const isJumpSeries = pendingElementInfo?.isJumpSeries || false;
       
-      if (isRotationOrBalance) {
-        // For rotations and balances: APPEND new DAs to existing ones in order
+      if (isRotationOrBalance || isJumpSeries) {
+        // For rotations, balances, and jump series: APPEND new DAs to existing ones in order
         appendHandlingDAs(daElementsData);
       } else {
-        // For jumps: Replace DAs and clear TEs (mutually exclusive)
-        setPendingHandlingItems(daElementsData.map(da => ({ type: 'da', id: `da-${da.id}`, data: da })));
+        // For regular jumps: Replace DAs and clear TEs (mutually exclusive)
+        setPendingHandlingItems(daElementsData.map(da => ({ type: 'da', id: da.id, data: da })));
       }
       
       // Return to Element Information Dialog
