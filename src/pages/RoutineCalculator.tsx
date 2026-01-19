@@ -619,9 +619,15 @@ const RoutineCalculator = () => {
   };
   
   // Function to add handling items while preserving order (for rotation appends)
+  // Uses timestamp + index to ensure unique IDs even for duplicate TEs (jump series)
   const appendHandlingTEs = (teElements: Array<{ id: string; code: string; name: string; description: string; symbol_image: string | null }>) => {
     setPendingHandlingItems(prev => {
-      const newTeItems: HandlingItem[] = teElements.map(te => ({ type: 'te', id: `te-${te.id}`, data: te }));
+      const timestamp = Date.now();
+      const newTeItems: HandlingItem[] = teElements.map((te, idx) => ({ 
+        type: 'te', 
+        id: `te-${te.id}-${timestamp}-${idx}`, 
+        data: te 
+      }));
       return [...prev, ...newTeItems];
     });
   };
@@ -1501,13 +1507,19 @@ const RoutineCalculator = () => {
     if (pendingDbElement && elements.length > 0) {
       const isRotationOrBalance = pendingElementInfo?.elementType === 'rotation' || pendingDbElement?.type === 'rotation' ||
                                   pendingElementInfo?.elementType === 'balance' || pendingDbElement?.type === 'balance';
+      const isJumpSeries = pendingElementInfo?.isJumpSeries || false;
       
-      if (isRotationOrBalance) {
-        // For rotations and balances: APPEND new TEs to existing ones in order
+      if (isRotationOrBalance || isJumpSeries) {
+        // For rotations, balances, and jump series: APPEND new TEs to existing ones in order
         appendHandlingTEs(elements);
       } else {
-        // For jumps: Replace TEs and clear DAs (mutually exclusive)
-        setPendingHandlingItems(elements.map(te => ({ type: 'te', id: `te-${te.id}`, data: te })));
+        // For regular jumps: Replace TEs and clear DAs (mutually exclusive)
+        const timestamp = Date.now();
+        setPendingHandlingItems(elements.map((te, idx) => ({ 
+          type: 'te', 
+          id: `te-${te.id}-${timestamp}-${idx}`, 
+          data: te 
+        })));
       }
       
       // Return to Element Information Dialog
@@ -2290,11 +2302,13 @@ const RoutineCalculator = () => {
         initialRotationCount={pendingElementInfo?.rotationCount}
         initialIsSeries={pendingElementInfo?.isSeries}
         isModifying={modifyingRoutineElement !== null}
-        onRemoveTechnicalElement={(id) => {
-          setPendingHandlingItems(prev => prev.filter(item => !(item.type === 'te' && item.data.id === id)));
+        onRemoveTechnicalElement={(itemId) => {
+          // Filter by unique item.id, not data.id, to support duplicate TEs in jump series
+          setPendingHandlingItems(prev => prev.filter(item => item.id !== itemId));
         }}
-        onRemoveDaElement={(id) => {
-          setPendingHandlingItems(prev => prev.filter(item => !(item.type === 'da' && item.data.id === id)));
+        onRemoveDaElement={(itemId) => {
+          // Filter by unique item.id, not data.id
+          setPendingHandlingItems(prev => prev.filter(item => item.id !== itemId));
         }}
         onReorderHandlingItems={(items) => {
           setPendingHandlingItems(items);

@@ -1197,9 +1197,9 @@ export const ElementInformationDialog = ({
                           getTechnicalElementSymbol={getTechnicalElementSymbol}
                           onRemove={() => {
                             if (item.type === 'te' && onRemoveTechnicalElement) {
-                              onRemoveTechnicalElement(item.data.id);
+                              onRemoveTechnicalElement(item.id); // Use unique item.id, not item.data.id
                             } else if (item.type === 'da' && onRemoveDaElement) {
-                              onRemoveDaElement(item.data.id);
+                              onRemoveDaElement(item.id); // Use unique item.id, not item.data.id
                             }
                           }}
                         />
