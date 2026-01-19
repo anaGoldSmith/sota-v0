@@ -122,6 +122,8 @@ interface RoutineElement {
     rotationCount?: number;
     fouetteComponents?: FouetteComponent[];
     isSeries?: boolean;
+    isFlatFoot?: boolean;
+    isSlowTurn?: boolean;
   };
   daData?: {
     symbolImages: string[];
@@ -1220,6 +1222,8 @@ const RoutineCalculator = () => {
       rotationCount: element.dbData?.rotationCount,
       fouetteComponents: element.dbData?.fouetteComponents,
       isSeries: element.dbData?.isSeries,
+      isFlatFoot: element.dbData?.isFlatFoot,
+      isSlowTurn: element.dbData?.isSlowTurn,
     });
     
     // Set pending DB element for apparatus handling
@@ -1244,8 +1248,10 @@ const RoutineCalculator = () => {
     withApparatusHandling: boolean;
     fouetteComponents?: FouetteComponent[];
     isSeries?: boolean;
+    isFlatFoot?: boolean;
+    isSlowTurn?: boolean;
   }) => {
-    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, handlingOrder, withApparatusHandling, fouetteComponents, isSeries } = data;
+    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, handlingOrder, withApparatusHandling, fouetteComponents, isSeries, isFlatFoot, isSlowTurn } = data;
     
     // Get DB symbol images
     const dbSymbolImages = element.symbol_image ? [
@@ -1301,6 +1307,8 @@ const RoutineCalculator = () => {
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
           fouetteComponents: fouetteComponents,
           isSeries: isSeries,
+          isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
+          isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
         },
         daData: {
           symbolImages: daSymbolImages,
@@ -1351,6 +1359,8 @@ const RoutineCalculator = () => {
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
           fouetteComponents: fouetteComponents,
           isSeries: isSeries,
+          isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
+          isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
         },
         daData: {
           symbolImages: teSymbolImages,
@@ -1393,6 +1403,8 @@ const RoutineCalculator = () => {
           rotationCount: elementType === 'rotation' ? rotationCount : undefined,
           fouetteComponents: fouetteComponents,
           isSeries: isSeries,
+          isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
+          isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
         },
         daData: {
           symbolImages: daSymbolImages,
@@ -1797,6 +1809,16 @@ const RoutineCalculator = () => {
                                                   {element.dbData.isSeries 
                                                     ? `(Series of ${element.dbData.rotationCount} ${element.dbData.rotationCount === 1 ? 'rotation' : 'rotations'})`
                                                     : `(${element.dbData.rotationCount} ${element.dbData.rotationCount === 1 ? 'rotation' : 'rotations'})`
+                                                  }
+                                                </span>
+                                              )}
+                                              {element.dbData.elementType === 'balance' && (element.dbData.isFlatFoot || element.dbData.isSlowTurn) && (
+                                                <span className="text-xs text-muted-foreground">
+                                                  {element.dbData.isSlowTurn && element.dbData.isFlatFoot
+                                                    ? '(slow turn on flat foot)'
+                                                    : element.dbData.isSlowTurn
+                                                    ? '(slow turn on relevé)'
+                                                    : '(on flat foot)'
                                                   }
                                                 </span>
                                               )}
