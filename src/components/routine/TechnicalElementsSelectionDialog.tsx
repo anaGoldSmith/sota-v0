@@ -53,18 +53,18 @@ export const TechnicalElementsSelectionDialog = ({
   // Track previous open state to only reset on fresh open
   const [wasOpen, setWasOpen] = useState(false);
   
-  // For rotations: we allow adding multiple TEs, so don't pre-select existing ones
-  // For jumps/balances: pre-select existing ones since they replace
+  // For rotations and balances: we allow adding multiple TEs, so don't pre-select existing ones
+  // For jumps: pre-select existing ones since they replace
   // IMPORTANT: Only reset on dialog opening, NOT when initialSelectedElements changes
   // (to avoid clearing new selections when removing an already-added element)
   useEffect(() => {
     if (open && !wasOpen) {
       // Dialog just opened
-      if (elementType === 'rotation') {
-        // For rotations: start fresh - don't pre-select existing elements
+      if (elementType === 'rotation' || elementType === 'balance') {
+        // For rotations and balances: start fresh - don't pre-select existing elements
         setSelectedElements(new Set());
       } else {
-        // For jumps/balances: pre-select existing elements (replace mode)
+        // For jumps: pre-select existing elements (replace mode)
         setSelectedElements(new Set(initialSelectedElements.map(el => el.id)));
       }
     }
@@ -305,8 +305,8 @@ export const TechnicalElementsSelectionDialog = ({
                   {Array.from(groupedElements.entries()).map(([group, elements]) => (
                     elements.map((element) => {
                       const isSelected = selectedElements.has(element.id);
-                      // For rotations, check if this element is already in the parent's saved TEs
-                      const isAlreadyAdded = elementType === 'rotation' && 
+                      // For rotations and balances, check if this element is already in the parent's saved TEs
+                      const isAlreadyAdded = (elementType === 'rotation' || elementType === 'balance') && 
                         initialSelectedElements.some(el => el.id === element.id);
                       const symbolUrl = getSymbolUrl(element.symbol_image);
                       
