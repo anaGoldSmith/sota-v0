@@ -836,13 +836,14 @@ const RoutineCalculator = () => {
         selectedCriteria: combo.selectedCriteria,
       }));
       
-      const isRotation = pendingElementInfo?.elementType === 'rotation' || pendingDbElement?.type === 'rotation';
+      const isRotationOrBalance = pendingElementInfo?.elementType === 'rotation' || pendingDbElement?.type === 'rotation' ||
+                                  pendingElementInfo?.elementType === 'balance' || pendingDbElement?.type === 'balance';
       
-      if (isRotation) {
-        // For rotations: APPEND new DAs to existing ones in order
+      if (isRotationOrBalance) {
+        // For rotations and balances: APPEND new DAs to existing ones in order
         appendHandlingDAs(daElementsData);
       } else {
-        // For jumps/balances: Replace DAs and clear TEs (mutually exclusive)
+        // For jumps: Replace DAs and clear TEs (mutually exclusive)
         setPendingHandlingItems(daElementsData.map(da => ({ type: 'da', id: `da-${da.id}`, data: da })));
       }
       
@@ -1479,13 +1480,14 @@ const RoutineCalculator = () => {
     symbol_image: string | null;
   }>) => {
     if (pendingDbElement && elements.length > 0) {
-      const isRotation = pendingElementInfo?.elementType === 'rotation' || pendingDbElement?.type === 'rotation';
+      const isRotationOrBalance = pendingElementInfo?.elementType === 'rotation' || pendingDbElement?.type === 'rotation' ||
+                                  pendingElementInfo?.elementType === 'balance' || pendingDbElement?.type === 'balance';
       
-      if (isRotation) {
-        // For rotations: APPEND new TEs to existing ones in order
+      if (isRotationOrBalance) {
+        // For rotations and balances: APPEND new TEs to existing ones in order
         appendHandlingTEs(elements);
       } else {
-        // For jumps/balances: Replace TEs and clear DAs (mutually exclusive)
+        // For jumps: Replace TEs and clear DAs (mutually exclusive)
         setPendingHandlingItems(elements.map(te => ({ type: 'te', id: `te-${te.id}`, data: te })));
       }
       

@@ -969,16 +969,16 @@ export const ElementInformationDialog = ({
                 </DndContext>
               )}
 
-              {/* Buttons - For rotations, both TE and DA are allowed (multiple); for jumps/balances they are mutually exclusive */}
+              {/* Buttons - For rotations and balances, both TE and DA are allowed (multiple); for jumps they are mutually exclusive */}
               <div className="flex gap-2 pt-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleTechnicalElementsClick}
-                  disabled={!apparatus || (elementType !== 'rotation' && selectedDaElements.length > 0)}
+                  disabled={!apparatus || (elementType === 'jump' && selectedDaElements.length > 0)}
                   className="flex-1 text-xs"
                 >
-                  {elementType === 'rotation' 
+                  {(elementType === 'rotation' || elementType === 'balance')
                     ? '+ Technical Elements' 
                     : (selectedTechnicalElements.length > 0 ? 'Change TE' : '+ Technical Elements')
                   }
@@ -987,10 +987,10 @@ export const ElementInformationDialog = ({
                   variant="outline"
                   size="sm"
                   onClick={handleApparatusDifficultyClick}
-                  disabled={!apparatus || (elementType !== 'rotation' && selectedTechnicalElements.length > 0)}
+                  disabled={!apparatus || (elementType === 'jump' && selectedTechnicalElements.length > 0)}
                   className="flex-1 text-xs"
                 >
-                  {elementType === 'rotation' 
+                  {(elementType === 'rotation' || elementType === 'balance')
                     ? '+ Apparatus Difficulty' 
                     : (selectedDaElements.length > 0 ? 'Change DA' : '+ Apparatus Difficulty')
                   }
