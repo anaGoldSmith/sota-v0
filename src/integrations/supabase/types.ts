@@ -19,9 +19,14 @@ export type Database = {
           code: string
           created_at: string
           description: string
+          flat: boolean | null
+          fouette: boolean | null
           id: string
+          leg_level: string | null
           name: string | null
+          slow_turn: boolean | null
           symbol_image: string | null
+          turn_degrees: string | null
           updated_at: string
           value: number
         }
@@ -29,9 +34,14 @@ export type Database = {
           code: string
           created_at?: string
           description: string
+          flat?: boolean | null
+          fouette?: boolean | null
           id?: string
+          leg_level?: string | null
           name?: string | null
+          slow_turn?: boolean | null
           symbol_image?: string | null
+          turn_degrees?: string | null
           updated_at?: string
           value: number
         }
@@ -39,9 +49,14 @@ export type Database = {
           code?: string
           created_at?: string
           description?: string
+          flat?: boolean | null
+          fouette?: boolean | null
           id?: string
+          leg_level?: string | null
           name?: string | null
+          slow_turn?: boolean | null
           symbol_image?: string | null
+          turn_degrees?: string | null
           updated_at?: string
           value?: number
         }
