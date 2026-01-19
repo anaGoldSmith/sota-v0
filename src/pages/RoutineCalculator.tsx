@@ -1866,6 +1866,11 @@ const RoutineCalculator = () => {
                                                         }
                                                       </span>
                                                     )}
+                                                    {element.dbData.elementType === 'jump' && element.dbData.isJumpSeries && element.dbData.jumpCount && (
+                                                      <span className="text-xs text-muted-foreground">
+                                                        (Series of {element.dbData.jumpCount} {element.dbData.jumpCount === 1 ? 'jump' : 'jumps'})
+                                                      </span>
+                                                    )}
                                                     {element.dbData.elementType === 'balance' && (
                                                       <div className="flex items-center gap-2">
                                                         <span className="text-xs text-muted-foreground">
