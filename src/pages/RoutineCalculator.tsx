@@ -1187,11 +1187,11 @@ const RoutineCalculator = () => {
     // Extract original element data
     const originalData = element.originalData as SelectedJump | SelectedBalance | SelectedRotation;
     
-    // Determine element type
+    // Determine element type based on code prefix (more reliable than checking properties)
     let elementType: 'jump' | 'rotation' | 'balance' = 'jump';
-    if ('turn_degrees' in originalData && originalData.code?.startsWith('3.')) {
+    if (originalData.code?.startsWith('3.')) {
       elementType = 'rotation';
-    } else if (!('turn_degrees' in originalData)) {
+    } else if (originalData.code?.startsWith('2.')) {
       elementType = 'balance';
     }
     
