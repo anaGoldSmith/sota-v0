@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -250,7 +250,7 @@ export const ElementInformationDialog = ({
   initialSlowTurn = false,
   onFlatFootChange,
   onSlowTurnChange,
-  initialFouetteShapes = [],
+  initialFouetteShapes,
   onFouetteShapesChange,
 }: ElementInformationDialogProps) => {
   const [rotationCount, setRotationCount] = useState<number>(1);
@@ -441,11 +441,20 @@ export const ElementInformationDialog = ({
   }, [element, elementType, initialFlatFoot, initialSlowTurn]);
   
   // Set fouetté shapes state when element changes (for 2.1803 and 2.1805)
+  // Use a ref to prevent infinite loops from array reference changes
+  const prevFouetteShapesRef = useRef<string>('');
   useEffect(() => {
     if (element && isFouetteBalanceElement) {
-      setFouetteShapes(initialFouetteShapes);
+      const shapesKey = (initialFouetteShapes || []).map(s => s.id).join(',');
+      if (shapesKey !== prevFouetteShapesRef.current) {
+        prevFouetteShapesRef.current = shapesKey;
+        setFouetteShapes(initialFouetteShapes || []);
+      }
     } else {
-      setFouetteShapes([]);
+      if (prevFouetteShapesRef.current !== '') {
+        prevFouetteShapesRef.current = '';
+        setFouetteShapes([]);
+      }
     }
   }, [element, isFouetteBalanceElement, initialFouetteShapes]);
 
