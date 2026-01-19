@@ -65,9 +65,12 @@ Deno.serve(async (req) => {
     // Validate headers
     const requiredHeaders = ['code', 'name', 'description', 'value', 'turn_degrees', 'fouette', 'leg_level', 'flat', 'slow_turn', 'symbol_image'];
     const headers = Object.keys(((result as any).data?.[0]) || {});
+    console.log('📋 CSV headers found:', headers);
+    console.log('📋 Required headers:', requiredHeaders);
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
     if (missingHeaders.length > 0) {
-      throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
+      console.error('❌ Missing headers:', missingHeaders);
+      throw new Error(`Missing required headers: ${missingHeaders.join(', ')}. Found headers: ${headers.join(', ')}`);
     }
 
     // Helper to parse boolean values
