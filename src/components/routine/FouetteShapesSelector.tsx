@@ -207,8 +207,13 @@ export const FouetteShapesSelector = ({
                   
                   return (
                     <button
+                      type="button"
                       key={shape.id}
-                      onClick={() => !isDisabled && toggleShape(shape)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleShape(shape);
+                      }}
                       disabled={isDisabled}
                       className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors ${
                         isDisabled
@@ -253,8 +258,13 @@ export const FouetteShapesSelector = ({
                   
                   return (
                     <button
+                      type="button"
                       key={shape.id}
-                      onClick={() => !isDisabled && toggleShape(shape)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleShape(shape);
+                      }}
                       disabled={isDisabled}
                       className={`flex items-center gap-2 p-2 rounded text-left text-xs transition-colors ${
                         isDisabled
