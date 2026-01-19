@@ -1210,32 +1210,42 @@ export const ElementInformationDialog = ({
               )}
 
               {/* Buttons - For rotations, balances, and jump series: both TE and DA are allowed (multiple); for single jumps they are mutually exclusive */}
-              <div className="flex gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleTechnicalElementsClick}
-                  disabled={!apparatus || (elementType === 'jump' && !isJumpSeries && selectedDaElements.length > 0)}
-                  className="flex-1 text-xs"
-                >
-                  {(elementType === 'rotation' || elementType === 'balance' || (elementType === 'jump' && isJumpSeries))
-                    ? '+ Technical Elements' 
-                    : (selectedTechnicalElements.length > 0 ? 'Change TE' : '+ Technical Elements')
-                  }
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleApparatusDifficultyClick}
-                  disabled={!apparatus || (elementType === 'jump' && !isJumpSeries && selectedTechnicalElements.length > 0)}
-                  className="flex-1 text-xs"
-                >
-                  {(elementType === 'rotation' || elementType === 'balance' || (elementType === 'jump' && isJumpSeries))
-                    ? '+ Apparatus Difficulty' 
-                    : (selectedDaElements.length > 0 ? 'Change DA' : '+ Apparatus Difficulty')
-                  }
-                </Button>
-              </div>
+              {/* For jump series: disable buttons when handling count >= jump count */}
+              {(() => {
+                const currentHandlingCount = handlingItems.length;
+                const jumpSeriesLimitReached = isJumpSeries && currentHandlingCount >= jumpCount;
+                const isRegularJumpWithDA = elementType === 'jump' && !isJumpSeries && selectedDaElements.length > 0;
+                const isRegularJumpWithTE = elementType === 'jump' && !isJumpSeries && selectedTechnicalElements.length > 0;
+                
+                return (
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleTechnicalElementsClick}
+                      disabled={!apparatus || isRegularJumpWithDA || jumpSeriesLimitReached}
+                      className="flex-1 text-xs"
+                    >
+                      {(elementType === 'rotation' || elementType === 'balance' || (elementType === 'jump' && isJumpSeries))
+                        ? '+ Technical Elements' 
+                        : (selectedTechnicalElements.length > 0 ? 'Change TE' : '+ Technical Elements')
+                      }
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleApparatusDifficultyClick}
+                      disabled={!apparatus || isRegularJumpWithTE || jumpSeriesLimitReached}
+                      className="flex-1 text-xs"
+                    >
+                      {(elementType === 'rotation' || elementType === 'balance' || (elementType === 'jump' && isJumpSeries))
+                        ? '+ Apparatus Difficulty' 
+                        : (selectedDaElements.length > 0 ? 'Change DA' : '+ Apparatus Difficulty')
+                      }
+                    </Button>
+                  </div>
+                );
+              })()}
 
               {!apparatus && (
                 <p className="text-xs text-center text-destructive">
