@@ -1,12 +1,29 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Info, X, Check, AlertTriangle, Circle, Plus } from "lucide-react";
+import { Info, X, Check, AlertTriangle, Circle, Plus, GripVertical } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  horizontalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 export interface FouetteShape {
   id: string;
@@ -17,6 +34,56 @@ export interface FouetteShape {
   leg_level: string | null;
   symbol_image: string | null;
   isCustom?: boolean; // Flag for user-entered custom shapes
+}
+
+// Sortable shape item component
+function SortableShapeItem({ 
+  shape, 
+  index, 
+  onRemove 
+}: { 
+  shape: FouetteShape; 
+  index: number; 
+  onRemove: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `shape-${index}` });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs border ${
+        shape.isCustom ? 'bg-orange-100 dark:bg-orange-900/30 border-orange-300' : 'bg-muted/50'
+      }`}
+    >
+      <div
+        {...listeners}
+        {...attributes}
+        className="cursor-grab active:cursor-grabbing"
+      >
+        <GripVertical className="h-3 w-3 text-muted-foreground" />
+      </div>
+      <span className="font-medium text-muted-foreground">#{index + 1}</span>
+      <span className="truncate max-w-[80px]">{shape.name || shape.code}</span>
+      {shape.isCustom && <span className="text-[9px] text-orange-600">(custom)</span>}
+      <button type="button" onClick={onRemove} className="hover:text-destructive">
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
 }
 
 interface FouetteShapesSelectorProps {
@@ -34,6 +101,18 @@ export const FouetteShapesSelector = ({
 }: FouetteShapesSelectorProps) => {
   const [customShapeInput, setCustomShapeInput] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Determine which leg level is required (primary)
   const requiredLegLevel = elementCode === "2.1803" ? "HOR" : "HIGH";
@@ -81,7 +160,6 @@ export const FouetteShapesSelector = ({
   ).length;
   
   // Valid if 3 shapes AND (at least 2 primary level OR has custom shapes which bypass the check)
-  const hasAllCustom = customShapesCount === 3;
   const isValid = selectedShapes.length === 3 && (primaryLevelCount >= 2 || customShapesCount > 0);
 
   const getShapeCount = (shapeId: string) => selectedShapes.filter(s => s.id === shapeId && !s.isCustom).length;
@@ -116,9 +194,23 @@ export const FouetteShapesSelector = ({
     onChange(newShapes);
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      const oldIndex = parseInt(String(active.id).replace('shape-', ''));
+      const newIndex = parseInt(String(over.id).replace('shape-', ''));
+      
+      const newShapes = arrayMove(selectedShapes, oldIndex, newIndex);
+      onChange(newShapes);
+    }
+  };
+
   if (isLoading) {
     return <div className="text-xs text-muted-foreground">Loading shapes...</div>;
   }
+
+  const shapeIds = selectedShapes.map((_, index) => `shape-${index}`);
 
   return (
     <div className="space-y-2">
@@ -132,7 +224,7 @@ export const FouetteShapesSelector = ({
               </div>
             </TooltipTrigger>
             <TooltipContent side="top" align="center" className="max-w-[280px] text-sm z-[200]" sideOffset={8}>
-              <p>Select exactly 3 shapes. At least 2 must be {requiredLegLevelLabel} level, or use "Other" to enter custom shapes.</p>
+              <p>Select exactly 3 shapes. At least 2 must be {requiredLegLevelLabel} level, or use "Other" to enter custom shapes. Drag to reorder.</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -141,25 +233,26 @@ export const FouetteShapesSelector = ({
         </span>
       </div>
 
-      {/* Selected shapes display */}
+      {/* Selected shapes display with drag-and-drop */}
       {selectedShapes.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {selectedShapes.map((shape, index) => (
-            <div 
-              key={`${shape.id}-${index}`}
-              className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs border ${
-                shape.isCustom ? 'bg-orange-100 dark:bg-orange-900/30 border-orange-300' : 'bg-muted/50'
-              }`}
-            >
-              <span className="font-medium text-muted-foreground">#{index + 1}</span>
-              <span className="truncate max-w-[100px]">{shape.name || shape.code}</span>
-              {shape.isCustom && <span className="text-[9px] text-orange-600">(custom)</span>}
-              <button type="button" onClick={() => removeShapeAtIndex(index)} className="hover:text-destructive">
-                <X className="h-3 w-3" />
-              </button>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={shapeIds} strategy={horizontalListSortingStrategy}>
+            <div className="flex flex-wrap gap-1">
+              {selectedShapes.map((shape, index) => (
+                <SortableShapeItem
+                  key={`${shape.id}-${index}`}
+                  shape={shape}
+                  index={index}
+                  onRemove={() => removeShapeAtIndex(index)}
+                />
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Validation message */}
