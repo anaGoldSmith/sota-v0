@@ -642,6 +642,12 @@ export const ElementInformationDialog = ({
         : 1;
   const currentHandlingCount = selectedTechnicalElements.length + selectedDaElements.length;
   const hasEnoughHandling = currentHandlingCount >= requiredHandlingCount;
+  
+  // For jump series: check if there are MORE handling items than jumps (excess handling)
+  const hasExcessHandling = isJumpSeries && currentHandlingCount > jumpCount;
+  
+  // State for showing excess handling warning dialog
+  const [showExcessHandlingWarning, setShowExcessHandlingWarning] = useState(false);
 
   const handleSave = () => {
     // For fouetté balance elements: validate shapes selection
@@ -659,6 +665,12 @@ export const ElementInformationDialog = ({
     // For rotation series: must have handling for each rotation in the series
     if (isSeries && !hasEnoughHandling) {
       setShowWarningDialog(true);
+      return;
+    }
+    
+    // For jump series: check if EXCESS handling (more than jump count)
+    if (isJumpSeries && hasExcessHandling) {
+      setShowExcessHandlingWarning(true);
       return;
     }
     
@@ -1346,6 +1358,54 @@ export const ElementInformationDialog = ({
               Yes
             </AlertDialogAction>
             <AlertDialogCancel onClick={(isPerRotationElement || isSeries || isJumpSeries) ? handleWarningNoSeriesOr3_1704 : handleWarningNo}>No</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Excess Handling Warning Dialog for Jump Series */}
+      <AlertDialog open={showExcessHandlingWarning} onOpenChange={setShowExcessHandlingWarning}>
+        <AlertDialogContent className="z-[100]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excess Apparatus Handling</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <span>
+                The number of apparatus handling elements ({currentHandlingCount}) exceeds the number of jumps in the series ({jumpCount}). Would you like to remove the extra apparatus handling or add extra jumps?
+              </span>
+              <span className="block text-xs text-muted-foreground italic">
+                Click "Yes" to return and adjust the configuration. Click "No" to save the element as-is.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => {
+              setShowExcessHandlingWarning(false);
+              // Stay in dialog so user can adjust
+            }}>
+              Yes
+            </AlertDialogAction>
+            <AlertDialogCancel onClick={() => {
+              // Save anyway with excess handling
+              if (element && elementType) {
+                onSave({
+                  element,
+                  elementType,
+                  rotationCount,
+                  totalValue,
+                  technicalElements: selectedTechnicalElements.length > 0 ? selectedTechnicalElements : undefined,
+                  daElements: selectedDaElements.length > 0 ? selectedDaElements : undefined,
+                  handlingOrder: handlingItems.length > 0 ? handlingItems.map(item => ({ type: item.type, id: item.data.id })) : undefined,
+                  withApparatusHandling: hasApparatusHandling,
+                  isSeries: isSeries,
+                  isJumpSeries: true,
+                  jumpCount: jumpCount,
+                  isFlatFoot: undefined,
+                  isSlowTurn: undefined,
+                  fouetteShapes: undefined,
+                });
+                setShowExcessHandlingWarning(false);
+                onOpenChange(false);
+              }
+            }}>No</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
