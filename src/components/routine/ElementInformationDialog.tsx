@@ -79,6 +79,8 @@ interface ElementInformationDialogProps {
     withApparatusHandling: boolean;
     fouetteComponents?: FouetteComponent[];
     isSeries?: boolean; // Whether this is a series of rotations
+    isJumpSeries?: boolean; // Whether this is a series of jumps
+    jumpCount?: number; // Number of jumps in a series
     isFlatFoot?: boolean; // Whether balance is performed at flat foot
     isSlowTurn?: boolean; // Whether balance is performed in slow turn mode
     fouetteShapes?: FouetteShape[]; // For fouetté balance elements (2.1803, 2.1805)
@@ -97,6 +99,8 @@ interface ElementInformationDialogProps {
   // For modifying existing element
   initialRotationCount?: number;
   initialIsSeries?: boolean;
+  initialJumpCount?: number;
+  initialIsJumpSeries?: boolean;
   isModifying?: boolean;
   // Callbacks for removing individual TE/DA
   onRemoveTechnicalElement?: (id: string) => void;
@@ -107,6 +111,9 @@ interface ElementInformationDialogProps {
   onRotationCountChange?: (count: number) => void;
   // Callback for series state changes (to persist state when navigating to TE/DA dialogs)
   onSeriesChange?: (isSeries: boolean) => void;
+  // Callback for jump series state changes
+  onJumpSeriesChange?: (isJumpSeries: boolean) => void;
+  onJumpCountChange?: (count: number) => void;
   // For Fouetté elements
   initialFouetteComponents?: FouetteComponent[];
   onFouetteComponentsChange?: (components: FouetteComponent[]) => void;
@@ -238,12 +245,16 @@ export const ElementInformationDialog = ({
   handlingItems: handlingItemsProp,
   initialRotationCount,
   initialIsSeries = false,
+  initialJumpCount,
+  initialIsJumpSeries = false,
   isModifying = false,
   onRemoveTechnicalElement,
   onRemoveDaElement,
   onReorderHandlingItems,
   onRotationCountChange,
   onSeriesChange,
+  onJumpSeriesChange,
+  onJumpCountChange,
   initialFouetteComponents,
   onFouetteComponentsChange,
   initialFlatFoot = false,
@@ -255,6 +266,10 @@ export const ElementInformationDialog = ({
 }: ElementInformationDialogProps) => {
   const [rotationCount, setRotationCount] = useState<number>(1);
   const [isSeries, setIsSeries] = useState<boolean>(false);
+  
+  // Jump series state
+  const [isJumpSeries, setIsJumpSeries] = useState<boolean>(false);
+  const [jumpCount, setJumpCount] = useState<number>(2);
   
   // Balance-specific state
   const [isFlatFoot, setIsFlatFoot] = useState<boolean>(false);
@@ -330,6 +345,17 @@ export const ElementInformationDialog = ({
   const updateIsSeries = (value: boolean) => {
     setIsSeries(value);
     onSeriesChange?.(value);
+  };
+  
+  // Wrap jump series state updates to notify parent
+  const updateIsJumpSeries = (value: boolean) => {
+    setIsJumpSeries(value);
+    onJumpSeriesChange?.(value);
+  };
+  
+  const updateJumpCount = (count: number) => {
+    setJumpCount(count);
+    onJumpCountChange?.(count);
   };
   
   // Wrap balance flat foot update to notify parent
@@ -429,6 +455,17 @@ export const ElementInformationDialog = ({
     }
   }, [element, elementType, elementIs180Degrees, isFixedRotation, isFouetteElement, initialRotationCount, initialFouetteComponents, initialIsSeries]);
   
+  // Set jump series state when element changes
+  useEffect(() => {
+    if (element && elementType === 'jump') {
+      setIsJumpSeries(initialIsJumpSeries);
+      setJumpCount(initialJumpCount !== undefined ? initialJumpCount : 2);
+    } else {
+      setIsJumpSeries(false);
+      setJumpCount(2);
+    }
+  }, [element, elementType, initialIsJumpSeries, initialJumpCount]);
+  
   // Set balance-specific state when element changes
   useEffect(() => {
     if (element && elementType === 'balance') {
@@ -510,6 +547,14 @@ export const ElementInformationDialog = ({
       return baseValue + balanceAdjustments.flatFootAdjust + balanceAdjustments.slowTurnAdjust;
     }
     
+    // For jumps: if in a series, multiply base value by jump count
+    if (elementType === 'jump') {
+      if (isJumpSeries) {
+        return baseValue * jumpCount;
+      }
+      return baseValue;
+    }
+    
     if (elementType !== 'rotation') {
       return baseValue;
     }
@@ -544,7 +589,7 @@ export const ElementInformationDialog = ({
       const additionalFullRotations = Math.floor(rotationCount) - 1;
       return baseValue + (Math.max(0, additionalFullRotations) * extraValue);
     }
-  }, [element, elementType, rotationCount, is180Degrees, isFixedRotation, isPerRotationElement, isFouetteElement, fouetteComponents, isSeries, balanceAdjustments]);
+  }, [element, elementType, rotationCount, is180Degrees, isFixedRotation, isPerRotationElement, isFouetteElement, fouetteComponents, isSeries, balanceAdjustments, isJumpSeries, jumpCount]);
 
   const handleIncrement = () => {
     if (isFixedRotation || elementType !== 'rotation') return;
@@ -584,11 +629,17 @@ export const ElementInformationDialog = ({
   // For 3.1704 or series: each rotation needs its own TE or DA
   // Series requires at least 2 rotations with handling for each
   const seriesRotationCount = isSeries ? Math.max(2, Math.floor(rotationCount)) : 0;
+  
+  // For jump series: each jump needs its own TE or DA, but same TE can be used (not same DA)
+  const jumpSeriesRequiredCount = isJumpSeries ? jumpCount : 0;
+  
   const requiredHandlingCount = isPerRotationElement 
     ? rotationCount 
     : isSeries 
       ? seriesRotationCount 
-      : 1;
+      : isJumpSeries
+        ? jumpSeriesRequiredCount
+        : 1;
   const currentHandlingCount = selectedTechnicalElements.length + selectedDaElements.length;
   const hasEnoughHandling = currentHandlingCount >= requiredHandlingCount;
 
@@ -605,8 +656,14 @@ export const ElementInformationDialog = ({
       return;
     }
     
-    // For series: must have handling for each rotation in the series
+    // For rotation series: must have handling for each rotation in the series
     if (isSeries && !hasEnoughHandling) {
+      setShowWarningDialog(true);
+      return;
+    }
+    
+    // For jump series: must have handling for each jump in the series
+    if (isJumpSeries && !hasEnoughHandling) {
       setShowWarningDialog(true);
       return;
     }
@@ -617,7 +674,7 @@ export const ElementInformationDialog = ({
       return;
     }
     
-    if (!hasApparatusHandling && !isFouetteElement && !isSeries && !isFouetteBalanceElement) {
+    if (!hasApparatusHandling && !isFouetteElement && !isSeries && !isJumpSeries && !isFouetteBalanceElement) {
       // Show warning that element needs apparatus handling
       setShowWarningDialog(true);
       return;
@@ -640,6 +697,8 @@ export const ElementInformationDialog = ({
         withApparatusHandling: hasApparatusHandling,
         fouetteComponents: isFouetteElement ? fouetteComponents : undefined,
         isSeries: isSeries,
+        isJumpSeries: elementType === 'jump' ? isJumpSeries : undefined,
+        jumpCount: elementType === 'jump' && isJumpSeries ? jumpCount : undefined,
         isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
         isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
         fouetteShapes: isFouetteBalanceElement ? fouetteShapes : undefined,
@@ -672,6 +731,8 @@ export const ElementInformationDialog = ({
         withApparatusHandling: hasApparatusHandling,
         fouetteComponents: isFouetteElement ? fouetteComponents : undefined,
         isSeries: isSeries,
+        isJumpSeries: elementType === 'jump' ? isJumpSeries : undefined,
+        jumpCount: elementType === 'jump' && isJumpSeries ? jumpCount : undefined,
         isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
         isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
         fouetteShapes: isFouetteBalanceElement ? fouetteShapes : undefined,
@@ -681,7 +742,7 @@ export const ElementInformationDialog = ({
     }
   };
 
-  // For 3.1704 or series: No = save with missing handling anyway
+  // For 3.1704 or series (rotation or jump): No = save with missing handling anyway
   const handleWarningNoSeriesOr3_1704 = () => {
     if (element && elementType) {
       onSave({
@@ -694,6 +755,8 @@ export const ElementInformationDialog = ({
         handlingOrder: handlingItems.length > 0 ? handlingItems.map(item => ({ type: item.type, id: item.data.id })) : undefined,
         withApparatusHandling: hasApparatusHandling,
         isSeries: isSeries,
+        isJumpSeries: elementType === 'jump' ? isJumpSeries : undefined,
+        jumpCount: elementType === 'jump' && isJumpSeries ? jumpCount : undefined,
         isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
         isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
         fouetteShapes: isFouetteBalanceElement ? fouetteShapes : undefined,
@@ -772,6 +835,99 @@ export const ElementInformationDialog = ({
                   <p className="text-lg font-bold text-primary">{totalValue.toFixed(1)}</p>
                 </div>
               </div>
+
+              {/* Jump Series Controls (only for jumps) */}
+              {elementType === 'jump' && (
+                <div className="mt-4 pt-4 border-t space-y-2">
+                  <Label className="text-sm">Jump Series</Label>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={isJumpSeries ? "default" : "outline"}
+                      size="sm"
+                      className={`h-8 px-3 ${isJumpSeries ? 'bg-primary text-primary-foreground' : ''}`}
+                      onClick={() => {
+                        const newSeriesState = !isJumpSeries;
+                        updateIsJumpSeries(newSeriesState);
+                      }}
+                    >
+                      Series
+                    </Button>
+                    <TooltipProvider>
+                      <Tooltip delayDuration={0}>
+                        <TooltipTrigger asChild>
+                          <div className="cursor-help">
+                            <Info className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent 
+                          side="left" 
+                          align="center"
+                          className="max-w-[280px] text-sm z-[200]"
+                          sideOffset={8}
+                        >
+                          <p>A series refers to two or more identical jumps performed consecutively. Each jump counts as a separate Difficulty and requires its own TE or DA. The same TE can be used for multiple jumps, but each DA must be unique.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    {isJumpSeries && (
+                      <>
+                        <div className="text-xs text-muted-foreground ml-2">Jumps:</div>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            if (jumpCount > 2) updateJumpCount(jumpCount - 1);
+                          }}
+                          disabled={jumpCount <= 2}
+                          className="h-8 w-8"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        
+                        <Input
+                          type="number"
+                          min={2}
+                          max={5}
+                          value={jumpCount}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            if (!isNaN(value) && value >= 2 && value <= 5) {
+                              updateJumpCount(value);
+                            }
+                          }}
+                          className="text-center text-sm font-semibold h-8 w-14 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            if (jumpCount < 5) updateJumpCount(jumpCount + 1);
+                          }}
+                          disabled={jumpCount >= 5}
+                          className="h-8 w-8"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Jump series handling requirement notice */}
+                  {isJumpSeries && (
+                    <div className="mt-2 p-2 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded text-xs text-purple-700 dark:text-purple-300">
+                      <div className="flex justify-between items-center">
+                        <span><span className="font-medium">Series active:</span> {jumpCount} × {element.value.toFixed(1)} = {totalValue.toFixed(1)}</span>
+                        <span className="text-purple-600 dark:text-purple-400">({currentHandlingCount}/{jumpCount} handling)</span>
+                      </div>
+                      <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                        Same TE can be used for multiple jumps. Each DA must be unique.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Rotation Count Input (only for rotations) */}
               {showRotationCount && !isFouetteElement && (
@@ -1053,16 +1209,16 @@ export const ElementInformationDialog = ({
                 </DndContext>
               )}
 
-              {/* Buttons - For rotations and balances, both TE and DA are allowed (multiple); for jumps they are mutually exclusive */}
+              {/* Buttons - For rotations, balances, and jump series: both TE and DA are allowed (multiple); for single jumps they are mutually exclusive */}
               <div className="flex gap-2 pt-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleTechnicalElementsClick}
-                  disabled={!apparatus || (elementType === 'jump' && selectedDaElements.length > 0)}
+                  disabled={!apparatus || (elementType === 'jump' && !isJumpSeries && selectedDaElements.length > 0)}
                   className="flex-1 text-xs"
                 >
-                  {(elementType === 'rotation' || elementType === 'balance')
+                  {(elementType === 'rotation' || elementType === 'balance' || (elementType === 'jump' && isJumpSeries))
                     ? '+ Technical Elements' 
                     : (selectedTechnicalElements.length > 0 ? 'Change TE' : '+ Technical Elements')
                   }
@@ -1071,10 +1227,10 @@ export const ElementInformationDialog = ({
                   variant="outline"
                   size="sm"
                   onClick={handleApparatusDifficultyClick}
-                  disabled={!apparatus || (elementType === 'jump' && selectedTechnicalElements.length > 0)}
+                  disabled={!apparatus || (elementType === 'jump' && !isJumpSeries && selectedTechnicalElements.length > 0)}
                   className="flex-1 text-xs"
                 >
-                  {(elementType === 'rotation' || elementType === 'balance')
+                  {(elementType === 'rotation' || elementType === 'balance' || (elementType === 'jump' && isJumpSeries))
                     ? '+ Apparatus Difficulty' 
                     : (selectedDaElements.length > 0 ? 'Change DA' : '+ Apparatus Difficulty')
                   }
@@ -1138,7 +1294,7 @@ export const ElementInformationDialog = ({
                 ? 'Invalid Fouetté Shapes'
                 : isFouetteElement 
                   ? 'Missing Apparatus Handling' 
-                  : isPerRotationElement || isSeries
+                  : isPerRotationElement || isSeries || isJumpSeries
                     ? 'Missing Apparatus Handling' 
                     : `${getElementTypeLabel()} Without Apparatus Handling`
               }
@@ -1152,8 +1308,10 @@ export const ElementInformationDialog = ({
                     : isPerRotationElement 
                       ? `A Backward Illusion requires one TE or DA for each rotation to be valid. You have added ${currentHandlingCount} of ${requiredHandlingCount} required. Would you like to add the missing apparatus handling to validate the DB?`
                       : isSeries
-                        ? `A series requires one TE or DA for each rotation. You have added ${currentHandlingCount} of ${seriesRotationCount} required. Would you like to add the missing apparatus handling?`
-                        : `You have added a new ${getElementTypeLabel().toLowerCase()} to the routine. However, the ${getElementTypeLabel().toLowerCase()} is not valid without an apparatus technical element or apparatus difficulty. Do you want to add apparatus handling?`
+                        ? `A rotation series requires one TE or DA for each rotation. You have added ${currentHandlingCount} of ${seriesRotationCount} required. Would you like to add the missing apparatus handling?`
+                        : isJumpSeries
+                          ? `A jump series requires one TE or DA for each jump. You have added ${currentHandlingCount} of ${jumpCount} required. Would you like to add the missing apparatus handling?`
+                          : `You have added a new ${getElementTypeLabel().toLowerCase()} to the routine. However, the ${getElementTypeLabel().toLowerCase()} is not valid without an apparatus technical element or apparatus difficulty. Do you want to add apparatus handling?`
                 }
               </span>
               {isPerRotationElement && (
@@ -1166,13 +1324,18 @@ export const ElementInformationDialog = ({
                   Each rotation in a series counts as a separate Difficulty and requires its own apparatus handling.
                 </span>
               )}
+              {isJumpSeries && (
+                <span className="block text-xs text-muted-foreground italic">
+                  Each jump in a series counts as a separate Difficulty. Same TE can be used for multiple jumps, but each DA must be unique.
+                </span>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction onClick={handleWarningYes}>
               Yes
             </AlertDialogAction>
-            <AlertDialogCancel onClick={(isPerRotationElement || isSeries) ? handleWarningNoSeriesOr3_1704 : handleWarningNo}>No</AlertDialogCancel>
+            <AlertDialogCancel onClick={(isPerRotationElement || isSeries || isJumpSeries) ? handleWarningNoSeriesOr3_1704 : handleWarningNo}>No</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

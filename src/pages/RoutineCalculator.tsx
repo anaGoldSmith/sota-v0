@@ -124,6 +124,8 @@ interface RoutineElement {
     fouetteComponents?: FouetteComponent[];
     fouetteShapes?: FouetteShape[];
     isSeries?: boolean;
+    isJumpSeries?: boolean;
+    jumpCount?: number;
     isFlatFoot?: boolean;
     isSlowTurn?: boolean;
     shapesExpanded?: boolean; // Track if shapes are expanded in breakdown
@@ -993,7 +995,7 @@ const RoutineCalculator = () => {
   // Calculate scores from routine elements
   const dbElements = routineElements.filter(el => el.type === 'DB' || el.type === 'DB/DA' || el.type === 'DB/TE' || el.type === 'DB/TE/DA');
   
-  // Calculate DB count - for 3.1704 and series rotations, each rotation counts as a separate DB
+  // Calculate DB count - for 3.1704, series rotations, and jump series, each counts as a separate DB
   const explicitDbCount = dbElements.reduce((count, el) => {
     // Check if this is element 3.1704 with rotation count - each rotation is a separate DB
     if (el.dbData?.code === '3.1704' && el.dbData?.rotationCount) {
@@ -1002,6 +1004,10 @@ const RoutineCalculator = () => {
     // For series rotations, each rotation in the series counts as a separate DB
     if (el.dbData?.isSeries && el.dbData?.rotationCount) {
       return count + el.dbData.rotationCount;
+    }
+    // For jump series, each jump counts as a separate DB
+    if (el.dbData?.isJumpSeries && el.dbData?.jumpCount) {
+      return count + el.dbData.jumpCount;
     }
     return count + 1;
   }, 0);
@@ -1252,11 +1258,13 @@ const RoutineCalculator = () => {
     withApparatusHandling: boolean;
     fouetteComponents?: FouetteComponent[];
     isSeries?: boolean;
+    isJumpSeries?: boolean;
+    jumpCount?: number;
     isFlatFoot?: boolean;
     isSlowTurn?: boolean;
     fouetteShapes?: FouetteShape[];
   }) => {
-    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, handlingOrder, withApparatusHandling, fouetteComponents, isSeries, isFlatFoot, isSlowTurn, fouetteShapes } = data;
+    const { element, elementType, rotationCount, totalValue, technicalElements, daElements, handlingOrder, withApparatusHandling, fouetteComponents, isSeries, isJumpSeries, jumpCount, isFlatFoot, isSlowTurn, fouetteShapes } = data;
     
     // Get DB symbol images
     const dbSymbolImages = element.symbol_image ? [
@@ -1313,6 +1321,8 @@ const RoutineCalculator = () => {
           fouetteComponents: fouetteComponents,
           fouetteShapes: elementType === 'balance' ? fouetteShapes : undefined,
           isSeries: isSeries,
+          isJumpSeries: elementType === 'jump' ? isJumpSeries : undefined,
+          jumpCount: elementType === 'jump' && isJumpSeries ? jumpCount : undefined,
           isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
           isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
         },
