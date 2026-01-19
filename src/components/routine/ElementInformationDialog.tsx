@@ -41,6 +41,9 @@ interface ElementData {
   turn_degrees?: string | null;
   extra_value?: number | null;
   symbol_image: string | null;
+  // Balance-specific fields
+  flat?: boolean;
+  slow_turn?: boolean;
 }
 
 export interface TechnicalElementSelection {
@@ -75,6 +78,8 @@ interface ElementInformationDialogProps {
     withApparatusHandling: boolean;
     fouetteComponents?: FouetteComponent[];
     isSeries?: boolean; // Whether this is a series of rotations
+    isFlatFoot?: boolean; // Whether balance is performed at flat foot
+    isSlowTurn?: boolean; // Whether balance is performed in slow turn mode
   }) => void;
   onCancel: () => void;
   getSymbolUrl: (symbolImage: string | null, bucketName: string) => string | null;
@@ -103,6 +108,11 @@ interface ElementInformationDialogProps {
   // For Fouetté elements
   initialFouetteComponents?: FouetteComponent[];
   onFouetteComponentsChange?: (components: FouetteComponent[]) => void;
+  // For balance flat foot / slow turn
+  initialFlatFoot?: boolean;
+  initialSlowTurn?: boolean;
+  onFlatFootChange?: (isFlatFoot: boolean) => void;
+  onSlowTurnChange?: (isSlowTurn: boolean) => void;
 }
 
 // Sortable handling item component
@@ -231,9 +241,17 @@ export const ElementInformationDialog = ({
   onSeriesChange,
   initialFouetteComponents,
   onFouetteComponentsChange,
+  initialFlatFoot = false,
+  initialSlowTurn = false,
+  onFlatFootChange,
+  onSlowTurnChange,
 }: ElementInformationDialogProps) => {
   const [rotationCount, setRotationCount] = useState<number>(1);
   const [isSeries, setIsSeries] = useState<boolean>(false);
+  
+  // Balance-specific state
+  const [isFlatFoot, setIsFlatFoot] = useState<boolean>(false);
+  const [isSlowTurn, setIsSlowTurn] = useState<boolean>(false);
   
   // Fouetté components state (for 3.1601 and 3.1602)
   const [fouetteComponents, setFouetteComponents] = useState<FouetteComponent[]>([
@@ -247,6 +265,7 @@ export const ElementInformationDialog = ({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
 
   // Use the provided handlingItems prop if available (preserves insertion order), 
   // otherwise fall back to constructing from separate TE/DA arrays
@@ -301,6 +320,18 @@ export const ElementInformationDialog = ({
   const updateIsSeries = (value: boolean) => {
     setIsSeries(value);
     onSeriesChange?.(value);
+  };
+  
+  // Wrap balance flat foot update to notify parent
+  const updateFlatFoot = (value: boolean) => {
+    setIsFlatFoot(value);
+    onFlatFootChange?.(value);
+  };
+  
+  // Wrap balance slow turn update to notify parent
+  const updateSlowTurn = (value: boolean) => {
+    setIsSlowTurn(value);
+    onSlowTurnChange?.(value);
   };
   
   const [showWarningDialog, setShowWarningDialog] = useState(false);
@@ -375,6 +406,21 @@ export const ElementInformationDialog = ({
       setIsSeries(false);
     }
   }, [element, elementType, elementIs180Degrees, isFixedRotation, isFouetteElement, initialRotationCount, initialFouetteComponents, initialIsSeries]);
+  
+  // Set balance-specific state when element changes
+  useEffect(() => {
+    if (element && elementType === 'balance') {
+      setIsFlatFoot(initialFlatFoot);
+      setIsSlowTurn(initialSlowTurn);
+    } else {
+      setIsFlatFoot(false);
+      setIsSlowTurn(false);
+    }
+  }, [element, elementType, initialFlatFoot, initialSlowTurn]);
+
+  // Check if balance supports flat foot / slow turn
+  const canBeFlatFoot = elementType === 'balance' && element?.flat === true;
+  const canBeSlowTurn = elementType === 'balance' && element?.slow_turn === true;
 
   const minValue = is180Degrees ? 0.5 : 1;
 
@@ -507,6 +553,8 @@ export const ElementInformationDialog = ({
         withApparatusHandling: hasApparatusHandling,
         fouetteComponents: isFouetteElement ? fouetteComponents : undefined,
         isSeries: isSeries,
+        isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
+        isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
       });
       onOpenChange(false);
     }
@@ -536,6 +584,8 @@ export const ElementInformationDialog = ({
         withApparatusHandling: hasApparatusHandling,
         fouetteComponents: isFouetteElement ? fouetteComponents : undefined,
         isSeries: isSeries,
+        isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
+        isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
       });
       setShowWarningDialog(false);
       onOpenChange(false);
@@ -555,6 +605,8 @@ export const ElementInformationDialog = ({
         handlingOrder: handlingItems.length > 0 ? handlingItems.map(item => ({ type: item.type, id: item.data.id })) : undefined,
         withApparatusHandling: hasApparatusHandling,
         isSeries: isSeries,
+        isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
+        isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
       });
       setShowWarningDialog(false);
       onOpenChange(false);
@@ -757,6 +809,58 @@ export const ElementInformationDialog = ({
                     baseValue={element.value}
                     maxComponents={10}
                   />
+                </div>
+              )}
+              
+              {/* Balance-specific options (Flat Foot / Slow Turn) */}
+              {elementType === 'balance' && (canBeFlatFoot || canBeSlowTurn) && (
+                <div className="mt-4 pt-4 border-t space-y-2">
+                  <Label className="text-sm">Balance Options</Label>
+                  <div className="flex items-center gap-2">
+                    {canBeFlatFoot && (
+                      <Button
+                        variant={isFlatFoot ? "default" : "outline"}
+                        size="sm"
+                        className={`h-8 px-3 ${isFlatFoot ? 'bg-primary text-primary-foreground' : ''}`}
+                        onClick={() => updateFlatFoot(!isFlatFoot)}
+                      >
+                        Flat Foot
+                      </Button>
+                    )}
+                    {canBeSlowTurn && (
+                      <Button
+                        variant={isSlowTurn ? "default" : "outline"}
+                        size="sm"
+                        className={`h-8 px-3 ${isSlowTurn ? 'bg-primary text-primary-foreground' : ''}`}
+                        onClick={() => updateSlowTurn(!isSlowTurn)}
+                      >
+                        Slow Turn
+                      </Button>
+                    )}
+                    <TooltipProvider>
+                      <Tooltip delayDuration={0}>
+                        <TooltipTrigger asChild>
+                          <div className="cursor-help">
+                            <Info className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent 
+                          side="left" 
+                          align="center"
+                          className="max-w-[250px] text-sm z-[200]"
+                          sideOffset={8}
+                        >
+                          <p>
+                            {canBeFlatFoot && canBeSlowTurn 
+                              ? 'Flat Foot: Balance performed on flat foot. Slow Turn: Balance performed with slow rotation.'
+                              : canBeFlatFoot 
+                                ? 'Flat Foot: Balance performed on flat foot instead of relevé.'
+                                : 'Slow Turn: Balance performed with slow rotation.'}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </div>
               )}
             </div>
