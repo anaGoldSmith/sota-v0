@@ -192,7 +192,89 @@ function SortableRow({
 
   const MAX_VISIBLE_SYMBOLS = 6;
 
+  // Render stacked symbols for jump series (DB on bottom, TE/DA on top)
+  const renderJumpSeriesSymbols = () => {
+    if (!element.dbData?.isJumpSeries || !element.dbData?.jumpCount) {
+      return null;
+    }
+    
+    const jumpCount = element.dbData.jumpCount;
+    const dbSymbol = element.dbData.symbolImages?.[0];
+    const teElements = element.teElements || [];
+    const daElements = element.daElements || [];
+    const handlingOrder = element.handlingOrder || [];
+    
+    // Build handling items in order
+    const orderedHandling: Array<{ type: 'te' | 'da'; symbol: string | null }> = [];
+    
+    if (handlingOrder.length > 0) {
+      handlingOrder.forEach(order => {
+        if (order.type === 'te') {
+          const te = teElements.find(t => t.id === order.id);
+          orderedHandling.push({ type: 'te', symbol: te?.symbolImage || null });
+        } else {
+          const da = daElements.find(d => d.id === order.id);
+          // For DA, we'll show "DA" text instead of symbols
+          orderedHandling.push({ type: 'da', symbol: null });
+        }
+      });
+    } else {
+      // Fallback: TEs first, then DAs
+      teElements.forEach(te => {
+        orderedHandling.push({ type: 'te', symbol: te.symbolImage || null });
+      });
+      daElements.forEach(() => {
+        orderedHandling.push({ type: 'da', symbol: null });
+      });
+    }
+    
+    // Create stacked symbols for each jump
+    const stackedSymbols: JSX.Element[] = [];
+    
+    for (let i = 0; i < jumpCount; i++) {
+      const handling = orderedHandling[i];
+      
+      stackedSymbols.push(
+        <div key={`jump-stack-${i}`} className="flex flex-col items-center justify-center relative">
+          {/* Top: TE symbol or "DA" text */}
+          {handling && (
+            <div className="h-5 w-8 flex items-center justify-center -mb-1">
+              {handling.type === 'te' && handling.symbol ? (
+                <img 
+                  src={handling.symbol} 
+                  alt="TE" 
+                  className="h-5 w-5 object-contain" 
+                />
+              ) : handling.type === 'da' ? (
+                <span className="text-xs font-bold text-purple-600">DA</span>
+              ) : null}
+            </div>
+          )}
+          {/* Bottom: DB (jump) symbol */}
+          {dbSymbol && (
+            <img 
+              src={dbSymbol} 
+              alt="Jump" 
+              className="h-8 w-8 object-contain" 
+            />
+          )}
+        </div>
+      );
+    }
+    
+    return (
+      <div className="flex items-end gap-2 flex-nowrap">
+        {stackedSymbols}
+      </div>
+    );
+  };
+
   const renderSymbols = (symbolImages: string[]) => {
+    // Check if this is a jump series - use special stacked rendering
+    if (element.dbData?.isJumpSeries && element.dbData?.jumpCount) {
+      return renderJumpSeriesSymbols();
+    }
+    
     const visibleSymbols = symbolImages.slice(0, MAX_VISIBLE_SYMBOLS);
     const hiddenCount = symbolImages.length - MAX_VISIBLE_SYMBOLS;
     
