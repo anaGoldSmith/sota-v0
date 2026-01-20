@@ -246,7 +246,7 @@ function SortableRow({
                   className="h-5 w-5 object-contain" 
                 />
               ) : handling.type === 'da' ? (
-                <span className="text-xs font-bold text-purple-600">DA</span>
+                <span className="text-xs font-bold text-black">DA</span>
               ) : null}
             </div>
           )}
