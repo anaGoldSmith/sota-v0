@@ -1887,6 +1887,9 @@ const RoutineCalculator = () => {
                           
                           // If expanded and has DB/DA or DB/TE or DB/TE/DA breakdown, show detailed sub-table
                           if ((element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA') && element.isExpanded && element.dbData) {
+                            // Check if this is a jump series for special display
+                            const isJumpSeriesBreakdown = element.dbData.isJumpSeries && element.dbData.jumpCount && element.dbData.jumpCount > 1;
+                            
                             rows.push(
                               <TableRow key={`${element.id}-expanded`} className="bg-muted/10">
                                 <TableCell colSpan={6} className="p-4">
@@ -1894,6 +1897,9 @@ const RoutineCalculator = () => {
                                     <table className="w-full">
                                       <thead className="bg-muted/30">
                                         <tr>
+                                          {isJumpSeriesBreakdown && (
+                                            <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground w-16">Jump</th>
+                                          )}
                                           <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground w-16">Type</th>
                                           <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Symbol</th>
                                           <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Name</th>
@@ -1923,6 +1929,9 @@ const RoutineCalculator = () => {
                                           return (
                                             <>
                                               <tr className="bg-secondary/10">
+                                                {isJumpSeriesBreakdown && (
+                                                  <td className="py-2 px-4"></td>
+                                                )}
                                                 <td className="py-2 px-4">
                                                   <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">DB</span>
                                                 </td>
@@ -2012,11 +2021,29 @@ const RoutineCalculator = () => {
                                         {element.handlingOrder ? (
                                           // Use handlingOrder for correct drag-drop sequence
                                           element.handlingOrder.map((orderItem, idx) => {
+                                            // Get jump symbol for jump series (only if within jumpCount)
+                                            const jumpSymbol = isJumpSeriesBreakdown && idx < (element.dbData.jumpCount || 0)
+                                              ? element.dbData.symbolImages[0]
+                                              : null;
+                                            
                                             if (orderItem.type === 'te') {
                                               const te = element.teElements?.find(t => t.id === orderItem.id);
                                               if (!te) return null;
                                               return (
                                                 <tr key={te.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                  {isJumpSeriesBreakdown && (
+                                                    <td className="py-2 px-4">
+                                                      {jumpSymbol ? (
+                                                        jumpSymbol.startsWith('TEXT:') ? (
+                                                          <span className="text-lg font-bold">{jumpSymbol.replace('TEXT:', '')}</span>
+                                                        ) : (
+                                                          <img src={jumpSymbol} alt="Jump" className="h-6 w-6 object-contain" />
+                                                        )
+                                                      ) : (
+                                                        <span className="text-xs text-muted-foreground">#{idx + 1}</span>
+                                                      )}
+                                                    </td>
+                                                  )}
                                                   <td className="py-2 px-4">
                                                     <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded dark:text-green-300 dark:bg-green-900/30">TE</span>
                                                   </td>
@@ -2045,6 +2072,19 @@ const RoutineCalculator = () => {
                                               if (!da) return null;
                                               return (
                                                 <tr key={da.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                  {isJumpSeriesBreakdown && (
+                                                    <td className="py-2 px-4">
+                                                      {jumpSymbol ? (
+                                                        jumpSymbol.startsWith('TEXT:') ? (
+                                                          <span className="text-lg font-bold">{jumpSymbol.replace('TEXT:', '')}</span>
+                                                        ) : (
+                                                          <img src={jumpSymbol} alt="Jump" className="h-6 w-6 object-contain" />
+                                                        )
+                                                      ) : (
+                                                        <span className="text-xs text-muted-foreground">#{idx + 1}</span>
+                                                      )}
+                                                    </td>
+                                                  )}
                                                   <td className="py-2 px-4">
                                                     <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
                                                   </td>
@@ -2068,38 +2108,76 @@ const RoutineCalculator = () => {
                                         ) : (
                                           <>
                                             {/* Fallback: Technical Elements Rows (for DB/TE or DB/TE/DA) */}
-                                            {(element.type === 'DB/TE' || element.type === 'DB/TE/DA') && element.teElements && element.teElements.map((te, idx) => (
-                                              <tr key={te.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
-                                                <td className="py-2 px-4">
-                                                  <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded dark:text-green-300 dark:bg-green-900/30">TE</span>
-                                                </td>
-                                                <td className="py-2 px-4">
-                                                  {te.symbolImage ? (
-                                                    <img src={te.symbolImage} alt={te.name} className="h-6 w-6 object-contain" />
-                                                  ) : (
-                                                    <div className="h-6 w-6 bg-muted rounded" />
+                                            {(element.type === 'DB/TE' || element.type === 'DB/TE/DA') && element.teElements && element.teElements.map((te, idx) => {
+                                              // Get jump symbol for jump series (only if within jumpCount)
+                                              const jumpSymbol = isJumpSeriesBreakdown && idx < (element.dbData?.jumpCount || 0)
+                                                ? element.dbData?.symbolImages[0]
+                                                : null;
+                                              
+                                              return (
+                                                <tr key={te.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                  {isJumpSeriesBreakdown && (
+                                                    <td className="py-2 px-4">
+                                                      {jumpSymbol ? (
+                                                        jumpSymbol.startsWith('TEXT:') ? (
+                                                          <span className="text-lg font-bold">{jumpSymbol.replace('TEXT:', '')}</span>
+                                                        ) : (
+                                                          <img src={jumpSymbol} alt="Jump" className="h-6 w-6 object-contain" />
+                                                        )
+                                                      ) : (
+                                                        <span className="text-xs text-muted-foreground">#{idx + 1}</span>
+                                                      )}
+                                                    </td>
                                                   )}
-                                                </td>
-                                                <td className="py-2 px-4 font-medium">
-                                                  <div className="flex flex-col">
-                                                    <span>{te.name}</span>
-                                                    {element.dbData?.code === '3.1704' && element.dbData?.rotationCount && element.dbData.rotationCount > 1 && (
-                                                      <span className="text-xs text-muted-foreground">
-                                                        (handling for {idx + 1}{idx === 0 ? 'st' : idx === 1 ? 'nd' : idx === 2 ? 'rd' : 'th'} rotation)
-                                                      </span>
+                                                  <td className="py-2 px-4">
+                                                    <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded dark:text-green-300 dark:bg-green-900/30">TE</span>
+                                                  </td>
+                                                  <td className="py-2 px-4">
+                                                    {te.symbolImage ? (
+                                                      <img src={te.symbolImage} alt={te.name} className="h-6 w-6 object-contain" />
+                                                    ) : (
+                                                      <div className="h-6 w-6 bg-muted rounded" />
                                                     )}
-                                                  </div>
-                                                </td>
-                                                <td className="py-2 px-4 text-right font-mono">{te.value.toFixed(1)}</td>
-                                              </tr>
-                                            ))}
+                                                  </td>
+                                                  <td className="py-2 px-4 font-medium">
+                                                    <div className="flex flex-col">
+                                                      <span>{te.name}</span>
+                                                      {element.dbData?.code === '3.1704' && element.dbData?.rotationCount && element.dbData.rotationCount > 1 && (
+                                                        <span className="text-xs text-muted-foreground">
+                                                          (handling for {idx + 1}{idx === 0 ? 'st' : idx === 1 ? 'nd' : idx === 2 ? 'rd' : 'th'} rotation)
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                  </td>
+                                                  <td className="py-2 px-4 text-right font-mono">{te.value.toFixed(1)}</td>
+                                                </tr>
+                                              );
+                                            })}
                                             
                                             {/* Fallback: DA Elements Rows (for DB/DA or DB/TE/DA) - one row per DA element */}
                                             {(element.type === 'DB/DA' || element.type === 'DB/TE/DA') && element.daElements && element.daElements.map((da, idx) => {
                                               const teCount = element.type === 'DB/TE/DA' && element.teElements ? element.teElements.length : 0;
                                               const rowIndex = teCount + idx;
+                                              // Get jump symbol for jump series (only if within jumpCount)
+                                              const jumpSymbol = isJumpSeriesBreakdown && rowIndex < (element.dbData?.jumpCount || 0)
+                                                ? element.dbData?.symbolImages[0]
+                                                : null;
+                                              
                                               return (
                                                 <tr key={da.id} className={rowIndex % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                  {isJumpSeriesBreakdown && (
+                                                    <td className="py-2 px-4">
+                                                      {jumpSymbol ? (
+                                                        jumpSymbol.startsWith('TEXT:') ? (
+                                                          <span className="text-lg font-bold">{jumpSymbol.replace('TEXT:', '')}</span>
+                                                        ) : (
+                                                          <img src={jumpSymbol} alt="Jump" className="h-6 w-6 object-contain" />
+                                                        )
+                                                      ) : (
+                                                        <span className="text-xs text-muted-foreground">#{rowIndex + 1}</span>
+                                                      )}
+                                                    </td>
+                                                  )}
                                                   <td className="py-2 px-4">
                                                     <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
                                                   </td>
@@ -2123,6 +2201,19 @@ const RoutineCalculator = () => {
                                             {/* Fallback: Single DA row if no daElements array (for DB/DA) */}
                                             {(element.type === 'DB/DA' || element.type === 'DB/TE/DA') && !element.daElements && element.daData && element.daData.value > 0 && (
                                               <tr>
+                                                {isJumpSeriesBreakdown && (
+                                                  <td className="py-2 px-4">
+                                                    {element.dbData?.symbolImages[0] ? (
+                                                      element.dbData.symbolImages[0].startsWith('TEXT:') ? (
+                                                        <span className="text-lg font-bold">{element.dbData.symbolImages[0].replace('TEXT:', '')}</span>
+                                                      ) : (
+                                                        <img src={element.dbData.symbolImages[0]} alt="Jump" className="h-6 w-6 object-contain" />
+                                                      )
+                                                    ) : (
+                                                      <span className="text-xs text-muted-foreground">#1</span>
+                                                    )}
+                                                  </td>
+                                                )}
                                                 <td className="py-2 px-4">
                                                   <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded dark:text-orange-300 dark:bg-orange-900/30">DA</span>
                                                 </td>
