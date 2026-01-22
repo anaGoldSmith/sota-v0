@@ -1426,18 +1426,30 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                     <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
                       {/* Throw during DB option */}
                       <div 
-                        className="flex items-center gap-3 p-3 hover:bg-primary/10 cursor-pointer border-b-2 border-primary/30 bg-primary/5" 
+                        className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border" 
                         onClick={() => {
                           setShowThrowDropdown(false);
                           setShowDBDuringThrowDialog(true);
                         }}
                       >
                         <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                          <span className="text-xl">🎯</span>
+                          {dynamicThrows.find(t => t.code === 'Thr1')?.symbol_image ? (
+                            <img 
+                              src={dynamicThrows.find(t => t.code === 'Thr1')!.symbol_image!} 
+                              alt="Throw" 
+                              className="h-8 w-8 object-contain" 
+                              onError={e => e.currentTarget.style.display = 'none'} 
+                            />
+                          ) : (
+                            <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-primary font-semibold text-sm">Throw during DB</span>
+                          <span className="text-foreground text-sm">Throw during DB</span>
                           <p className="text-xs text-muted-foreground">Select a DB element performed during throw</p>
+                        </div>
+                        <div className="w-12 text-right flex-shrink-0 flex items-center justify-end gap-1">
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
                       </div>
                       {filteredThrows.length === 0 ? (
@@ -1515,7 +1527,18 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                     </div>
                   </div>
                   <div className="flex-1 py-4 px-4">
-                    <p className="font-medium text-foreground text-sm">Throw during DB</p>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-foreground text-sm">Throw during DB</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
+                        onClick={() => setShowDBDuringThrowDialog(true)}
+                      >
+                        <span className="text-xs">Select DB</span>
+                        <ChevronDown className="h-3 w-3 ml-1" />
+                      </Button>
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       {throwDuringDB.dbType.charAt(0).toUpperCase() + throwDuringDB.dbType.slice(1)}: {throwDuringDB.db.name || throwDuringDB.db.description}
                     </p>
@@ -1828,18 +1851,30 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                     <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
                       {/* Catch during DB option */}
                       <div 
-                        className="flex items-center gap-3 p-3 hover:bg-primary/10 cursor-pointer border-b-2 border-primary/30 bg-primary/5" 
+                        className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border" 
                         onClick={() => {
                           setShowCatchDropdown(false);
                           setShowDBDuringCatchDialog(true);
                         }}
                       >
                         <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                          <span className="text-xl">🎯</span>
+                          {dynamicCatches.find(c => c.code === 'Catch1')?.symbol_image ? (
+                            <img 
+                              src={dynamicCatches.find(c => c.code === 'Catch1')!.symbol_image!} 
+                              alt="Catch" 
+                              className="h-8 w-8 object-contain" 
+                              onError={e => e.currentTarget.style.display = 'none'} 
+                            />
+                          ) : (
+                            <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C</div>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-primary font-semibold text-sm">Catch during DB</span>
+                          <span className="text-foreground text-sm">Catch during DB</span>
                           <p className="text-xs text-muted-foreground">Select a DB element performed during catch</p>
+                        </div>
+                        <div className="w-12 text-right flex-shrink-0 flex items-center justify-end gap-1">
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
                       </div>
                       {filteredCatches.length === 0 ? (
@@ -1927,7 +1962,18 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                     </div>
                   </div>
                   <div className="flex-1 py-4 px-4">
-                    <p className="font-medium text-foreground text-sm">Catch during DB</p>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-foreground text-sm">Catch during DB</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
+                        onClick={() => setShowDBDuringCatchDialog(true)}
+                      >
+                        <span className="text-xs">Select DB</span>
+                        <ChevronDown className="h-3 w-3 ml-1" />
+                      </Button>
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       {catchDuringDB.dbType.charAt(0).toUpperCase() + catchDuringDB.dbType.slice(1)}: {catchDuringDB.db.name || catchDuringDB.db.description}
                     </p>
