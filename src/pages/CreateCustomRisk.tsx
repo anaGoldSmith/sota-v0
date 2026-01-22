@@ -1484,71 +1484,112 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                 </div>
               ) : throwDuringDB ? (
                 /* Throw during DB - Stacked symbols display */
-                <div className="flex items-center border-b border-border last:border-b-0">
-                  <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="w-16 flex justify-center py-4">
-                    {/* Stacked symbols: Standard throw on top, DB below */}
-                    <div className="flex flex-col items-center gap-0">
-                      {/* Standard throw symbol - Thr1 */}
-                      {dynamicThrows.find(t => t.code === 'Thr1')?.symbol_image ? (
-                        <img 
-                          src={dynamicThrows.find(t => t.code === 'Thr1')!.symbol_image!} 
-                          alt="Standard Throw" 
-                          className="h-6 w-6 object-contain" 
-                          onError={e => e.currentTarget.style.display = 'none'} 
-                        />
-                      ) : (
-                        <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
-                      )}
-                      {/* DB symbol below */}
-                      {throwDuringDB.db.symbol_image ? (
-                        <img 
-                          src={throwDuringDB.db.symbol_image.startsWith('http') 
-                            ? throwDuringDB.db.symbol_image 
-                            : supabase.storage.from('jump-symbols').getPublicUrl(throwDuringDB.db.symbol_image).data.publicUrl
-                          } 
-                          alt={throwDuringDB.db.name || throwDuringDB.db.code} 
-                          className="h-8 w-8 object-contain -mt-1" 
-                          onError={e => e.currentTarget.style.display = 'none'} 
-                        />
-                      ) : (
-                        <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
-                          {throwDuringDB.db.code}
-                        </div>
-                      )}
+                <>
+                  <div className="flex items-center border-b border-border">
+                    <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                      <GripVertical className="h-4 w-4 text-muted-foreground" />
                     </div>
-                  </div>
-                  <div className="flex-1 py-4 px-4">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground text-sm">Throw during DB</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
-                        onClick={() => setShowDBDuringThrowDialog(true)}
+                    <div className="w-16 flex justify-center py-4">
+                      {/* Stacked symbols: Standard throw on top, DB below */}
+                      <div className="flex flex-col items-center gap-0">
+                        {/* Standard throw symbol - Thr1 */}
+                        {dynamicThrows.find(t => t.code === 'Thr1')?.symbol_image ? (
+                          <img 
+                            src={dynamicThrows.find(t => t.code === 'Thr1')!.symbol_image!} 
+                            alt="Standard Throw" 
+                            className="h-6 w-6 object-contain" 
+                            onError={e => e.currentTarget.style.display = 'none'} 
+                          />
+                        ) : (
+                          <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
+                        )}
+                        {/* DB symbol below */}
+                        {throwDuringDB.db.symbol_image ? (
+                          <img 
+                            src={throwDuringDB.db.symbol_image.startsWith('http') 
+                              ? throwDuringDB.db.symbol_image 
+                              : supabase.storage.from('jump-symbols').getPublicUrl(throwDuringDB.db.symbol_image).data.publicUrl
+                            } 
+                            alt={throwDuringDB.db.name || throwDuringDB.db.code} 
+                            className="h-8 w-8 object-contain -mt-1" 
+                            onError={e => e.currentTarget.style.display = 'none'} 
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
+                            {throwDuringDB.db.code}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1 py-4 px-4">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-foreground text-sm">Throw during DB</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
+                          onClick={() => setShowDBDuringThrowDialog(true)}
+                        >
+                          <span className="text-xs">Change DB</span>
+                          <ChevronDown className="h-3 w-3 ml-1" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {throwDuringDB.db.name || throwDuringDB.db.description}
+                      </p>
+                    </div>
+                    <div className="w-20 py-4 px-2 text-center border-l border-border relative">
+                      <p className="font-semibold text-primary">{throwDuringDB.db.value}</p>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => {
+                          setThrowDuringDB(null);
+                          setThrowCriteria([]);
+                        }} 
+                        className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                       >
-                        <span className="text-xs">Change DB</span>
-                        <ChevronDown className="h-3 w-3 ml-1" />
+                        <X className="h-3 w-3" />
                       </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {throwDuringDB.db.name || throwDuringDB.db.description}
-                    </p>
                   </div>
-                  <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                    <p className="font-semibold text-primary">{throwDuringDB.db.value}</p>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => setThrowDuringDB(null)} 
-                      className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
+                  {/* Extra Throw Criteria for Throw during DB */}
+                  {throwCriteria.map(item => (
+                    <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
+                      <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                        <GripVertical className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
+                        {item.symbol ? (
+                          <img 
+                            src={item.symbol} 
+                            alt={item.name} 
+                            className="h-8 w-auto max-w-[40px] object-contain" 
+                            onError={e => e.currentTarget.style.display = 'none'} 
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
+                        )}
+                      </div>
+                      <div className="flex-1 py-4 px-4">
+                        <span className="font-medium text-foreground text-sm">
+                          {item.note ? <NotesWithSymbols notes={item.note} symbolMap={notesSymbolMap} /> : item.name}
+                        </span>
+                      </div>
+                      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
+                        <p className="font-semibold text-primary">{item.value}</p>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => setThrowCriteria(throwCriteria.filter(t => t.id !== item.id))} 
+                          className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </>
               ) : (
                 <>
                   {/* Selected Throw Row */}
@@ -1922,71 +1963,112 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                 </div>
               ) : catchDuringDB ? (
                 /* Catch during DB - Stacked symbols display */
-                <div className="flex items-center border-b border-border last:border-b-0">
-                  <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="w-16 flex justify-center py-4">
-                    {/* Stacked symbols: Standard catch on top, DB below */}
-                    <div className="flex flex-col items-center gap-0">
-                      {/* Standard catch symbol - Catch1 */}
-                      {dynamicCatches.find(c => c.code === 'Catch1')?.symbol_image ? (
-                        <img 
-                          src={dynamicCatches.find(c => c.code === 'Catch1')!.symbol_image!} 
-                          alt="Standard Catch" 
-                          className="h-6 w-6 object-contain" 
-                          onError={e => e.currentTarget.style.display = 'none'} 
-                        />
-                      ) : (
-                        <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C</div>
-                      )}
-                      {/* DB symbol below */}
-                      {catchDuringDB.db.symbol_image ? (
-                        <img 
-                          src={catchDuringDB.db.symbol_image.startsWith('http') 
-                            ? catchDuringDB.db.symbol_image 
-                            : supabase.storage.from('jump-symbols').getPublicUrl(catchDuringDB.db.symbol_image).data.publicUrl
-                          } 
-                          alt={catchDuringDB.db.name || catchDuringDB.db.code} 
-                          className="h-8 w-8 object-contain -mt-1" 
-                          onError={e => e.currentTarget.style.display = 'none'} 
-                        />
-                      ) : (
-                        <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
-                          {catchDuringDB.db.code}
-                        </div>
-                      )}
+                <>
+                  <div className="flex items-center border-b border-border">
+                    <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                      <GripVertical className="h-4 w-4 text-muted-foreground" />
                     </div>
-                  </div>
-                  <div className="flex-1 py-4 px-4">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground text-sm">Catch during DB</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
-                        onClick={() => setShowDBDuringCatchDialog(true)}
+                    <div className="w-16 flex justify-center py-4">
+                      {/* Stacked symbols: Standard catch on top, DB below */}
+                      <div className="flex flex-col items-center gap-0">
+                        {/* Standard catch symbol - Catch1 */}
+                        {dynamicCatches.find(c => c.code === 'Catch1')?.symbol_image ? (
+                          <img 
+                            src={dynamicCatches.find(c => c.code === 'Catch1')!.symbol_image!} 
+                            alt="Standard Catch" 
+                            className="h-6 w-6 object-contain" 
+                            onError={e => e.currentTarget.style.display = 'none'} 
+                          />
+                        ) : (
+                          <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C</div>
+                        )}
+                        {/* DB symbol below */}
+                        {catchDuringDB.db.symbol_image ? (
+                          <img 
+                            src={catchDuringDB.db.symbol_image.startsWith('http') 
+                              ? catchDuringDB.db.symbol_image 
+                              : supabase.storage.from('jump-symbols').getPublicUrl(catchDuringDB.db.symbol_image).data.publicUrl
+                            } 
+                            alt={catchDuringDB.db.name || catchDuringDB.db.code} 
+                            className="h-8 w-8 object-contain -mt-1" 
+                            onError={e => e.currentTarget.style.display = 'none'} 
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
+                            {catchDuringDB.db.code}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1 py-4 px-4">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-foreground text-sm">Catch during DB</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
+                          onClick={() => setShowDBDuringCatchDialog(true)}
+                        >
+                          <span className="text-xs">Change DB</span>
+                          <ChevronDown className="h-3 w-3 ml-1" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {catchDuringDB.db.name || catchDuringDB.db.description}
+                      </p>
+                    </div>
+                    <div className="w-20 py-4 px-2 text-center border-l border-border relative">
+                      <p className="font-semibold text-primary">{catchDuringDB.db.value}</p>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => {
+                          setCatchDuringDB(null);
+                          setCatchCriteria([]);
+                        }} 
+                        className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                       >
-                        <span className="text-xs">Change DB</span>
-                        <ChevronDown className="h-3 w-3 ml-1" />
+                        <X className="h-3 w-3" />
                       </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {catchDuringDB.db.name || catchDuringDB.db.description}
-                    </p>
                   </div>
-                  <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                    <p className="font-semibold text-primary">{catchDuringDB.db.value}</p>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => setCatchDuringDB(null)} 
-                      className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
+                  {/* Extra Catch Criteria for Catch during DB */}
+                  {catchCriteria.map(item => (
+                    <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
+                      <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                        <GripVertical className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
+                        {item.symbol ? (
+                          <img 
+                            src={item.symbol} 
+                            alt={item.name} 
+                            className="h-8 w-auto max-w-[40px] object-contain" 
+                            onError={e => e.currentTarget.style.display = 'none'} 
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
+                        )}
+                      </div>
+                      <div className="flex-1 py-4 px-4">
+                        <span className="font-medium text-foreground text-sm">
+                          {item.note ? <NotesWithSymbols notes={item.note} symbolMap={notesSymbolMap} /> : item.name}
+                        </span>
+                      </div>
+                      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
+                        <p className="font-semibold text-primary">{item.value}</p>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => setCatchCriteria(catchCriteria.filter(c => c.id !== item.id))} 
+                          className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </>
               ) : (
                 <>
                   {/* Selected Catch Row */}
