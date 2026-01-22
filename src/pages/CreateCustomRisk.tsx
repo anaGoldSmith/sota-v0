@@ -1347,7 +1347,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                     variant="ghost" 
                     size="sm" 
                     onClick={() => {
-                      if (!selectedThrow) {
+                      if (!selectedThrow && !throwDuringDB) {
                         toast({
                           title: "Selection required",
                           description: "Please select a throw type before adding extra criteria.",
@@ -1357,13 +1357,13 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       }
                       setShowThrowCriteriaDropdown(!showThrowCriteriaDropdown);
                     }} 
-                    className={`text-primary hover:bg-primary/10 ${!selectedThrow ? 'opacity-50' : ''}`}
+                    className={`text-primary hover:bg-primary/10 ${!selectedThrow && !throwDuringDB ? 'opacity-50' : ''}`}
                   >
                     <Plus className="h-4 w-4 mr-1" />
                     Add Criteria
                   </Button>
                   
-                  {showThrowCriteriaDropdown && selectedThrow && (
+                  {showThrowCriteriaDropdown && (selectedThrow || throwDuringDB) && (
                     <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
                       <div className="p-3 border-b border-border">
                         <span className="font-medium text-foreground">Select Criteria (max 2)</span>
@@ -1535,12 +1535,12 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
                         onClick={() => setShowDBDuringThrowDialog(true)}
                       >
-                        <span className="text-xs">Select DB</span>
+                        <span className="text-xs">Change DB</span>
                         <ChevronDown className="h-3 w-3 ml-1" />
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {throwDuringDB.dbType.charAt(0).toUpperCase() + throwDuringDB.dbType.slice(1)}: {throwDuringDB.db.name || throwDuringDB.db.description}
+                      {throwDuringDB.db.name || throwDuringDB.db.description}
                     </p>
                   </div>
                   <div className="w-20 py-4 px-2 text-center border-l border-border">
@@ -1772,7 +1772,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                     variant="ghost" 
                     size="sm" 
                     onClick={() => {
-                      if (!selectedCatch) {
+                      if (!selectedCatch && !catchDuringDB) {
                         toast({
                           title: "Selection required",
                           description: "Please select a catch type before adding extra criteria.",
@@ -1782,13 +1782,13 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       }
                       setShowCatchCriteriaDropdown(!showCatchCriteriaDropdown);
                     }} 
-                    className={`text-primary hover:bg-primary/10 ${!selectedCatch ? 'opacity-50' : ''}`}
+                    className={`text-primary hover:bg-primary/10 ${!selectedCatch && !catchDuringDB ? 'opacity-50' : ''}`}
                   >
                     <Plus className="h-4 w-4 mr-1" />
                     Add Criteria
                   </Button>
                   
-                  {showCatchCriteriaDropdown && selectedCatch && (
+                  {showCatchCriteriaDropdown && (selectedCatch || catchDuringDB) && (
                     <div className="absolute right-0 top-full mt-2 w-72 bg-background border border-border rounded-lg shadow-lg z-50">
                       <div className="p-3 border-b border-border">
                         <span className="font-medium text-foreground">Select Criteria (max 2)</span>
@@ -1970,12 +1970,12 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
                         onClick={() => setShowDBDuringCatchDialog(true)}
                       >
-                        <span className="text-xs">Select DB</span>
+                        <span className="text-xs">Change DB</span>
                         <ChevronDown className="h-3 w-3 ml-1" />
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {catchDuringDB.dbType.charAt(0).toUpperCase() + catchDuringDB.dbType.slice(1)}: {catchDuringDB.db.name || catchDuringDB.db.description}
+                      {catchDuringDB.db.name || catchDuringDB.db.description}
                     </p>
                   </div>
                   <div className="w-20 py-4 px-2 text-center border-l border-border">
