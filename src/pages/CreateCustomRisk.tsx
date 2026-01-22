@@ -2120,7 +2120,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
           setSelectedThrow(null);
           setThrowCriteria([]);
         }}
-        standardThrowSymbol={dynamicThrows.find(t => t.code === 'Thr1')?.symbol_image}
       />
 
       {/* DB During Catch Dialog */}
@@ -2133,7 +2132,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
           setSelectedCatch(null);
           setCatchCriteria([]);
         }}
-        standardCatchSymbol={dynamicCatches.find(c => c.code === 'Catch1')?.symbol_image}
       />
     </div>;
 };
