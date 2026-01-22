@@ -32,8 +32,6 @@ export const DBDuringThrowCatchDialog = ({
   onOpenChange,
   type,
   onSelectDB,
-  standardThrowSymbol,
-  standardCatchSymbol,
 }: DBDuringThrowCatchDialogProps) => {
   const [selectedGroup, setSelectedGroup] = useState<DBType | null>(null);
   const [searchText, setSearchText] = useState("");
@@ -126,7 +124,7 @@ export const DBDuringThrowCatchDialog = ({
     // Determine bucket based on selected group
     const bucketMap: Record<DBType, string> = {
       jumps: 'jump-symbols',
-      balances: 'jump-symbols', // Use same bucket or adjust as needed
+      balances: 'jump-symbols',
       rotations: 'jump-symbols',
     };
     
@@ -137,15 +135,15 @@ export const DBDuringThrowCatchDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-h-[80vh] flex flex-col bg-background">
+        <DialogHeader className="pb-2">
           <div className="flex items-center gap-2">
             {selectedGroup && (
               <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
-            <DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-foreground">
               {type === 'throw' ? 'Throw during DB' : 'Catch during DB'}
               {selectedGroup && ` - ${selectedGroup.charAt(0).toUpperCase() + selectedGroup.slice(1)}`}
             </DialogTitle>
@@ -153,38 +151,48 @@ export const DBDuringThrowCatchDialog = ({
         </DialogHeader>
 
         {!selectedGroup ? (
-          // Group selection view
-          <div className="space-y-3 py-4">
+          // Group selection view - matching Elements module style
+          <div className="py-2">
             <p className="text-sm text-muted-foreground mb-4">
               Select the type of Difficulty Body element:
             </p>
-            <Button
-              variant="outline"
-              className="w-full h-16 text-lg justify-start px-6 hover:bg-primary/5 hover:border-primary"
-              onClick={() => setSelectedGroup('jumps')}
-            >
-              <span className="text-2xl mr-4">🦘</span>
-              Jumps
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-16 text-lg justify-start px-6 hover:bg-primary/5 hover:border-primary"
-              onClick={() => setSelectedGroup('balances')}
-            >
-              <span className="text-2xl mr-4">🧘</span>
-              Balances
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-16 text-lg justify-start px-6 hover:bg-primary/5 hover:border-primary"
-              onClick={() => setSelectedGroup('rotations')}
-            >
-              <span className="text-2xl mr-4">🔄</span>
-              Rotations
-            </Button>
+            <div className="space-y-2">
+              {/* Jumps */}
+              <div
+                className="flex items-center gap-4 p-4 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                onClick={() => setSelectedGroup('jumps')}
+              >
+                <div className="w-10 h-10 flex items-center justify-center">
+                  <span className="text-2xl">🦘</span>
+                </div>
+                <span className="text-base font-medium text-foreground">Jumps</span>
+              </div>
+
+              {/* Balances */}
+              <div
+                className="flex items-center gap-4 p-4 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                onClick={() => setSelectedGroup('balances')}
+              >
+                <div className="w-10 h-10 flex items-center justify-center">
+                  <span className="text-2xl">🧘</span>
+                </div>
+                <span className="text-base font-medium text-foreground">Balances</span>
+              </div>
+
+              {/* Rotations */}
+              <div
+                className="flex items-center gap-4 p-4 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                onClick={() => setSelectedGroup('rotations')}
+              >
+                <div className="w-10 h-10 flex items-center justify-center">
+                  <span className="text-2xl">🔄</span>
+                </div>
+                <span className="text-base font-medium text-foreground">Rotations</span>
+              </div>
+            </div>
           </div>
         ) : (
-          // DB selection table view
+          // DB selection table view - matching Elements module style
           <div className="flex flex-col flex-1 min-h-0">
             {/* Search */}
             <div className="relative mb-3">
@@ -202,14 +210,14 @@ export const DBDuringThrowCatchDialog = ({
               {filteredList.length} elements found
             </p>
 
-            {/* Table */}
-            <ScrollArea className="flex-1 border rounded-lg">
-              <div className="min-w-full">
+            {/* Table - matching Elements module style */}
+            <ScrollArea className="flex-1 max-h-[45vh]">
+              <div className="border rounded-lg overflow-hidden">
                 {/* Header */}
-                <div className="grid grid-cols-[60px_1fr_60px] gap-2 px-3 py-2 bg-muted border-b text-sm font-medium text-muted-foreground sticky top-0">
-                  <span>Symbol</span>
+                <div className="grid grid-cols-[50px_1fr_50px] gap-2 px-3 py-2 bg-muted border-b text-xs font-medium text-muted-foreground">
+                  <span className="text-center">Symbol</span>
                   <span>Name</span>
-                  <span className="text-right">Value</span>
+                  <span className="text-center">Value</span>
                 </div>
 
                 {/* Rows */}
@@ -218,7 +226,7 @@ export const DBDuringThrowCatchDialog = ({
                   return (
                     <div
                       key={item.id}
-                      className="grid grid-cols-[60px_1fr_60px] gap-2 px-3 py-3 border-b border-border/50 hover:bg-muted/50 cursor-pointer items-center"
+                      className="grid grid-cols-[50px_1fr_50px] gap-2 px-3 py-2 border-b border-border/50 hover:bg-muted/50 cursor-pointer items-center"
                       onClick={() => handleSelectDB(item)}
                     >
                       <div className="flex justify-center">
@@ -226,32 +234,32 @@ export const DBDuringThrowCatchDialog = ({
                           <img
                             src={symbolUrl}
                             alt={item.name || item.code}
-                            className="h-10 w-10 object-contain"
+                            className="h-8 w-8 object-contain"
                             onError={(e) => (e.currentTarget.style.display = 'none')}
                           />
                         ) : (
-                          <div className="h-10 w-10 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
-                            {item.code}
+                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-[10px] text-muted-foreground">
+                            {item.code.slice(0, 4)}
                           </div>
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-foreground text-sm truncate">
+                        <p className="text-sm text-foreground truncate">
                           {item.name || item.description}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
                           {item.code}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <span className="font-semibold text-primary">{item.value}</span>
+                      <div className="text-center">
+                        <span className="text-sm font-medium text-primary">{item.value}</span>
                       </div>
                     </div>
                   );
                 })}
 
                 {filteredList.length === 0 && (
-                  <div className="p-8 text-center text-muted-foreground">
+                  <div className="p-8 text-center text-muted-foreground text-sm">
                     No elements found
                   </div>
                 )}
