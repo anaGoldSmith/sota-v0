@@ -326,10 +326,8 @@ const renderSymbol = () => {
               </Button>
             </div>
           </div>
-          <div className="w-20 py-4 px-2 text-center border-l border-border">
+          <div className="w-20 py-4 px-2 text-center border-l border-border relative">
             <p className="font-semibold text-primary">{getValue()}</p>
-          </div>
-          <div className="w-10 flex justify-center">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -337,9 +335,9 @@ const renderSymbol = () => {
                 e.stopPropagation();
                 onRemove(entry.id);
               }} 
-              className="h-8 w-8 text-destructive hover:bg-destructive/10"
+              className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3" />
             </Button>
           </div>
         </div>
@@ -669,12 +667,15 @@ const renderSymbol = () => {
           />
         </div>
       </div>
-      <div className="w-20 py-4 px-2 text-center border-l border-border">
+      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
         <p className="font-semibold text-primary">{getValue()}</p>
-      </div>
-      <div className="w-10 flex justify-center">
-        <Button variant="ghost" size="icon" onClick={() => onRemove(entry.id)} className="h-8 w-8 text-destructive hover:bg-destructive/10">
-          <X className="h-4 w-4" />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => onRemove(entry.id)} 
+          className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+        >
+          <X className="h-3 w-3" />
         </Button>
       </div>
     </div>
@@ -1484,15 +1485,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
               ) : throwDuringDB ? (
                 /* Throw during DB - Stacked symbols display */
                 <div className="flex items-center border-b border-border last:border-b-0">
-                  <div className="w-10 flex justify-center py-4">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => setThrowDuringDB(null)} 
-                      className="h-6 w-6 text-destructive hover:bg-destructive/10"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                  <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div className="w-16 flex justify-center py-4">
                     {/* Stacked symbols: Standard throw on top, DB below */}
@@ -1543,26 +1537,24 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       {throwDuringDB.db.name || throwDuringDB.db.description}
                     </p>
                   </div>
-                  <div className="w-20 py-4 px-2 text-center border-l border-border">
+                  <div className="w-20 py-4 px-2 text-center border-l border-border relative">
                     <p className="font-semibold text-primary">{throwDuringDB.db.value}</p>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setThrowDuringDB(null)} 
+                      className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
               ) : (
                 <>
                   {/* Selected Throw Row */}
                   <div className="flex items-center border-b border-border">
-                    <div className="w-10 flex justify-center py-4">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => {
-                          setSelectedThrow(null);
-                          setThrowCriteria([]);
-                        }} 
-                        className="h-6 w-6 text-destructive hover:bg-destructive/10"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                    <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                      <GripVertical className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div className="w-12 flex justify-center py-4">
                       {selectedThrow?.symbol_image ? (
@@ -1581,23 +1573,27 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         <NotesWithSymbols notes={selectedThrow?.name || ''} symbolMap={notesSymbolMap} />
                       </span>
                     </div>
-                    <div className="w-20 py-4 px-2 text-center border-l border-border">
+                    <div className="w-20 py-4 px-2 text-center border-l border-border relative">
                       <p className="font-semibold text-primary">{selectedThrow?.value ?? 0}</p>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => {
+                          setSelectedThrow(null);
+                          setThrowCriteria([]);
+                        }} 
+                        className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                   
                   {/* Extra Throw Criteria */}
                   {throwCriteria.map(item => (
                     <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
-                      <div className="w-10 flex justify-center py-4">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => setThrowCriteria(throwCriteria.filter(t => t.id !== item.id))} 
-                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                      <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                        <GripVertical className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <div className="w-12 flex justify-center py-4">
                         {item.symbol ? (
@@ -1616,8 +1612,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           {item.note ? <NotesWithSymbols notes={item.note} symbolMap={notesSymbolMap} /> : item.name}
                         </span>
                       </div>
-                      <div className="w-20 py-4 px-2 text-center border-l border-border">
+                      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
                         <p className="font-semibold text-primary">{item.value}</p>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => setThrowCriteria(throwCriteria.filter(t => t.id !== item.id))} 
+                          className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -1919,15 +1923,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
               ) : catchDuringDB ? (
                 /* Catch during DB - Stacked symbols display */
                 <div className="flex items-center border-b border-border last:border-b-0">
-                  <div className="w-10 flex justify-center py-4">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => setCatchDuringDB(null)} 
-                      className="h-6 w-6 text-destructive hover:bg-destructive/10"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                  <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div className="w-16 flex justify-center py-4">
                     {/* Stacked symbols: Standard catch on top, DB below */}
@@ -1978,26 +1975,24 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       {catchDuringDB.db.name || catchDuringDB.db.description}
                     </p>
                   </div>
-                  <div className="w-20 py-4 px-2 text-center border-l border-border">
+                  <div className="w-20 py-4 px-2 text-center border-l border-border relative">
                     <p className="font-semibold text-primary">{catchDuringDB.db.value}</p>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setCatchDuringDB(null)} 
+                      className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
               ) : (
                 <>
                   {/* Selected Catch Row */}
                   <div className="flex items-center border-b border-border">
-                    <div className="w-10 flex justify-center py-4">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => {
-                          setSelectedCatch(null);
-                          setCatchCriteria([]);
-                        }} 
-                        className="h-6 w-6 text-destructive hover:bg-destructive/10"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                    <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                      <GripVertical className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div className="w-12 flex justify-center py-4">
                       {selectedCatch?.symbol_image ? (
@@ -2026,23 +2021,27 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         </TooltipProvider>
                       )}
                     </div>
-                    <div className="w-20 py-4 px-2 text-center border-l border-border">
+                    <div className="w-20 py-4 px-2 text-center border-l border-border relative">
                       <p className="font-semibold text-primary">{selectedCatch?.value ?? 0}</p>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => {
+                          setSelectedCatch(null);
+                          setCatchCriteria([]);
+                        }} 
+                        className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                   
                   {/* Extra Catch Criteria */}
                   {catchCriteria.map(item => (
                     <div key={item.id} className="flex items-center border-b border-border last:border-b-0">
-                      <div className="w-10 flex justify-center py-4">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => setCatchCriteria(catchCriteria.filter(c => c.id !== item.id))} 
-                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                      <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                        <GripVertical className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <div className="w-12 flex justify-center py-4">
                         {item.symbol ? (
@@ -2062,8 +2061,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           {item.note && <NotesWithSymbols notes={item.note} symbolMap={notesSymbolMap} />}
                         </span>
                       </div>
-                      <div className="w-20 py-4 px-2 text-center border-l border-border">
+                      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
                         <p className="font-semibold text-primary">{item.value}</p>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => setCatchCriteria(catchCriteria.filter(c => c.id !== item.id))} 
+                          className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
                       </div>
                     </div>
                   ))}
