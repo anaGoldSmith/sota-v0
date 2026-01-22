@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ApparatusType } from "@/types/apparatus";
 import { useToast } from "@/hooks/use-toast";
 import { NotesWithSymbols } from "@/components/routine/NotesWithSymbols";
+import { DBDuringThrowCatchDialog } from "@/components/routine/DBDuringThrowCatchDialog";
 interface CriteriaItem {
   id: string;
   name: string;
@@ -720,13 +721,18 @@ const CreateCustomRisk = () => {
   const [selectedThrow, setSelectedThrow] = useState<DynamicThrow | null>(null);
   const [selectedCatch, setSelectedCatch] = useState<DynamicCatch | null>(null);
 
+  // DB during throw/catch state
+  const [showDBDuringThrowDialog, setShowDBDuringThrowDialog] = useState(false);
+  const [showDBDuringCatchDialog, setShowDBDuringCatchDialog] = useState(false);
+  const [throwDuringDB, setThrowDuringDB] = useState<{ db: { id: string; code: string; name: string | null; description: string; value: number; symbol_image: string | null }; dbType: 'jumps' | 'balances' | 'rotations' } | null>(null);
+  const [catchDuringDB, setCatchDuringDB] = useState<{ db: { id: string; code: string; name: string | null; description: string; value: number; symbol_image: string | null }; dbType: 'jumps' | 'balances' | 'rotations' } | null>(null);
 
   // Risk components state
   const [throwCriteria, setThrowCriteria] = useState<CriteriaItem[]>([]);
   const [rotationEntries, setRotationEntries] = useState<RotationEntry[]>([]);
   const [seriesCount, setSeriesCount] = useState<number>(3);
   const [showRotationDropdown, setShowRotationDropdown] = useState(false);
-const [catchCriteria, setCatchCriteria] = useState<CriteriaItem[]>([]);
+  const [catchCriteria, setCatchCriteria] = useState<CriteriaItem[]>([]);
   const rotationDropdownRef = useRef<HTMLDivElement>(null);
 
   // State for DBs for risks
@@ -770,8 +776,8 @@ const [catchCriteria, setCatchCriteria] = useState<CriteriaItem[]>([]);
   const rLevel = getTotalRotations();
 
   // Calculate total value
-  const throwValue = selectedThrow?.value ?? 0;
-  const catchValue = selectedCatch?.value ?? 0;
+  const throwValue = throwDuringDB ? throwDuringDB.db.value : (selectedThrow?.value ?? 0);
+  const catchValue = catchDuringDB ? catchDuringDB.db.value : (selectedCatch?.value ?? 0);
   const totalValue = throwValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + catchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
 
   // Close dropdowns when clicking outside
@@ -1405,7 +1411,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
             
             {/* Section Content */}
             <div className="border-x border-b border-border rounded-b-lg bg-background">
-              {!selectedThrow ? (
+              {!selectedThrow && !throwDuringDB ? (
                 <div className="p-4" ref={throwDropdownRef}>
                   <Button 
                     variant="outline" 
@@ -1418,6 +1424,22 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   
                   {showThrowDropdown && (
                     <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                      {/* Throw during DB option */}
+                      <div 
+                        className="flex items-center gap-3 p-3 hover:bg-primary/10 cursor-pointer border-b-2 border-primary/30 bg-primary/5" 
+                        onClick={() => {
+                          setShowThrowDropdown(false);
+                          setShowDBDuringThrowDialog(true);
+                        }}
+                      >
+                        <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
+                          <span className="text-xl">🎯</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-primary font-semibold text-sm">Throw during DB</span>
+                          <p className="text-xs text-muted-foreground">Select a DB element performed during throw</p>
+                        </div>
+                      </div>
                       {filteredThrows.length === 0 ? (
                         <div className="p-4 text-center text-muted-foreground">
                           No throws available for this apparatus
@@ -1447,6 +1469,61 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                     </div>
                   )}
                 </div>
+              ) : throwDuringDB ? (
+                /* Throw during DB - Stacked symbols display */
+                <div className="flex items-center border-b border-border last:border-b-0">
+                  <div className="w-10 flex justify-center py-4">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setThrowDuringDB(null)} 
+                      className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="w-16 flex justify-center py-4">
+                    {/* Stacked symbols: Standard throw on top, DB below */}
+                    <div className="flex flex-col items-center gap-0">
+                      {/* Standard throw symbol - Thr1 */}
+                      {dynamicThrows.find(t => t.code === 'Thr1')?.symbol_image ? (
+                        <img 
+                          src={dynamicThrows.find(t => t.code === 'Thr1')!.symbol_image!} 
+                          alt="Standard Throw" 
+                          className="h-6 w-6 object-contain" 
+                          onError={e => e.currentTarget.style.display = 'none'} 
+                        />
+                      ) : (
+                        <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
+                      )}
+                      {/* DB symbol below */}
+                      {throwDuringDB.db.symbol_image ? (
+                        <img 
+                          src={throwDuringDB.db.symbol_image.startsWith('http') 
+                            ? throwDuringDB.db.symbol_image 
+                            : supabase.storage.from('jump-symbols').getPublicUrl(throwDuringDB.db.symbol_image).data.publicUrl
+                          } 
+                          alt={throwDuringDB.db.name || throwDuringDB.db.code} 
+                          className="h-8 w-8 object-contain -mt-1" 
+                          onError={e => e.currentTarget.style.display = 'none'} 
+                        />
+                      ) : (
+                        <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
+                          {throwDuringDB.db.code}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex-1 py-4 px-4">
+                    <p className="font-medium text-foreground text-sm">Throw during DB</p>
+                    <p className="text-xs text-muted-foreground">
+                      {throwDuringDB.dbType.charAt(0).toUpperCase() + throwDuringDB.dbType.slice(1)}: {throwDuringDB.db.name || throwDuringDB.db.description}
+                    </p>
+                  </div>
+                  <div className="w-20 py-4 px-2 text-center border-l border-border">
+                    <p className="font-semibold text-primary">{throwDuringDB.db.value}</p>
+                  </div>
+                </div>
               ) : (
                 <>
                   {/* Selected Throw Row */}
@@ -1465,7 +1542,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       </Button>
                     </div>
                     <div className="w-12 flex justify-center py-4">
-                      {selectedThrow.symbol_image ? (
+                      {selectedThrow?.symbol_image ? (
                         <img 
                           src={selectedThrow.symbol_image} 
                           alt={selectedThrow.name} 
@@ -1478,11 +1555,11 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                     </div>
                     <div className="flex-1 py-4 px-4">
                       <span className="font-medium text-foreground text-sm">
-                        <NotesWithSymbols notes={selectedThrow.name} symbolMap={notesSymbolMap} />
+                        <NotesWithSymbols notes={selectedThrow?.name || ''} symbolMap={notesSymbolMap} />
                       </span>
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border">
-                      <p className="font-semibold text-primary">{selectedThrow.value ?? 0}</p>
+                      <p className="font-semibold text-primary">{selectedThrow?.value ?? 0}</p>
                     </div>
                   </div>
                   
@@ -1736,7 +1813,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
             
             {/* Section Content */}
             <div className="border-x border-b border-border rounded-b-lg bg-background">
-              {!selectedCatch ? (
+              {!selectedCatch && !catchDuringDB ? (
                 <div className="p-4" ref={catchDropdownRef}>
                   <Button 
                     variant="outline" 
@@ -1749,6 +1826,22 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   
                   {showCatchDropdown && (
                     <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                      {/* Catch during DB option */}
+                      <div 
+                        className="flex items-center gap-3 p-3 hover:bg-primary/10 cursor-pointer border-b-2 border-primary/30 bg-primary/5" 
+                        onClick={() => {
+                          setShowCatchDropdown(false);
+                          setShowDBDuringCatchDialog(true);
+                        }}
+                      >
+                        <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
+                          <span className="text-xl">🎯</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-primary font-semibold text-sm">Catch during DB</span>
+                          <p className="text-xs text-muted-foreground">Select a DB element performed during catch</p>
+                        </div>
+                      </div>
                       {filteredCatches.length === 0 ? (
                         <div className="p-4 text-center text-muted-foreground">
                           No catches available for this apparatus
@@ -1788,6 +1881,61 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                     </div>
                   )}
                 </div>
+              ) : catchDuringDB ? (
+                /* Catch during DB - Stacked symbols display */
+                <div className="flex items-center border-b border-border last:border-b-0">
+                  <div className="w-10 flex justify-center py-4">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setCatchDuringDB(null)} 
+                      className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="w-16 flex justify-center py-4">
+                    {/* Stacked symbols: Standard catch on top, DB below */}
+                    <div className="flex flex-col items-center gap-0">
+                      {/* Standard catch symbol - Catch1 */}
+                      {dynamicCatches.find(c => c.code === 'Catch1')?.symbol_image ? (
+                        <img 
+                          src={dynamicCatches.find(c => c.code === 'Catch1')!.symbol_image!} 
+                          alt="Standard Catch" 
+                          className="h-6 w-6 object-contain" 
+                          onError={e => e.currentTarget.style.display = 'none'} 
+                        />
+                      ) : (
+                        <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C</div>
+                      )}
+                      {/* DB symbol below */}
+                      {catchDuringDB.db.symbol_image ? (
+                        <img 
+                          src={catchDuringDB.db.symbol_image.startsWith('http') 
+                            ? catchDuringDB.db.symbol_image 
+                            : supabase.storage.from('jump-symbols').getPublicUrl(catchDuringDB.db.symbol_image).data.publicUrl
+                          } 
+                          alt={catchDuringDB.db.name || catchDuringDB.db.code} 
+                          className="h-8 w-8 object-contain -mt-1" 
+                          onError={e => e.currentTarget.style.display = 'none'} 
+                        />
+                      ) : (
+                        <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
+                          {catchDuringDB.db.code}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex-1 py-4 px-4">
+                    <p className="font-medium text-foreground text-sm">Catch during DB</p>
+                    <p className="text-xs text-muted-foreground">
+                      {catchDuringDB.dbType.charAt(0).toUpperCase() + catchDuringDB.dbType.slice(1)}: {catchDuringDB.db.name || catchDuringDB.db.description}
+                    </p>
+                  </div>
+                  <div className="w-20 py-4 px-2 text-center border-l border-border">
+                    <p className="font-semibold text-primary">{catchDuringDB.db.value}</p>
+                  </div>
+                </div>
               ) : (
                 <>
                   {/* Selected Catch Row */}
@@ -1806,7 +1954,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       </Button>
                     </div>
                     <div className="w-12 flex justify-center py-4">
-                      {selectedCatch.symbol_image ? (
+                      {selectedCatch?.symbol_image ? (
                         <img 
                           src={selectedCatch.symbol_image} 
                           alt={selectedCatch.name} 
@@ -1818,8 +1966,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       )}
                     </div>
                     <div className="flex-1 py-4 px-4 flex items-center gap-2">
-                      <span className="font-medium text-foreground text-sm">{selectedCatch.name}</span>
-                      {selectedCatch.notes && (
+                      <span className="font-medium text-foreground text-sm">{selectedCatch?.name}</span>
+                      {selectedCatch?.notes && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -1833,7 +1981,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       )}
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border">
-                      <p className="font-semibold text-primary">{selectedCatch.value ?? 0}</p>
+                      <p className="font-semibold text-primary">{selectedCatch?.value ?? 0}</p>
                     </div>
                   </div>
                   
@@ -1915,6 +2063,32 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* DB During Throw Dialog */}
+      <DBDuringThrowCatchDialog
+        open={showDBDuringThrowDialog}
+        onOpenChange={setShowDBDuringThrowDialog}
+        type="throw"
+        onSelectDB={(db, dbType) => {
+          setThrowDuringDB({ db, dbType });
+          setSelectedThrow(null);
+          setThrowCriteria([]);
+        }}
+        standardThrowSymbol={dynamicThrows.find(t => t.code === 'Thr1')?.symbol_image}
+      />
+
+      {/* DB During Catch Dialog */}
+      <DBDuringThrowCatchDialog
+        open={showDBDuringCatchDialog}
+        onOpenChange={setShowDBDuringCatchDialog}
+        type="catch"
+        onSelectDB={(db, dbType) => {
+          setCatchDuringDB({ db, dbType });
+          setSelectedCatch(null);
+          setCatchCriteria([]);
+        }}
+        standardCatchSymbol={dynamicCatches.find(c => c.code === 'Catch1')?.symbol_image}
+      />
     </div>;
 };
 export default CreateCustomRisk;
