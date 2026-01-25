@@ -327,14 +327,23 @@ const renderSymbol = () => {
   const showSpecificationButton = entry.type === 'one' || entry.type === 'two' || entry.type === 'series';
   
   // Build the specification label - show vertical rotation name if selected
+  // Use plural "Rotations" for 'two' (2 base rotations) or 'series'
+  const isPlural = entry.type === 'two' || entry.type === 'series';
   const selectedSpecLabel = (() => {
     if (!entry.specificationType) return null;
     if (entry.specificationType === 'vertical' && entry.selectedVerticalRotation) {
-      // Format: "Vertical Upright Rotation: name" or "Vertical Seated Rotation: name"
-      return `Vertical ${entry.selectedVerticalRotation.group_name} Rotation: ${entry.selectedVerticalRotation.name}`;
+      // Format: "Vertical Upright Rotation(s): name" - capitalize group name and pluralize if needed
+      const groupName = (entry.selectedVerticalRotation.group_name || '').charAt(0).toUpperCase() + (entry.selectedVerticalRotation.group_name || '').slice(1).toLowerCase();
+      const rotationWord = isPlural ? 'Rotations' : 'Rotation';
+      return `Vertical ${groupName} ${rotationWord}: ${entry.selectedVerticalRotation.name}`;
     }
     return ROTATION_SPECIFICATION_OPTIONS.find(o => o.value === entry.specificationType)?.label || null;
   })();
+  
+  // Filter rotation options based on type - series can only have pre-acrobatic
+  const availableRotationOptions = entry.type === 'series' 
+    ? ROTATION_SPECIFICATION_OPTIONS.filter(o => o.value === 'pre-acrobatic')
+    : ROTATION_SPECIFICATION_OPTIONS;
 
   const getBaseTypeName = () => {
     if (entry.type === 'one') return 'One Rotation';
@@ -492,7 +501,7 @@ const renderSymbol = () => {
               </Button>
             </div>
             <div className="p-2 space-y-1">
-              {ROTATION_SPECIFICATION_OPTIONS.map((option) => (
+              {availableRotationOptions.map((option) => (
                 <div
                   key={option.value}
                   className={`p-3 rounded hover:bg-muted cursor-pointer ${entry.specificationType === option.value ? 'bg-primary/10' : ''}`}
@@ -606,7 +615,7 @@ const renderSymbol = () => {
                       </Button>
                     </div>
                     <div className="p-2 space-y-1">
-                      {ROTATION_SPECIFICATION_OPTIONS.map((option) => (
+                      {availableRotationOptions.map((option) => (
                         <div
                           key={option.value}
                           className={`p-3 rounded hover:bg-muted cursor-pointer ${entry.specificationType === option.value ? 'bg-primary/10' : ''}`}
