@@ -780,8 +780,8 @@ const CreateCustomRisk = () => {
   // DB during throw/catch state
   const [showDBDuringThrowDialog, setShowDBDuringThrowDialog] = useState(false);
   const [showDBDuringCatchDialog, setShowDBDuringCatchDialog] = useState(false);
-  const [throwDuringDB, setThrowDuringDB] = useState<{ db: { id: string; code: string; name: string | null; description: string; value: number; symbol_image: string | null }; dbType: 'jumps' | 'balances' | 'rotations' } | null>(null);
-  const [catchDuringDB, setCatchDuringDB] = useState<{ db: { id: string; code: string; name: string | null; description: string; value: number; symbol_image: string | null }; dbType: 'jumps' | 'balances' | 'rotations' } | null>(null);
+  const [throwDuringDB, setThrowDuringDB] = useState<{ db: { id: string; code: string; name: string | null; description: string; value: number; symbol_image: string | null }; dbType: 'jumps' | 'rotations'; rotationCount?: number } | null>(null);
+  const [catchDuringDB, setCatchDuringDB] = useState<{ db: { id: string; code: string; name: string | null; description: string; value: number; symbol_image: string | null }; dbType: 'jumps' | 'rotations'; rotationCount?: number } | null>(null);
 
   // Risk components state
   const [throwCriteria, setThrowCriteria] = useState<CriteriaItem[]>([]);
@@ -2184,8 +2184,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         open={showDBDuringThrowDialog}
         onOpenChange={setShowDBDuringThrowDialog}
         type="throw"
-        onSelectDB={(db, dbType) => {
-          setThrowDuringDB({ db, dbType });
+        onSelectDB={(db, dbType, rotationCount) => {
+          // For rotations, multiply value by rotation count
+          const effectiveValue = dbType === 'rotations' && rotationCount 
+            ? db.value * rotationCount 
+            : db.value;
+          setThrowDuringDB({ 
+            db: { ...db, value: effectiveValue }, 
+            dbType, 
+            rotationCount 
+          });
           setSelectedThrow(null);
           setThrowCriteria([]);
         }}
@@ -2196,8 +2204,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         open={showDBDuringCatchDialog}
         onOpenChange={setShowDBDuringCatchDialog}
         type="catch"
-        onSelectDB={(db, dbType) => {
-          setCatchDuringDB({ db, dbType });
+        onSelectDB={(db, dbType, rotationCount) => {
+          // For rotations, multiply value by rotation count
+          const effectiveValue = dbType === 'rotations' && rotationCount 
+            ? db.value * rotationCount 
+            : db.value;
+          setCatchDuringDB({ 
+            db: { ...db, value: effectiveValue }, 
+            dbType, 
+            rotationCount 
+          });
           setSelectedCatch(null);
           setCatchCriteria([]);
         }}
