@@ -199,47 +199,66 @@ export const PreAcrobaticSelectionDialog = ({
                 No pre-acrobatic elements found
               </div>
             ) : (
-              filteredElements.map((element) => (
-                <div
-                  key={element.id}
-                  className="flex items-center hover:bg-muted/50 cursor-pointer border-b border-border last:border-b-0"
-                  onClick={() => handleSelect(element)}
-                >
-                  <div className="flex-1 px-4 py-3 flex items-center gap-2">
-                    <span className="font-medium text-foreground">
-                      {element.name}
-                    </span>
-                    {element.level_change && !element.two_bases_series && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex flex-shrink-0">
-                              <Info className="h-4 w-4 text-primary cursor-help" />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-sm">
-                            <p>This element automatically adds change of level/axis criteria and can only be used as the first single rotation.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
-                    {element.level_change && element.two_bases_series && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex flex-shrink-0">
-                              <Info className="h-4 w-4 text-primary cursor-help" />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-sm">
-                            <p>This element automatically adds change of level/axis criteria.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
+              filteredElements.map((element) => {
+                // Special tooltip for Dive leap
+                const isDiveLeap = element.name?.toLowerCase() === 'dive leap';
+                
+                return (
+                  <div
+                    key={element.id}
+                    className="flex items-center hover:bg-muted/50 cursor-pointer border-b border-border last:border-b-0"
+                    onClick={() => handleSelect(element)}
+                  >
+                    <div className="flex-1 px-4 py-3 flex items-center gap-2">
+                      <span className="font-medium text-foreground">
+                        {element.name}
+                      </span>
+                      {isDiveLeap && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex flex-shrink-0">
+                                <Info className="h-4 w-4 text-primary cursor-help" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-sm">
+                              <p>The criterion "change of level" is awarded when a Dive leap is performed in a risk (R). The Dive leap may be performed only as the first rotation and must be followed by at least one additional rotation to fulfil the two base rotations (R2). If the Dive leap is performed after the first rotation, it does not count as a rotational element.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {!isDiveLeap && element.level_change && !element.two_bases_series && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex flex-shrink-0">
+                                <Info className="h-4 w-4 text-primary cursor-help" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-sm">
+                              <p>This element automatically adds change of level/axis criteria and can only be used as the first single rotation.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {!isDiveLeap && element.level_change && element.two_bases_series && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex flex-shrink-0">
+                                <Info className="h-4 w-4 text-primary cursor-help" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-sm">
+                              <p>This element automatically adds change of level/axis criteria.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
