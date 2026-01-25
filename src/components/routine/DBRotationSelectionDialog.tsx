@@ -3,31 +3,33 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
-interface DBElement {
+export interface DBElement {
   id: string;
+  db_group?: string;
+  group?: string | null;
   code: string;
-  name: string;
+  name: string | null;
   description: string | null;
   value: number | null;
   turn_degrees: string | null;
   symbol_image: string | null;
 }
 
-interface DBRotationSelectionDialogProps {
+interface DBRotationSelectionDialogProps<T extends DBElement> {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  elements: DBElement[];
+  elements: T[];
   title: string;
-  onSelect: (element: DBElement) => void;
+  onSelect: (element: T) => void;
 }
 
-export const DBRotationSelectionDialog = ({
+export const DBRotationSelectionDialog = <T extends DBElement>({
   open,
   onOpenChange,
   elements,
   title,
   onSelect,
-}: DBRotationSelectionDialogProps) => {
+}: DBRotationSelectionDialogProps<T>) => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredElements = useMemo(() => {
@@ -35,13 +37,13 @@ export const DBRotationSelectionDialog = ({
     const query = searchQuery.toLowerCase();
     return elements.filter(
       (el) =>
-        el.name.toLowerCase().includes(query) ||
+        (el.name && el.name.toLowerCase().includes(query)) ||
         (el.description && el.description.toLowerCase().includes(query)) ||
         el.code.toLowerCase().includes(query)
     );
   }, [elements, searchQuery]);
 
-  const handleSelect = (element: DBElement) => {
+  const handleSelect = (element: T) => {
     onSelect(element);
     onOpenChange(false);
     setSearchQuery("");
@@ -90,7 +92,7 @@ export const DBRotationSelectionDialog = ({
                   {element.symbol_image ? (
                     <img
                       src={element.symbol_image}
-                      alt={element.name}
+                      alt={element.name || element.code}
                       className="h-8 w-8 object-contain"
                       onError={(e) => (e.currentTarget.style.display = "none")}
                     />
@@ -104,7 +106,7 @@ export const DBRotationSelectionDialog = ({
                 {/* Name */}
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">
-                    {element.name}
+                    {element.name || element.code}
                   </p>
                   {element.turn_degrees && (
                     <p className="text-xs text-muted-foreground">

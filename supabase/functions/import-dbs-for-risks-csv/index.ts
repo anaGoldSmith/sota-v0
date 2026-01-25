@@ -57,81 +57,117 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse CSV
+    // Parse CSV with robust options
     const parsed = Papa.parse(csvContent, {
       header: true,
-      skipEmptyLines: true,
+      skipEmptyLines: 'greedy', // Skip all empty lines including those with just whitespace
       transformHeader: (header: string) => header.toLowerCase().trim().replace(/\s+/g, '_'),
     });
 
     if (parsed.errors.length > 0) {
-      console.error('CSV parsing errors:', parsed.errors);
-      return new Response(
-        JSON.stringify({ error: 'CSV parsing failed', details: parsed.errors }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      // Filter out errors that are just about empty rows
+      const criticalErrors = parsed.errors.filter((e: any) => 
+        e.code !== 'TooFewFields' && e.code !== 'TooManyFields'
       );
+      if (criticalErrors.length > 0) {
+        console.error('CSV parsing errors:', criticalErrors);
+        return new Response(
+          JSON.stringify({ error: 'CSV parsing failed', details: criticalErrors }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Validate required headers
-    const requiredHeaders = ['code', 'name'];
+    const requiredHeaders = ['db_group', 'code'];
     const headers = parsed.meta.fields || [];
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
 
     if (missingHeaders.length > 0) {
       return new Response(
-        JSON.stringify({ error: `Missing required headers: ${missingHeaders.join(', ')}` }),
+        JSON.stringify({ 
+          error: `Missing required headers: ${missingHeaders.join(', ')}`,
+          foundHeaders: headers
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Transform data
+    // Helper to parse numeric values, handling comma decimals
+    const parseNumeric = (val: unknown): number | null => {
+      if (val === null || val === undefined || val === '') return null;
+      const strVal = String(val).trim().replace(',', '.');
+      const num = parseFloat(strVal);
+      return isNaN(num) ? null : num;
+    };
+
+    // Transform data - filter out rows that don't have required fields
     const elements = parsed.data
-      .filter((row: any) => row.code && row.name)
+      .filter((row: any) => {
+        // Must have db_group and code as minimum
+        const dbGroup = row.db_group?.toString().trim();
+        const code = row.code?.toString().trim();
+        return dbGroup && code;
+      })
       .map((row: any) => ({
-        code: row.code?.trim() || '',
-        name: row.name?.trim() || '',
-        description: row.description?.trim() || null,
-        value: row.value ? parseFloat(row.value) : null,
-        turn_degrees: row.turn_degrees?.trim() || null,
-        symbol_image: row.symbol_image?.trim() || null,
+        db_group: row.db_group?.toString().trim() || '',
+        group: row.group?.toString().trim() || null,
+        code: row.code?.toString().trim() || '',
+        name: row.name?.toString().trim() || null,
+        description: row.description?.toString().trim() || null,
+        value: parseNumeric(row.value),
+        turn_degrees: row.turn_degrees?.toString().trim() || null,
       }));
 
     if (elements.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'No valid data found in CSV' }),
+        JSON.stringify({ error: 'No valid data found in CSV. Ensure rows have db_group and code values.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    console.log(`Processing ${elements.length} valid rows from CSV`);
+
     // Delete existing records
     const { error: deleteError } = await supabase
-      .from('jumps_dbs_for_risks')
+      .from('dbs_for_risks')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000');
 
     if (deleteError) {
       console.error('Error deleting existing records:', deleteError);
       return new Response(
-        JSON.stringify({ error: 'Failed to clear existing data' }),
+        JSON.stringify({ error: 'Failed to clear existing data', details: deleteError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Insert new records
-    const { error: insertError } = await supabase
-      .from('jumps_dbs_for_risks')
-      .insert(elements);
+    // Insert new records in batches to avoid payload limits
+    const batchSize = 100;
+    let insertedCount = 0;
+    
+    for (let i = 0; i < elements.length; i += batchSize) {
+      const batch = elements.slice(i, i + batchSize);
+      const { error: insertError } = await supabase
+        .from('dbs_for_risks')
+        .insert(batch);
 
-    if (insertError) {
-      console.error('Error inserting records:', insertError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to insert data', details: insertError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (insertError) {
+        console.error('Error inserting records:', insertError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to insert data', 
+            details: insertError.message,
+            insertedSoFar: insertedCount
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      insertedCount += batch.length;
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: `Successfully imported ${elements.length} Jumps DBs for Risks` }),
+      JSON.stringify({ success: true, message: `Successfully imported ${insertedCount} DBs for Risks` }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
