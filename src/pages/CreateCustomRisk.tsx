@@ -155,14 +155,8 @@ type RotationEntry = {
 };
 
 const ROTATION_SPECIFICATION_OPTIONS = [
-  { value: 'pre-acrobatic' as const, label: 'Pre-acrobatic Elements', hasSubmenu: false },
-  { value: 'vertical' as const, label: 'Vertical Rotations', hasSubmenu: false },
-  { value: 'db-rotation' as const, label: 'DB with rotation of 360° or more, value 0.20 p. or more', hasSubmenu: true },
-];
-
-const DB_SUB_TYPE_OPTIONS = [
-  { value: 'jumps' as const, label: 'Jumps DBs with Rotations/Turns' },
-  { value: 'rotations' as const, label: 'Rotations DBs' },
+  { value: 'pre-acrobatic' as const, label: 'Pre-acrobatic Elements' },
+  { value: 'vertical' as const, label: 'Vertical Rotations' },
 ];
 
 interface SortableRotationRowProps {
@@ -336,7 +330,8 @@ const renderSymbol = () => {
   const selectedSpecLabel = (() => {
     if (!entry.specificationType) return null;
     if (entry.specificationType === 'vertical' && entry.selectedVerticalRotation) {
-      return `${entry.selectedVerticalRotation.group_name}: ${entry.selectedVerticalRotation.name}`;
+      // Format: "Vertical Upright Rotation: name" or "Vertical Seated Rotation: name"
+      return `Vertical ${entry.selectedVerticalRotation.group_name} Rotation: ${entry.selectedVerticalRotation.name}`;
     }
     return ROTATION_SPECIFICATION_OPTIONS.find(o => o.value === entry.specificationType)?.label || null;
   })();
@@ -498,68 +493,21 @@ const renderSymbol = () => {
             </div>
             <div className="p-2 space-y-1">
               {ROTATION_SPECIFICATION_OPTIONS.map((option) => (
-                option.hasSubmenu ? (
-                  <div
-                    key={option.value}
-                    className="relative group"
-                    onMouseEnter={() => setHoveredDBOption(true)}
-                    onMouseLeave={() => setHoveredDBOption(false)}
-                  >
-                    <div
-                      className={`p-3 rounded hover:bg-muted cursor-default flex items-center justify-between ${hoveredDBOption ? 'bg-muted' : ''}`}
-                    >
-                      <span className="text-sm text-foreground">{option.label}</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    
-                    {hoveredDBOption && (
-                      <div 
-                        className="absolute left-full top-0 pl-1 z-[110]"
-                        onMouseEnter={() => setHoveredDBOption(true)}
-                      >
-                        <div className="w-64 bg-background border border-border rounded-lg shadow-xl">
-                          <div className="p-2 space-y-1">
-                            {DB_SUB_TYPE_OPTIONS.map((subOption) => (
-                              <div
-                                key={subOption.value}
-                                className="p-3 rounded hover:bg-muted cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onUpdateDBSubType(entry.id, subOption.value);
-                                  setShowSpecificationDropdown(false);
-                                  setHoveredDBOption(false);
-                                  if (subOption.value === 'jumps') {
-                                    setShowJumpsDialog(true);
-                                  } else {
-                                    setShowRotationsDialog(true);
-                                  }
-                                }}
-                              >
-                                <span className="text-sm text-foreground">{subOption.label}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div
-                    key={option.value}
-                    className={`p-3 rounded hover:bg-muted cursor-pointer ${entry.specificationType === option.value ? 'bg-primary/10' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onUpdateSpecificationType(entry.id, option.value);
-                      setShowSpecificationDropdown(false);
-                      // Open vertical rotations dialog if vertical is selected
-                      if (option.value === 'vertical') {
-                        setShowVerticalRotationsDialog(true);
-                      }
-                    }}
-                  >
-                    <span className="text-sm text-foreground">{option.label}</span>
-                  </div>
-                )
+                <div
+                  key={option.value}
+                  className={`p-3 rounded hover:bg-muted cursor-pointer ${entry.specificationType === option.value ? 'bg-primary/10' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdateSpecificationType(entry.id, option.value);
+                    setShowSpecificationDropdown(false);
+                    // Open vertical rotations dialog if vertical is selected
+                    if (option.value === 'vertical') {
+                      setShowVerticalRotationsDialog(true);
+                    }
+                  }}
+                >
+                  <span className="text-sm text-foreground">{option.label}</span>
+                </div>
               ))}
             </div>
           </div>
@@ -610,20 +558,7 @@ const renderSymbol = () => {
                 {selectedSpecLabel ? (
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm text-muted-foreground italic">{selectedSpecLabel}</span>
-                    {/* Show "Change Rotation" button for vertical rotations */}
-                    {entry.specificationType === 'vertical' && entry.selectedVerticalRotation && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs text-primary hover:bg-primary/10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowVerticalRotationsDialog(true);
-                        }}
-                      >
-                        Change Rotation
-                      </Button>
-                    )}
+                    {/* Single "Change Rotation" button that opens the dropdown */}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -633,7 +568,7 @@ const renderSymbol = () => {
                         setShowSpecificationDropdown(!showSpecificationDropdown);
                       }}
                     >
-                      Change Type
+                      Change Rotation
                     </Button>
                   </div>
                 ) : (
@@ -672,70 +607,21 @@ const renderSymbol = () => {
                     </div>
                     <div className="p-2 space-y-1">
                       {ROTATION_SPECIFICATION_OPTIONS.map((option) => (
-                        option.hasSubmenu ? (
-                          <div
-                            key={option.value}
-                            className="relative group"
-                            onMouseEnter={() => setHoveredDBOption(true)}
-                            onMouseLeave={() => setHoveredDBOption(false)}
-                          >
-                            <div
-                              className={`p-3 rounded hover:bg-muted cursor-default flex items-center justify-between ${hoveredDBOption ? 'bg-muted' : ''}`}
-                            >
-                              <span className="text-sm text-foreground">{option.label}</span>
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                            
-                            {/* Sub-menu for DB options - with overlap padding to prevent gap */}
-                            {hoveredDBOption && (
-                              <div 
-                                className="absolute left-full top-0 pl-1 z-[110]"
-                                onMouseEnter={() => setHoveredDBOption(true)}
-                              >
-                                <div className="w-64 bg-background border border-border rounded-lg shadow-xl">
-                                  <div className="p-2 space-y-1">
-                                    {DB_SUB_TYPE_OPTIONS.map((subOption) => (
-                                      <div
-                                        key={subOption.value}
-                                        className="p-3 rounded hover:bg-muted cursor-pointer"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          onUpdateSpecificationType(entry.id, 'db-rotation');
-                                          onUpdateDBSubType(entry.id, subOption.value);
-                                          setShowSpecificationDropdown(false);
-                                          setHoveredDBOption(false);
-                                          if (subOption.value === 'jumps') {
-                                            setShowJumpsDialog(true);
-                                          } else {
-                                            setShowRotationsDialog(true);
-                                          }
-                                        }}
-                                      >
-                                        <span className="text-sm text-foreground">{subOption.label}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div
-                            key={option.value}
-                            className={`p-3 rounded hover:bg-muted cursor-pointer ${entry.specificationType === option.value ? 'bg-primary/10' : ''}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onUpdateSpecificationType(entry.id, option.value);
-                              setShowSpecificationDropdown(false);
-                              // Open vertical rotations dialog if vertical is selected
-                              if (option.value === 'vertical') {
-                                setShowVerticalRotationsDialog(true);
-                              }
-                            }}
-                          >
-                            <span className="text-sm text-foreground">{option.label}</span>
-                          </div>
-                        )
+                        <div
+                          key={option.value}
+                          className={`p-3 rounded hover:bg-muted cursor-pointer ${entry.specificationType === option.value ? 'bg-primary/10' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onUpdateSpecificationType(entry.id, option.value);
+                            setShowSpecificationDropdown(false);
+                            // Open vertical rotations dialog if vertical is selected
+                            if (option.value === 'vertical') {
+                              setShowVerticalRotationsDialog(true);
+                            }
+                          }}
+                        >
+                          <span className="text-sm text-foreground">{option.label}</span>
+                        </div>
                       ))}
                     </div>
                   </div>

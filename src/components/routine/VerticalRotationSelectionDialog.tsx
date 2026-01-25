@@ -29,6 +29,13 @@ const GROUP_OPTIONS = [
   { value: 'lying', label: 'Lying' },
 ];
 
+// Define sort order for groups
+const GROUP_ORDER: Record<string, number> = {
+  'Upright': 1,
+  'Seated': 2,
+  'Lying': 3,
+};
+
 export const VerticalRotationSelectionDialog = ({
   open,
   onOpenChange,
@@ -40,30 +47,28 @@ export const VerticalRotationSelectionDialog = ({
   const [customGroup, setCustomGroup] = useState<string>("");
   const [customName, setCustomName] = useState("");
 
-  const filteredRotations = useMemo(() => {
-    if (!searchQuery.trim()) return rotations;
-    const query = searchQuery.toLowerCase();
-    return rotations.filter(
-      (r) =>
-        r.name?.toLowerCase().includes(query) ||
-        r.description?.toLowerCase().includes(query) ||
-        r.group_name?.toLowerCase().includes(query) ||
-        r.code?.toLowerCase().includes(query)
-    );
-  }, [rotations, searchQuery]);
+  // Filter and sort rotations: Upright first, then Seated, then Lying
+  const sortedRotations = useMemo(() => {
+    let filtered = rotations;
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = rotations.filter(
+        (r) =>
+          r.name?.toLowerCase().includes(query) ||
+          r.description?.toLowerCase().includes(query) ||
+          r.group_name?.toLowerCase().includes(query) ||
+          r.code?.toLowerCase().includes(query)
+      );
+    }
 
-  // Group rotations by group_name
-  const groupedRotations = useMemo(() => {
-    const groups: Record<string, VerticalRotation[]> = {};
-    filteredRotations.forEach((r) => {
-      const groupKey = r.group_name || "Other";
-      if (!groups[groupKey]) {
-        groups[groupKey] = [];
-      }
-      groups[groupKey].push(r);
+    // Sort by group order
+    return [...filtered].sort((a, b) => {
+      const orderA = GROUP_ORDER[a.group_name || ''] ?? 99;
+      const orderB = GROUP_ORDER[b.group_name || ''] ?? 99;
+      return orderA - orderB;
     });
-    return groups;
-  }, [filteredRotations]);
+  }, [rotations, searchQuery]);
 
   const handleSelect = (rotation: VerticalRotation) => {
     onSelect(rotation);
@@ -175,53 +180,52 @@ export const VerticalRotationSelectionDialog = ({
           </div>
         )}
 
-        {/* Rotation List */}
-        <div className="flex-1 overflow-y-auto border border-border rounded-lg">
-          {Object.keys(groupedRotations).length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              No vertical rotations found
-            </div>
-          ) : (
-            Object.entries(groupedRotations).map(([groupName, items]) => (
-              <div key={groupName}>
-                {/* Group Header */}
-                <div className="sticky top-0 bg-muted px-4 py-2 border-b border-border">
-                  <span className="font-medium text-sm text-foreground">{groupName}</span>
-                </div>
-                {/* Rotation Items */}
-                {items.map((rotation) => (
-                  <div
-                    key={rotation.id}
-                    className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 cursor-pointer border-b border-border last:border-b-0"
-                    onClick={() => handleSelect(rotation)}
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <span className="font-medium text-foreground truncate">
-                        {rotation.name || rotation.code}
-                      </span>
-                      {rotation.description && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="inline-flex flex-shrink-0">
-                                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-sm">
-                              <p>{rotation.description}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </div>
-                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded flex-shrink-0">
-                      {rotation.db === 'Y' ? 'DB' : 'Non-DB'}
-                    </span>
-                  </div>
-                ))}
+        {/* Table Header */}
+        <div className="border border-border rounded-lg overflow-hidden">
+          <div className="flex items-center bg-muted border-b border-border">
+            <div className="w-24 px-4 py-2 font-medium text-sm text-foreground">Group</div>
+            <div className="flex-1 px-4 py-2 font-medium text-sm text-foreground">Name</div>
+          </div>
+
+          {/* Rotation List */}
+          <div className="max-h-[45vh] overflow-y-auto">
+            {sortedRotations.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                No vertical rotations found
               </div>
-            ))
-          )}
+            ) : (
+              sortedRotations.map((rotation) => (
+                <div
+                  key={rotation.id}
+                  className="flex items-center hover:bg-muted/50 cursor-pointer border-b border-border last:border-b-0"
+                  onClick={() => handleSelect(rotation)}
+                >
+                  <div className="w-24 px-4 py-3 text-sm text-muted-foreground">
+                    {rotation.group_name || '—'}
+                  </div>
+                  <div className="flex-1 px-4 py-3 flex items-center gap-2">
+                    <span className="font-medium text-foreground">
+                      {rotation.name || rotation.code}
+                    </span>
+                    {rotation.description && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex flex-shrink-0">
+                              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-sm">
+                            <p>{rotation.description}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
