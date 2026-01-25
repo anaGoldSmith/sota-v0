@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Info, Search, AlertCircle } from "lucide-react";
+import { Info, Search, AlertCircle, Plus } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface PreAcrobaticElement {
@@ -12,6 +12,7 @@ export interface PreAcrobaticElement {
   name: string;
   level_change: boolean;
   two_bases_series: boolean;
+  isCustom?: boolean;
 }
 
 interface PreAcrobaticSelectionDialogProps {
@@ -33,6 +34,8 @@ export const PreAcrobaticSelectionDialog = ({
   isFirstRotation,
 }: PreAcrobaticSelectionDialogProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customName, setCustomName] = useState("");
 
   // Filter elements based on business rules and search query
   const filteredElements = useMemo(() => {
@@ -71,12 +74,32 @@ export const PreAcrobaticSelectionDialog = ({
   const handleSelect = (element: PreAcrobaticElement) => {
     onSelect(element);
     setSearchQuery("");
+    setShowCustomInput(false);
+    setCustomName("");
     onOpenChange(false);
   };
 
   const handleClose = () => {
     setSearchQuery("");
+    setShowCustomInput(false);
+    setCustomName("");
     onOpenChange(false);
+  };
+
+  const handleCustomSubmit = () => {
+    if (!customName.trim()) return;
+    
+    const customElement: PreAcrobaticElement = {
+      id: `custom-preacro-${Date.now()}`,
+      group_code: 'CUSTOM',
+      group_name: 'Custom',
+      name: customName.trim(),
+      level_change: false,
+      two_bases_series: true, // Allow custom elements in all contexts
+      isCustom: true,
+    };
+    
+    handleSelect(customElement);
   };
 
   // Get info text about restrictions
@@ -97,7 +120,7 @@ export const PreAcrobaticSelectionDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Select Pre-acrobatic Element</DialogTitle>
         </DialogHeader>
@@ -113,6 +136,46 @@ export const PreAcrobaticSelectionDialog = ({
           />
         </div>
 
+        {/* Custom Element Button */}
+        {!showCustomInput ? (
+          <Button
+            variant="outline"
+            className="w-full justify-start gap-2"
+            onClick={() => setShowCustomInput(true)}
+          >
+            <Plus className="h-4 w-4" />
+            Add Custom Pre-acrobatic Element
+          </Button>
+        ) : (
+          <div className="flex gap-2">
+            <Input
+              placeholder="Enter custom element name..."
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value.slice(0, 100))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCustomSubmit();
+                if (e.key === 'Escape') {
+                  setShowCustomInput(false);
+                  setCustomName("");
+                }
+              }}
+              autoFocus
+            />
+            <Button onClick={handleCustomSubmit} disabled={!customName.trim()}>
+              Add
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                setShowCustomInput(false);
+                setCustomName("");
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        )}
+
         {/* Restriction info */}
         {restrictionInfo && (
           <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
@@ -124,8 +187,9 @@ export const PreAcrobaticSelectionDialog = ({
         {/* Table Header */}
         <div className="border border-border rounded-lg overflow-hidden">
           <div className="flex items-center bg-muted border-b border-border">
-            <div className="w-24 px-4 py-2 font-medium text-sm text-foreground">Group</div>
-            <div className="flex-1 px-4 py-2 font-medium text-sm text-foreground">Name</div>
+            <div className="flex-1 px-4 py-2 font-medium text-sm text-foreground">
+              Name of Pre-acrobatic Element
+            </div>
           </div>
 
           {/* Element List */}
@@ -141,9 +205,6 @@ export const PreAcrobaticSelectionDialog = ({
                   className="flex items-center hover:bg-muted/50 cursor-pointer border-b border-border last:border-b-0"
                   onClick={() => handleSelect(element)}
                 >
-                  <div className="w-24 px-4 py-3 text-sm text-muted-foreground">
-                    {element.group_name || element.group_code || '—'}
-                  </div>
                   <div className="flex-1 px-4 py-3 flex items-center gap-2">
                     <span className="font-medium text-foreground">
                       {element.name}
