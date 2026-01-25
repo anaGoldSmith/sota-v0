@@ -253,6 +253,9 @@ export const DBDuringThrowCatchDialog = ({
                 <div className="flex-1">
                   <span className="text-base font-medium text-foreground">Turning Leaps</span>
                   <p className="text-sm text-muted-foreground">{turningLeaps.length} elements</p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                    Note: This section allows to select only one turning leap. To add a risk with a series of turning jumps, go one step back to the "Standard Risks" section and choose a risk with three turning leaps.
+                  </p>
                 </div>
               </div>
 
