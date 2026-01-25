@@ -690,6 +690,8 @@ const renderSymbol = () => {
             isFirstRotation={isFirstRotation}
           />
         </div>
+      </div>
+      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
         <p className="font-semibold text-primary">{getValue()}</p>
         <Button 
           variant="ghost" 
