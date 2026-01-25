@@ -288,7 +288,7 @@ export const DBDuringThrowCatchDialog = ({
             {/* Rotation Count Selector - only for rotations */}
             {selectedGroup === 'rotations' && (
               <div className="flex items-center gap-4 mt-4 p-3 bg-muted/50 rounded-lg">
-                <Label className="text-sm font-medium">Number of rotations:</Label>
+                <Label className="text-sm font-medium">Number of circles in selected rotation:</Label>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -347,11 +347,15 @@ export const DBDuringThrowCatchDialog = ({
                     ) : (
                       filteredList.map(item => {
                         const symbolUrl = getSymbolUrl(item.symbol_image);
+                        // 3.1704 (Backward Illusion) can only have 1 rotation
+                        const isFixed1704 = item.code === '3.1704';
+                        const effectiveCount = isFixed1704 ? 1 : rotationCount;
+                        
                         return (
                           <TableRow 
                             key={item.id}
                             className="hover:bg-accent/50 cursor-pointer"
-                            onClick={() => handleSelectDB(item, selectedGroup === 'rotations' ? rotationCount : undefined)}
+                            onClick={() => handleSelectDB(item, selectedGroup === 'rotations' ? effectiveCount : undefined)}
                           >
                             <TableCell className="p-3">
                               <div className="w-12 h-12 bg-muted/50 rounded flex items-center justify-center">
@@ -380,17 +384,22 @@ export const DBDuringThrowCatchDialog = ({
                                   ({item.turn_degrees}°)
                                 </span>
                               )}
+                              {isFixed1704 && (
+                                <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">
+                                  (1 rotation only)
+                                </span>
+                              )}
                             </TableCell>
                             <TableCell className="text-center">
                               <span className="font-semibold text-primary">
                                 {selectedGroup === 'rotations' 
-                                  ? calculateRotationValue(item, rotationCount).toFixed(2)
+                                  ? calculateRotationValue(item, effectiveCount).toFixed(2)
                                   : (item.value || 0).toFixed(2)
                                 }
                               </span>
-                              {selectedGroup === 'rotations' && rotationCount > 1 && (
+                              {selectedGroup === 'rotations' && effectiveCount > 1 && !isFixed1704 && (
                                 <span className="block text-xs text-muted-foreground">
-                                  ({item.value || 0} + {(rotationCount - 1)} × {item.extra_value || 0})
+                                  ({item.value || 0} + {(effectiveCount - 1)} × {item.extra_value || 0})
                                 </span>
                               )}
                             </TableCell>
@@ -400,7 +409,7 @@ export const DBDuringThrowCatchDialog = ({
                                 variant="outline"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleSelectDB(item, selectedGroup === 'rotations' ? rotationCount : undefined);
+                                  handleSelectDB(item, selectedGroup === 'rotations' ? effectiveCount : undefined);
                                 }}
                               >
                                 Select
