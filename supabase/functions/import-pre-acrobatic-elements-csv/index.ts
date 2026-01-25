@@ -87,7 +87,7 @@ serve(async (req) => {
     console.log(`Parsed ${rows.length} rows from CSV`);
 
     // Validate required headers
-    const requiredHeaders = ['group_code', 'group', 'name', 'level_change', '2bases_series'];
+    const requiredHeaders = ['group_code', 'group_name', 'level_change', '2bases_series'];
     const headers = parseResult.meta.fields || [];
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
 
@@ -118,11 +118,11 @@ serve(async (req) => {
 
     // Transform and insert data
     const elements = rows
-      .filter(row => row.group_code && row.name) // Filter out empty rows
+      .filter(row => row.group_code && row.group_name) // Filter out empty rows
       .map(row => ({
         group_code: row.group_code?.trim() || '',
-        group_name: row.group?.trim() || '',
-        name: row.name?.trim() || '',
+        group_name: row.group_name?.trim() || '',
+        name: row.group_name?.trim() || '', // Use group_name as the element name
         level_change: parseBool(row.level_change),
         two_bases_series: parseBool(row['2bases_series']),
       }));
