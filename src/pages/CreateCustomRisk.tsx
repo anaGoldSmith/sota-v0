@@ -73,11 +73,13 @@ const isApplicableForApparatus = (item: {
 
 import { DBRotationSelectionDialog } from "@/components/routine/DBRotationSelectionDialog";
 
-// DB Element interface for jumps/rotations
+// DB Element interface for unified dbs_for_risks table
 interface DBForRisk {
   id: string;
+  db_group: string;
+  group: string | null;
   code: string;
-  name: string;
+  name: string | null;
   description: string | null;
   value: number | null;
   turn_degrees: string | null;
@@ -789,9 +791,12 @@ const CreateCustomRisk = () => {
   const [catchCriteria, setCatchCriteria] = useState<CriteriaItem[]>([]);
   const rotationDropdownRef = useRef<HTMLDivElement>(null);
 
-  // State for DBs for risks
-  const [jumpsDBs, setJumpsDBs] = useState<DBForRisk[]>([]);
-  const [rotationsDBs, setRotationsDBs] = useState<DBForRisk[]>([]);
+  // State for DBs for risks (unified table, filtered by db_group)
+  const [dbsForRisks, setDbsForRisks] = useState<DBForRisk[]>([]);
+  
+  // Derived: filter DBs by group
+  const jumpsDBs = useMemo(() => dbsForRisks.filter(db => db.db_group === 'jumps'), [dbsForRisks]);
+  const rotationsDBs = useMemo(() => dbsForRisks.filter(db => db.db_group === 'rotations'), [dbsForRisks]);
   
   // Check if axis change already exists
   const hasAxisChange = rotationEntries.some(e => e.type === 'axis');
@@ -902,24 +907,17 @@ const CreateCustomRisk = () => {
         setDynamicCatches(data);
       }
 };
-    const loadJumpsDBs = async () => {
-      const { data, error } = await supabase.from('jumps_dbs_for_risks').select('*').order('code');
+    const loadDbsForRisks = async () => {
+      const { data, error } = await supabase.from('dbs_for_risks').select('*').order('code');
       if (data && !error) {
-        setJumpsDBs(data);
-      }
-    };
-    const loadRotationsDBs = async () => {
-      const { data, error } = await supabase.from('rotations_dbs_for_risks').select('*').order('code');
-      if (data && !error) {
-        setRotationsDBs(data);
+        setDbsForRisks(data as DBForRisk[]);
       }
     };
     loadSymbols();
     loadGeneralCriteria();
     loadDynamicThrows();
     loadDynamicCatches();
-    loadJumpsDBs();
-    loadRotationsDBs();
+    loadDbsForRisks();
   }, []);
 
   // Pre-populate form when modifying an existing risk

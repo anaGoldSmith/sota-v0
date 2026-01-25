@@ -317,6 +317,45 @@ export type Database = {
         }
         Relationships: []
       }
+      dbs_for_risks: {
+        Row: {
+          code: string
+          created_at: string
+          db_group: string
+          description: string | null
+          group: string | null
+          id: string
+          name: string | null
+          symbol_image: string | null
+          turn_degrees: string | null
+          value: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          db_group: string
+          description?: string | null
+          group?: string | null
+          id?: string
+          name?: string | null
+          symbol_image?: string | null
+          turn_degrees?: string | null
+          value?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          db_group?: string
+          description?: string | null
+          group?: string | null
+          id?: string
+          name?: string | null
+          symbol_image?: string | null
+          turn_degrees?: string | null
+          value?: number | null
+        }
+        Relationships: []
+      }
       dynamic_catches: {
         Row: {
           apparatus: string
@@ -551,42 +590,6 @@ export type Database = {
           turn_degrees?: string | null
           updated_at?: string
           value?: number
-        }
-        Relationships: []
-      }
-      jumps_dbs_for_risks: {
-        Row: {
-          code: string
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          symbol_image: string | null
-          turn_degrees: string | null
-          updated_at: string
-          value: number | null
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          symbol_image?: string | null
-          turn_degrees?: string | null
-          updated_at?: string
-          value?: number | null
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          symbol_image?: string | null
-          turn_degrees?: string | null
-          updated_at?: string
-          value?: number | null
         }
         Relationships: []
       }
@@ -845,42 +848,6 @@ export type Database = {
           turn_degrees?: string | null
           updated_at?: string
           value?: number
-        }
-        Relationships: []
-      }
-      rotations_dbs_for_risks: {
-        Row: {
-          code: string
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          symbol_image: string | null
-          turn_degrees: string | null
-          updated_at: string
-          value: number | null
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          symbol_image?: string | null
-          turn_degrees?: string | null
-          updated_at?: string
-          value?: number | null
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          symbol_image?: string | null
-          turn_degrees?: string | null
-          updated_at?: string
-          value?: number | null
         }
         Relationships: []
       }
