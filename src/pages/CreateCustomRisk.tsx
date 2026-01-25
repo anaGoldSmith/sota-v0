@@ -72,6 +72,7 @@ const isApplicableForApparatus = (item: {
 };
 
 import { DBRotationSelectionDialog } from "@/components/routine/DBRotationSelectionDialog";
+import { VerticalRotationSelectionDialog, VerticalRotation } from "@/components/routine/VerticalRotationSelectionDialog";
 
 // DB Element interface for unified dbs_for_risks table
 interface DBForRisk {
@@ -150,6 +151,7 @@ type RotationEntry = {
   specificationType?: RotationSpecificationType;
   dbSubType?: DBSubType;
   selectedDBElement?: DBForRisk;
+  selectedVerticalRotation?: VerticalRotation;
 };
 
 const ROTATION_SPECIFICATION_OPTIONS = [
@@ -171,15 +173,18 @@ interface SortableRotationRowProps {
   onUpdateSpecificationType: (id: string, type: RotationSpecificationType) => void;
   onUpdateDBSubType: (id: string, subType: DBSubType) => void;
   onSelectDBElement: (id: string, element: DBForRisk) => void;
+  onSelectVerticalRotation: (id: string, rotation: VerticalRotation) => void;
   jumpsDBs: DBForRisk[];
   rotationsDBs: DBForRisk[];
+  verticalRotations: VerticalRotation[];
 }
 
-const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount, onUpdateSpecificationType, onUpdateDBSubType, onSelectDBElement, jumpsDBs, rotationsDBs }: SortableRotationRowProps) => {
+const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount, onUpdateSpecificationType, onUpdateDBSubType, onSelectDBElement, onSelectVerticalRotation, jumpsDBs, rotationsDBs, verticalRotations }: SortableRotationRowProps) => {
   const [showSpecificationDropdown, setShowSpecificationDropdown] = useState(false);
   const [hoveredDBOption, setHoveredDBOption] = useState(false);
   const [showJumpsDialog, setShowJumpsDialog] = useState(false);
   const [showRotationsDialog, setShowRotationsDialog] = useState(false);
+  const [showVerticalRotationsDialog, setShowVerticalRotationsDialog] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const specDropdownRef = useRef<HTMLDivElement>(null);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: entry.id });
@@ -326,9 +331,15 @@ const renderSymbol = () => {
 
   // Only show specification button for actual rotations (not axis)
   const showSpecificationButton = entry.type === 'one' || entry.type === 'two' || entry.type === 'series';
-  const selectedSpecLabel = entry.specificationType 
-    ? ROTATION_SPECIFICATION_OPTIONS.find(o => o.value === entry.specificationType)?.label 
-    : null;
+  
+  // Build the specification label - show vertical rotation name if selected
+  const selectedSpecLabel = (() => {
+    if (!entry.specificationType) return null;
+    if (entry.specificationType === 'vertical' && entry.selectedVerticalRotation) {
+      return `${entry.selectedVerticalRotation.group_name}: ${entry.selectedVerticalRotation.name}`;
+    }
+    return ROTATION_SPECIFICATION_OPTIONS.find(o => o.value === entry.specificationType)?.label || null;
+  })();
 
   const getBaseTypeName = () => {
     if (entry.type === 'one') return 'One Rotation';
@@ -540,6 +551,10 @@ const renderSymbol = () => {
                       e.stopPropagation();
                       onUpdateSpecificationType(entry.id, option.value);
                       setShowSpecificationDropdown(false);
+                      // Open vertical rotations dialog if vertical is selected
+                      if (option.value === 'vertical') {
+                        setShowVerticalRotationsDialog(true);
+                      }
                     }}
                   >
                     <span className="text-sm text-foreground">{option.label}</span>
@@ -565,6 +580,12 @@ const renderSymbol = () => {
           title="Select Rotation DB"
           onSelect={(element) => onSelectDBElement(entry.id, element)}
         />
+        <VerticalRotationSelectionDialog
+          open={showVerticalRotationsDialog}
+          onOpenChange={setShowVerticalRotationsDialog}
+          rotations={verticalRotations}
+          onSelect={(rotation) => onSelectVerticalRotation(entry.id, rotation)}
+        />
       </div>
     );
   }
@@ -587,8 +608,22 @@ const renderSymbol = () => {
             <div className="space-y-2">
               <div className="relative" ref={specDropdownRef}>
                 {selectedSpecLabel ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm text-muted-foreground italic">{selectedSpecLabel}</span>
+                    {/* Show "Change Rotation" button for vertical rotations */}
+                    {entry.specificationType === 'vertical' && entry.selectedVerticalRotation && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs text-primary hover:bg-primary/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowVerticalRotationsDialog(true);
+                        }}
+                      >
+                        Change Rotation
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -598,7 +633,7 @@ const renderSymbol = () => {
                         setShowSpecificationDropdown(!showSpecificationDropdown);
                       }}
                     >
-                      Change
+                      Change Type
                     </Button>
                   </div>
                 ) : (
@@ -692,6 +727,10 @@ const renderSymbol = () => {
                               e.stopPropagation();
                               onUpdateSpecificationType(entry.id, option.value);
                               setShowSpecificationDropdown(false);
+                              // Open vertical rotations dialog if vertical is selected
+                              if (option.value === 'vertical') {
+                                setShowVerticalRotationsDialog(true);
+                              }
                             }}
                           >
                             <span className="text-sm text-foreground">{option.label}</span>
@@ -720,9 +759,13 @@ const renderSymbol = () => {
             title="Select Rotation DB"
             onSelect={(element) => onSelectDBElement(entry.id, element)}
           />
+          <VerticalRotationSelectionDialog
+            open={showVerticalRotationsDialog}
+            onOpenChange={setShowVerticalRotationsDialog}
+            rotations={verticalRotations}
+            onSelect={(rotation) => onSelectVerticalRotation(entry.id, rotation)}
+          />
         </div>
-      </div>
-      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
         <p className="font-semibold text-primary">{getValue()}</p>
         <Button 
           variant="ghost" 
@@ -793,6 +836,9 @@ const CreateCustomRisk = () => {
 
   // State for DBs for risks (unified table, filtered by db_group)
   const [dbsForRisks, setDbsForRisks] = useState<DBForRisk[]>([]);
+  
+  // State for vertical rotations
+  const [verticalRotations, setVerticalRotations] = useState<VerticalRotation[]>([]);
   
   // Derived: filter DBs by group
   const jumpsDBs = useMemo(() => dbsForRisks.filter(db => db.db_group === 'jumps'), [dbsForRisks]);
@@ -913,11 +959,18 @@ const CreateCustomRisk = () => {
         setDbsForRisks(data as DBForRisk[]);
       }
     };
+    const loadVerticalRotations = async () => {
+      const { data, error } = await supabase.from('vertical_rotations').select('*').order('group_name, name');
+      if (data && !error) {
+        setVerticalRotations(data as VerticalRotation[]);
+      }
+    };
     loadSymbols();
     loadGeneralCriteria();
     loadDynamicThrows();
     loadDynamicCatches();
     loadDbsForRisks();
+    loadVerticalRotations();
   }, []);
 
   // Pre-populate form when modifying an existing risk
@@ -1100,6 +1153,11 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
   const handleSelectDBElement = (id: string, element: DBForRisk) => {
     setRotationEntries(prev => prev.map(e => 
       e.id === id ? { ...e, selectedDBElement: element } : e
+    ));
+  };
+  const handleSelectVerticalRotation = (id: string, rotation: VerticalRotation) => {
+    setRotationEntries(prev => prev.map(e => 
+      e.id === id ? { ...e, selectedVerticalRotation: rotation } : e
     ));
   };
   // Check if 2 base rotations already exists
@@ -1823,8 +1881,10 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         onUpdateSpecificationType={handleUpdateSpecificationType}
                         onUpdateDBSubType={handleUpdateDBSubType}
                         onSelectDBElement={handleSelectDBElement}
+                        onSelectVerticalRotation={handleSelectVerticalRotation}
                         jumpsDBs={jumpsDBs}
                         rotationsDBs={rotationsDBs}
+                        verticalRotations={verticalRotations}
                       />
                     ))}
                   </SortableContext>
