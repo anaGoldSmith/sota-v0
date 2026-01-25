@@ -22,6 +22,7 @@ interface DBForRisk {
   value: number | null;
   turn_degrees: string | null;
   symbol_image: string | null;
+  extra_value: number | null;
 }
 
 // Simplified element for parent component
@@ -108,13 +109,37 @@ export const DBDuringThrowCatchDialog = ({
     }
   };
 
+  // Calculate total value for rotations with extra value logic (same as Elements module)
+  const calculateRotationValue = (db: DBForRisk, count: number): number => {
+    const baseValue = db.value || 0;
+    const extraValue = db.extra_value || 0;
+    
+    // Check if it's a 180-degree rotation
+    const is180Degrees = db.turn_degrees === "180" || (db.turn_degrees && db.turn_degrees.includes("180"));
+    
+    if (is180Degrees) {
+      // For 180°: add extra_value for each additional 0.5 after the first 0.5
+      const additionalHalfRotations = (count - 0.5) / 0.5;
+      return baseValue + (additionalHalfRotations * extraValue);
+    } else {
+      // For other rotations: add extra_value only for full extra circles
+      const additionalFullRotations = Math.floor(count) - 1;
+      return baseValue + (Math.max(0, additionalFullRotations) * extraValue);
+    }
+  };
+
   const handleSelectDB = (db: DBForRisk, customRotationCount?: number) => {
+    // Calculate final value for rotations with extra value logic
+    const finalValue = selectedGroup === 'rotations' && customRotationCount
+      ? calculateRotationValue(db, customRotationCount)
+      : db.value || 0;
+    
     const element: DBElement = {
       id: db.id,
       code: db.code,
       name: db.name,
       description: db.description || '',
-      value: db.value || 0,
+      value: finalValue,
       symbol_image: db.symbol_image,
       turn_degrees: db.turn_degrees,
     };
@@ -359,13 +384,13 @@ export const DBDuringThrowCatchDialog = ({
                             <TableCell className="text-center">
                               <span className="font-semibold text-primary">
                                 {selectedGroup === 'rotations' 
-                                  ? ((item.value || 0) * rotationCount).toFixed(2)
+                                  ? calculateRotationValue(item, rotationCount).toFixed(2)
                                   : (item.value || 0).toFixed(2)
                                 }
                               </span>
                               {selectedGroup === 'rotations' && rotationCount > 1 && (
                                 <span className="block text-xs text-muted-foreground">
-                                  ({item.value || 0} × {rotationCount})
+                                  ({item.value || 0} + {(rotationCount - 1)} × {item.extra_value || 0})
                                 </span>
                               )}
                             </TableCell>

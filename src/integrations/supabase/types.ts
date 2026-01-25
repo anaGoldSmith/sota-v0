@@ -323,6 +323,7 @@ export type Database = {
           created_at: string
           db_group: string
           description: string | null
+          extra_value: number | null
           group: string | null
           id: string
           name: string | null
@@ -335,6 +336,7 @@ export type Database = {
           created_at?: string
           db_group: string
           description?: string | null
+          extra_value?: number | null
           group?: string | null
           id?: string
           name?: string | null
@@ -347,6 +349,7 @@ export type Database = {
           created_at?: string
           db_group?: string
           description?: string | null
+          extra_value?: number | null
           group?: string | null
           id?: string
           name?: string | null
