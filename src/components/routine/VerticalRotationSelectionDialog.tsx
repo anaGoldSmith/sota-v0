@@ -29,11 +29,14 @@ const GROUP_OPTIONS = [
   { value: 'lying', label: 'Lying' },
 ];
 
-// Define sort order for groups
+// Define sort order for groups: Upright first, then Seated, then Lying
 const GROUP_ORDER: Record<string, number> = {
   'Upright': 1,
+  'upright': 1,
   'Seated': 2,
+  'seated': 2,
   'Lying': 3,
+  'lying': 3,
 };
 
 export const VerticalRotationSelectionDialog = ({
@@ -200,7 +203,7 @@ export const VerticalRotationSelectionDialog = ({
                   className="flex items-center hover:bg-muted/50 cursor-pointer border-b border-border last:border-b-0"
                   onClick={() => handleSelect(rotation)}
                 >
-                  <div className="w-24 px-4 py-3 text-sm text-muted-foreground">
+                  <div className="w-24 px-4 py-3 text-sm text-muted-foreground capitalize">
                     {rotation.group_name || '—'}
                   </div>
                   <div className="flex-1 px-4 py-3 flex items-center gap-2">
