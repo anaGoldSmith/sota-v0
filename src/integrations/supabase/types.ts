@@ -908,6 +908,39 @@ export type Database = {
         }
         Relationships: []
       }
+      vertical_rotations: {
+        Row: {
+          code: string
+          created_at: string
+          db: string | null
+          description: string | null
+          group: string | null
+          group_name: string | null
+          id: string
+          name: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          db?: string | null
+          description?: string | null
+          group?: string | null
+          group_name?: string | null
+          id?: string
+          name?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          db?: string | null
+          description?: string | null
+          group?: string | null
+          group_name?: string | null
+          id?: string
+          name?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
