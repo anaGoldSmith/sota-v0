@@ -16,6 +16,7 @@ const DynamicElementsConfiguration = () => {
   const [uploadingPrerecordedRiskComponents, setUploadingPrerecordedRiskComponents] = useState(false);
   const [uploadingPrerecordedRisks, setUploadingPrerecordedRisks] = useState(false);
   const [uploadingDBsForRisks, setUploadingDBsForRisks] = useState(false);
+  const [uploadingVerticalRotations, setUploadingVerticalRotations] = useState(false);
   
   const catchesInputRef = useRef<HTMLInputElement>(null);
   const throwsInputRef = useRef<HTMLInputElement>(null);
@@ -23,7 +24,7 @@ const DynamicElementsConfiguration = () => {
   const prerecordedRiskComponentsInputRef = useRef<HTMLInputElement>(null);
   const prerecordedRisksInputRef = useRef<HTMLInputElement>(null);
   const dbsForRisksInputRef = useRef<HTMLInputElement>(null);
-  const rotationsDBsInputRef = useRef<HTMLInputElement>(null);
+  const verticalRotationsInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -334,6 +335,42 @@ const DynamicElementsConfiguration = () => {
               >
                 <Upload className="h-4 w-4 mr-2" />
                 {uploadingDBsForRisks ? "Uploading..." : "Upload DBs for Risks CSV"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Vertical Rotations CSV Upload */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <FileText className="h-8 w-8 text-primary" />
+                <CardTitle>Vertical Rotations</CardTitle>
+              </div>
+              <CardDescription>
+                Upload CSV with columns: group, group_name, DB, code, name, description
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <input
+                type="file"
+                accept=".csv"
+                ref={verticalRotationsInputRef}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleCsvUpload(file, 'import-vertical-rotations-csv', setUploadingVerticalRotations, 'vertical rotations');
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <Button
+                onClick={() => verticalRotationsInputRef.current?.click()}
+                disabled={uploadingVerticalRotations}
+                className="w-full"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {uploadingVerticalRotations ? "Uploading..." : "Upload Vertical Rotations CSV"}
               </Button>
             </CardContent>
           </Card>
