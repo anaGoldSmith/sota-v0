@@ -596,6 +596,39 @@ export type Database = {
         }
         Relationships: []
       }
+      pre_acrobatic_elements: {
+        Row: {
+          created_at: string
+          group_code: string
+          group_name: string
+          id: string
+          level_change: boolean
+          name: string
+          two_bases_series: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          group_code: string
+          group_name: string
+          id?: string
+          level_change?: boolean
+          name: string
+          two_bases_series?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          group_code?: string
+          group_name?: string
+          id?: string
+          level_change?: boolean
+          name?: string
+          two_bases_series?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prerecorded_risk_components: {
         Row: {
           created_at: string

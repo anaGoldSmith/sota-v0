@@ -73,6 +73,7 @@ const isApplicableForApparatus = (item: {
 
 import { DBRotationSelectionDialog } from "@/components/routine/DBRotationSelectionDialog";
 import { VerticalRotationSelectionDialog, VerticalRotation } from "@/components/routine/VerticalRotationSelectionDialog";
+import { PreAcrobaticSelectionDialog, PreAcrobaticElement } from "@/components/routine/PreAcrobaticSelectionDialog";
 
 // DB Element interface for unified dbs_for_risks table
 interface DBForRisk {
@@ -152,6 +153,7 @@ type RotationEntry = {
   dbSubType?: DBSubType;
   selectedDBElement?: DBForRisk;
   selectedVerticalRotation?: VerticalRotation;
+  selectedPreAcrobaticElement?: PreAcrobaticElement;
 };
 
 const ROTATION_SPECIFICATION_OPTIONS = [
@@ -168,17 +170,21 @@ interface SortableRotationRowProps {
   onUpdateDBSubType: (id: string, subType: DBSubType) => void;
   onSelectDBElement: (id: string, element: DBForRisk) => void;
   onSelectVerticalRotation: (id: string, rotation: VerticalRotation) => void;
+  onSelectPreAcrobaticElement: (id: string, element: PreAcrobaticElement) => void;
   jumpsDBs: DBForRisk[];
   rotationsDBs: DBForRisk[];
   verticalRotations: VerticalRotation[];
+  preAcrobaticElements: PreAcrobaticElement[];
+  isFirstRotation: boolean;
 }
 
-const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount, onUpdateSpecificationType, onUpdateDBSubType, onSelectDBElement, onSelectVerticalRotation, jumpsDBs, rotationsDBs, verticalRotations }: SortableRotationRowProps) => {
+const SortableRotationRow = ({ entry, symbols, onRemove, onUpdateSeriesCount, onUpdateSpecificationType, onUpdateDBSubType, onSelectDBElement, onSelectVerticalRotation, onSelectPreAcrobaticElement, jumpsDBs, rotationsDBs, verticalRotations, preAcrobaticElements, isFirstRotation }: SortableRotationRowProps) => {
   const [showSpecificationDropdown, setShowSpecificationDropdown] = useState(false);
   const [hoveredDBOption, setHoveredDBOption] = useState(false);
   const [showJumpsDialog, setShowJumpsDialog] = useState(false);
   const [showRotationsDialog, setShowRotationsDialog] = useState(false);
   const [showVerticalRotationsDialog, setShowVerticalRotationsDialog] = useState(false);
+  const [showPreAcrobaticDialog, setShowPreAcrobaticDialog] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const specDropdownRef = useRef<HTMLDivElement>(null);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: entry.id });
@@ -326,7 +332,7 @@ const renderSymbol = () => {
   // Only show specification button for actual rotations (not axis)
   const showSpecificationButton = entry.type === 'one' || entry.type === 'two' || entry.type === 'series';
   
-  // Build the specification label - show vertical rotation name if selected
+  // Build the specification label - show vertical rotation name or pre-acrobatic element if selected
   // Use plural "Rotations" for 'two' (2 base rotations) or 'series'
   const isPlural = entry.type === 'two' || entry.type === 'series';
   const selectedSpecLabel = (() => {
@@ -336,6 +342,9 @@ const renderSymbol = () => {
       const groupName = (entry.selectedVerticalRotation.group_name || '').charAt(0).toUpperCase() + (entry.selectedVerticalRotation.group_name || '').slice(1).toLowerCase();
       const rotationWord = isPlural ? 'Rotations' : 'Rotation';
       return `Vertical ${groupName} ${rotationWord}: ${entry.selectedVerticalRotation.name}`;
+    }
+    if (entry.specificationType === 'pre-acrobatic' && entry.selectedPreAcrobaticElement) {
+      return `Pre-acrobatic: ${entry.selectedPreAcrobaticElement.name}`;
     }
     return ROTATION_SPECIFICATION_OPTIONS.find(o => o.value === entry.specificationType)?.label || null;
   })();
@@ -509,9 +518,11 @@ const renderSymbol = () => {
                     e.stopPropagation();
                     onUpdateSpecificationType(entry.id, option.value);
                     setShowSpecificationDropdown(false);
-                    // Open vertical rotations dialog if vertical is selected
+                    // Open appropriate dialog based on selection
                     if (option.value === 'vertical') {
                       setShowVerticalRotationsDialog(true);
+                    } else if (option.value === 'pre-acrobatic') {
+                      setShowPreAcrobaticDialog(true);
                     }
                   }}
                 >
@@ -542,6 +553,14 @@ const renderSymbol = () => {
           onOpenChange={setShowVerticalRotationsDialog}
           rotations={verticalRotations}
           onSelect={(rotation) => onSelectVerticalRotation(entry.id, rotation)}
+        />
+        <PreAcrobaticSelectionDialog
+          open={showPreAcrobaticDialog}
+          onOpenChange={setShowPreAcrobaticDialog}
+          elements={preAcrobaticElements}
+          onSelect={(element) => onSelectPreAcrobaticElement(entry.id, element)}
+          rotationType={entry.type as 'one' | 'two' | 'series'}
+          isFirstRotation={isFirstRotation}
         />
       </div>
     );
@@ -623,9 +642,11 @@ const renderSymbol = () => {
                             e.stopPropagation();
                             onUpdateSpecificationType(entry.id, option.value);
                             setShowSpecificationDropdown(false);
-                            // Open vertical rotations dialog if vertical is selected
+                            // Open appropriate dialog based on selection
                             if (option.value === 'vertical') {
                               setShowVerticalRotationsDialog(true);
+                            } else if (option.value === 'pre-acrobatic') {
+                              setShowPreAcrobaticDialog(true);
                             }
                           }}
                         >
@@ -659,6 +680,14 @@ const renderSymbol = () => {
             onOpenChange={setShowVerticalRotationsDialog}
             rotations={verticalRotations}
             onSelect={(rotation) => onSelectVerticalRotation(entry.id, rotation)}
+          />
+          <PreAcrobaticSelectionDialog
+            open={showPreAcrobaticDialog}
+            onOpenChange={setShowPreAcrobaticDialog}
+            elements={preAcrobaticElements}
+            onSelect={(element) => onSelectPreAcrobaticElement(entry.id, element)}
+            rotationType={entry.type as 'one' | 'two' | 'series'}
+            isFirstRotation={isFirstRotation}
           />
         </div>
         <p className="font-semibold text-primary">{getValue()}</p>
@@ -734,6 +763,9 @@ const CreateCustomRisk = () => {
   
   // State for vertical rotations
   const [verticalRotations, setVerticalRotations] = useState<VerticalRotation[]>([]);
+  
+  // State for pre-acrobatic elements
+  const [preAcrobaticElements, setPreAcrobaticElements] = useState<PreAcrobaticElement[]>([]);
   
   // Derived: filter DBs by group
   const jumpsDBs = useMemo(() => dbsForRisks.filter(db => db.db_group === 'jumps'), [dbsForRisks]);
@@ -860,12 +892,19 @@ const CreateCustomRisk = () => {
         setVerticalRotations(data as VerticalRotation[]);
       }
     };
+    const loadPreAcrobaticElements = async () => {
+      const { data, error } = await supabase.from('pre_acrobatic_elements').select('*').order('group_code, name');
+      if (data && !error) {
+        setPreAcrobaticElements(data as PreAcrobaticElement[]);
+      }
+    };
     loadSymbols();
     loadGeneralCriteria();
     loadDynamicThrows();
     loadDynamicCatches();
     loadDbsForRisks();
     loadVerticalRotations();
+    loadPreAcrobaticElements();
   }, []);
 
   // Pre-populate form when modifying an existing risk
@@ -1054,6 +1093,29 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     setRotationEntries(prev => prev.map(e => 
       e.id === id ? { ...e, selectedVerticalRotation: rotation } : e
     ));
+  };
+  const handleSelectPreAcrobaticElement = (id: string, element: PreAcrobaticElement) => {
+    setRotationEntries(prev => {
+      const updated = prev.map(e => 
+        e.id === id ? { ...e, selectedPreAcrobaticElement: element } : e
+      );
+      
+      // Business rule: if level_change = true AND two_bases_series = false,
+      // automatically add change of level/axis criteria
+      if (element.level_change && !element.two_bases_series) {
+        // Check if axis change entry already exists
+        const hasAxisChange = updated.some(e => e.type === 'axis');
+        if (!hasAxisChange) {
+          // Add axis change entry automatically
+          updated.push({
+            id: crypto.randomUUID(),
+            type: 'axis'
+          });
+        }
+      }
+      
+      return updated;
+    });
   };
   // Check if 2 base rotations already exists
   const hasTwoBaseRotations = rotationEntries.some(e => e.type === 'two');
@@ -1766,7 +1828,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                 {/* Show existing rotation entries with drag and drop - below the button */}
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRotationDragEnd}>
                   <SortableContext items={rotationEntries.map(e => e.id)} strategy={verticalListSortingStrategy}>
-{rotationEntries.map((entry) => (
+{rotationEntries.map((entry, index) => (
                       <SortableRotationRow 
                         key={entry.id}
                         entry={entry}
@@ -1777,9 +1839,12 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         onUpdateDBSubType={handleUpdateDBSubType}
                         onSelectDBElement={handleSelectDBElement}
                         onSelectVerticalRotation={handleSelectVerticalRotation}
+                        onSelectPreAcrobaticElement={handleSelectPreAcrobaticElement}
                         jumpsDBs={jumpsDBs}
                         rotationsDBs={rotationsDBs}
                         verticalRotations={verticalRotations}
+                        preAcrobaticElements={preAcrobaticElements}
+                        isFirstRotation={index === 0}
                       />
                     ))}
                   </SortableContext>

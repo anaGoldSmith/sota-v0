@@ -17,6 +17,7 @@ const DynamicElementsConfiguration = () => {
   const [uploadingPrerecordedRisks, setUploadingPrerecordedRisks] = useState(false);
   const [uploadingDBsForRisks, setUploadingDBsForRisks] = useState(false);
   const [uploadingVerticalRotations, setUploadingVerticalRotations] = useState(false);
+  const [uploadingPreAcrobaticElements, setUploadingPreAcrobaticElements] = useState(false);
   
   const catchesInputRef = useRef<HTMLInputElement>(null);
   const throwsInputRef = useRef<HTMLInputElement>(null);
@@ -25,6 +26,7 @@ const DynamicElementsConfiguration = () => {
   const prerecordedRisksInputRef = useRef<HTMLInputElement>(null);
   const dbsForRisksInputRef = useRef<HTMLInputElement>(null);
   const verticalRotationsInputRef = useRef<HTMLInputElement>(null);
+  const preAcrobaticElementsInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -371,6 +373,42 @@ const DynamicElementsConfiguration = () => {
               >
                 <Upload className="h-4 w-4 mr-2" />
                 {uploadingVerticalRotations ? "Uploading..." : "Upload Vertical Rotations CSV"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Pre-acrobatic Elements CSV Upload */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <FileText className="h-8 w-8 text-primary" />
+                <CardTitle>Pre-acrobatic Elements</CardTitle>
+              </div>
+              <CardDescription>
+                Upload CSV with columns: group_code, group, name, level_change, 2bases_series
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <input
+                type="file"
+                accept=".csv"
+                ref={preAcrobaticElementsInputRef}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleCsvUpload(file, 'import-pre-acrobatic-elements-csv', setUploadingPreAcrobaticElements, 'pre-acrobatic elements');
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <Button
+                onClick={() => preAcrobaticElementsInputRef.current?.click()}
+                disabled={uploadingPreAcrobaticElements}
+                className="w-full"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {uploadingPreAcrobaticElements ? "Uploading..." : "Upload Pre-acrobatic Elements CSV"}
               </Button>
             </CardContent>
           </Card>

@@ -62,3 +62,18 @@ verify_jwt = true
 
 [functions.import-rotations-dbs-for-risks-csv]
 verify_jwt = true
+
+[functions.import-dbs-for-risks-csv]
+verify_jwt = true
+
+[functions.import-vertical-rotations-csv]
+verify_jwt = true
+
+[functions.import-prerecorded-risks-csv]
+verify_jwt = true
+
+[functions.import-prerecorded-risks-main-csv]
+verify_jwt = true
+
+[functions.import-pre-acrobatic-elements-csv]
+verify_jwt = true
