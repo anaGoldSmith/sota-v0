@@ -2185,12 +2185,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         onOpenChange={setShowDBDuringThrowDialog}
         type="throw"
         onSelectDB={(db, dbType, rotationCount) => {
-          // For rotations, multiply value by rotation count
-          const effectiveValue = dbType === 'rotations' && rotationCount 
-            ? db.value * rotationCount 
-            : db.value;
+          // The dialog already calculates the final value including rotation count
           setThrowDuringDB({ 
-            db: { ...db, value: effectiveValue }, 
+            db, 
             dbType, 
             rotationCount 
           });
@@ -2205,12 +2202,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         onOpenChange={setShowDBDuringCatchDialog}
         type="catch"
         onSelectDB={(db, dbType, rotationCount) => {
-          // For rotations, multiply value by rotation count
-          const effectiveValue = dbType === 'rotations' && rotationCount 
-            ? db.value * rotationCount 
-            : db.value;
+          // The dialog already calculates the final value including rotation count
           setCatchDuringDB({ 
-            db: { ...db, value: effectiveValue }, 
+            db, 
             dbType, 
             rotationCount 
           });
