@@ -124,10 +124,13 @@ const DynamicElementsRisk = () => {
           <div className="space-y-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="w-full h-16 text-lg hover:scale-[1.02] transition-transform bg-primary hover:bg-primary/90 text-primary-foreground shadow-md">
-                  <span className="flex items-center gap-2">
-                    Select Standard Risk
-                    <ChevronDown className="h-5 w-5" />
+                <Button className="w-full h-auto py-3 text-lg hover:scale-[1.02] transition-transform bg-primary hover:bg-primary/90 text-primary-foreground shadow-md">
+                  <span className="flex flex-col items-center gap-1">
+                    <span className="flex items-center gap-2">
+                      Select Standard Risk
+                      <ChevronDown className="h-5 w-5" />
+                    </span>
+                    <span className="text-xs font-normal opacity-80">(including series of turning leaps)</span>
                   </span>
                 </Button>
               </DropdownMenuTrigger>
