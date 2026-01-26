@@ -790,8 +790,55 @@ const CreateCustomRisk = () => {
   // DB during throw/catch state
   const [showDBDuringThrowDialog, setShowDBDuringThrowDialog] = useState(false);
   const [showDBDuringCatchDialog, setShowDBDuringCatchDialog] = useState(false);
-  const [throwDuringDB, setThrowDuringDB] = useState<{ db: { id: string; code: string; name: string | null; description: string; value: number; symbol_image: string | null }; dbType: 'jumps' | 'rotations'; rotationCount?: number } | null>(null);
-  const [catchDuringDB, setCatchDuringDB] = useState<{ db: { id: string; code: string; name: string | null; description: string; value: number; symbol_image: string | null }; dbType: 'jumps' | 'rotations'; rotationCount?: number } | null>(null);
+  
+  // Extended type for throw/catch during DB that supports jumps, rotations, pre-acrobatic, and vertical
+  type ThrowCatchDuringDB = {
+    db: { id: string; code: string; name: string | null; description: string; value: number; symbol_image: string | null };
+    dbType: 'jumps' | 'rotations';
+    rotationCount?: number;
+  } | {
+    rotationType: 'pre-acrobatic';
+    preAcrobaticElement: PreAcrobaticElement;
+  } | {
+    rotationType: 'vertical';
+    verticalRotation: VerticalRotation;
+  };
+  
+  const [throwDuringDB, setThrowDuringDB] = useState<ThrowCatchDuringDB | null>(null);
+  const [catchDuringDB, setCatchDuringDB] = useState<ThrowCatchDuringDB | null>(null);
+  
+  // Helper functions to extract data from discriminated union
+  const getThrowCatchDBInfo = (data: ThrowCatchDuringDB | null) => {
+    if (!data) return null;
+    if ('db' in data) {
+      return {
+        name: data.db.name || data.db.description,
+        value: data.db.value,
+        symbol_image: data.db.symbol_image,
+        code: data.db.code,
+        type: 'db' as const,
+      };
+    }
+    if ('preAcrobaticElement' in data) {
+      return {
+        name: data.preAcrobaticElement.name,
+        value: 0, // Pre-acrobatic elements don't have intrinsic value in this context
+        symbol_image: null,
+        code: data.preAcrobaticElement.group_code,
+        type: 'pre-acrobatic' as const,
+      };
+    }
+    if ('verticalRotation' in data) {
+      return {
+        name: data.verticalRotation.name,
+        value: 0, // Vertical rotations don't have intrinsic value in this context
+        symbol_image: null,
+        code: data.verticalRotation.code,
+        type: 'vertical' as const,
+      };
+    }
+    return null;
+  };
 
   // Risk components state
   const [throwCriteria, setThrowCriteria] = useState<CriteriaItem[]>([]);
@@ -852,9 +899,11 @@ const CreateCustomRisk = () => {
   const rotationValue = getRotationValue();
   const rLevel = getTotalRotations();
 
-  // Calculate total value
-  const throwValue = throwDuringDB ? throwDuringDB.db.value : (selectedThrow?.value ?? 0);
-  const catchValue = catchDuringDB ? catchDuringDB.db.value : (selectedCatch?.value ?? 0);
+  // Calculate total value using helper function
+  const throwDBInfo = getThrowCatchDBInfo(throwDuringDB);
+  const catchDBInfo = getThrowCatchDBInfo(catchDuringDB);
+  const throwValue = throwDBInfo ? throwDBInfo.value : (selectedThrow?.value ?? 0);
+  const catchValue = catchDBInfo ? catchDBInfo.value : (selectedCatch?.value ?? 0);
   const totalValue = throwValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + catchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
 
   // Close dropdowns when clicking outside
@@ -1615,89 +1664,110 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                 </div>
               ) : throwDuringDB ? (
                 /* Throw during DB - Stacked symbols display */
-                <>
-                  <div className="flex items-center border-b border-border">
-                    <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
-                      <GripVertical className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div className="w-16 flex justify-center py-4">
-                      {/* Stacked symbols: Standard throw on top, DB below */}
-                      <div className="flex flex-col items-center gap-0">
-                        {/* Standard throw symbol - Thr1 */}
-                        {dynamicThrows.find(t => t.code === 'Thr1')?.symbol_image ? (
-                          <img 
-                            src={dynamicThrows.find(t => t.code === 'Thr1')!.symbol_image!} 
-                            alt="Standard Throw" 
-                            className="h-6 w-6 object-contain" 
-                            onError={e => e.currentTarget.style.display = 'none'} 
-                          />
-                        ) : (
-                          <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
-                        )}
-                        {/* DB symbol below */}
-                        {throwDuringDB.db.symbol_image ? (
-                          <img 
-                            src={throwDuringDB.db.symbol_image.startsWith('http') 
-                              ? throwDuringDB.db.symbol_image 
-                              : supabase.storage.from('jump-symbols').getPublicUrl(throwDuringDB.db.symbol_image).data.publicUrl
-                            } 
-                            alt={throwDuringDB.db.name || throwDuringDB.db.code} 
-                            className="h-8 w-8 object-contain -mt-1" 
-                            onError={e => e.currentTarget.style.display = 'none'} 
-                          />
-                        ) : (
-                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
-                            {throwDuringDB.db.code}
+                (() => {
+                  const throwInfo = getThrowCatchDBInfo(throwDuringDB);
+                  const isDBType = 'db' in throwDuringDB;
+                  const isPreAcrobatic = 'preAcrobaticElement' in throwDuringDB;
+                  const isVertical = 'verticalRotation' in throwDuringDB;
+                  
+                  return (
+                    <>
+                      <div className="flex items-center border-b border-border">
+                        <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                          <GripVertical className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="w-16 flex justify-center py-4">
+                          {/* Stacked symbols: Standard throw on top, DB/rotation below */}
+                          <div className="flex flex-col items-center gap-0">
+                            {/* Standard throw symbol - Thr1 */}
+                            {dynamicThrows.find(t => t.code === 'Thr1')?.symbol_image ? (
+                              <img 
+                                src={dynamicThrows.find(t => t.code === 'Thr1')!.symbol_image!} 
+                                alt="Standard Throw" 
+                                className="h-6 w-6 object-contain" 
+                                onError={e => e.currentTarget.style.display = 'none'} 
+                              />
+                            ) : (
+                              <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
+                            )}
+                            {/* DB/Rotation symbol below */}
+                            {isDBType && throwDuringDB.db.symbol_image ? (
+                              <img 
+                                src={throwDuringDB.db.symbol_image.startsWith('http') 
+                                  ? throwDuringDB.db.symbol_image 
+                                  : supabase.storage.from('jump-symbols').getPublicUrl(throwDuringDB.db.symbol_image).data.publicUrl
+                                } 
+                                alt={throwDuringDB.db.name || throwDuringDB.db.code} 
+                                className="h-8 w-8 object-contain -mt-1" 
+                                onError={e => e.currentTarget.style.display = 'none'} 
+                              />
+                            ) : isPreAcrobatic ? (
+                              <div className="h-8 w-8 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium -mt-1">
+                                PA
+                              </div>
+                            ) : isVertical ? (
+                              <img 
+                                src={multipleVerticalRotationsSymbol} 
+                                alt="Vertical Rotation" 
+                                className="h-8 w-8 object-contain -mt-1" 
+                              />
+                            ) : (
+                              <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
+                                {throwInfo?.code || '—'}
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
+                        <div className="flex-1 py-4 px-4">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-foreground text-sm">
+                              {isPreAcrobatic ? 'Throw during Pre-acrobatic' : isVertical ? 'Throw during Vertical Rotation' : 'Throw during DB'}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
+                              onClick={() => setShowDBDuringThrowDialog(true)}
+                            >
+                              <span className="text-xs">Change</span>
+                              <ChevronDown className="h-3 w-3 ml-1" />
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {throwInfo?.name || '—'}
+                          </p>
+                        </div>
+                        <div className="w-20 py-4 px-2 text-center border-l border-border relative">
+                          <p className="font-semibold text-primary">{throwInfo?.value || 0}</p>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => {
+                              setThrowDuringDB(null);
+                              setThrowCriteria([]);
+                            }} 
+                            className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex-1 py-4 px-4">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-foreground text-sm">Throw during DB</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
-                          onClick={() => setShowDBDuringThrowDialog(true)}
-                        >
-                          <span className="text-xs">Change DB</span>
-                          <ChevronDown className="h-3 w-3 ml-1" />
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {throwDuringDB.db.name || throwDuringDB.db.description}
-                      </p>
-                    </div>
-                    <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                      <p className="font-semibold text-primary">{throwDuringDB.db.value}</p>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => {
-                          setThrowDuringDB(null);
-                          setThrowCriteria([]);
-                        }} 
-                        className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  {/* Extra Throw Criteria for Throw during DB */}
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleThrowCriteriaDragEnd}>
-                    <SortableContext items={throwCriteria.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                      {throwCriteria.map(item => (
-                        <SortableCriteriaRow 
-                          key={item.id} 
-                          item={item} 
-                          onRemove={(id) => setThrowCriteria(throwCriteria.filter(t => t.id !== id))}
-                          notesSymbolMap={notesSymbolMap}
-                        />
-                      ))}
-                    </SortableContext>
-                  </DndContext>
-                </>
+                      {/* Extra Throw Criteria for Throw during DB */}
+                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleThrowCriteriaDragEnd}>
+                        <SortableContext items={throwCriteria.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                          {throwCriteria.map(item => (
+                            <SortableCriteriaRow 
+                              key={item.id} 
+                              item={item} 
+                              onRemove={(id) => setThrowCriteria(throwCriteria.filter(t => t.id !== id))}
+                              notesSymbolMap={notesSymbolMap}
+                            />
+                          ))}
+                        </SortableContext>
+                      </DndContext>
+                    </>
+                  );
+                })()
               ) : (
                 <>
                   {/* Selected Throw Row */}
@@ -2072,89 +2142,110 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                 </div>
               ) : catchDuringDB ? (
                 /* Catch during DB - Stacked symbols display */
-                <>
-                  <div className="flex items-center border-b border-border">
-                    <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
-                      <GripVertical className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div className="w-16 flex justify-center py-4">
-                      {/* Stacked symbols: Standard catch on top, DB below */}
-                      <div className="flex flex-col items-center gap-0">
-                        {/* Standard catch symbol - Catch1 */}
-                        {dynamicCatches.find(c => c.code === 'Catch1')?.symbol_image ? (
-                          <img 
-                            src={dynamicCatches.find(c => c.code === 'Catch1')!.symbol_image!} 
-                            alt="Standard Catch" 
-                            className="h-6 w-6 object-contain" 
-                            onError={e => e.currentTarget.style.display = 'none'} 
-                          />
-                        ) : (
-                          <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C</div>
-                        )}
-                        {/* DB symbol below */}
-                        {catchDuringDB.db.symbol_image ? (
-                          <img 
-                            src={catchDuringDB.db.symbol_image.startsWith('http') 
-                              ? catchDuringDB.db.symbol_image 
-                              : supabase.storage.from('jump-symbols').getPublicUrl(catchDuringDB.db.symbol_image).data.publicUrl
-                            } 
-                            alt={catchDuringDB.db.name || catchDuringDB.db.code} 
-                            className="h-8 w-8 object-contain -mt-1" 
-                            onError={e => e.currentTarget.style.display = 'none'} 
-                          />
-                        ) : (
-                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
-                            {catchDuringDB.db.code}
+                (() => {
+                  const catchInfo = getThrowCatchDBInfo(catchDuringDB);
+                  const isDBType = 'db' in catchDuringDB;
+                  const isPreAcrobatic = 'preAcrobaticElement' in catchDuringDB;
+                  const isVertical = 'verticalRotation' in catchDuringDB;
+                  
+                  return (
+                    <>
+                      <div className="flex items-center border-b border-border">
+                        <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                          <GripVertical className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="w-16 flex justify-center py-4">
+                          {/* Stacked symbols: Standard catch on top, DB/rotation below */}
+                          <div className="flex flex-col items-center gap-0">
+                            {/* Standard catch symbol - Catch1 */}
+                            {dynamicCatches.find(c => c.code === 'Catch1')?.symbol_image ? (
+                              <img 
+                                src={dynamicCatches.find(c => c.code === 'Catch1')!.symbol_image!} 
+                                alt="Standard Catch" 
+                                className="h-6 w-6 object-contain" 
+                                onError={e => e.currentTarget.style.display = 'none'} 
+                              />
+                            ) : (
+                              <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C</div>
+                            )}
+                            {/* DB/Rotation symbol below */}
+                            {isDBType && catchDuringDB.db.symbol_image ? (
+                              <img 
+                                src={catchDuringDB.db.symbol_image.startsWith('http') 
+                                  ? catchDuringDB.db.symbol_image 
+                                  : supabase.storage.from('jump-symbols').getPublicUrl(catchDuringDB.db.symbol_image).data.publicUrl
+                                } 
+                                alt={catchDuringDB.db.name || catchDuringDB.db.code} 
+                                className="h-8 w-8 object-contain -mt-1" 
+                                onError={e => e.currentTarget.style.display = 'none'} 
+                              />
+                            ) : isPreAcrobatic ? (
+                              <div className="h-8 w-8 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium -mt-1">
+                                PA
+                              </div>
+                            ) : isVertical ? (
+                              <img 
+                                src={multipleVerticalRotationsSymbol} 
+                                alt="Vertical Rotation" 
+                                className="h-8 w-8 object-contain -mt-1" 
+                              />
+                            ) : (
+                              <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
+                                {catchInfo?.code || '—'}
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
+                        <div className="flex-1 py-4 px-4">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-foreground text-sm">
+                              {isPreAcrobatic ? 'Catch during Pre-acrobatic' : isVertical ? 'Catch during Vertical Rotation' : 'Catch during DB'}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
+                              onClick={() => setShowDBDuringCatchDialog(true)}
+                            >
+                              <span className="text-xs">Change</span>
+                              <ChevronDown className="h-3 w-3 ml-1" />
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {catchInfo?.name || '—'}
+                          </p>
+                        </div>
+                        <div className="w-20 py-4 px-2 text-center border-l border-border relative">
+                          <p className="font-semibold text-primary">{catchInfo?.value || 0}</p>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => {
+                              setCatchDuringDB(null);
+                              setCatchCriteria([]);
+                            }} 
+                            className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex-1 py-4 px-4">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-foreground text-sm">Catch during DB</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
-                          onClick={() => setShowDBDuringCatchDialog(true)}
-                        >
-                          <span className="text-xs">Change DB</span>
-                          <ChevronDown className="h-3 w-3 ml-1" />
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {catchDuringDB.db.name || catchDuringDB.db.description}
-                      </p>
-                    </div>
-                    <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                      <p className="font-semibold text-primary">{catchDuringDB.db.value}</p>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => {
-                          setCatchDuringDB(null);
-                          setCatchCriteria([]);
-                        }} 
-                        className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  {/* Extra Catch Criteria for Catch during DB */}
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCatchCriteriaDragEnd}>
-                    <SortableContext items={catchCriteria.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                      {catchCriteria.map(item => (
-                        <SortableCriteriaRow 
-                          key={item.id} 
-                          item={item} 
-                          onRemove={(id) => setCatchCriteria(catchCriteria.filter(c => c.id !== id))}
-                          notesSymbolMap={notesSymbolMap}
-                        />
-                      ))}
-                    </SortableContext>
-                  </DndContext>
-                </>
+                      {/* Extra Catch Criteria for Catch during DB */}
+                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCatchCriteriaDragEnd}>
+                        <SortableContext items={catchCriteria.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                          {catchCriteria.map(item => (
+                            <SortableCriteriaRow 
+                              key={item.id} 
+                              item={item} 
+                              onRemove={(id) => setCatchCriteria(catchCriteria.filter(c => c.id !== id))}
+                              notesSymbolMap={notesSymbolMap}
+                            />
+                          ))}
+                        </SortableContext>
+                      </DndContext>
+                    </>
+                  );
+                })()
               ) : (
                 <>
                   {/* Selected Catch Row */}
@@ -2276,6 +2367,21 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
           setSelectedThrow(null);
           setThrowCriteria([]);
         }}
+        onSelectRotation={(rotation) => {
+          if (rotation.type === 'pre-acrobatic' && rotation.preAcrobaticElement) {
+            setThrowDuringDB({
+              rotationType: 'pre-acrobatic',
+              preAcrobaticElement: rotation.preAcrobaticElement,
+            });
+          } else if (rotation.type === 'vertical' && rotation.verticalRotation) {
+            setThrowDuringDB({
+              rotationType: 'vertical',
+              verticalRotation: rotation.verticalRotation,
+            });
+          }
+          setSelectedThrow(null);
+          setThrowCriteria([]);
+        }}
       />
 
       {/* DB During Catch Dialog */}
@@ -2290,6 +2396,21 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
             dbType, 
             rotationCount 
           });
+          setSelectedCatch(null);
+          setCatchCriteria([]);
+        }}
+        onSelectRotation={(rotation) => {
+          if (rotation.type === 'pre-acrobatic' && rotation.preAcrobaticElement) {
+            setCatchDuringDB({
+              rotationType: 'pre-acrobatic',
+              preAcrobaticElement: rotation.preAcrobaticElement,
+            });
+          } else if (rotation.type === 'vertical' && rotation.verticalRotation) {
+            setCatchDuringDB({
+              rotationType: 'vertical',
+              verticalRotation: rotation.verticalRotation,
+            });
+          }
           setSelectedCatch(null);
           setCatchCriteria([]);
         }}
