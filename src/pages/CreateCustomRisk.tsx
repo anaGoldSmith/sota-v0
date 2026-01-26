@@ -1822,30 +1822,22 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       
                       {/* Rotation Type Specification for Thr6 (Throw during rotation) */}
                       {selectedThrow?.code === 'Thr6' && (
-                        <div className="mt-2 relative" ref={throwRotationSpecRef}>
+                        <div className="relative" ref={throwRotationSpecRef}>
                           {throwRotationSpec ? (
                             <div className="flex items-center gap-2 flex-wrap">
-                              {/* Display selected rotation type with symbol */}
-                              {throwRotationSpec.type === 'vertical' && (
-                                <img src={multipleVerticalRotationsSymbol} alt="Vertical" className="h-6 w-6 object-contain" />
-                              )}
-                              {throwRotationSpec.type === 'pre-acrobatic' && (
-                                <div className="h-6 w-6 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium">PA</div>
-                              )}
                               <span className="text-sm text-muted-foreground italic">
                                 {throwRotationSpec.type === 'vertical' 
                                   ? `Vertical ${(throwRotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (throwRotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${throwRotationSpec.verticalRotation?.name}`
                                   : `Pre-acrobatic: ${throwRotationSpec.preAcrobaticElement?.name}`
                                 }
                               </span>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs text-primary hover:bg-primary/10"
                                 onClick={() => setShowThrowRotationSpecDropdown(true)}
                               >
-                                Change
-                                <ChevronDown className="h-3 w-3 ml-1" />
+                                Change Rotation
                               </Button>
                             </div>
                           ) : (
@@ -1860,29 +1852,43 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             </Button>
                           )}
                           
+                          {/* Backdrop for closing dropdown */}
+                          {showThrowRotationSpecDropdown && (
+                            <div className="fixed inset-0 z-[99]" onClick={() => setShowThrowRotationSpecDropdown(false)} />
+                          )}
+                          
                           {/* Dropdown for rotation type selection */}
                           {showThrowRotationSpecDropdown && (
-                            <div className="absolute left-0 top-full mt-1 bg-background border border-border rounded-lg shadow-xl z-[100] min-w-[200px]">
+                            <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-[100]">
+                              <div className="p-2 border-b border-border flex items-center justify-between">
+                                <span className="text-sm font-medium text-foreground">Select Rotation Type</span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                  onClick={() => setShowThrowRotationSpecDropdown(false)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
                               <div className="p-2 space-y-1">
                                 <div 
-                                  className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer"
+                                  className={`p-3 rounded hover:bg-muted cursor-pointer ${throwRotationSpec?.type === 'pre-acrobatic' ? 'bg-primary/10' : ''}`}
                                   onClick={() => {
                                     setShowThrowRotationSpecDropdown(false);
                                     setShowThrowPreAcrobaticDialog(true);
                                   }}
                                 >
-                                  <div className="h-6 w-6 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium">PA</div>
-                                  <span className="font-medium text-foreground">Pre-acrobatic Elements</span>
+                                  <span className="text-sm text-foreground">Pre-acrobatic Elements</span>
                                 </div>
                                 <div 
-                                  className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer"
+                                  className={`p-3 rounded hover:bg-muted cursor-pointer ${throwRotationSpec?.type === 'vertical' ? 'bg-primary/10' : ''}`}
                                   onClick={() => {
                                     setShowThrowRotationSpecDropdown(false);
                                     setShowThrowVerticalDialog(true);
                                   }}
                                 >
-                                  <img src={multipleVerticalRotationsSymbol} alt="Vertical" className="h-6 w-6 object-contain" />
-                                  <span className="font-medium text-foreground">Vertical Rotations</span>
+                                  <span className="text-sm text-foreground">Vertical Rotations</span>
                                 </div>
                               </div>
                             </div>
@@ -2383,30 +2389,22 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       
                       {/* Rotation Type Specification for Catch8 (Catch during rotation) */}
                       {selectedCatch?.code === 'Catch8' && (
-                        <div className="mt-2 relative" ref={catchRotationSpecRef}>
+                        <div className="relative" ref={catchRotationSpecRef}>
                           {catchRotationSpec ? (
                             <div className="flex items-center gap-2 flex-wrap">
-                              {/* Display selected rotation type with symbol */}
-                              {catchRotationSpec.type === 'vertical' && (
-                                <img src={multipleVerticalRotationsSymbol} alt="Vertical" className="h-6 w-6 object-contain" />
-                              )}
-                              {catchRotationSpec.type === 'pre-acrobatic' && (
-                                <div className="h-6 w-6 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium">PA</div>
-                              )}
                               <span className="text-sm text-muted-foreground italic">
                                 {catchRotationSpec.type === 'vertical' 
                                   ? `Vertical ${(catchRotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (catchRotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${catchRotationSpec.verticalRotation?.name}`
                                   : `Pre-acrobatic: ${catchRotationSpec.preAcrobaticElement?.name}`
                                 }
                               </span>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs text-primary hover:bg-primary/10"
                                 onClick={() => setShowCatchRotationSpecDropdown(true)}
                               >
-                                Change
-                                <ChevronDown className="h-3 w-3 ml-1" />
+                                Change Rotation
                               </Button>
                             </div>
                           ) : (
@@ -2421,29 +2419,43 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             </Button>
                           )}
                           
+                          {/* Backdrop for closing dropdown */}
+                          {showCatchRotationSpecDropdown && (
+                            <div className="fixed inset-0 z-[99]" onClick={() => setShowCatchRotationSpecDropdown(false)} />
+                          )}
+                          
                           {/* Dropdown for rotation type selection */}
                           {showCatchRotationSpecDropdown && (
-                            <div className="absolute left-0 top-full mt-1 bg-background border border-border rounded-lg shadow-xl z-[100] min-w-[200px]">
+                            <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-[100]">
+                              <div className="p-2 border-b border-border flex items-center justify-between">
+                                <span className="text-sm font-medium text-foreground">Select Rotation Type</span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                  onClick={() => setShowCatchRotationSpecDropdown(false)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
                               <div className="p-2 space-y-1">
                                 <div 
-                                  className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer"
+                                  className={`p-3 rounded hover:bg-muted cursor-pointer ${catchRotationSpec?.type === 'pre-acrobatic' ? 'bg-primary/10' : ''}`}
                                   onClick={() => {
                                     setShowCatchRotationSpecDropdown(false);
                                     setShowCatchPreAcrobaticDialog(true);
                                   }}
                                 >
-                                  <div className="h-6 w-6 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium">PA</div>
-                                  <span className="font-medium text-foreground">Pre-acrobatic Elements</span>
+                                  <span className="text-sm text-foreground">Pre-acrobatic Elements</span>
                                 </div>
                                 <div 
-                                  className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer"
+                                  className={`p-3 rounded hover:bg-muted cursor-pointer ${catchRotationSpec?.type === 'vertical' ? 'bg-primary/10' : ''}`}
                                   onClick={() => {
                                     setShowCatchRotationSpecDropdown(false);
                                     setShowCatchVerticalDialog(true);
                                   }}
                                 >
-                                  <img src={multipleVerticalRotationsSymbol} alt="Vertical" className="h-6 w-6 object-contain" />
-                                  <span className="font-medium text-foreground">Vertical Rotations</span>
+                                  <span className="text-sm text-foreground">Vertical Rotations</span>
                                 </div>
                               </div>
                             </div>
