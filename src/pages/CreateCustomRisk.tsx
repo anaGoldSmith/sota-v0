@@ -1863,7 +1863,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                 <p className="font-medium text-foreground mb-2">Value Breakdown</p>
                                 {isDBType && throwDuringDB.dbType === 'rotations' && throwDuringDB.rotationCount && throwDuringDB.rotationCount > 1 && (
                                   <div className="flex justify-between gap-6">
-                                    <span className="text-muted-foreground">Rotations:</span>
+                                    <span className="text-muted-foreground">Rotations in DB:</span>
                                     <span className="font-medium">{throwDuringDB.rotationCount}</span>
                                   </div>
                                 )}
@@ -2448,7 +2448,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                 <p className="font-medium text-foreground mb-2">Value Breakdown</p>
                                 {isDBType && catchDuringDB.dbType === 'rotations' && catchDuringDB.rotationCount && catchDuringDB.rotationCount > 1 && (
                                   <div className="flex justify-between gap-6">
-                                    <span className="text-muted-foreground">Rotations:</span>
+                                    <span className="text-muted-foreground">Rotations in DB:</span>
                                     <span className="font-medium">{catchDuringDB.rotationCount}</span>
                                   </div>
                                 )}
