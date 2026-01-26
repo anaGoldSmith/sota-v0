@@ -324,7 +324,7 @@ const renderSymbol = () => {
                   </span>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-sm">
-                  <p>Select 3 or more identical vertical rotations performed under the flight. Each rotation adds 0.1 to the value.</p>
+                  <p>Select 3 or more identical vertical rotations performed under the flight. Each rotation adds 0.1 to the value. Vertical rotations cannot be performed in a series.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -1881,7 +1881,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                     </span>
                                   </TooltipTrigger>
                                   <TooltipContent className="max-w-sm">
-                                    <p>Select 3 or more identical vertical rotations performed under the flight. Each rotation adds 0.1 to the value. Unlike Series, this does not include the 0.2 base value.</p>
+                                    <p>Select 3 or more identical vertical rotations performed under the flight. Each rotation adds 0.1 to the value. Vertical rotations cannot be performed in a series.</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
