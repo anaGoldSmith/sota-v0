@@ -2576,21 +2576,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
           setSelectedThrow(null);
           setThrowCriteria([]);
         }}
-        onSelectRotation={(rotation) => {
-          if (rotation.type === 'pre-acrobatic' && rotation.preAcrobaticElement) {
-            setThrowDuringDB({
-              rotationType: 'pre-acrobatic',
-              preAcrobaticElement: rotation.preAcrobaticElement,
-            });
-          } else if (rotation.type === 'vertical' && rotation.verticalRotation) {
-            setThrowDuringDB({
-              rotationType: 'vertical',
-              verticalRotation: rotation.verticalRotation,
-            });
-          }
-          setSelectedThrow(null);
-          setThrowCriteria([]);
-        }}
       />
 
       {/* DB During Catch Dialog */}
@@ -2605,21 +2590,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
             dbType, 
             rotationCount 
           });
-          setSelectedCatch(null);
-          setCatchCriteria([]);
-        }}
-        onSelectRotation={(rotation) => {
-          if (rotation.type === 'pre-acrobatic' && rotation.preAcrobaticElement) {
-            setCatchDuringDB({
-              rotationType: 'pre-acrobatic',
-              preAcrobaticElement: rotation.preAcrobaticElement,
-            });
-          } else if (rotation.type === 'vertical' && rotation.verticalRotation) {
-            setCatchDuringDB({
-              rotationType: 'vertical',
-              verticalRotation: rotation.verticalRotation,
-            });
-          }
           setSelectedCatch(null);
           setCatchCriteria([]);
         }}
