@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Plus, CheckCircle, X, ChevronDown, ChevronRight, Info, GripVertical } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -1850,32 +1851,31 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </p>
                         </div>
                         <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex items-center justify-center gap-1 cursor-help">
-                                  <p className="font-semibold text-primary">{((throwInfo?.value || 0) + 0.1).toFixed(1)}</p>
-                                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors">
+                                <p className="font-semibold text-primary">{((throwInfo?.value || 0) + 0.1).toFixed(1)}</p>
+                                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent side="left" className="w-auto p-3">
+                              <div className="text-sm space-y-2">
+                                <p className="font-medium text-foreground mb-2">Value Breakdown</p>
+                                <div className="flex justify-between gap-6">
+                                  <span className="text-muted-foreground">DB Value:</span>
+                                  <span className="font-medium">{(throwInfo?.value || 0).toFixed(1)}</span>
                                 </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="left" className="p-2">
-                                <div className="text-xs space-y-1">
-                                  <div className="flex justify-between gap-4">
-                                    <span className="text-muted-foreground">DB Value:</span>
-                                    <span className="font-medium">{(throwInfo?.value || 0).toFixed(1)}</span>
-                                  </div>
-                                  <div className="flex justify-between gap-4">
-                                    <span className="text-muted-foreground">Extra rotation:</span>
-                                    <span className="font-medium">+0.1</span>
-                                  </div>
-                                  <div className="border-t border-border pt-1 flex justify-between gap-4">
-                                    <span className="font-medium">Total:</span>
-                                    <span className="font-bold text-primary">{((throwInfo?.value || 0) + 0.1).toFixed(1)}</span>
-                                  </div>
+                                <div className="flex justify-between gap-6">
+                                  <span className="text-muted-foreground">Extra rotation:</span>
+                                  <span className="font-medium text-green-600">+0.1</span>
                                 </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                                <div className="border-t border-border pt-2 flex justify-between gap-6">
+                                  <span className="font-medium">Total:</span>
+                                  <span className="font-bold text-primary">{((throwInfo?.value || 0) + 0.1).toFixed(1)}</span>
+                                </div>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                           <Button 
                             variant="ghost" 
                             size="icon" 
@@ -2430,32 +2430,31 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </p>
                         </div>
                         <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex items-center justify-center gap-1 cursor-help">
-                                  <p className="font-semibold text-primary">{((catchInfo?.value || 0) + 0.1).toFixed(1)}</p>
-                                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors">
+                                <p className="font-semibold text-primary">{((catchInfo?.value || 0) + 0.1).toFixed(1)}</p>
+                                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent side="left" className="w-auto p-3">
+                              <div className="text-sm space-y-2">
+                                <p className="font-medium text-foreground mb-2">Value Breakdown</p>
+                                <div className="flex justify-between gap-6">
+                                  <span className="text-muted-foreground">DB Value:</span>
+                                  <span className="font-medium">{(catchInfo?.value || 0).toFixed(1)}</span>
                                 </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="left" className="p-2">
-                                <div className="text-xs space-y-1">
-                                  <div className="flex justify-between gap-4">
-                                    <span className="text-muted-foreground">DB Value:</span>
-                                    <span className="font-medium">{(catchInfo?.value || 0).toFixed(1)}</span>
-                                  </div>
-                                  <div className="flex justify-between gap-4">
-                                    <span className="text-muted-foreground">Extra rotation:</span>
-                                    <span className="font-medium">+0.1</span>
-                                  </div>
-                                  <div className="border-t border-border pt-1 flex justify-between gap-4">
-                                    <span className="font-medium">Total:</span>
-                                    <span className="font-bold text-primary">{((catchInfo?.value || 0) + 0.1).toFixed(1)}</span>
-                                  </div>
+                                <div className="flex justify-between gap-6">
+                                  <span className="text-muted-foreground">Extra rotation:</span>
+                                  <span className="font-medium text-green-600">+0.1</span>
                                 </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                                <div className="border-t border-border pt-2 flex justify-between gap-6">
+                                  <span className="font-medium">Total:</span>
+                                  <span className="font-bold text-primary">{((catchInfo?.value || 0) + 0.1).toFixed(1)}</span>
+                                </div>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                           <Button 
                             variant="ghost" 
                             size="icon" 
