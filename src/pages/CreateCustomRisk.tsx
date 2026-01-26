@@ -900,7 +900,10 @@ const CreateCustomRisk = () => {
     }, 0);
   };
 
-  // Calculate total rotations for R level (includes Thr6/Catch8 which add 1 rotation each)
+  // Calculate total rotations for R level
+  // - Thr6/Catch8 (throw/catch during rotation) each add 1 rotation
+  // - Throw/Catch during DB with rotation type (pre-acrobatic or vertical) each add 1 rotation
+  // - Note: Even if user specifies multiple rotations for throw/catch during DB, it only counts as 1 rotation for R level
   const getTotalRotations = (): number => {
     let total = rotationEntries.reduce((sum, entry) => {
       if (entry.type === 'one') return sum + 1;
@@ -910,9 +913,31 @@ const CreateCustomRisk = () => {
       return sum + (entry.seriesCount || 3); // series
     }, 0);
     
-    // Thr6 and Catch8 are performed during rotation, each adds 1 rotation
+    // Thr6 (throw during rotation) adds 1 rotation
     if (selectedThrow?.code === 'Thr6') total += 1;
+    
+    // Catch8 (catch during rotation) adds 1 rotation
     if (selectedCatch?.code === 'Catch8') total += 1;
+    
+    // Throw during DB with rotation type adds 1 rotation (counts as 1 regardless of rotation count)
+    if (throwDuringDB) {
+      // Check if it's a rotation type (either db with rotations dbType, pre-acrobatic, or vertical)
+      if ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') {
+        total += 1;
+      } else if ('preAcrobaticElement' in throwDuringDB || 'verticalRotation' in throwDuringDB) {
+        total += 1;
+      }
+    }
+    
+    // Catch during DB with rotation type adds 1 rotation (counts as 1 regardless of rotation count)
+    if (catchDuringDB) {
+      // Check if it's a rotation type (either db with rotations dbType, pre-acrobatic, or vertical)
+      if ('db' in catchDuringDB && catchDuringDB.dbType === 'rotations') {
+        total += 1;
+      } else if ('preAcrobaticElement' in catchDuringDB || 'verticalRotation' in catchDuringDB) {
+        total += 1;
+      }
+    }
     
     return total;
   };
