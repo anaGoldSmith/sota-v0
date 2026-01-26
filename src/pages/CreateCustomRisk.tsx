@@ -1850,7 +1850,32 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </p>
                         </div>
                         <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                          <p className="font-semibold text-primary">{((throwInfo?.value || 0) + 0.1).toFixed(1)}</p>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center justify-center gap-1 cursor-help">
+                                  <p className="font-semibold text-primary">{((throwInfo?.value || 0) + 0.1).toFixed(1)}</p>
+                                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="p-2">
+                                <div className="text-xs space-y-1">
+                                  <div className="flex justify-between gap-4">
+                                    <span className="text-muted-foreground">DB Value:</span>
+                                    <span className="font-medium">{(throwInfo?.value || 0).toFixed(1)}</span>
+                                  </div>
+                                  <div className="flex justify-between gap-4">
+                                    <span className="text-muted-foreground">Extra rotation:</span>
+                                    <span className="font-medium">+0.1</span>
+                                  </div>
+                                  <div className="border-t border-border pt-1 flex justify-between gap-4">
+                                    <span className="font-medium">Total:</span>
+                                    <span className="font-bold text-primary">{((throwInfo?.value || 0) + 0.1).toFixed(1)}</span>
+                                  </div>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           <Button 
                             variant="ghost" 
                             size="icon" 
@@ -2405,7 +2430,32 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </p>
                         </div>
                         <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                          <p className="font-semibold text-primary">{((catchInfo?.value || 0) + 0.1).toFixed(1)}</p>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center justify-center gap-1 cursor-help">
+                                  <p className="font-semibold text-primary">{((catchInfo?.value || 0) + 0.1).toFixed(1)}</p>
+                                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="p-2">
+                                <div className="text-xs space-y-1">
+                                  <div className="flex justify-between gap-4">
+                                    <span className="text-muted-foreground">DB Value:</span>
+                                    <span className="font-medium">{(catchInfo?.value || 0).toFixed(1)}</span>
+                                  </div>
+                                  <div className="flex justify-between gap-4">
+                                    <span className="text-muted-foreground">Extra rotation:</span>
+                                    <span className="font-medium">+0.1</span>
+                                  </div>
+                                  <div className="border-t border-border pt-1 flex justify-between gap-4">
+                                    <span className="font-medium">Total:</span>
+                                    <span className="font-bold text-primary">{((catchInfo?.value || 0) + 0.1).toFixed(1)}</span>
+                                  </div>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           <Button 
                             variant="ghost" 
                             size="icon" 
