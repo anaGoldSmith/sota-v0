@@ -1838,7 +1838,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </p>
                         </div>
                         <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                          <p className="font-semibold text-primary">{throwInfo?.value || 0}</p>
+                          <p className="font-semibold text-primary">{((throwInfo?.value || 0) + ((isDBType && throwDuringDB.dbType === 'rotations') || isPreAcrobatic || isVertical ? 0.1 : 0)).toFixed(1)}</p>
                           <Button 
                             variant="ghost" 
                             size="icon" 
@@ -1969,7 +1969,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       )}
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                      <p className="font-semibold text-primary">{selectedThrow?.value ?? 0}</p>
+                      <p className="font-semibold text-primary">{selectedThrow?.code === 'Thr6' ? ((selectedThrow?.value ?? 0) + 0.1).toFixed(1) : (selectedThrow?.value ?? 0)}</p>
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -2393,7 +2393,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </p>
                         </div>
                         <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                          <p className="font-semibold text-primary">{catchInfo?.value || 0}</p>
+                          <p className="font-semibold text-primary">{((catchInfo?.value || 0) + ((isDBType && catchDuringDB.dbType === 'rotations') || isPreAcrobatic || isVertical ? 0.1 : 0)).toFixed(1)}</p>
                           <Button 
                             variant="ghost" 
                             size="icon" 
@@ -2536,7 +2536,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       )}
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                      <p className="font-semibold text-primary">{selectedCatch?.value ?? 0}</p>
+                      <p className="font-semibold text-primary">{selectedCatch?.code === 'Catch8' ? ((selectedCatch?.value ?? 0) + 0.1).toFixed(1) : (selectedCatch?.value ?? 0)}</p>
                       <Button 
                         variant="ghost" 
                         size="icon" 
