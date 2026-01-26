@@ -1738,7 +1738,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-foreground text-sm">Throw during DB</span>
+                          <span className="text-foreground text-sm">Throw during DB <span className="text-muted-foreground">(0.1 is added for extra rotation)</span></span>
                           <p className="text-xs text-muted-foreground">Select a DB element performed during throw</p>
                         </div>
                         <div className="w-12 text-right flex-shrink-0 flex items-center justify-end gap-1">
@@ -2283,7 +2283,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-foreground text-sm">Catch during DB</span>
+                          <span className="text-foreground text-sm">Catch during DB <span className="text-muted-foreground">(0.1 is added for extra rotation)</span></span>
                           <p className="text-xs text-muted-foreground">Select a DB element performed during catch</p>
                         </div>
                         <div className="w-12 text-right flex-shrink-0 flex items-center justify-end gap-1">
