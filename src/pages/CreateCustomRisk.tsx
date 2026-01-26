@@ -944,14 +944,30 @@ const CreateCustomRisk = () => {
   const rotationValue = getRotationValue();
   const rLevel = getTotalRotations();
 
-  // Calculate total value using helper function
+  // Calculate throw row value: base value + 0.1 if it involves a rotation (Thr6 or throw during DB with rotation)
   const throwDBInfo = getThrowCatchDBInfo(throwDuringDB);
+  const baseThrowValue = throwDBInfo ? throwDBInfo.value : (selectedThrow?.value ?? 0);
+  const throwHasRotation = selectedThrow?.code === 'Thr6' || 
+    (throwDuringDB && (
+      ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
+      'preAcrobaticElement' in throwDuringDB ||
+      'verticalRotation' in throwDuringDB
+    ));
+  const throwValue = baseThrowValue + (throwHasRotation ? 0.1 : 0);
+  
+  // Calculate catch row value: base value + 0.1 if it involves a rotation (Catch8 or catch during DB with rotation)
   const catchDBInfo = getThrowCatchDBInfo(catchDuringDB);
-  const throwValue = throwDBInfo ? throwDBInfo.value : (selectedThrow?.value ?? 0);
-  const catchValue = catchDBInfo ? catchDBInfo.value : (selectedCatch?.value ?? 0);
-  // R level contributes 0.1 per rotation to the total value
-  const rLevelValue = rLevel * 0.1;
-  const totalValue = throwValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + rLevelValue + catchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
+  const baseCatchValue = catchDBInfo ? catchDBInfo.value : (selectedCatch?.value ?? 0);
+  const catchHasRotation = selectedCatch?.code === 'Catch8' ||
+    (catchDuringDB && (
+      ('db' in catchDuringDB && catchDuringDB.dbType === 'rotations') ||
+      'preAcrobaticElement' in catchDuringDB ||
+      'verticalRotation' in catchDuringDB
+    ));
+  const catchValue = baseCatchValue + (catchHasRotation ? 0.1 : 0);
+  
+  // Total value = sum of all row values (throw + throw criteria + rotations + catch + catch criteria)
+  const totalValue = throwValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + catchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -1436,11 +1452,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     const hasAxisChange = rotationEntries.some(e => e.type === 'axis');
     const axisLevelSymbol = hasAxisChange ? (symbols["axisLevelChange"] || '') : undefined;
 
-    // Calculate effective values
-    const effectiveThrowValue = effectiveThrow?.value ?? 0;
-    const effectiveCatchValue = effectiveCatch?.value ?? 0;
-    
-    // Calculate effective rLevel (include Thr6/Catch8 and throw/catch during DB with rotations)
+    // Calculate effective rLevel (for display only)
     let effectiveRLevel = rotationEntries.reduce((sum, entry) => {
       if (entry.type === 'one') return sum + 1;
       if (entry.type === 'two') return sum + 2;
@@ -1449,26 +1461,39 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     }, 0);
     if (effectiveThrow?.code === 'Thr6') effectiveRLevel += 1;
     if (effectiveCatch?.code === 'Catch8') effectiveRLevel += 1;
-    // Throw during DB with rotation type adds 1 rotation
-    if (throwDuringDB) {
-      if ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') {
-        effectiveRLevel += 1;
-      } else if ('preAcrobaticElement' in throwDuringDB || 'verticalRotation' in throwDuringDB) {
-        effectiveRLevel += 1;
-      }
-    }
-    // Catch during DB with rotation type adds 1 rotation
-    if (catchDuringDB) {
-      if ('db' in catchDuringDB && catchDuringDB.dbType === 'rotations') {
-        effectiveRLevel += 1;
-      } else if ('preAcrobaticElement' in catchDuringDB || 'verticalRotation' in catchDuringDB) {
-        effectiveRLevel += 1;
-      }
-    }
+    if (throwDuringDB && (
+      ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
+      'preAcrobaticElement' in throwDuringDB ||
+      'verticalRotation' in throwDuringDB
+    )) effectiveRLevel += 1;
+    if (catchDuringDB && (
+      ('db' in catchDuringDB && catchDuringDB.dbType === 'rotations') ||
+      'preAcrobaticElement' in catchDuringDB ||
+      'verticalRotation' in catchDuringDB
+    )) effectiveRLevel += 1;
     
-    // R level contributes 0.1 per rotation to the total value
-    const effectiveRLevelValue = effectiveRLevel * 0.1;
-    const effectiveTotalValue = effectiveThrowValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + effectiveRLevelValue + effectiveCatchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
+    // Calculate effective throw value: base + 0.1 if involves rotation
+    const baseEffectiveThrowValue = effectiveThrow?.value ?? 0;
+    const effectiveThrowHasRotation = effectiveThrow?.code === 'Thr6' || 
+      (throwDuringDB && (
+        ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
+        'preAcrobaticElement' in throwDuringDB ||
+        'verticalRotation' in throwDuringDB
+      ));
+    const effectiveThrowValue = baseEffectiveThrowValue + (effectiveThrowHasRotation ? 0.1 : 0);
+    
+    // Calculate effective catch value: base + 0.1 if involves rotation
+    const baseEffectiveCatchValue = effectiveCatch?.value ?? 0;
+    const effectiveCatchHasRotation = effectiveCatch?.code === 'Catch8' ||
+      (catchDuringDB && (
+        ('db' in catchDuringDB && catchDuringDB.dbType === 'rotations') ||
+        'preAcrobaticElement' in catchDuringDB ||
+        'verticalRotation' in catchDuringDB
+      ));
+    const effectiveCatchValue = baseEffectiveCatchValue + (effectiveCatchHasRotation ? 0.1 : 0);
+    
+    // Total = sum of all row values
+    const effectiveTotalValue = effectiveThrowValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + effectiveCatchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
 
     
     const riskData = {
