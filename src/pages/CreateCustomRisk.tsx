@@ -807,6 +807,26 @@ const CreateCustomRisk = () => {
   const [throwDuringDB, setThrowDuringDB] = useState<ThrowCatchDuringDB | null>(null);
   const [catchDuringDB, setCatchDuringDB] = useState<ThrowCatchDuringDB | null>(null);
   
+  // State for rotation type specification when Thr6 or Catch8 is selected
+  type ThrowCatchRotationSpec = {
+    type: 'pre-acrobatic' | 'vertical';
+    preAcrobaticElement?: PreAcrobaticElement;
+    verticalRotation?: VerticalRotation;
+  } | null;
+  
+  const [throwRotationSpec, setThrowRotationSpec] = useState<ThrowCatchRotationSpec>(null);
+  const [catchRotationSpec, setCatchRotationSpec] = useState<ThrowCatchRotationSpec>(null);
+  
+  // UI states for rotation spec dropdowns/dialogs
+  const [showThrowRotationSpecDropdown, setShowThrowRotationSpecDropdown] = useState(false);
+  const [showThrowVerticalDialog, setShowThrowVerticalDialog] = useState(false);
+  const [showThrowPreAcrobaticDialog, setShowThrowPreAcrobaticDialog] = useState(false);
+  const [showCatchRotationSpecDropdown, setShowCatchRotationSpecDropdown] = useState(false);
+  const [showCatchVerticalDialog, setShowCatchVerticalDialog] = useState(false);
+  const [showCatchPreAcrobaticDialog, setShowCatchPreAcrobaticDialog] = useState(false);
+  const throwRotationSpecRef = useRef<HTMLDivElement>(null);
+  const catchRotationSpecRef = useRef<HTMLDivElement>(null);
+  
   // Helper functions to extract data from discriminated union
   const getThrowCatchDBInfo = (data: ThrowCatchDuringDB | null) => {
     if (!data) return null;
@@ -923,6 +943,12 @@ const CreateCustomRisk = () => {
       }
       if (rotationDropdownRef.current && !rotationDropdownRef.current.contains(event.target as Node)) {
         setShowRotationDropdown(false);
+      }
+      if (throwRotationSpecRef.current && !throwRotationSpecRef.current.contains(event.target as Node)) {
+        setShowThrowRotationSpecDropdown(false);
+      }
+      if (catchRotationSpecRef.current && !catchRotationSpecRef.current.contains(event.target as Node)) {
+        setShowCatchRotationSpecDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -1255,6 +1281,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
   const handleSelectThrow = (throwItem: DynamicThrow) => {
     setSelectedThrow(throwItem);
     setShowThrowDropdown(false);
+    setThrowRotationSpec(null); // Reset rotation spec when throw changes
 
     // Auto-add Cr1V and Cr2H when Thr2 is selected
     if (throwItem.code === 'Thr2') {
@@ -1289,6 +1316,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
   const handleSelectCatch = (catchItem: DynamicCatch) => {
     setSelectedCatch(catchItem);
     setShowCatchDropdown(false);
+    setCatchRotationSpec(null); // Reset rotation spec when catch changes
 
     // Auto-add Cr2H when Catch3 is selected
     if (catchItem.code === 'Catch3') {
@@ -1791,6 +1819,76 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       <span className="font-medium text-foreground text-sm">
                         <NotesWithSymbols notes={selectedThrow?.name || ''} symbolMap={notesSymbolMap} />
                       </span>
+                      
+                      {/* Rotation Type Specification for Thr6 (Throw during rotation) */}
+                      {selectedThrow?.code === 'Thr6' && (
+                        <div className="mt-2 relative" ref={throwRotationSpecRef}>
+                          {throwRotationSpec ? (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {/* Display selected rotation type with symbol */}
+                              {throwRotationSpec.type === 'vertical' && (
+                                <img src={multipleVerticalRotationsSymbol} alt="Vertical" className="h-6 w-6 object-contain" />
+                              )}
+                              {throwRotationSpec.type === 'pre-acrobatic' && (
+                                <div className="h-6 w-6 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium">PA</div>
+                              )}
+                              <span className="text-sm text-muted-foreground italic">
+                                {throwRotationSpec.type === 'vertical' 
+                                  ? `Vertical ${(throwRotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (throwRotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${throwRotationSpec.verticalRotation?.name}`
+                                  : `Pre-acrobatic: ${throwRotationSpec.preAcrobaticElement?.name}`
+                                }
+                              </span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                onClick={() => setShowThrowRotationSpecDropdown(true)}
+                              >
+                                Change
+                                <ChevronDown className="h-3 w-3 ml-1" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                              onClick={() => setShowThrowRotationSpecDropdown(true)}
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Specify Rotation Type
+                            </Button>
+                          )}
+                          
+                          {/* Dropdown for rotation type selection */}
+                          {showThrowRotationSpecDropdown && (
+                            <div className="absolute left-0 top-full mt-1 bg-background border border-border rounded-lg shadow-xl z-[100] min-w-[200px]">
+                              <div className="p-2 space-y-1">
+                                <div 
+                                  className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer"
+                                  onClick={() => {
+                                    setShowThrowRotationSpecDropdown(false);
+                                    setShowThrowPreAcrobaticDialog(true);
+                                  }}
+                                >
+                                  <div className="h-6 w-6 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium">PA</div>
+                                  <span className="font-medium text-foreground">Pre-acrobatic Elements</span>
+                                </div>
+                                <div 
+                                  className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer"
+                                  onClick={() => {
+                                    setShowThrowRotationSpecDropdown(false);
+                                    setShowThrowVerticalDialog(true);
+                                  }}
+                                >
+                                  <img src={multipleVerticalRotationsSymbol} alt="Vertical" className="h-6 w-6 object-contain" />
+                                  <span className="font-medium text-foreground">Vertical Rotations</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border relative">
                       <p className="font-semibold text-primary">{selectedThrow?.value ?? 0}</p>
@@ -1800,6 +1898,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         onClick={() => {
                           setSelectedThrow(null);
                           setThrowCriteria([]);
+                          setThrowRotationSpec(null);
                         }} 
                         className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                       >
@@ -2265,19 +2364,91 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
                       )}
                     </div>
-                    <div className="flex-1 py-4 px-4 flex items-center gap-2">
-                      <span className="font-medium text-foreground text-sm">{selectedCatch?.name}</span>
-                      {selectedCatch?.notes && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-sm">
-                              <NotesWithSymbols notes={selectedCatch.notes} symbolMap={notesSymbolMap} />
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                    <div className="flex-1 py-4 px-4">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-foreground text-sm">{selectedCatch?.name}</span>
+                        {selectedCatch?.notes && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-sm">
+                                <NotesWithSymbols notes={selectedCatch.notes} symbolMap={notesSymbolMap} />
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                      
+                      {/* Rotation Type Specification for Catch8 (Catch during rotation) */}
+                      {selectedCatch?.code === 'Catch8' && (
+                        <div className="mt-2 relative" ref={catchRotationSpecRef}>
+                          {catchRotationSpec ? (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {/* Display selected rotation type with symbol */}
+                              {catchRotationSpec.type === 'vertical' && (
+                                <img src={multipleVerticalRotationsSymbol} alt="Vertical" className="h-6 w-6 object-contain" />
+                              )}
+                              {catchRotationSpec.type === 'pre-acrobatic' && (
+                                <div className="h-6 w-6 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium">PA</div>
+                              )}
+                              <span className="text-sm text-muted-foreground italic">
+                                {catchRotationSpec.type === 'vertical' 
+                                  ? `Vertical ${(catchRotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (catchRotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${catchRotationSpec.verticalRotation?.name}`
+                                  : `Pre-acrobatic: ${catchRotationSpec.preAcrobaticElement?.name}`
+                                }
+                              </span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                onClick={() => setShowCatchRotationSpecDropdown(true)}
+                              >
+                                Change
+                                <ChevronDown className="h-3 w-3 ml-1" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                              onClick={() => setShowCatchRotationSpecDropdown(true)}
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Specify Rotation Type
+                            </Button>
+                          )}
+                          
+                          {/* Dropdown for rotation type selection */}
+                          {showCatchRotationSpecDropdown && (
+                            <div className="absolute left-0 top-full mt-1 bg-background border border-border rounded-lg shadow-xl z-[100] min-w-[200px]">
+                              <div className="p-2 space-y-1">
+                                <div 
+                                  className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer"
+                                  onClick={() => {
+                                    setShowCatchRotationSpecDropdown(false);
+                                    setShowCatchPreAcrobaticDialog(true);
+                                  }}
+                                >
+                                  <div className="h-6 w-6 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium">PA</div>
+                                  <span className="font-medium text-foreground">Pre-acrobatic Elements</span>
+                                </div>
+                                <div 
+                                  className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer"
+                                  onClick={() => {
+                                    setShowCatchRotationSpecDropdown(false);
+                                    setShowCatchVerticalDialog(true);
+                                  }}
+                                >
+                                  <img src={multipleVerticalRotationsSymbol} alt="Vertical" className="h-6 w-6 object-contain" />
+                                  <span className="font-medium text-foreground">Vertical Rotations</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border relative">
@@ -2288,6 +2459,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         onClick={() => {
                           setSelectedCatch(null);
                           setCatchCriteria([]);
+                          setCatchRotationSpec(null);
                         }} 
                         className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                       >
@@ -2414,6 +2586,52 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
           setSelectedCatch(null);
           setCatchCriteria([]);
         }}
+      />
+
+      {/* Throw Rotation Specification Dialogs */}
+      <VerticalRotationSelectionDialog
+        open={showThrowVerticalDialog}
+        onOpenChange={setShowThrowVerticalDialog}
+        rotations={verticalRotations}
+        onSelect={(rotation) => {
+          setThrowRotationSpec({ type: 'vertical', verticalRotation: rotation });
+          setShowThrowVerticalDialog(false);
+        }}
+      />
+      
+      <PreAcrobaticSelectionDialog
+        open={showThrowPreAcrobaticDialog}
+        onOpenChange={setShowThrowPreAcrobaticDialog}
+        elements={preAcrobaticElements}
+        onSelect={(element) => {
+          setThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
+          setShowThrowPreAcrobaticDialog(false);
+        }}
+        rotationType="one"
+        isFirstRotation={true}
+      />
+
+      {/* Catch Rotation Specification Dialogs */}
+      <VerticalRotationSelectionDialog
+        open={showCatchVerticalDialog}
+        onOpenChange={setShowCatchVerticalDialog}
+        rotations={verticalRotations}
+        onSelect={(rotation) => {
+          setCatchRotationSpec({ type: 'vertical', verticalRotation: rotation });
+          setShowCatchVerticalDialog(false);
+        }}
+      />
+      
+      <PreAcrobaticSelectionDialog
+        open={showCatchPreAcrobaticDialog}
+        onOpenChange={setShowCatchPreAcrobaticDialog}
+        elements={preAcrobaticElements}
+        onSelect={(element) => {
+          setCatchRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
+          setShowCatchPreAcrobaticDialog(false);
+        }}
+        rotationType="one"
+        isFirstRotation={true}
       />
     </div>;
 };
