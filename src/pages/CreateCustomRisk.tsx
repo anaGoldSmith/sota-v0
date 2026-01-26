@@ -260,7 +260,7 @@ const renderSymbol = () => {
     if (entry.type === 'two') {
       return (
         <span className="flex items-center gap-2">
-          2 Base Rotations
+          2 Rotations (including 2 base rotations)
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -269,7 +269,7 @@ const renderSymbol = () => {
                 </span>
               </TooltipTrigger>
               <TooltipContent className="max-w-sm">
-                <p>Each Risk requires two base rotations. Select '2 Base Rotations' or 'Series.'</p>
+                <p>Each Risk requires two base rotations. Select '2 Rotations' or 'Series.'</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -394,7 +394,7 @@ const renderSymbol = () => {
 
   const getBaseTypeName = () => {
     if (entry.type === 'one') return 'One Rotation';
-    if (entry.type === 'two') return '2 Base Rotations';
+    if (entry.type === 'two') return '2 Rotations (including 2 base rotations)';
     if (entry.type === 'axis') return 'Axis/Level Change';
     if (entry.type === 'series') return `Series (${entry.seriesCount || 3} rotations)`;
     if (entry.type === 'multiple-vertical') return `Multiple Vertical Rotations (${entry.seriesCount || 3})`;
@@ -1162,12 +1162,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       return updated;
     });
   };
-  // Check if 2 base rotations already exists
-  const hasTwoBaseRotations = rotationEntries.some(e => e.type === 'two');
-  // Check if series already exists
+  // Check if series already exists (only series is restricted to one)
   const hasSeries = rotationEntries.some(e => e.type === 'series');
-  // Check if multiple vertical rotations already exists
-  const hasMultipleVertical = rotationEntries.some(e => e.type === 'multiple-vertical');
   
   // Drag and drop sensors
   const sensors = useSensors(
@@ -1823,13 +1819,12 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </div>
                           <span className="text-primary font-semibold">0.1</span>
                         </div>
-                        {!hasTwoBaseRotations && (
-                          <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('two')}>
+                        <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('two')}>
                             <div className="w-8 h-8 flex items-center justify-center">
                               {symbols["baseRotations"] ? <img src={symbols["baseRotations"]} alt="Base Rotations" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 bg-muted rounded" />}
                             </div>
                             <div className="flex-1 flex items-center gap-2">
-                              <span className="font-medium text-foreground">2 Base Rotations</span>
+                              <span className="font-medium text-foreground">2 Rotations (including 2 base rotations)</span>
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -1838,14 +1833,13 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                     </span>
                                   </TooltipTrigger>
                                   <TooltipContent className="max-w-sm">
-                                    <p>Each Risk requires two base rotations. Select '2 Base Rotations' or 'Series.'</p>
+                                    <p>Each Risk requires two base rotations. Select '2 Rotations' or 'Series.'</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
                             </div>
                             <span className="text-primary font-semibold">0.2</span>
                           </div>
-                        )}
                         {!hasSeries && (
                           <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('series')}>
                             <div className="w-8 h-8 flex items-center justify-center">
@@ -1867,8 +1861,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             <span className="text-primary font-semibold">0.5</span>
                           </div>
                         )}
-                        {!hasMultipleVertical && !hasTwoBaseRotations && (
-                          <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('multiple-vertical')}>
+                        <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('multiple-vertical')}>
                             <div className="w-8 h-8 flex items-center justify-center">
                               <img src={multipleVerticalRotationsSymbol} alt="Multiple Vertical Rotations" className="h-6 w-auto max-w-[36px] object-contain" />
                             </div>
@@ -1889,7 +1882,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             </div>
                             <span className="text-primary font-semibold">0.3</span>
                           </div>
-                        )}
                       </div>
                     </div>
                   )}
