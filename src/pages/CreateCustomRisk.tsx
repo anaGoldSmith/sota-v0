@@ -944,27 +944,39 @@ const CreateCustomRisk = () => {
   const rotationValue = getRotationValue();
   const rLevel = getTotalRotations();
 
-  // Calculate throw row value: base value + 0.1 if it involves a rotation (Thr6 or throw during DB with rotation)
+  // Calculate throw row value:
+  // - Thr6 (throw during rotation): always 0.1
+  // - Throw during DB: DB value + 0.1 (always add 0.1 for rotation as risk component)
+  // - Other throws: base value only
   const throwDBInfo = getThrowCatchDBInfo(throwDuringDB);
-  const baseThrowValue = throwDBInfo ? throwDBInfo.value : (selectedThrow?.value ?? 0);
-  const throwHasRotation = selectedThrow?.code === 'Thr6' || 
-    (throwDuringDB && (
-      ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
-      'preAcrobaticElement' in throwDuringDB ||
-      'verticalRotation' in throwDuringDB
-    ));
-  const throwValue = baseThrowValue + (throwHasRotation ? 0.1 : 0);
+  let throwValue = 0;
+  if (throwDuringDB) {
+    // Throw during DB: DB value (which already includes extra rotation calculations) + 0.1
+    throwValue = (throwDBInfo?.value ?? 0) + 0.1;
+  } else if (selectedThrow?.code === 'Thr6') {
+    // Thr6: always 0.1
+    throwValue = 0.1;
+  } else if (selectedThrow) {
+    // Other throw types: base value only
+    throwValue = selectedThrow.value ?? 0;
+  }
   
-  // Calculate catch row value: base value + 0.1 if it involves a rotation (Catch8 or catch during DB with rotation)
+  // Calculate catch row value:
+  // - Catch8 (catch during rotation): always 0.1
+  // - Catch during DB: DB value + 0.1 (always add 0.1 for rotation as risk component)
+  // - Other catches: base value only
   const catchDBInfo = getThrowCatchDBInfo(catchDuringDB);
-  const baseCatchValue = catchDBInfo ? catchDBInfo.value : (selectedCatch?.value ?? 0);
-  const catchHasRotation = selectedCatch?.code === 'Catch8' ||
-    (catchDuringDB && (
-      ('db' in catchDuringDB && catchDuringDB.dbType === 'rotations') ||
-      'preAcrobaticElement' in catchDuringDB ||
-      'verticalRotation' in catchDuringDB
-    ));
-  const catchValue = baseCatchValue + (catchHasRotation ? 0.1 : 0);
+  let catchValue = 0;
+  if (catchDuringDB) {
+    // Catch during DB: DB value (which already includes extra rotation calculations) + 0.1
+    catchValue = (catchDBInfo?.value ?? 0) + 0.1;
+  } else if (selectedCatch?.code === 'Catch8') {
+    // Catch8: always 0.1
+    catchValue = 0.1;
+  } else if (selectedCatch) {
+    // Other catch types: base value only
+    catchValue = selectedCatch.value ?? 0;
+  }
   
   // Total value = sum of all row values (throw + throw criteria + rotations + catch + catch criteria)
   const totalValue = throwValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + catchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
@@ -1838,7 +1850,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </p>
                         </div>
                         <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                          <p className="font-semibold text-primary">{((throwInfo?.value || 0) + ((isDBType && throwDuringDB.dbType === 'rotations') || isPreAcrobatic || isVertical ? 0.1 : 0)).toFixed(1)}</p>
+                          <p className="font-semibold text-primary">{((throwInfo?.value || 0) + 0.1).toFixed(1)}</p>
                           <Button 
                             variant="ghost" 
                             size="icon" 
@@ -1969,7 +1981,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       )}
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                      <p className="font-semibold text-primary">{selectedThrow?.code === 'Thr6' ? ((selectedThrow?.value ?? 0) + 0.1).toFixed(1) : (selectedThrow?.value ?? 0)}</p>
+                      <p className="font-semibold text-primary">{selectedThrow?.code === 'Thr6' ? '0.1' : (selectedThrow?.value ?? 0)}</p>
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -2393,7 +2405,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </p>
                         </div>
                         <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                          <p className="font-semibold text-primary">{((catchInfo?.value || 0) + ((isDBType && catchDuringDB.dbType === 'rotations') || isPreAcrobatic || isVertical ? 0.1 : 0)).toFixed(1)}</p>
+                          <p className="font-semibold text-primary">{((catchInfo?.value || 0) + 0.1).toFixed(1)}</p>
                           <Button 
                             variant="ghost" 
                             size="icon" 
@@ -2536,7 +2548,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       )}
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                      <p className="font-semibold text-primary">{selectedCatch?.code === 'Catch8' ? ((selectedCatch?.value ?? 0) + 0.1).toFixed(1) : (selectedCatch?.value ?? 0)}</p>
+                      <p className="font-semibold text-primary">{selectedCatch?.code === 'Catch8' ? '0.1' : (selectedCatch?.value ?? 0)}</p>
                       <Button 
                         variant="ghost" 
                         size="icon" 
