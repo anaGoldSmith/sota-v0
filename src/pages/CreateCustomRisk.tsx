@@ -1861,6 +1861,12 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             <PopoverContent side="left" className="w-auto p-3">
                               <div className="text-sm space-y-2">
                                 <p className="font-medium text-foreground mb-2">Value Breakdown</p>
+                                {isDBType && throwDuringDB.dbType === 'rotations' && throwDuringDB.rotationCount && throwDuringDB.rotationCount > 1 && (
+                                  <div className="flex justify-between gap-6">
+                                    <span className="text-muted-foreground">Rotations:</span>
+                                    <span className="font-medium">{throwDuringDB.rotationCount}</span>
+                                  </div>
+                                )}
                                 <div className="flex justify-between gap-6">
                                   <span className="text-muted-foreground">DB Value:</span>
                                   <span className="font-medium">{(throwInfo?.value || 0).toFixed(1)}</span>
@@ -2440,6 +2446,12 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             <PopoverContent side="left" className="w-auto p-3">
                               <div className="text-sm space-y-2">
                                 <p className="font-medium text-foreground mb-2">Value Breakdown</p>
+                                {isDBType && catchDuringDB.dbType === 'rotations' && catchDuringDB.rotationCount && catchDuringDB.rotationCount > 1 && (
+                                  <div className="flex justify-between gap-6">
+                                    <span className="text-muted-foreground">Rotations:</span>
+                                    <span className="font-medium">{catchDuringDB.rotationCount}</span>
+                                  </div>
+                                )}
                                 <div className="flex justify-between gap-6">
                                   <span className="text-muted-foreground">DB Value:</span>
                                   <span className="font-medium">{(catchInfo?.value || 0).toFixed(1)}</span>
