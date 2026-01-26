@@ -206,7 +206,7 @@ const renderSymbol = () => {
         return <span className="text-2xl font-bold text-foreground">S</span>;
       }
       if (entry.type === 'multiple-vertical') {
-        return <img src={multipleVerticalRotationsSymbol} alt="Multiple Vertical Rotations" className="h-8 w-auto max-w-[48px] object-contain" />;
+        return <img src={multipleVerticalRotationsSymbol} alt="Multiple Vertical Rotations" className="h-8 w-auto max-w-[48px] object-contain" style={{ mixBlendMode: 'multiply' }} />;
       }
       if (entry.type === 'one') {
         return symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />;
@@ -471,7 +471,7 @@ const renderSymbol = () => {
                 {entry.type === 'series' ? (
                   <span className="text-xl font-bold text-foreground">S</span>
                 ) : entry.type === 'multiple-vertical' ? (
-                  <img src={multipleVerticalRotationsSymbol} alt="Multiple Vertical Rotations" className="h-6 w-auto max-w-[36px] object-contain" />
+                  <img src={multipleVerticalRotationsSymbol} alt="Multiple Vertical Rotations" className="h-6 w-auto max-w-[36px] object-contain" style={{ mixBlendMode: 'multiply' }} />
                 ) : entry.type === 'one' ? (
                   symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 bg-muted rounded" />
                 ) : entry.type === 'two' ? (
@@ -1914,6 +1914,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                 src={multipleVerticalRotationsSymbol} 
                                 alt="Vertical Rotation" 
                                 className="h-8 w-8 object-contain -mt-1" 
+                                style={{ mixBlendMode: 'multiply' }}
                               />
                             ) : (
                               <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
@@ -2244,7 +2245,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         )}
                         <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('multiple-vertical')}>
                             <div className="w-8 h-8 flex items-center justify-center">
-                              <img src={multipleVerticalRotationsSymbol} alt="Multiple Vertical Rotations" className="h-6 w-auto max-w-[36px] object-contain" />
+                              <img src={multipleVerticalRotationsSymbol} alt="Multiple Vertical Rotations" className="h-6 w-auto max-w-[36px] object-contain" style={{ mixBlendMode: 'multiply' }} />
                             </div>
                             <div className="flex-1 flex items-center gap-2">
                               <span className="font-medium text-foreground">Multiple Vertical Rotations (3+ identical vertical rotations)</span>
@@ -2499,6 +2500,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                 src={multipleVerticalRotationsSymbol} 
                                 alt="Vertical Rotation" 
                                 className="h-8 w-8 object-contain -mt-1" 
+                                style={{ mixBlendMode: 'multiply' }}
                               />
                             ) : (
                               <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
