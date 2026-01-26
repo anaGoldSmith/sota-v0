@@ -142,7 +142,7 @@ const SortableCriteriaRow = ({ item, onRemove, notesSymbolMap }: SortableCriteri
 };
 
 // Sortable Rotation Row Component
-type RotationType = 'one' | 'two' | 'series' | 'axis';
+type RotationType = 'one' | 'two' | 'series' | 'axis' | 'multiple-vertical';
 type RotationSpecificationType = 'pre-acrobatic' | 'vertical' | 'db-rotation' | null;
 type DBSubType = 'jumps' | 'rotations' | null;
 type RotationEntry = { 
@@ -202,6 +202,9 @@ const renderSymbol = () => {
     const baseSymbol = (() => {
       if (entry.type === 'series') {
         return <span className="text-2xl font-bold text-foreground">S</span>;
+      }
+      if (entry.type === 'multiple-vertical') {
+        return <span className="text-lg font-bold text-foreground">MV</span>;
       }
       if (entry.type === 'one') {
         return symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} /> : <div className="h-8 w-8 bg-muted rounded" />;
@@ -308,6 +311,37 @@ const renderSymbol = () => {
         </div>
       );
     }
+    if (entry.type === 'multiple-vertical') {
+      return (
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-2">
+            Multiple Vertical Rotations
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-sm">
+                  <p>Select 3 or more identical vertical rotations performed under the flight. Each rotation adds 0.1 to the value.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => onUpdateSeriesCount(entry.id, Math.max(3, (entry.seriesCount || 3) - 1))} disabled={(entry.seriesCount || 3) <= 3}>
+              -
+            </Button>
+            <span className="w-6 text-center font-semibold">{entry.seriesCount || 3}</span>
+            <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => onUpdateSeriesCount(entry.id, (entry.seriesCount || 3) + 1)}>
+              +
+            </Button>
+            <span className="text-sm text-muted-foreground">rotations</span>
+          </div>
+        </div>
+      );
+    }
     return null;
   };
 
@@ -316,6 +350,7 @@ const renderSymbol = () => {
     if (entry.type === 'two') return 0.2;
     if (entry.type === 'axis') return 0.1;
     if (entry.type === 'series') return (entry.seriesCount || 3) * 0.1 + 0.2;
+    if (entry.type === 'multiple-vertical') return (entry.seriesCount || 3) * 0.1;
     return 0;
   };
 
@@ -330,11 +365,11 @@ const renderSymbol = () => {
   };
 
   // Only show specification button for actual rotations (not axis)
-  const showSpecificationButton = entry.type === 'one' || entry.type === 'two' || entry.type === 'series';
+  const showSpecificationButton = entry.type === 'one' || entry.type === 'two' || entry.type === 'series' || entry.type === 'multiple-vertical';
   
   // Build the specification label - show vertical rotation name or pre-acrobatic element if selected
   // Use plural "Rotations" for 'two' (2 base rotations) or 'series'
-  const isPlural = entry.type === 'two' || entry.type === 'series';
+  const isPlural = entry.type === 'two' || entry.type === 'series' || entry.type === 'multiple-vertical';
   const selectedSpecLabel = (() => {
     if (!entry.specificationType) return null;
     if (entry.specificationType === 'vertical' && entry.selectedVerticalRotation) {
@@ -349,16 +384,19 @@ const renderSymbol = () => {
     return ROTATION_SPECIFICATION_OPTIONS.find(o => o.value === entry.specificationType)?.label || null;
   })();
   
-  // Filter rotation options based on type - series can only have pre-acrobatic
+  // Filter rotation options based on type - series can only have pre-acrobatic, multiple-vertical can only have vertical
   const availableRotationOptions = entry.type === 'series' 
     ? ROTATION_SPECIFICATION_OPTIONS.filter(o => o.value === 'pre-acrobatic')
-    : ROTATION_SPECIFICATION_OPTIONS;
+    : entry.type === 'multiple-vertical'
+      ? ROTATION_SPECIFICATION_OPTIONS.filter(o => o.value === 'vertical')
+      : ROTATION_SPECIFICATION_OPTIONS;
 
   const getBaseTypeName = () => {
     if (entry.type === 'one') return 'One Rotation';
     if (entry.type === 'two') return '2 Base Rotations';
     if (entry.type === 'axis') return 'Axis/Level Change';
     if (entry.type === 'series') return `Series (${entry.seriesCount || 3} rotations)`;
+    if (entry.type === 'multiple-vertical') return `Multiple Vertical Rotations (${entry.seriesCount || 3})`;
     return '';
   };
 
@@ -430,6 +468,8 @@ const renderSymbol = () => {
               <div className="w-12 flex justify-center py-3">
                 {entry.type === 'series' ? (
                   <span className="text-xl font-bold text-foreground">S</span>
+                ) : entry.type === 'multiple-vertical' ? (
+                  <span className="text-lg font-bold text-foreground">MV</span>
                 ) : entry.type === 'one' ? (
                   symbols["extraRotation"] ? <img src={symbols["extraRotation"]} alt="Rotation" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 bg-muted rounded" />
                 ) : entry.type === 'two' ? (
@@ -783,7 +823,8 @@ const CreateCustomRisk = () => {
       if (entry.type === 'one') baseValue = 0.1;
       else if (entry.type === 'two') baseValue = 0.2;
       else if (entry.type === 'axis') baseValue = 0.1;
-      else baseValue = (entry.seriesCount || 3) * 0.1 + 0.2; // Series
+      else if (entry.type === 'series') baseValue = (entry.seriesCount || 3) * 0.1 + 0.2;
+      else if (entry.type === 'multiple-vertical') baseValue = (entry.seriesCount || 3) * 0.1;
       
       // Add DB element value if selected
       const dbValue = entry.selectedDBElement?.value ?? 0;
@@ -797,7 +838,8 @@ const CreateCustomRisk = () => {
       if (entry.type === 'one') return sum + 1;
       if (entry.type === 'two') return sum + 2;
       if (entry.type === 'axis') return sum; // axis doesn't add rotations
-      return sum + (entry.seriesCount || 3);
+      if (entry.type === 'multiple-vertical') return sum + (entry.seriesCount || 3);
+      return sum + (entry.seriesCount || 3); // series
     }, 0);
     
     // Thr6 and Catch8 are performed during rotation, each adds 1 rotation
@@ -1056,11 +1098,11 @@ const CreateCustomRisk = () => {
     });
     return map;
   }, [dynamicCatches, generalCriteria, dynamicThrows]);
-  const handleSelectRotationType = (type: 'one' | 'two' | 'series') => {
+  const handleSelectRotationType = (type: 'one' | 'two' | 'series' | 'multiple-vertical') => {
     const newEntry: RotationEntry = {
       id: crypto.randomUUID(),
       type,
-      seriesCount: type === 'series' ? 3 : undefined
+      seriesCount: (type === 'series' || type === 'multiple-vertical') ? 3 : undefined
     };
     setRotationEntries(prev => [...prev, newEntry]);
     setShowRotationDropdown(false);
@@ -1123,6 +1165,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
   const hasTwoBaseRotations = rotationEntries.some(e => e.type === 'two');
   // Check if series already exists
   const hasSeries = rotationEntries.some(e => e.type === 'series');
+  // Check if multiple vertical rotations already exists
+  const hasMultipleVertical = rotationEntries.some(e => e.type === 'multiple-vertical');
   
   // Drag and drop sensors
   const sensors = useSensors(
@@ -1820,6 +1864,29 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                               </Tooltip>
                             </TooltipProvider>
                             <span className="text-primary font-semibold">0.5</span>
+                          </div>
+                        )}
+                        {!hasMultipleVertical && !hasTwoBaseRotations && (
+                          <div className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer" onClick={() => handleSelectRotationType('multiple-vertical')}>
+                            <div className="w-8 h-8 flex items-center justify-center">
+                              <span className="text-lg font-bold text-foreground">MV</span>
+                            </div>
+                            <div className="flex-1 flex items-center gap-2">
+                              <span className="font-medium text-foreground">Multiple Vertical Rotations (3+ identical vertical rotations)</span>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                    <span className="inline-flex">
+                                      <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-sm">
+                                    <p>Select 3 or more identical vertical rotations performed under the flight. Each rotation adds 0.1 to the value. Unlike Series, this does not include the 0.2 base value.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                            <span className="text-primary font-semibold">0.3</span>
                           </div>
                         )}
                       </div>
