@@ -1432,13 +1432,104 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
   const handleSaveCatchCriteriaSelection = () => {
     setShowCatchCriteriaDropdown(false);
   };
+  // Helper function to check if two rotation entries are identical
+  const areRotationsIdentical = (a: RotationEntry, b: RotationEntry): boolean => {
+    // Both must be single rotations with the same specification type
+    if (a.type !== 'one' || b.type !== 'one') return false;
+    if (a.specificationType !== b.specificationType) return false;
+    if (!a.specificationType) return false;
+    
+    // Compare based on specification type
+    if (a.specificationType === 'pre-acrobatic') {
+      return a.selectedPreAcrobaticElement?.id === b.selectedPreAcrobaticElement?.id 
+             && a.selectedPreAcrobaticElement?.id !== undefined;
+    }
+    
+    if (a.specificationType === 'vertical') {
+      return a.selectedVerticalRotation?.id === b.selectedVerticalRotation?.id
+             && a.selectedVerticalRotation?.id !== undefined;
+    }
+    
+    return false;
+  };
+
+  // Comprehensive validation for rotation configuration
+  const validateRotationConfiguration = (): { valid: boolean; message: string } => {
+    // Filter out axis entries (they're criteria, not rotations)
+    const actualRotations = rotationEntries.filter(e => e.type !== 'axis');
+    
+    if (actualRotations.length === 0) {
+      return { 
+        valid: false, 
+        message: "A valid Risk requires at least two identical, uninterrupted rotations." 
+      };
+    }
+    
+    // Check for automatically valid types (series, multiple-vertical, two)
+    const hasSeriesOrMultipleOrTwo = actualRotations.some(e => 
+      e.type === 'series' || e.type === 'multiple-vertical' || e.type === 'two'
+    );
+    
+    if (hasSeriesOrMultipleOrTwo) {
+      return { valid: true, message: "" };
+    }
+    
+    // For single rotations only, check for consecutive identical pairs
+    const singleRotations = actualRotations.filter(e => e.type === 'one');
+    
+    if (singleRotations.length < 2) {
+      return { 
+        valid: false, 
+        message: "A valid Risk requires at least two identical rotations. Add another identical rotation or select '2 Rotations' or 'Series'." 
+      };
+    }
+    
+    // Check for consecutive identical rotations in the original array (ignoring axis entries)
+    for (let i = 0; i < singleRotations.length - 1; i++) {
+      const current = singleRotations[i];
+      const next = singleRotations[i + 1];
+      
+      // Find their positions in the original rotationEntries array
+      const currentIndex = rotationEntries.findIndex(e => e.id === current.id);
+      const nextIndex = rotationEntries.findIndex(e => e.id === next.id);
+      
+      // Check if they're adjacent (ignoring axis entries between them)
+      const entriesBetween = rotationEntries.slice(currentIndex + 1, nextIndex);
+      const nonAxisBetween = entriesBetween.filter(e => e.type !== 'axis');
+      
+      // If no non-axis entries between them and they're identical, it's valid
+      if (nonAxisBetween.length === 0 && areRotationsIdentical(current, next)) {
+        return { valid: true, message: "" };
+      }
+    }
+    
+    // Check if there are identical rotations but they're not consecutive
+    const hasIdenticalButNotConsecutive = singleRotations.some((rot, idx) => 
+      singleRotations.some((other, otherIdx) => 
+        idx !== otherIdx && areRotationsIdentical(rot, other)
+      )
+    );
+    
+    if (hasIdenticalButNotConsecutive) {
+      return { 
+        valid: false, 
+        message: "Identical rotations must be performed consecutively without interruption. Reorder your rotations so identical elements are adjacent (e.g., chainé, chainé, roll instead of chainé, roll, chainé)." 
+      };
+    }
+    
+    return { 
+      valid: false, 
+      message: "Two rotations must be identical (same element). Select the same pre-acrobatic or vertical rotation for at least two consecutive entries." 
+    };
+  };
+
   const handleSave = () => {
-    // Validation: Check if user has selected either 2 Base Rotations or Series
-    const hasValidBaseRotations = rotationEntries.some(e => e.type === 'two' || e.type === 'series');
-    if (!hasValidBaseRotations) {
+    // Validate rotation configuration
+    const rotationValidation = validateRotationConfiguration();
+    if (!rotationValidation.valid) {
       toast({
         title: "Invalid Risk Configuration",
-        description: "A valid Risk requires at least two identical, uninterrupted rotations. Select either '2 Base Rotations' or a 'Series' of Rotations.",
+        description: rotationValidation.message,
         variant: "destructive"
       });
       return;
