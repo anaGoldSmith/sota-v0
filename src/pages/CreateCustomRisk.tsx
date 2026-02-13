@@ -1474,6 +1474,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       return { valid: true, message: "" };
     }
     
+    // Dive Leap exception: if Dive Leap is selected in the Throw section (Thr6 with pre-acrobatic spec),
+    // a single rotation in the Rotations section is sufficient to make the risk valid
+    const hasDiveLeapInThrow = selectedThrow?.code === 'Thr6' && 
+      throwRotationSpec?.type === 'pre-acrobatic' && 
+      throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap';
+    
+    if (hasDiveLeapInThrow && actualRotations.length >= 1) {
+      return { valid: true, message: "" };
+    }
+    
     // For single rotations only, check for consecutive identical pairs
     const singleRotations = actualRotations.filter(e => e.type === 'one');
     
@@ -2287,7 +2297,13 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         jumpsDBs={jumpsDBs}
                         rotationsDBs={rotationsDBs}
                         verticalRotations={verticalRotations}
-                        preAcrobaticElements={preAcrobaticElements}
+                        preAcrobaticElements={
+                          // Exclude Dive Leap from rotation section if already selected in Throw (Thr6) spec
+                          (selectedThrow?.code === 'Thr6' && throwRotationSpec?.type === 'pre-acrobatic' && 
+                           throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap')
+                            ? preAcrobaticElements.filter(e => e.name?.toLowerCase() !== 'dive leap')
+                            : preAcrobaticElements
+                        }
                         isFirstRotation={index === 0}
                       />
                     ))}
@@ -2845,7 +2861,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       <PreAcrobaticSelectionDialog
         open={showCatchPreAcrobaticDialog}
         onOpenChange={setShowCatchPreAcrobaticDialog}
-        elements={preAcrobaticElements}
+        elements={preAcrobaticElements.filter(e => e.name?.toLowerCase() !== 'dive leap')}
         onSelect={(element) => {
           setCatchRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
           setShowCatchPreAcrobaticDialog(false);
