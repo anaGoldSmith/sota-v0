@@ -1603,6 +1603,14 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     const actualRotations = rotationEntries.filter(e => e.type !== 'axis');
     if (actualRotations.length === 0) return 'ok';
     
+    // Dive leap always comes with valid change of level — skip all checks
+    const hasDiveLeap = actualRotations.some(e => 
+      e.specificationType === 'pre-acrobatic' && 
+      e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'dive leap'
+    ) || (throwRotationSpec?.type === 'pre-acrobatic' && 
+      throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap');
+    if (hasDiveLeap) return 'ok';
+    
     const hasAxisChange = rotationEntries.some(e => e.type === 'axis');
     if (!hasAxisChange) {
       // Check if we should auto-add below, otherwise no issue
