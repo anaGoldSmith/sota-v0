@@ -1275,7 +1275,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     ));
   };
   const handleSelectPreAcrobaticElement = (id: string, element: PreAcrobaticElement) => {
-    // Check if Dive Leap is being selected as the first rotation and no rotation-based throw exists
+    // Check if Dive Leap is being selected
     if (element.name?.toLowerCase() === 'dive leap') {
       const throwHasRotation = selectedThrow?.code === 'Thr6' || 
         (throwDuringDB && (
@@ -1284,18 +1284,20 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
           'verticalRotation' in throwDuringDB
         ));
       
-      // Only show prompt if dive leap will be the first rotation (no rotation-based throw)
-      if (!throwHasRotation) {
-        // Check if this entry is at position 0 or will be moved there
-        const entryIndex = rotationEntries.findIndex(e => e.id === id);
-        const actualRotations = rotationEntries.filter(e => e.type !== 'axis');
-        const isFirstActualRotation = entryIndex === 0 || actualRotations[0]?.id === id || actualRotations.length === 0;
-        
-        if (isFirstActualRotation || entryIndex <= 0) {
-          setPendingDiveLeapContext({ source: 'rotation', entryId: id, element });
-          setShowDiveLeapPrompt(true);
-          return;
-        }
+      // Block dive leap entirely if a rotation-based throw exists
+      if (throwHasRotation) {
+        return; // Silently prevent — dive leap is not valid after rotation-based throw
+      }
+      
+      // Show prompt if dive leap will be the first rotation (no rotation-based throw)
+      const entryIndex = rotationEntries.findIndex(e => e.id === id);
+      const actualRotations = rotationEntries.filter(e => e.type !== 'axis');
+      const isFirstActualRotation = entryIndex === 0 || actualRotations[0]?.id === id || actualRotations.length === 0;
+      
+      if (isFirstActualRotation || entryIndex <= 0) {
+        setPendingDiveLeapContext({ source: 'rotation', entryId: id, element });
+        setShowDiveLeapPrompt(true);
+        return;
       }
     }
     
@@ -2110,8 +2112,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                     <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
                       {/* Throw during DB option */}
                       <div 
-                        className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border" 
+                        className={`flex items-center gap-3 p-3 border-b border-border ${hasDiveLeapInRotation ? 'opacity-40 cursor-not-allowed' : 'hover:bg-muted cursor-pointer'}`}
                         onClick={() => {
+                          if (hasDiveLeapInRotation) return;
                           setShowThrowDropdown(false);
                           setShowDBDuringThrowDialog(true);
                         }}
@@ -2130,7 +2133,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         </div>
                         <div className="flex-1 min-w-0">
                           <span className="text-foreground text-sm">Throw during DB <span className="text-foreground">(0.1 is added for extra rotation)</span></span>
-                          <p className="text-xs text-muted-foreground">Select a DB element performed during throw</p>
+                          <p className="text-xs text-muted-foreground">
+                            {hasDiveLeapInRotation ? 'Not available when Dive Leap is in rotations' : 'Select a DB element performed during throw'}
+                          </p>
                         </div>
                         <div className="w-12 text-right flex-shrink-0 flex items-center justify-end gap-1">
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -2142,11 +2147,13 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         </div>
                       ) : filteredThrows.map(throwItem => {
                         const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
+                        const isRotationThrow = throwItem.code === 'Thr6';
+                        const isDisabled = isRotationThrow && hasDiveLeapInRotation;
                         return (
                           <div 
                             key={throwItem.id} 
-                            className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" 
-                            onClick={() => handleSelectThrow(throwItem)}
+                            className={`flex items-center gap-3 p-3 border-b border-border last:border-b-0 ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-muted cursor-pointer'}`}
+                            onClick={() => !isDisabled && handleSelectThrow(throwItem)}
                           >
                             <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
                               <img src={symbolUrl} alt={throwItem.code} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
@@ -2155,6 +2162,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                               <span className="text-foreground text-sm">
                                 <NotesWithSymbols notes={throwItem.name} symbolMap={notesSymbolMap} />
                               </span>
+                              {isDisabled && (
+                                <p className="text-xs text-muted-foreground">Not available when Dive Leap is in rotations</p>
+                              )}
                             </div>
                             <div className="w-12 text-right flex-shrink-0">
                               <span className="text-primary font-semibold">{throwItem.value ?? 0}</span>
@@ -2588,10 +2598,21 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         verticalRotations={verticalRotations}
                         preAcrobaticElements={
                           // Exclude Dive Leap if already selected in Throw section OR already in another rotation entry
+                          // OR if a rotation-based throw exists (Thr6 or throw during DB)
                           (() => {
                             let filtered = preAcrobaticElements;
                             // Exclude if dive leap is in throw
                             if (hasDiveLeapInThrow) {
+                              filtered = filtered.filter(e => e.name?.toLowerCase() !== 'dive leap');
+                            }
+                            // Exclude if a rotation-based throw exists (Thr6 or throw during DB)
+                            const throwHasRotation = selectedThrow?.code === 'Thr6' || 
+                              (throwDuringDB && (
+                                ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
+                                'preAcrobaticElement' in throwDuringDB ||
+                                'verticalRotation' in throwDuringDB
+                              ));
+                            if (throwHasRotation) {
                               filtered = filtered.filter(e => e.name?.toLowerCase() !== 'dive leap');
                             }
                             // Exclude if dive leap is already in a different rotation entry
