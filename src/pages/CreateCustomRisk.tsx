@@ -1609,24 +1609,34 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     const axisLevelSymbol = hasAxisChange ? (symbols["axisLevelChange"] || '') : undefined;
 
     // Calculate effective rLevel (for display only)
-    let effectiveRLevel = rotationEntries.reduce((sum, entry) => {
-      if (entry.type === 'one') return sum + 1;
-      if (entry.type === 'two') return sum + 2;
-      if (entry.type === 'axis') return sum;
-      return sum + (entry.seriesCount || 3);
-    }, 0);
-    if (effectiveThrow?.code === 'Thr6') effectiveRLevel += 1;
-    if (effectiveCatch?.code === 'Catch8') effectiveRLevel += 1;
-    if (throwDuringDB && (
-      ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
-      'preAcrobaticElement' in throwDuringDB ||
-      'verticalRotation' in throwDuringDB
-    )) effectiveRLevel += 1;
-    if (catchDuringDB && (
-      ('db' in catchDuringDB && catchDuringDB.dbType === 'rotations') ||
-      'preAcrobaticElement' in catchDuringDB ||
-      'verticalRotation' in catchDuringDB
-    )) effectiveRLevel += 1;
+    // excludeDiveLeap: when true, dive leap in Rotations section won't count as a rotation
+    const calculateRLevel = (excludeDiveLeap: boolean) => {
+      let rLevel = rotationEntries.reduce((sum, entry) => {
+        if (entry.type === 'axis') return sum;
+        if (excludeDiveLeap && entry.type === 'one' && 
+            entry.specificationType === 'pre-acrobatic' && 
+            entry.selectedPreAcrobaticElement?.name?.toLowerCase() === 'dive leap') {
+          return sum; // Skip dive leap
+        }
+        if (entry.type === 'one') return sum + 1;
+        if (entry.type === 'two') return sum + 2;
+        return sum + (entry.seriesCount || 3);
+      }, 0);
+      if (effectiveThrow?.code === 'Thr6') rLevel += 1;
+      if (effectiveCatch?.code === 'Catch8') rLevel += 1;
+      if (throwDuringDB && (
+        ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
+        'preAcrobaticElement' in throwDuringDB ||
+        'verticalRotation' in throwDuringDB
+      )) rLevel += 1;
+      if (catchDuringDB && (
+        ('db' in catchDuringDB && catchDuringDB.dbType === 'rotations') ||
+        'preAcrobaticElement' in catchDuringDB ||
+        'verticalRotation' in catchDuringDB
+      )) rLevel += 1;
+      return rLevel;
+    };
+    let effectiveRLevel = calculateRLevel(false);
     
     // Calculate effective throw value: base + 0.1 if involves rotation
     const baseEffectiveThrowValue = effectiveThrow?.value ?? 0;
@@ -2869,6 +2879,11 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
             <Button 
               className="w-full bg-primary hover:bg-primary/90" 
               onClick={() => {
+                // Recalculate rLevel excluding dive leap since it's not the first rotation
+                if (savedRiskData) {
+                  const adjustedRLevel = savedRiskData.rLevel - 1;
+                  setSavedRiskData({ ...savedRiskData, rLevel: adjustedRLevel });
+                }
                 setShowDiveLeapWarning(false);
                 setShowSuccessDialog(true);
               }}
