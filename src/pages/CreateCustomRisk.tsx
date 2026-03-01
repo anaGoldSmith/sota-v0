@@ -1868,7 +1868,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   
                   {showThrowDropdown && (
                     <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                      {/* Throw during DB option */}
+                      {/* Throw during DB option - hidden when Dive Leap is in Rotation section */}
+                      {!hasDiveLeapInRotation && (
                       <div 
                         className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border" 
                         onClick={() => {
@@ -1896,11 +1897,13 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
                       </div>
-                      {filteredThrows.length === 0 ? (
+                      )}
+                      {/* Filter out Thr6 when Dive Leap is in Rotation section */}
+                      {(hasDiveLeapInRotation ? filteredThrows.filter(t => t.code !== 'Thr6') : filteredThrows).length === 0 ? (
                         <div className="p-4 text-center text-muted-foreground">
                           No throws available for this apparatus
                         </div>
-                      ) : filteredThrows.map(throwItem => {
+                      ) : (hasDiveLeapInRotation ? filteredThrows.filter(t => t.code !== 'Thr6') : filteredThrows).map(throwItem => {
                         const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
                         return (
                           <div 
