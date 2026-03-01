@@ -79,6 +79,9 @@ interface RiskComponent {
   name: string;
   symbol: string;
   value: number;
+  rotationTag?: 'ACRO' | 'VER' | 'UNK'; // For rotation specification rows
+  rotationCount?: number; // Number of rotations (1, 2, or series count)
+  rotationSpec?: string; // Specification label (e.g., "Roll Forward")
 }
 
 interface RiskData {
@@ -485,44 +488,59 @@ function SortableRow({
           <TableCell colSpan={6} className="p-4">
             <div className="ml-8 border rounded-lg overflow-hidden">
               <table className="w-full">
-                <thead className="bg-muted/30">
-                  <tr>
-                    <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Symbol</th>
-                    <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Risk Component</th>
-                    <th className="py-2 px-4 text-right text-sm font-semibold text-muted-foreground">Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {element.riskData.components.map((component, idx) => (
-                    <tr key={idx} className={idx % 2 === 1 ? "bg-secondary/10" : ""}>
-                      <td className="py-2 px-4">
-                        {component.symbol ? (
-                          <img 
-                            src={component.symbol} 
-                            alt={component.name} 
-                            className="h-6 w-6 object-contain"
-                          />
-                        ) : component.name.toLowerCase().includes('series') ? (
-                          <span className="text-lg font-bold text-foreground">S</span>
-                        ) : (
-                          <div className="h-6 w-6 bg-muted rounded" />
-                        )}
-                      </td>
-                      <td className="py-2 px-4 font-medium">
-                        <NotesWithSymbols 
-                          notes={component.name} 
-                          symbolMap={Object.fromEntries(
-                            ['Cr1V','Cr2H','Cr3L','Cr4F','Cr5W','Cr6DB','Cr7R'].map(code => [
-                              code, 
-                              supabase.storage.from('criteria-symbols').getPublicUrl(`${code}.png`).data.publicUrl
-                            ])
-                          )} 
-                        />
-                      </td>
-                      <td className="py-2 px-4 text-right font-mono">{component.value}</td>
-                    </tr>
-                  ))}
-                </tbody>
+                 <thead className="bg-muted/30">
+                   <tr>
+                     <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Symbol</th>
+                     <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Risk Component</th>
+                     <th className="py-2 px-4 text-center text-sm font-semibold text-muted-foreground">Type</th>
+                     <th className="py-2 px-4 text-right text-sm font-semibold text-muted-foreground">Value</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {element.riskData.components.map((component, idx) => (
+                     <tr key={idx} className={idx % 2 === 1 ? "bg-secondary/10" : ""}>
+                       <td className="py-2 px-4">
+                         {component.symbol ? (
+                           <img 
+                             src={component.symbol} 
+                             alt={component.name} 
+                             className="h-6 w-6 object-contain"
+                           />
+                         ) : component.name.toLowerCase().includes('series') || (component.rotationTag && component.rotationCount && component.rotationCount >= 3) ? (
+                           <span className="text-lg font-bold text-foreground">S</span>
+                         ) : (
+                           <div className="h-6 w-6 bg-muted rounded" />
+                         )}
+                       </td>
+                       <td className="py-2 px-4 font-medium">
+                         <NotesWithSymbols 
+                           notes={component.name} 
+                           symbolMap={Object.fromEntries(
+                             ['Cr1V','Cr2H','Cr3L','Cr4F','Cr5W','Cr6DB','Cr7R'].map(code => [
+                               code, 
+                               supabase.storage.from('criteria-symbols').getPublicUrl(`${code}.png`).data.publicUrl
+                             ])
+                           )} 
+                         />
+                       </td>
+                       <td className="py-2 px-4 text-center">
+                         {component.rotationTag && (
+                           <Badge 
+                             variant="outline" 
+                             className={
+                               component.rotationTag === 'ACRO' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border-orange-300' :
+                               component.rotationTag === 'VER' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300' :
+                               'bg-muted text-muted-foreground border-border'
+                             }
+                           >
+                             {component.rotationTag}
+                           </Badge>
+                         )}
+                       </td>
+                       <td className="py-2 px-4 text-right font-mono">{component.value}</td>
+                     </tr>
+                   ))}
+                 </tbody>
               </table>
             </div>
           </TableCell>
