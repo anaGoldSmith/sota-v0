@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Plus, CheckCircle, X, ChevronDown, ChevronRight, Info, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, CheckCircle, X, ChevronDown, ChevronRight, Info, GripVertical, AlertCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -756,6 +756,7 @@ const CreateCustomRisk = () => {
   } = useToast();
   const [symbols, setSymbols] = useState<Record<string, string>>({});
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showDiveLeapWarning, setShowDiveLeapWarning] = useState(false);
   const [savedRiskData, setSavedRiskData] = useState<any>(null);
 
   // Get apparatus and modification state from navigation state
@@ -1514,19 +1515,11 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     }
     
     // Dive Leap in Rotation section: counts as a rotation, so if dive leap + 1 more rotation = valid
-    // But also enforce: if dive leap is in rotation, throw must NOT have Thr6 or throwDuringDB
     const diveLeapRotEntry = actualRotations.find(e => 
       e.specificationType === 'pre-acrobatic' && 
       e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'dive leap'
     );
     if (diveLeapRotEntry) {
-      // Validate: throw section must not have throw during rotation or DBs
-      if (selectedThrow?.code === 'Thr6') {
-        return { valid: false, message: "When Dive Leap is in the Rotations section, the Throw section cannot use 'Throw during rotation' (Thr6). Remove Thr6 or move Dive Leap to the Throw section." };
-      }
-      if (throwDuringDB) {
-        return { valid: false, message: "When Dive Leap is in the Rotations section, the Throw section cannot have a DB during throw. Remove the DB or move Dive Leap to the Throw section." };
-      }
       // Dive leap counts as first rotation; need at least one more
       if (actualRotations.length >= 2) {
         return { valid: true, message: "" };
@@ -1705,6 +1698,29 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       }))]
     };
     setSavedRiskData(riskData);
+    
+    // Check if Dive Leap is in Rotations section but not as the first rotation overall
+    // (i.e., there are rotations in the throw section before it)
+    const diveLeapInRotations = rotationEntries.some(e => 
+      e.specificationType === 'pre-acrobatic' && 
+      e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'dive leap'
+    );
+    
+    if (diveLeapInRotations) {
+      const throwHasRotation = selectedThrow?.code === 'Thr6' || 
+        (throwDuringDB && (
+          ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
+          'preAcrobaticElement' in throwDuringDB ||
+          'verticalRotation' in throwDuringDB
+        ));
+      
+      if (throwHasRotation) {
+        // Dive leap is NOT the first rotation — show warning
+        setShowDiveLeapWarning(true);
+        return;
+      }
+    }
+    
     setShowSuccessDialog(true);
   };
   const handleAddMoreStandardRisks = () => {
@@ -1868,8 +1884,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   
                   {showThrowDropdown && (
                     <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                      {/* Throw during DB option - hidden when Dive Leap is in Rotation section */}
-                      {!hasDiveLeapInRotation && (
+                      {/* Throw during DB option */}
                       <div 
                         className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border" 
                         onClick={() => {
@@ -1897,13 +1912,11 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
                       </div>
-                      )}
-                      {/* Filter out Thr6 when Dive Leap is in Rotation section */}
-                      {(hasDiveLeapInRotation ? filteredThrows.filter(t => t.code !== 'Thr6') : filteredThrows).length === 0 ? (
+                      {filteredThrows.length === 0 ? (
                         <div className="p-4 text-center text-muted-foreground">
                           No throws available for this apparatus
                         </div>
-                      ) : (hasDiveLeapInRotation ? filteredThrows.filter(t => t.code !== 'Thr6') : filteredThrows).map(throwItem => {
+                      ) : filteredThrows.map(throwItem => {
                         const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
                         return (
                           <div 
@@ -2828,6 +2841,43 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
           </div>
         </div>
       </main>
+
+      {/* Dive Leap Warning Dialog */}
+      <Dialog open={showDiveLeapWarning} onOpenChange={setShowDiveLeapWarning}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <div className="flex justify-center mb-4">
+              <AlertCircle className="h-16 w-16 text-amber-500" />
+            </div>
+            <DialogTitle className="text-center text-xl">Dive Leap Notice</DialogTitle>
+            <DialogDescription className="text-center text-base leading-relaxed mt-2">
+              Please note: Your risk includes a dive leap that will not be counted as a rotational element.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground text-center leading-relaxed">
+            A dive leap can only be counted as a rotational element in R if it is performed as the first rotation — meaning it must be executed either during the throw or immediately after the throw.
+          </p>
+          <p className="text-sm font-medium text-center mt-2">Would you like to adjust your risk?</p>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={() => setShowDiveLeapWarning(false)}
+            >
+              Yes, adjust my risk
+            </Button>
+            <Button 
+              className="w-full bg-primary hover:bg-primary/90" 
+              onClick={() => {
+                setShowDiveLeapWarning(false);
+                setShowSuccessDialog(true);
+              }}
+            >
+              No, save as is
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Success Dialog */}
       <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
