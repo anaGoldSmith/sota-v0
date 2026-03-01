@@ -1883,9 +1883,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     // Default to Catch1 if no catch selected
     const effectiveCatch = selectedCatch || dynamicCatches.find(c => c.code === 'Catch1');
 
-    // Collect throw symbols (throw symbol + criteria symbols)
+    // Collect throw symbols (throw symbol + extra throw symbol + criteria symbols)
     const throwSymbols: string[] = [
       ...(effectiveThrow?.symbol_image ? [effectiveThrow.symbol_image] : []),
+      // Thr6+Thr2 combo: include Thr2 symbol after Thr6
+      ...(extraThrow?.symbol_image ? [extraThrow.symbol_image] : []),
+      // Thr2+Thr6 combo: include Thr6 symbol after Thr2
+      ...(thr2HasThr6 ? (() => {
+        const thr6Item = dynamicThrows.find(t => t.code === 'Thr6');
+        return thr6Item?.symbol_image ? [thr6Item.symbol_image] : [];
+      })() : []),
       ...throwCriteria.filter(t => t.symbol).map(t => t.symbol!)
     ];
     
@@ -1981,7 +1988,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       }] : []),
       ...(thr2HasThr6 ? [{
         name: 'Throw during rotation (Thr6)',
-        symbol: '',
+        symbol: dynamicThrows.find(t => t.code === 'Thr6')?.symbol_image || '',
         value: 0.1
       }] : []),
       ...throwCriteria.map(t => ({
