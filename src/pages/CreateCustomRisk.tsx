@@ -760,6 +760,7 @@ const CreateCustomRisk = () => {
   const [showDiveLeapPrompt, setShowDiveLeapPrompt] = useState(false);
   const [pendingDiveLeapContext, setPendingDiveLeapContext] = useState<{ source: 'throw' | 'rotation'; entryId?: string; element: PreAcrobaticElement } | null>(null);
   const [savedRiskData, setSavedRiskData] = useState<any>(null);
+  const [showAxisWarningDialog, setShowAxisWarningDialog] = useState(false);
 
   // Get apparatus and modification state from navigation state
   const locationState = location.state as {
@@ -1580,6 +1581,48 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     return false;
   };
 
+  // Axis/Level Change pre-checker
+  // Returns 'ok' if no issue, 'auto-added' if axis was added automatically, 'warning' if user should be warned
+  const checkAxisLevelChangeCriterion = (): 'ok' | 'warning' => {
+    const actualRotations = rotationEntries.filter(e => e.type !== 'axis');
+    if (actualRotations.length === 0) return 'ok';
+    
+    const hasVertical = actualRotations.some(e => e.specificationType === 'vertical' && e.selectedVerticalRotation);
+    const hasPreAcrobatic = actualRotations.some(e => e.specificationType === 'pre-acrobatic' && e.selectedPreAcrobaticElement);
+    const hasAxisChange = rotationEntries.some(e => e.type === 'axis');
+    
+    // Also check throw section for pre-acrobatic (dive leap)
+    const throwHasPreAcrobatic = throwRotationSpec?.type === 'pre-acrobatic' && throwRotationSpec?.preAcrobaticElement;
+    const effectiveHasPreAcrobatic = hasPreAcrobatic || throwHasPreAcrobatic;
+    
+    // Case 1: Mix of vertical + pre-acrobatic → auto-add axis if missing (always valid)
+    if (hasVertical && effectiveHasPreAcrobatic) {
+      if (!hasAxisChange) {
+        setRotationEntries(prev => [...prev, { id: crypto.randomUUID(), type: 'axis' as const }]);
+      }
+      return 'ok';
+    }
+    
+    // Case 2: Only vertical rotations with axis change → check groups
+    if (hasVertical && !effectiveHasPreAcrobatic && hasAxisChange) {
+      const verticalEntries = actualRotations.filter(e => e.specificationType === 'vertical' && e.selectedVerticalRotation);
+      const groups = new Set(verticalEntries.map(e => e.selectedVerticalRotation!.group_name?.toLowerCase()));
+      if (groups.size <= 1) {
+        // All same group — warning
+        return 'warning';
+      }
+      // Different groups — valid
+      return 'ok';
+    }
+    
+    // Case 3: Only pre-acrobatic rotations with axis change → flag
+    if (effectiveHasPreAcrobatic && !hasVertical && hasAxisChange) {
+      return 'warning';
+    }
+    
+    return 'ok';
+  };
+
   // Comprehensive validation for rotation configuration
   const validateRotationConfiguration = (): { valid: boolean; message: string } => {
     // Filter out axis entries (they're criteria, not rotations)
@@ -1862,7 +1905,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     setSavedRiskData(riskData);
     
     // Check if Dive Leap is in Rotations section but not as the first rotation overall
-    // (i.e., there are rotations in the throw section before it)
     const diveLeapInRotations = rotationEntries.some(e => 
       e.specificationType === 'pre-acrobatic' && 
       e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'dive leap'
@@ -1877,10 +1919,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         ));
       
       if (throwHasRotation) {
-        // Dive leap is NOT the first rotation — show warning
         setShowDiveLeapWarning(true);
         return;
       }
+    }
+    
+    // Axis/Level Change pre-checker
+    const axisCheckResult = checkAxisLevelChangeCriterion();
+    if (axisCheckResult === 'warning') {
+      setShowAxisWarningDialog(true);
+      return;
     }
     
     setShowSuccessDialog(true);
@@ -3075,10 +3123,65 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   setSavedRiskData({ ...savedRiskData, rLevel: adjustedRLevel });
                 }
                 setShowDiveLeapWarning(false);
+                // Run axis check before showing success
+                const axisResult = checkAxisLevelChangeCriterion();
+                if (axisResult === 'warning') {
+                  setShowAxisWarningDialog(true);
+                  return;
+                }
                 setShowSuccessDialog(true);
               }}
             >
               No, save as is
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Axis/Level Change Warning Dialog */}
+      <Dialog open={showAxisWarningDialog} onOpenChange={setShowAxisWarningDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <div className="flex justify-center mb-4">
+              <AlertCircle className="h-16 w-16 text-amber-500" />
+            </div>
+            <DialogTitle className="text-center text-xl">Change of Axis/Level Criterion Warning</DialogTitle>
+            <DialogDescription className="text-center text-base leading-relaxed mt-2">
+              For the change of axis/level criterion to be valid, your rotations must be either:
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="text-sm text-muted-foreground list-disc pl-6 space-y-1">
+            <li>around different axes (vertical or horizontal), or</li>
+            <li>at different levels (standing, seated, or lying).</li>
+          </ul>
+          <p className="text-sm font-medium text-center mt-2">Do your rotations meet this requirement?</p>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button 
+              className="w-full bg-primary hover:bg-primary/90" 
+              onClick={() => {
+                setShowAxisWarningDialog(false);
+                setShowSuccessDialog(true);
+              }}
+            >
+              Yes, save
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={() => {
+                // Remove the axis entry and let user adjust
+                setRotationEntries(prev => prev.filter(e => e.type !== 'axis'));
+                setShowAxisWarningDialog(false);
+              }}
+            >
+              No, remove criterion
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="w-full" 
+              onClick={() => setShowAxisWarningDialog(false)}
+            >
+              Go back and adjust
             </Button>
           </div>
         </DialogContent>
