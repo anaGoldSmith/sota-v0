@@ -1498,33 +1498,19 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     setShowExtraThrowDropdown(false);
     setThr2HasThr6(false);
 
-    // Auto-add Cr1V and Cr2H when Thr2 is selected
+    // Auto-add Cr2H when Thr2 is selected
     if (throwItem.code === 'Thr2') {
-      const cr1v = generalCriteria.find(gc => gc.code === 'Cr1V');
       const cr2h = generalCriteria.find(gc => gc.code === 'Cr2H');
-      const newCriteria: CriteriaItem[] = [];
-      if (cr1v && !selectedThrowCriteria.includes('Cr1V')) {
-        newCriteria.push({
-          id: `throw_${cr1v.code}`,
-          name: cr1v.name,
-          symbol: cr1v.symbol_image || undefined,
-          value: 0.1,
-          code: cr1v.code,
-          note: 'Without Vision: extra criteria added to throw after rolling the hoop on the floor'
-        });
-      }
       if (cr2h && !selectedThrowCriteria.includes('Cr2H')) {
-        newCriteria.push({
+        const newCriteria: CriteriaItem = {
           id: `throw_${cr2h.code}`,
           name: cr2h.name,
           symbol: cr2h.symbol_image || undefined,
           value: 0.1,
           code: cr2h.code,
           note: 'Without Hands: extra criteria added to throw after rolling the hoop on the floor'
-        });
-      }
-      if (newCriteria.length > 0) {
-        setThrowCriteria(prev => [...prev.filter(c => c.code !== 'Cr1V' && c.code !== 'Cr2H'), ...newCriteria]);
+        };
+        setThrowCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]);
       }
     }
   };
@@ -1535,40 +1521,26 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     setExtraThrow(throwItem);
     setShowExtraThrowDropdown(false);
     
-    // Auto-add Cr1V and Cr2H criteria (same as handleSelectThrow for Thr2)
-    const cr1v = generalCriteria.find(gc => gc.code === 'Cr1V');
+    // Auto-add Cr2H criteria (same as handleSelectThrow for Thr2)
     const cr2h = generalCriteria.find(gc => gc.code === 'Cr2H');
-    const newCriteria: CriteriaItem[] = [];
-    if (cr1v && !selectedThrowCriteria.includes('Cr1V')) {
-      newCriteria.push({
-        id: `throw_${cr1v.code}`,
-        name: cr1v.name,
-        symbol: cr1v.symbol_image || undefined,
-        value: 0.1,
-        code: cr1v.code,
-        note: 'Without Vision: extra criteria added to throw after rolling the hoop on the floor'
-      });
-    }
     if (cr2h && !selectedThrowCriteria.includes('Cr2H')) {
-      newCriteria.push({
+      const newCriteria: CriteriaItem = {
         id: `throw_${cr2h.code}`,
         name: cr2h.name,
         symbol: cr2h.symbol_image || undefined,
         value: 0.1,
         code: cr2h.code,
         note: 'Without Hands: extra criteria added to throw after rolling the hoop on the floor'
-      });
-    }
-    if (newCriteria.length > 0) {
-      setThrowCriteria(prev => [...prev.filter(c => c.code !== 'Cr1V' && c.code !== 'Cr2H'), ...newCriteria]);
+      };
+      setThrowCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]);
     }
   };
   
   // Handler to remove extra Thr2 from Thr6 combo
   const handleRemoveExtraThrow = () => {
     setExtraThrow(null);
-    // Remove auto-added Cr1V/Cr2H
-    setThrowCriteria(prev => prev.filter(c => c.code !== 'Cr1V' && c.code !== 'Cr2H'));
+    // Remove auto-added Cr2H
+    setThrowCriteria(prev => prev.filter(c => c.code !== 'Cr2H'));
   };
 
   const handleSelectCatch = (catchItem: DynamicCatch) => {
