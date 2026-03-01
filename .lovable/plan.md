@@ -1,44 +1,57 @@
 
 
-## Dive Leap + Roll Forward Validation Rules
+## Thr2 + Thr6 Combo: Bidirectional Support
 
 ### Summary
-Update the Dive Leap business logic so that "Dive Leap" (which inherently includes a forward roll) can form a valid risk when paired with a "Roll forward" element, and add a helpful prompt dialog when a user selects Dive Leap.
+When Thr6 is selected, add an expandable sub-section below the Thr6 row that lets the user add an extra throw. This opens the existing throw dropdown but with only Thr2 selectable -- all other throw types are displayed but greyed out and unclickable. Combined with the existing plan for Thr2-first selection, this enables the combo from both directions.
 
-### New Business Rules
+### How It Works for the User
 
-**1. Dive Leap + Roll Forward = Valid Risk (R2)**
-- When Dive Leap is in the **Throw section** (Thr6 spec) and the user adds "Roll forward" as the first rotation entry in the **Rotations section**, the risk is valid (R2: dive leap roll + roll forward).
-- When Dive Leap is in the **Rotations section** as the first entry and is immediately followed by a "Roll forward" (as single, two-base, or series), the risk is valid.
-- **Exception**: If Dive Leap is preceded by a "Throw during rotation" or "Throw during DB" (i.e., Dive Leap is NOT the first rotation overall), Dive Leap does NOT count as a valid rotation. In this case, the user must have two base rotations or a series independently (the existing warning dialog handles this).
+1. User selects **Thr6** from the throw dropdown (value 0.1)
+2. Below the Thr6 rotation specification, a button appears: **"+ Add extra throw type"**
+3. Clicking it opens the throw dropdown, but:
+   - **Thr2** is selectable (normal styling, clickable)
+   - **All other throws** (Thr1, Thr3, Thr4, Thr5, etc.) are displayed in light grey, unclickable
+   - "Throw during DB" option is also greyed out
+4. Selecting Thr2 adds it as a paired sub-row below Thr6, showing Thr2's name + value (0.1)
+5. The throw section total becomes 0.2 (Thr6: 0.1 + Thr2: 0.1)
+6. Thr2's auto-added criteria (Cr1V, Cr2H) are added to throw criteria as usual
+7. User can remove the Thr2 pairing via an X button
 
-**2. Dive Leap Prompt Dialog**
-- When a user selects "Dive Leap" as a pre-acrobatic element **only in the Throw section (Thr6) or as the first entry in the Rotations section** (and not when dive leap follows a throw-during-rotation/DB), show a confirmation dialog:
-  > "You are about to add a dive leap that already includes a forward roll. To make the risk valid, would you like to add another roll forward?"
-  - **"Yes, add"**: Adds the Dive Leap AND automatically adds a single rotation entry with "Roll forward" pre-acrobatic element to the Rotations section.
-  - **"No"**: Adds only the Dive Leap and returns the user to the risk constructor.
+### Technical Changes (all in `src/pages/CreateCustomRisk.tsx`)
 
-### Technical Changes
+**1. New state**
+- `extraThrow: DynamicThrow | null` -- stores the paired Thr2 when added via Thr6
+- `showExtraThrowDropdown: boolean` -- controls visibility of the extra throw dropdown
 
-**File: `src/pages/CreateCustomRisk.tsx`**
+**2. UI: Expandable sub-section under Thr6 row**
+- After the Thr6 rotation specification block (line ~2461), add:
+  - If `extraThrow` is null: a dashed button "+ Add extra throw type"
+  - If `extraThrow` is set: a sub-row showing Thr2's symbol, name, value (0.1), and an X remove button
+- The "+ Add extra throw type" button sets `showExtraThrowDropdown = true`
 
-1. **Add state for Dive Leap prompt dialog**
-   - `showDiveLeapPrompt` (boolean) and `pendingDiveLeapContext` (to track where the dive leap was selected: throw spec or rotation entry ID).
+**3. Extra throw dropdown**
+- Reuse the same dropdown structure as the main throw dropdown (lines 2133-2222)
+- For each throw item: if `throwItem.code !== 'Thr2'`, apply `opacity-40 cursor-not-allowed` styling and block clicks
+- The "Throw during DB" option is also greyed out
+- On selecting Thr2: set `extraThrow` to the Thr2 item, close dropdown, and auto-add Cr1V/Cr2H criteria (reuse existing logic from `handleSelectThrow` for Thr2)
 
-2. **Intercept Dive Leap selection**
-   - In the Throw section's pre-acrobatic dialog `onSelect` handler (for Thr6 rotation spec): when "Dive Leap" is selected, show the prompt dialog instead of immediately applying.
-   - In `handleSelectPreAcrobaticElement`: when "Dive Leap" is selected for a rotation entry that will be at position 0 (first rotation) and no throw-during-rotation/DB exists, show the prompt dialog.
+**4. Value calculation update**
+- When `selectedThrow?.code === 'Thr6' && extraThrow?.code === 'Thr2'`:
+  - `throwValue = 0.1 + 0.1 = 0.2` (or sum both values)
+- Display the combined value with a popover breakdown (similar to "Throw during DB" breakdown)
 
-3. **"Yes, add" handler**
-   - Apply the pending Dive Leap selection.
-   - Find "Roll forward" from the `preAcrobaticElements` array (by name match).
-   - Auto-add a new single rotation entry (`type: 'one'`, `specificationType: 'pre-acrobatic'`, `selectedPreAcrobaticElement: rollForward`).
+**5. Reset logic**
+- When user removes Thr6 (clears selectedThrow): also reset `extraThrow = null`
+- When user removes the extra Thr2: set `extraThrow = null` and remove auto-added Cr1V/Cr2H from throwCriteria
+- When user changes throw to something other than Thr6: reset `extraThrow = null`
 
-4. **Update `validateRotationConfiguration`**
-   - Add a specific check: if Dive Leap is in Throw and the first rotation entry in Rotations is "Roll forward" (any type: one/two/series), return valid.
-   - If Dive Leap is in Rotations (first position) and immediately followed by "Roll forward" (any type), return valid.
-   - Keep existing logic: if Dive Leap follows a rotation-based throw, it doesn't count (existing warning dialog path).
+**6. Save/load**
+- When saving: if `extraThrow` exists, include both Thr6 and Thr2 components in the risk data
+- When loading existing risk: detect Thr6 + Thr2 combo and restore `extraThrow` state
 
-5. **Dive Leap prompt dialog UI**
-   - New `<Dialog>` component with the message text, "Yes, add" and "No" buttons.
+**7. Symmetry with Thr2-first direction**
+- When Thr2 is selected first, show "+ Add throw during rotation (Thr6)" sub-section (from the earlier plan)
+- Both paths result in the same state: Thr2 + Thr6 paired, total throw value 0.2
+- The Thr6 rotation spec UI appears in both cases
 
