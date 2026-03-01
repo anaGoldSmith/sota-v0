@@ -1950,7 +1950,12 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       components: [...(effectiveThrow ? [{
         name: effectiveThrow.name,
         symbol: effectiveThrow.symbol_image || '',
-        value: effectiveThrow.value ?? 0
+        value: effectiveThrow.value ?? 0,
+        // Add rotation tag for Thr6 (standalone throw during rotation)
+        ...(effectiveThrow.code === 'Thr6' ? {
+          rotationTag: throwRotationSpec?.type === 'pre-acrobatic' ? 'ACRO' as const :
+                       throwRotationSpec?.type === 'vertical' ? 'VER' as const : 'UNK' as const
+        } : {})
       }] : []),
       // Thr2+Thr6 combo: include paired throw component
       ...(extraThrow ? [{
@@ -1961,7 +1966,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       ...(thr2HasThr6 ? [{
         name: 'Throw during rotation',
         symbol: dynamicThrows.find(t => t.code === 'Thr6')?.symbol_image || '',
-        value: 0.1
+        value: 0.1,
+        rotationTag: throwRotationSpec?.type === 'pre-acrobatic' ? 'ACRO' as const :
+                     throwRotationSpec?.type === 'vertical' ? 'VER' as const : 'UNK' as const
       }] : []),
       ...throwCriteria.map(t => ({
         name: t.name,
@@ -2012,7 +2019,12 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       ...(effectiveCatch ? [{
         name: effectiveCatch.name,
         symbol: effectiveCatch.symbol_image || '',
-        value: effectiveCatch.value ?? 0
+        value: effectiveCatch.value ?? 0,
+        // Add rotation tag for Catch8 (catch during rotation)
+        ...(effectiveCatch.code === 'Catch8' ? {
+          rotationTag: catchRotationSpec?.type === 'pre-acrobatic' ? 'ACRO' as const :
+                       catchRotationSpec?.type === 'vertical' ? 'VER' as const : 'UNK' as const
+        } : {})
       }] : []), ...catchCriteria.map(c => ({
         name: c.name,
         symbol: c.symbol || '',
