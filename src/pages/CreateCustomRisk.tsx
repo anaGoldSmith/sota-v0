@@ -3169,12 +3169,12 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
               variant="outline" 
               className="w-full" 
               onClick={() => {
-                // Remove the axis entry and let user adjust
                 setRotationEntries(prev => prev.filter(e => e.type !== 'axis'));
                 setShowAxisWarningDialog(false);
+                setShowSuccessDialog(true);
               }}
             >
-              No, remove criterion
+              No, remove criterion and save
             </Button>
             <Button 
               variant="ghost" 
