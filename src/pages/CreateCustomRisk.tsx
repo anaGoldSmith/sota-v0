@@ -2546,8 +2546,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         </div>
                       )}
                       
-                      {/* Thr6 → Thr2: Extra throw sub-section */}
-                      {selectedThrow?.code === 'Thr6' && (
+                      {/* Thr6 → Thr2: Extra throw sub-section (hidden if Dive Leap is the rotation) */}
+                      {selectedThrow?.code === 'Thr6' && !hasDiveLeapInThrow && (
                         <div className="mt-2">
                           {!extraThrow ? (
                             <Button 
@@ -3518,7 +3518,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       <PreAcrobaticSelectionDialog
         open={showThrowPreAcrobaticDialog}
         onOpenChange={setShowThrowPreAcrobaticDialog}
-        elements={hasDiveLeapInRotation 
+        elements={(hasDiveLeapInRotation || extraThrow?.code === 'Thr2' || (selectedThrow?.code === 'Thr2' && thr2HasThr6))
           ? preAcrobaticElements.filter(e => e.name?.toLowerCase() !== 'dive leap')
           : preAcrobaticElements
         }
