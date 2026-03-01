@@ -1336,6 +1336,18 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
   };
   
   // Handler for Dive Leap prompt "Yes, add" - adds dive leap + roll forward
+  // Helper: auto-add axis/level change for dive leap in throw section (counts as valid rotation)
+  const autoAddAxisChangeForThrowDiveLeap = () => {
+    setRotationEntries(prev => {
+      const hasAxisChange = prev.some(e => e.type === 'axis');
+      if (!hasAxisChange) {
+        return [...prev, { id: crypto.randomUUID(), type: 'axis' as const }];
+      }
+      return prev;
+    });
+  };
+
+  // Handler for Dive Leap prompt "Yes, add" - adds dive leap + roll forward
   const handleDiveLeapPromptYes = () => {
     if (!pendingDiveLeapContext) return;
     
@@ -1344,8 +1356,10 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     if (source === 'throw') {
       // Apply dive leap to throw rotation spec
       setThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
+      // Dive leap in throw counts as rotation, so auto-add axis/level change
+      autoAddAxisChangeForThrowDiveLeap();
     } else if (source === 'rotation' && entryId) {
-      // Apply dive leap to the rotation entry
+      // Apply dive leap to the rotation entry (applyPreAcrobaticElement handles axis auto-add)
       applyPreAcrobaticElement(entryId, element);
     }
     
@@ -1374,6 +1388,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     
     if (source === 'throw') {
       setThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
+      // Dive leap in throw counts as rotation, so auto-add axis/level change
+      autoAddAxisChangeForThrowDiveLeap();
     } else if (source === 'rotation' && entryId) {
       applyPreAcrobaticElement(entryId, element);
     }
