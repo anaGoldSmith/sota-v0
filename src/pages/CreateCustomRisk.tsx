@@ -1977,10 +1977,36 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
             value: 0.1
           };
         }
+        
+        // Determine rotation count
+        const rotCount = entry.type === 'one' ? 1 : entry.type === 'two' ? 2 : (entry.seriesCount || 3);
+        
+        // Determine specification label and tag
+        let rotationSpec = 'Unspecified';
+        let rotationTag: 'ACRO' | 'VER' | 'UNK' = 'UNK';
+        
+        if (entry.specificationType === 'pre-acrobatic' && entry.selectedPreAcrobaticElement) {
+          rotationSpec = entry.selectedPreAcrobaticElement.name;
+          rotationTag = 'ACRO';
+        } else if (entry.specificationType === 'vertical' && entry.selectedVerticalRotation) {
+          const groupName = (entry.selectedVerticalRotation.group_name || '').charAt(0).toUpperCase() + (entry.selectedVerticalRotation.group_name || '').slice(1).toLowerCase();
+          rotationSpec = `${groupName}: ${entry.selectedVerticalRotation.name}`;
+          rotationTag = 'VER';
+        } else if (entry.specificationType === 'db-rotation' && entry.selectedDBElement) {
+          rotationSpec = entry.selectedDBElement.name || entry.selectedDBElement.description || 'Element';
+          rotationTag = 'UNK';
+        } else if (entry.specificationType) {
+          rotationSpec = 'Unspecified';
+          rotationTag = 'UNK';
+        }
+        
         return {
-          name: entry.type === 'one' ? 'One Rotation' : entry.type === 'two' ? '2 Base Rotations' : `Series (${entry.seriesCount || 3} rotations)`,
+          name: `${rotCount}: ${rotationSpec}`,
           symbol: entry.type === 'series' ? '' : (entry.type === 'one' ? symbols["extraRotation"] : symbols["baseRotations"]) || '',
-          value: entry.type === 'one' ? 0.1 : entry.type === 'two' ? 0.2 : ((entry.seriesCount || 3) * 0.1 + 0.2)
+          value: entry.type === 'one' ? 0.1 : entry.type === 'two' ? 0.2 : ((entry.seriesCount || 3) * 0.1 + 0.2),
+          rotationTag,
+          rotationCount: rotCount,
+          rotationSpec,
         };
       }),
       ...(effectiveCatch ? [{
