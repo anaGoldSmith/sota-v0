@@ -2144,7 +2144,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                 <TooltipTrigger asChild>
                                   <AlertCircle className="h-4 w-4 text-amber-500" />
                                 </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
+                                <TooltipContent className="max-w-xs bg-muted-foreground text-white">
                                   <p>A dive leap can only count as a rotation if it is performed as the first rotation. Throw during DB would precede the dive leap, making it invalid.</p>
                                 </TooltipContent>
                               </Tooltip>
@@ -2186,7 +2186,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                     <TooltipTrigger asChild>
                                       <AlertCircle className="h-4 w-4 text-amber-500" />
                                     </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs">
+                                    <TooltipContent className="max-w-xs bg-muted-foreground text-white">
                                       <p>A dive leap can only count as a rotation if it is performed as the first rotation. Throw during rotation would precede the dive leap, making it invalid.</p>
                                     </TooltipContent>
                                   </Tooltip>
