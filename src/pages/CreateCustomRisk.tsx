@@ -3113,11 +3113,11 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
             </div>
             <DialogTitle className="text-center text-xl">Invalid Risk</DialogTitle>
             <DialogDescription className="text-center text-base leading-relaxed mt-2">
-              You need to have at least two identical uninterrupted rotations performed under the throw to save a valid risk.
+              Since the dive leap is not the first rotation in the constructed risk, it will not be counted as a rotational element. You need to have at least two identical uninterrupted rotations performed under the throw to save a valid risk.
             </DialogDescription>
           </DialogHeader>
           <p className="text-sm text-muted-foreground text-center leading-relaxed">
-            A dive leap can only be counted as a rotational element in R if it is performed as the first rotation — meaning it must be executed either during the throw or immediately after the throw.
+            A dive leap can only count as a rotation if it is performed as the first rotation — either during the throw or immediately after the throw.
           </p>
           <p className="text-sm font-medium text-center mt-2">Would you like to adjust your risk?</p>
           <div className="flex flex-col gap-3 mt-4">
