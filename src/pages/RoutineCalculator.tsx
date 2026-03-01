@@ -2005,7 +2005,7 @@ const RoutineCalculator = () => {
                                                       </span>
                                                     </td>
                                                     <td colSpan={2} className="py-1.5 px-4 text-sm">
-                                                      <span>{shape.name || shape.code}</span>
+                                                      <span>{shape.name || shape.description || 'Shape'}</span>
                                                       {shape.isCustom && (
                                                         <span className="ml-2 text-[9px] text-orange-600 bg-orange-100 px-1 rounded dark:text-orange-400 dark:bg-orange-900/30">custom</span>
                                                       )}

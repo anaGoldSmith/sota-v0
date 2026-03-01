@@ -1959,7 +1959,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         value: extraThrow.value ?? 0
       }] : []),
       ...(thr2HasThr6 ? [{
-        name: 'Throw during rotation (Thr6)',
+        name: 'Throw during rotation',
         symbol: dynamicThrows.find(t => t.code === 'Thr6')?.symbol_image || '',
         value: 0.1
       }] : []),
@@ -2244,7 +2244,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             onClick={() => !isDisabled && handleSelectThrow(throwItem)}
                           >
                             <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                              <img src={symbolUrl} alt={throwItem.code} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                              <img src={symbolUrl} alt={throwItem.name} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <span className="text-foreground text-sm">
@@ -2311,7 +2311,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                   ? throwDuringDB.db.symbol_image 
                                   : supabase.storage.from('jump-symbols').getPublicUrl(throwDuringDB.db.symbol_image).data.publicUrl
                                 } 
-                                alt={throwDuringDB.db.name || throwDuringDB.db.code} 
+                                alt={throwDuringDB.db.name || 'Element'} 
                                 className="h-8 w-8 object-contain -mt-1" 
                                 onError={e => e.currentTarget.style.display = 'none'} 
                               />
@@ -2455,7 +2455,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       {/* Thr2 + Thr6 combo label with remove */}
                       {selectedThrow?.code === 'Thr2' && thr2HasThr6 && (
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-muted-foreground italic">+ Throw during rotation (Thr6)</span>
+                          <span className="text-xs text-muted-foreground italic">+ Throw during rotation</span>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -2967,7 +2967,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             onClick={() => handleSelectCatch(catchItem)}
                           >
                             <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                              <img src={symbolUrl} alt={catchItem.code} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                              <img src={symbolUrl} alt={catchItem.name} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
                             </div>
                             <div className="flex-1 min-w-0 flex items-center gap-2">
                               <span className="text-foreground text-sm">{catchItem.name}</span>
@@ -3028,7 +3028,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                   ? catchDuringDB.db.symbol_image 
                                   : supabase.storage.from('jump-symbols').getPublicUrl(catchDuringDB.db.symbol_image).data.publicUrl
                                 } 
-                                alt={catchDuringDB.db.name || catchDuringDB.db.code} 
+                                alt={catchDuringDB.db.name || 'Element'} 
                                 className="h-8 w-8 object-contain -mt-1" 
                                 onError={e => e.currentTarget.style.display = 'none'} 
                               />
