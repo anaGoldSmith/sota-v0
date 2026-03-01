@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ArrowLeft, Calculator, GripVertical, ChevronDown, ChevronRight, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbols";
+import { NotesWithSymbols } from "@/components/routine/NotesWithSymbols";
 import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
 import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDialog";
 import { RotationSelectionDialog } from "@/components/routine/RotationSelectionDialog";
@@ -507,7 +508,17 @@ function SortableRow({
                           <div className="h-6 w-6 bg-muted rounded" />
                         )}
                       </td>
-                      <td className="py-2 px-4 font-medium">{component.name}</td>
+                      <td className="py-2 px-4 font-medium">
+                        <NotesWithSymbols 
+                          notes={component.name} 
+                          symbolMap={Object.fromEntries(
+                            ['Cr1V','Cr2H','Cr3L','Cr4F','Cr5W','Cr6DB','Cr7R'].map(code => [
+                              code, 
+                              supabase.storage.from('criteria-symbols').getPublicUrl(`${code}.png`).data.publicUrl
+                            ])
+                          )} 
+                        />
+                      </td>
                       <td className="py-2 px-4 text-right font-mono">{component.value}</td>
                     </tr>
                   ))}
