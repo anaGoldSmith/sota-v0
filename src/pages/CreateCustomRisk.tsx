@@ -1587,13 +1587,29 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     const actualRotations = rotationEntries.filter(e => e.type !== 'axis');
     if (actualRotations.length === 0) return 'ok';
     
+    const hasAxisChange = rotationEntries.some(e => e.type === 'axis');
+    if (!hasAxisChange) {
+      // Check if we should auto-add below, otherwise no issue
+    }
+    
     const hasVertical = actualRotations.some(e => e.specificationType === 'vertical' && e.selectedVerticalRotation);
     const hasPreAcrobatic = actualRotations.some(e => e.specificationType === 'pre-acrobatic' && e.selectedPreAcrobaticElement);
-    const hasAxisChange = rotationEntries.some(e => e.type === 'axis');
     
     // Also check throw section for pre-acrobatic (dive leap)
     const throwHasPreAcrobatic = throwRotationSpec?.type === 'pre-acrobatic' && throwRotationSpec?.preAcrobaticElement;
     const effectiveHasPreAcrobatic = hasPreAcrobatic || throwHasPreAcrobatic;
+    
+    // Case: axis change exists but rotations are not fully specified (missing type or element)
+    if (hasAxisChange) {
+      const unspecifiedRotations = actualRotations.some(e => 
+        !e.specificationType || 
+        (e.specificationType === 'vertical' && !e.selectedVerticalRotation) ||
+        (e.specificationType === 'pre-acrobatic' && !e.selectedPreAcrobaticElement)
+      );
+      if (unspecifiedRotations) {
+        return 'warning';
+      }
+    }
     
     // Case 1: Mix of vertical + pre-acrobatic → auto-add axis if missing (always valid)
     if (hasVertical && effectiveHasPreAcrobatic) {
@@ -1608,10 +1624,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       const verticalEntries = actualRotations.filter(e => e.specificationType === 'vertical' && e.selectedVerticalRotation);
       const groups = new Set(verticalEntries.map(e => e.selectedVerticalRotation!.group_name?.toLowerCase()));
       if (groups.size <= 1) {
-        // All same group — warning
         return 'warning';
       }
-      // Different groups — valid
       return 'ok';
     }
     
