@@ -1272,9 +1272,19 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
   };
   const handleSelectPreAcrobaticElement = (id: string, element: PreAcrobaticElement) => {
     setRotationEntries(prev => {
-      const updated = prev.map(e => 
+      let updated = prev.map(e => 
         e.id === id ? { ...e, selectedPreAcrobaticElement: element } : e
       );
+      
+      // Dive Leap rule: must be the first rotational element in the rotation section
+      // Auto-move the entry with Dive Leap to the first position
+      if (element.name?.toLowerCase() === 'dive leap') {
+        const diveLeapIndex = updated.findIndex(e => e.id === id);
+        if (diveLeapIndex > 0) {
+          const [diveEntry] = updated.splice(diveLeapIndex, 1);
+          updated.unshift(diveEntry);
+        }
+      }
       
       // Business rule: if level_change = true AND two_bases_series = false,
       // automatically add change of level/axis criteria
@@ -1296,6 +1306,17 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
   // Check if series already exists (only series is restricted to one)
   const hasSeries = rotationEntries.some(e => e.type === 'series');
   
+  // Check if Dive Leap is selected in any rotation entry's pre-acrobatic element
+  const hasDiveLeapInRotation = rotationEntries.some(e => 
+    e.specificationType === 'pre-acrobatic' && 
+    e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'dive leap'
+  );
+  
+  // Check if Dive Leap is selected in the Throw section (Thr6 with pre-acrobatic spec)
+  const hasDiveLeapInThrow = selectedThrow?.code === 'Thr6' && 
+    throwRotationSpec?.type === 'pre-acrobatic' && 
+    throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap';
+  
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -1308,7 +1329,19 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       setRotationEntries((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
+        const reordered = arrayMove(items, oldIndex, newIndex);
+        
+        // Enforce: if any entry has Dive Leap, it must remain first
+        const diveLeapIdx = reordered.findIndex(e => 
+          e.specificationType === 'pre-acrobatic' && 
+          e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'dive leap'
+        );
+        if (diveLeapIdx > 0) {
+          const [diveEntry] = reordered.splice(diveLeapIdx, 1);
+          reordered.unshift(diveEntry);
+        }
+        
+        return reordered;
       });
     }
   };
@@ -1476,12 +1509,28 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     
     // Dive Leap exception: if Dive Leap is selected in the Throw section (Thr6 with pre-acrobatic spec),
     // a single rotation in the Rotations section is sufficient to make the risk valid
-    const hasDiveLeapInThrow = selectedThrow?.code === 'Thr6' && 
-      throwRotationSpec?.type === 'pre-acrobatic' && 
-      throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap';
-    
     if (hasDiveLeapInThrow && actualRotations.length >= 1) {
       return { valid: true, message: "" };
+    }
+    
+    // Dive Leap in Rotation section: counts as a rotation, so if dive leap + 1 more rotation = valid
+    // But also enforce: if dive leap is in rotation, throw must NOT have Thr6 or throwDuringDB
+    const diveLeapRotEntry = actualRotations.find(e => 
+      e.specificationType === 'pre-acrobatic' && 
+      e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'dive leap'
+    );
+    if (diveLeapRotEntry) {
+      // Validate: throw section must not have throw during rotation or DBs
+      if (selectedThrow?.code === 'Thr6') {
+        return { valid: false, message: "When Dive Leap is in the Rotations section, the Throw section cannot use 'Throw during rotation' (Thr6). Remove Thr6 or move Dive Leap to the Throw section." };
+      }
+      if (throwDuringDB) {
+        return { valid: false, message: "When Dive Leap is in the Rotations section, the Throw section cannot have a DB during throw. Remove the DB or move Dive Leap to the Throw section." };
+      }
+      // Dive leap counts as first rotation; need at least one more
+      if (actualRotations.length >= 2) {
+        return { valid: true, message: "" };
+      }
     }
     
     // For single rotations only, check for consecutive identical pairs
@@ -2298,11 +2347,24 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         rotationsDBs={rotationsDBs}
                         verticalRotations={verticalRotations}
                         preAcrobaticElements={
-                          // Exclude Dive Leap from rotation section if already selected in Throw (Thr6) spec
-                          (selectedThrow?.code === 'Thr6' && throwRotationSpec?.type === 'pre-acrobatic' && 
-                           throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap')
-                            ? preAcrobaticElements.filter(e => e.name?.toLowerCase() !== 'dive leap')
-                            : preAcrobaticElements
+                          // Exclude Dive Leap if already selected in Throw section OR already in another rotation entry
+                          (() => {
+                            let filtered = preAcrobaticElements;
+                            // Exclude if dive leap is in throw
+                            if (hasDiveLeapInThrow) {
+                              filtered = filtered.filter(e => e.name?.toLowerCase() !== 'dive leap');
+                            }
+                            // Exclude if dive leap is already in a different rotation entry
+                            const otherHasDiveLeap = rotationEntries.some(re => 
+                              re.id !== entry.id && 
+                              re.specificationType === 'pre-acrobatic' && 
+                              re.selectedPreAcrobaticElement?.name?.toLowerCase() === 'dive leap'
+                            );
+                            if (otherHasDiveLeap) {
+                              filtered = filtered.filter(e => e.name?.toLowerCase() !== 'dive leap');
+                            }
+                            return filtered;
+                          })()
                         }
                         isFirstRotation={index === 0}
                       />
@@ -2838,7 +2900,10 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       <PreAcrobaticSelectionDialog
         open={showThrowPreAcrobaticDialog}
         onOpenChange={setShowThrowPreAcrobaticDialog}
-        elements={preAcrobaticElements}
+        elements={hasDiveLeapInRotation 
+          ? preAcrobaticElements.filter(e => e.name?.toLowerCase() !== 'dive leap')
+          : preAcrobaticElements
+        }
         onSelect={(element) => {
           setThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
           setShowThrowPreAcrobaticDialog(false);
