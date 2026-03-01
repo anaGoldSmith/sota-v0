@@ -2588,7 +2588,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                               }}
                             >
                               <Plus className="h-3 w-3 mr-1" />
-                              Add extra throw type
+                              Add throw after rolling the hoop on the floor
                             </Button>
                           ) : (
                             <div className="flex items-center gap-2">
