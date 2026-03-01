@@ -1369,14 +1369,28 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     // Find "Roll forward" from pre-acrobatic elements
     const rollForward = preAcrobaticElements.find(e => e.name?.toLowerCase() === 'roll forward');
     if (rollForward) {
-      // Auto-add a single rotation entry with Roll Forward
+      // Auto-add a single rotation entry with Roll Forward directly after the dive leap
       const newEntry: RotationEntry = {
         id: crypto.randomUUID(),
         type: 'one',
         specificationType: 'pre-acrobatic',
         selectedPreAcrobaticElement: rollForward,
       };
-      setRotationEntries(prev => [...prev, newEntry]);
+      setRotationEntries(prev => {
+        // Find the dive leap entry index to insert right after it
+        const diveLeapIndex = entryId 
+          ? prev.findIndex(e => e.id === entryId)
+          : prev.findIndex(e => 
+              e.specificationType === 'pre-acrobatic' && 
+              e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'dive leap'
+            );
+        if (diveLeapIndex >= 0) {
+          const updated = [...prev];
+          updated.splice(diveLeapIndex + 1, 0, newEntry);
+          return updated;
+        }
+        return [...prev, newEntry];
+      });
     }
     
     setShowDiveLeapPrompt(false);
