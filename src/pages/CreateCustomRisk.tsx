@@ -2576,13 +2576,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       
                       {/* Thr6 → Thr2: Extra throw sub-section */}
                       {selectedThrow?.code === 'Thr6' && (
-                        <div className="mt-2 relative" ref={extraThrowDropdownRef}>
+                        <div className="mt-2">
                           {!extraThrow ? (
                             <Button 
                               variant="ghost" 
                               size="sm"
                               className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
-                              onClick={() => setShowExtraThrowDropdown(!showExtraThrowDropdown)}
+                              onClick={() => {
+                                const thr2Item = filteredThrows.find(t => t.code === 'Thr2');
+                                if (thr2Item) handleSelectExtraThrow(thr2Item);
+                              }}
                             >
                               <Plus className="h-3 w-3 mr-1" />
                               Add extra throw type
@@ -2593,7 +2596,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                 <img src={extraThrow.symbol_image} alt={extraThrow.name} className="h-5 w-5 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
                               )}
                               <span className="text-xs text-muted-foreground italic">
-                                + {extraThrow.name} ({extraThrow.value ?? 0})
+                                + <NotesWithSymbols notes={extraThrow.name} symbolMap={notesSymbolMap} />
                               </span>
                               <Button
                                 variant="ghost"
@@ -2604,45 +2607,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                 <X className="h-3 w-3" />
                               </Button>
                             </div>
-                          )}
-                          
-                          {/* Extra throw dropdown - only Thr2 is selectable */}
-                          {showExtraThrowDropdown && (
-                            <>
-                              <div className="fixed inset-0 z-[99]" onClick={() => setShowExtraThrowDropdown(false)} />
-                              <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-[100] max-h-64 overflow-y-auto">
-                                {/* Throw during DB - greyed out */}
-                                <div className="flex items-center gap-3 p-3 border-b border-border opacity-40 cursor-not-allowed">
-                                  <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                                    <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
-                                  </div>
-                                  <span className="text-foreground text-sm">Throw during DB</span>
-                                </div>
-                                {filteredThrows.map(throwItem => {
-                                  const isThr2 = throwItem.code === 'Thr2';
-                                  const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
-                                  return (
-                                    <div 
-                                      key={throwItem.id} 
-                                      className={`flex items-center gap-3 p-3 border-b border-border last:border-b-0 ${isThr2 ? 'hover:bg-muted cursor-pointer' : 'opacity-40 cursor-not-allowed'}`}
-                                      onClick={() => isThr2 && handleSelectExtraThrow(throwItem)}
-                                    >
-                                      <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                                        <img src={symbolUrl} alt={throwItem.code} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <span className="text-foreground text-sm">
-                                          <NotesWithSymbols notes={throwItem.name} symbolMap={notesSymbolMap} />
-                                        </span>
-                                      </div>
-                                      <div className="w-12 text-right flex-shrink-0">
-                                        <span className={`font-semibold ${isThr2 ? 'text-primary' : 'text-muted-foreground'}`}>{throwItem.value ?? 0}</span>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </>
                           )}
                         </div>
                       )}
