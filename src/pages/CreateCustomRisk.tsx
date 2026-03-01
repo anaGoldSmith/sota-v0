@@ -3111,9 +3111,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
             <div className="flex justify-center mb-4">
               <AlertCircle className="h-16 w-16 text-amber-500" />
             </div>
-            <DialogTitle className="text-center text-xl">Dive Leap Notice</DialogTitle>
+            <DialogTitle className="text-center text-xl">Invalid Risk</DialogTitle>
             <DialogDescription className="text-center text-base leading-relaxed mt-2">
-              Please note: Your risk includes a dive leap that will not be counted as a rotational element.
+              You need to have at least two identical uninterrupted rotations performed under the throw to save a valid risk.
             </DialogDescription>
           </DialogHeader>
           <p className="text-sm text-muted-foreground text-center leading-relaxed">
