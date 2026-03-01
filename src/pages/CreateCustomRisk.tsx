@@ -757,6 +757,8 @@ const CreateCustomRisk = () => {
   const [symbols, setSymbols] = useState<Record<string, string>>({});
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDiveLeapWarning, setShowDiveLeapWarning] = useState(false);
+  const [showDiveLeapPrompt, setShowDiveLeapPrompt] = useState(false);
+  const [pendingDiveLeapContext, setPendingDiveLeapContext] = useState<{ source: 'throw' | 'rotation'; entryId?: string; element: PreAcrobaticElement } | null>(null);
   const [savedRiskData, setSavedRiskData] = useState<any>(null);
 
   // Get apparatus and modification state from navigation state
@@ -1272,6 +1274,34 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     ));
   };
   const handleSelectPreAcrobaticElement = (id: string, element: PreAcrobaticElement) => {
+    // Check if Dive Leap is being selected as the first rotation and no rotation-based throw exists
+    if (element.name?.toLowerCase() === 'dive leap') {
+      const throwHasRotation = selectedThrow?.code === 'Thr6' || 
+        (throwDuringDB && (
+          ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
+          'preAcrobaticElement' in throwDuringDB ||
+          'verticalRotation' in throwDuringDB
+        ));
+      
+      // Only show prompt if dive leap will be the first rotation (no rotation-based throw)
+      if (!throwHasRotation) {
+        // Check if this entry is at position 0 or will be moved there
+        const entryIndex = rotationEntries.findIndex(e => e.id === id);
+        const actualRotations = rotationEntries.filter(e => e.type !== 'axis');
+        const isFirstActualRotation = entryIndex === 0 || actualRotations[0]?.id === id || actualRotations.length === 0;
+        
+        if (isFirstActualRotation || entryIndex <= 0) {
+          setPendingDiveLeapContext({ source: 'rotation', entryId: id, element });
+          setShowDiveLeapPrompt(true);
+          return;
+        }
+      }
+    }
+    
+    applyPreAcrobaticElement(id, element);
+  };
+  
+  const applyPreAcrobaticElement = (id: string, element: PreAcrobaticElement) => {
     setRotationEntries(prev => {
       let updated = prev.map(e => 
         e.id === id ? { ...e, selectedPreAcrobaticElement: element } : e
@@ -1303,6 +1333,53 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       
       return updated;
     });
+  };
+  
+  // Handler for Dive Leap prompt "Yes, add" - adds dive leap + roll forward
+  const handleDiveLeapPromptYes = () => {
+    if (!pendingDiveLeapContext) return;
+    
+    const { source, entryId, element } = pendingDiveLeapContext;
+    
+    if (source === 'throw') {
+      // Apply dive leap to throw rotation spec
+      setThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
+    } else if (source === 'rotation' && entryId) {
+      // Apply dive leap to the rotation entry
+      applyPreAcrobaticElement(entryId, element);
+    }
+    
+    // Find "Roll forward" from pre-acrobatic elements
+    const rollForward = preAcrobaticElements.find(e => e.name?.toLowerCase() === 'roll forward');
+    if (rollForward) {
+      // Auto-add a single rotation entry with Roll Forward
+      const newEntry: RotationEntry = {
+        id: crypto.randomUUID(),
+        type: 'one',
+        specificationType: 'pre-acrobatic',
+        selectedPreAcrobaticElement: rollForward,
+      };
+      setRotationEntries(prev => [...prev, newEntry]);
+    }
+    
+    setShowDiveLeapPrompt(false);
+    setPendingDiveLeapContext(null);
+  };
+  
+  // Handler for Dive Leap prompt "No" - just adds dive leap
+  const handleDiveLeapPromptNo = () => {
+    if (!pendingDiveLeapContext) return;
+    
+    const { source, entryId, element } = pendingDiveLeapContext;
+    
+    if (source === 'throw') {
+      setThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
+    } else if (source === 'rotation' && entryId) {
+      applyPreAcrobaticElement(entryId, element);
+    }
+    
+    setShowDiveLeapPrompt(false);
+    setPendingDiveLeapContext(null);
   };
   // Check if series already exists (only series is restricted to one)
   const hasSeries = rotationEntries.some(e => e.type === 'series');
@@ -1508,21 +1585,80 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       return { valid: true, message: "" };
     }
     
-    // Dive Leap exception: if Dive Leap is selected in the Throw section (Thr6 with pre-acrobatic spec),
-    // a single rotation in the Rotations section is sufficient to make the risk valid
-    if (hasDiveLeapInThrow && actualRotations.length >= 1) {
-      return { valid: true, message: "" };
+    // Dive Leap + Roll Forward validation
+    // Case 1: Dive Leap in Throw (Thr6 spec) + Roll Forward as first rotation entry = valid R2
+    if (hasDiveLeapInThrow) {
+      if (actualRotations.length >= 1) {
+        const firstRot = actualRotations[0];
+        if (firstRot.specificationType === 'pre-acrobatic' && 
+            firstRot.selectedPreAcrobaticElement?.name?.toLowerCase() === 'roll forward') {
+          return { valid: true, message: "" };
+        }
+        // Even without roll forward, dive leap in throw + any rotation = valid
+        return { valid: true, message: "" };
+      }
     }
     
-    // Dive Leap in Rotation section: counts as a rotation, so if dive leap + 1 more rotation = valid
+    // Dive Leap in Rotation section
     const diveLeapRotEntry = actualRotations.find(e => 
       e.specificationType === 'pre-acrobatic' && 
       e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'dive leap'
     );
     if (diveLeapRotEntry) {
-      // Dive leap counts as first rotation; need at least one more
-      if (actualRotations.length >= 2) {
-        return { valid: true, message: "" };
+      const diveLeapIdx = actualRotations.indexOf(diveLeapRotEntry);
+      
+      // Check if throw has a rotation (meaning dive leap is NOT the first rotation overall)
+      const throwHasRotation = selectedThrow?.code === 'Thr6' || 
+        (throwDuringDB && (
+          ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
+          'preAcrobaticElement' in throwDuringDB ||
+          'verticalRotation' in throwDuringDB
+        ));
+      
+      if (!throwHasRotation) {
+        // Dive leap IS the first rotation overall
+        // Case 2: Dive Leap (first) + immediately followed by Roll Forward (any type) = valid
+        const nextRot = actualRotations[diveLeapIdx + 1];
+        if (nextRot) {
+          if (nextRot.specificationType === 'pre-acrobatic' && 
+              nextRot.selectedPreAcrobaticElement?.name?.toLowerCase() === 'roll forward') {
+            return { valid: true, message: "" };
+          }
+          // Dive leap + any other rotation still needs standard validation (2 identical or series/two)
+          if (actualRotations.length >= 2) {
+            return { valid: true, message: "" };
+          }
+        }
+      } else {
+        // Dive leap follows a rotation-based throw — it does NOT count as rotation
+        // The user needs 2 base rotations or series independently (excluding dive leap)
+        const nonDiveLeapRotations = actualRotations.filter(e => 
+          !(e.specificationType === 'pre-acrobatic' && 
+            e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'dive leap')
+        );
+        
+        // Check if remaining rotations satisfy the requirement independently
+        const hasSeriesOrTwoInRemaining = nonDiveLeapRotations.some(e => 
+          e.type === 'series' || e.type === 'multiple-vertical' || e.type === 'two'
+        );
+        if (hasSeriesOrTwoInRemaining) {
+          return { valid: true, message: "" };
+        }
+        
+        // Check for consecutive identical singles in remaining
+        const singles = nonDiveLeapRotations.filter(e => e.type === 'one');
+        if (singles.length >= 2) {
+          for (let i = 0; i < singles.length - 1; i++) {
+            if (areRotationsIdentical(singles[i], singles[i + 1])) {
+              return { valid: true, message: "" };
+            }
+          }
+        }
+        
+        return { 
+          valid: false, 
+          message: "Since the dive leap follows a rotation-based throw, it does not count as a rotational element. You need at least two base rotations or a series independently." 
+        };
       }
     }
     
@@ -2852,6 +2988,44 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         </div>
       </main>
 
+      {/* Dive Leap Prompt Dialog - shown when selecting dive leap in throw or first rotation */}
+      <Dialog open={showDiveLeapPrompt} onOpenChange={(open) => {
+        if (!open) {
+          setShowDiveLeapPrompt(false);
+          setPendingDiveLeapContext(null);
+        }
+      }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <div className="flex justify-center mb-4">
+              <Info className="h-16 w-16 text-primary" />
+            </div>
+            <DialogTitle className="text-center text-xl">Dive Leap</DialogTitle>
+            <DialogDescription className="text-center text-base leading-relaxed mt-2">
+              You are about to add a dive leap that already includes a forward roll.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground text-center leading-relaxed">
+            To make the risk valid, would you like to add another roll forward?
+          </p>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button 
+              className="w-full bg-primary hover:bg-primary/90" 
+              onClick={handleDiveLeapPromptYes}
+            >
+              Yes, add
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={handleDiveLeapPromptNo}
+            >
+              No
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Dive Leap Warning Dialog */}
       <Dialog open={showDiveLeapWarning} onOpenChange={setShowDiveLeapWarning}>
         <DialogContent className="sm:max-w-lg">
@@ -2973,6 +3147,13 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
           : preAcrobaticElements
         }
         onSelect={(element) => {
+          // Intercept Dive Leap selection to show prompt
+          if (element.name?.toLowerCase() === 'dive leap') {
+            setPendingDiveLeapContext({ source: 'throw', element });
+            setShowDiveLeapPrompt(true);
+            setShowThrowPreAcrobaticDialog(false);
+            return;
+          }
           setThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
           setShowThrowPreAcrobaticDialog(false);
         }}
