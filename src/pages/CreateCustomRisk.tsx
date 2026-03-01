@@ -3170,8 +3170,28 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
               className="w-full" 
               onClick={() => {
                 setRotationEntries(prev => prev.filter(e => e.type !== 'axis'));
+                // Update savedRiskData to remove axis component and its value
+                if (savedRiskData) {
+                  const updatedComponents = savedRiskData.components.filter(
+                    (c: any) => c.name !== 'Axis/Level Change'
+                  );
+                  const updatedValue = savedRiskData.value - 0.1;
+                  const updatedData = { 
+                    ...savedRiskData, 
+                    components: updatedComponents, 
+                    value: updatedValue,
+                    axisLevelSymbol: undefined 
+                  };
+                  setSavedRiskData(updatedData);
+                  // Navigate directly to routine calculator
+                  navigate("/routine-calculator", {
+                    state: {
+                      newRisk: updatedData,
+                      modifyingElementId: modifyingElementId
+                    }
+                  });
+                }
                 setShowAxisWarningDialog(false);
-                setShowSuccessDialog(true);
               }}
             >
               No, remove criterion and save
