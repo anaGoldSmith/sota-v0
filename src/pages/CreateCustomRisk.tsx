@@ -2458,17 +2458,19 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         <NotesWithSymbols notes={selectedThrow?.name || ''} symbolMap={notesSymbolMap} />
                       </span>
                       
-                      {/* Thr2 → Thr6: Add button when Thr2 selected */}
+                      {/* Thr2 → Thr6: Add button below text when Thr2 selected */}
                       {selectedThrow?.code === 'Thr2' && !thr2HasThr6 && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30 mt-1"
-                          onClick={() => setThr2HasThr6(true)}
-                        >
-                          <Plus className="h-3 w-3 mr-1" />
-                          Add throw during rotation (Thr6)
-                        </Button>
+                        <div className="mt-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                            onClick={() => setThr2HasThr6(true)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add throw during rotation
+                          </Button>
+                        </div>
                       )}
                       
                       {/* Thr2 + Thr6 combo label with remove */}
