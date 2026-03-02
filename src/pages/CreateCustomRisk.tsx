@@ -1105,6 +1105,95 @@ const CreateCustomRisk = () => {
       return;
     }
 
+    // If we have editMetadata, use it for full restoration
+    const meta = existingRiskData.editMetadata;
+    if (meta) {
+      // Restore throw
+      if (meta.selectedThrowCode) {
+        const throwItem = dynamicThrows.find(t => t.code === meta.selectedThrowCode);
+        if (throwItem) setSelectedThrow(throwItem);
+      }
+      // Restore catch
+      if (meta.selectedCatchCode) {
+        const catchItem = dynamicCatches.find(c => c.code === meta.selectedCatchCode);
+        if (catchItem) setSelectedCatch(catchItem);
+      }
+      // Restore extra throw and thr2+thr6 combo
+      if (meta.extraThrow) {
+        const et = dynamicThrows.find(t => t.code === meta.extraThrow.code);
+        if (et) setExtraThrow(et);
+      }
+      if (meta.thr2HasThr6) {
+        setThr2HasThr6(true);
+      }
+      // Restore throw/catch rotation specs
+      if (meta.throwRotationSpec) {
+        setThrowRotationSpec(meta.throwRotationSpec);
+      }
+      if (meta.catchRotationSpec) {
+        setCatchRotationSpec(meta.catchRotationSpec);
+      }
+      // Restore throw/catch during DB
+      if (meta.throwDuringDB) {
+        setThrowDuringDB(meta.throwDuringDB);
+      }
+      if (meta.catchDuringDB) {
+        setCatchDuringDB(meta.catchDuringDB);
+      }
+      // Restore rotation entries with full specification data
+      if (meta.rotationEntries && meta.rotationEntries.length > 0) {
+        setRotationEntries(meta.rotationEntries.map((entry: any) => ({
+          ...entry,
+          id: entry.id || crypto.randomUUID(),
+        })));
+      }
+      // Restore throw/catch criteria from components
+      const components = existingRiskData.components as Array<{ name: string; symbol: string; value: number }>;
+      const throwNames = dynamicThrows.map(t => t.name);
+      const catchNames = dynamicCatches.map(c => c.name);
+      const criteriaNames = generalCriteria.map(gc => gc.name);
+      
+      const newThrowCriteria: CriteriaItem[] = [];
+      const newCatchCriteria: CriteriaItem[] = [];
+      let foundCatch = false;
+
+      components.forEach((comp) => {
+        if (throwNames.includes(comp.name) || catchNames.includes(comp.name)) {
+          if (catchNames.includes(comp.name)) foundCatch = true;
+          return;
+        }
+        // Skip rotation entries and throw-during-rotation rows (handled by metadata)
+        if (comp.name === 'Throw during rotation') return;
+        if (criteriaNames.includes(comp.name)) {
+          const criteria = generalCriteria.find(gc => gc.name === comp.name);
+          if (criteria) {
+            if (!foundCatch) {
+              newThrowCriteria.push({
+                id: `throw_${criteria.code}`,
+                name: criteria.name,
+                symbol: criteria.symbol_image || undefined,
+                value: comp.value,
+                code: criteria.code,
+              });
+            } else {
+              newCatchCriteria.push({
+                id: `catch_${criteria.code}`,
+                name: criteria.name,
+                symbol: criteria.symbol_image || undefined,
+                value: comp.value,
+                code: criteria.code,
+              });
+            }
+          }
+        }
+      });
+
+      if (newThrowCriteria.length > 0) setThrowCriteria(newThrowCriteria);
+      if (newCatchCriteria.length > 0) setCatchCriteria(newCatchCriteria);
+      return;
+    }
+
+    // Fallback: legacy parsing from component names (no editMetadata)
     const components = existingRiskData.components as Array<{ name: string; symbol: string; value: number; section?: string }>;
     
     // Parse components to find throw, catch, rotations, and criteria
@@ -1143,8 +1232,6 @@ const CreateCustomRisk = () => {
       if (criteriaNames.includes(comp.name)) {
         const criteria = generalCriteria.find(gc => gc.name === comp.name);
         if (criteria) {
-          // Determine if it's throw or catch criteria based on position
-          // Criteria before catch are throw criteria, after are catch criteria
           if (!foundCatch) {
             newThrowCriteria.push({
               id: `throw_${criteria.code}`,
@@ -1178,7 +1265,6 @@ const CreateCustomRisk = () => {
           type: 'two',
         });
       } else if (comp.name.startsWith('Series')) {
-        // Extract series count from name like "Series (3 rotations)"
         const match = comp.name.match(/Series \((\d+) rotations\)/);
         const count = match ? parseInt(match[1]) : 3;
         newRotationEntries.push({
@@ -2029,7 +2115,24 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         name: c.name,
         symbol: c.symbol || '',
         value: c.value
-      }))]
+      }))],
+      // Store full structured metadata for edit restoration
+      editMetadata: {
+        rotationEntries: rotationEntries.map(entry => ({
+          ...entry,
+          selectedDBElement: entry.selectedDBElement ? { ...entry.selectedDBElement } : undefined,
+          selectedVerticalRotation: entry.selectedVerticalRotation ? { ...entry.selectedVerticalRotation } : undefined,
+          selectedPreAcrobaticElement: entry.selectedPreAcrobaticElement ? { ...entry.selectedPreAcrobaticElement } : undefined,
+        })),
+        throwRotationSpec: throwRotationSpec ? { ...throwRotationSpec } : null,
+        catchRotationSpec: catchRotationSpec ? { ...catchRotationSpec } : null,
+        throwDuringDB: throwDuringDB ? JSON.parse(JSON.stringify(throwDuringDB)) : null,
+        catchDuringDB: catchDuringDB ? JSON.parse(JSON.stringify(catchDuringDB)) : null,
+        extraThrow: extraThrow ? { ...extraThrow } : null,
+        thr2HasThr6,
+        selectedThrowCode: effectiveThrow?.code,
+        selectedCatchCode: effectiveCatch?.code,
+      },
     };
     setSavedRiskData(riskData);
     
