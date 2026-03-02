@@ -1922,14 +1922,33 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       return;
     }
 
-    // Default to Thr1 if no throw selected
-    const effectiveThrow = selectedThrow || dynamicThrows.find(t => t.code === 'Thr1');
-    // Default to Catch1 if no catch selected
-    const effectiveCatch = selectedCatch || dynamicCatches.find(c => c.code === 'Catch1');
+    // Default to Thr1 if no throw selected AND no throw during DB
+    const effectiveThrow = throwDuringDB ? null : (selectedThrow || dynamicThrows.find(t => t.code === 'Thr1'));
+    // Default to Catch1 if no catch selected AND no catch during DB
+    const effectiveCatch = catchDuringDB ? null : (selectedCatch || dynamicCatches.find(c => c.code === 'Catch1'));
+
+    // Build effective rotation entries that include auto-added axis/level change
+    const effectiveRotationEntries = (() => {
+      const entries = [...rotationEntries];
+      const hasAxisChange = entries.some(e => e.type === 'axis');
+      if (!hasAxisChange) {
+        const actualRotations = entries.filter(e => e.type !== 'axis');
+        const hasVertical = actualRotations.some(e => e.specificationType === 'vertical' && e.selectedVerticalRotation);
+        const hasPreAcrobatic = actualRotations.some(e => e.specificationType === 'pre-acrobatic' && e.selectedPreAcrobaticElement);
+        const throwHasPreAcrobatic = throwRotationSpec?.type === 'pre-acrobatic' && throwRotationSpec?.preAcrobaticElement;
+        if (hasVertical && (hasPreAcrobatic || throwHasPreAcrobatic)) {
+          entries.push({ id: crypto.randomUUID(), type: 'axis' as const });
+        }
+      }
+      return entries;
+    })();
 
     // Collect throw symbols (throw symbol + extra throw symbol + criteria symbols)
+    const throwDBInfo_save = getThrowCatchDBInfo(throwDuringDB);
+    const catchDBInfo_save = getThrowCatchDBInfo(catchDuringDB);
     const throwSymbols: string[] = [
-      ...(effectiveThrow?.symbol_image ? [effectiveThrow.symbol_image] : []),
+      ...(throwDuringDB && throwDBInfo_save?.symbol_image ? [throwDBInfo_save.symbol_image] : 
+          effectiveThrow?.symbol_image ? [effectiveThrow.symbol_image] : []),
       // Thr6+Thr2 combo: include Thr2 symbol after Thr6
       ...(extraThrow?.symbol_image ? [extraThrow.symbol_image] : []),
       // Thr2+Thr6 combo: include Thr6 symbol after Thr2
@@ -1942,12 +1961,13 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     
     // Collect catch symbols (catch symbol + criteria symbols)
     const catchSymbols: string[] = [
-      ...(effectiveCatch?.symbol_image ? [effectiveCatch.symbol_image] : []),
+      ...(catchDuringDB && catchDBInfo_save?.symbol_image ? [catchDBInfo_save.symbol_image] :
+          effectiveCatch?.symbol_image ? [effectiveCatch.symbol_image] : []),
       ...catchCriteria.filter(c => c.symbol).map(c => c.symbol!)
     ];
 
-    // Get axis/level change symbol if present
-    const hasAxisChange = rotationEntries.some(e => e.type === 'axis');
+    // Get axis/level change symbol if present (from effective entries which include auto-added)
+    const hasAxisChange = effectiveRotationEntries.some(e => e.type === 'axis');
     const axisLevelSymbol = hasAxisChange ? (symbols["axisLevelChange"] || '') : undefined;
 
     // Calculate effective rLevel (for display only)
@@ -1973,29 +1993,32 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     };
     let effectiveRLevel = calculateRLevel(false);
     
-    // Calculate effective throw value: base + 0.1 if involves rotation
-    const baseEffectiveThrowValue = effectiveThrow?.value ?? 0;
-    const effectiveThrowHasRotation = effectiveThrow?.code === 'Thr6' || thr2HasThr6 || 
-      (throwDuringDB && (
-        ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
-        'preAcrobaticElement' in throwDuringDB ||
-        'verticalRotation' in throwDuringDB
-      ));
-    let effectiveThrowValue = baseEffectiveThrowValue + (effectiveThrowHasRotation ? 0.1 : 0);
-    // Add extra throw value for Thr6+Thr2 combo
+    // Calculate effective throw value
+    let effectiveThrowValue = 0;
+    if (throwDuringDB) {
+      // Throw during DB: DB value + 0.1 for rotation
+      effectiveThrowValue = (throwDBInfo_save?.value ?? 0) + 0.1;
+    } else if (effectiveThrow) {
+      effectiveThrowValue = effectiveThrow.value ?? 0;
+      const hasRotation = effectiveThrow.code === 'Thr6' || thr2HasThr6;
+      if (hasRotation) effectiveThrowValue = 0.1; // Thr6 base is 0.1
+      if (thr2HasThr6 && effectiveThrow.code === 'Thr2') {
+        effectiveThrowValue = (effectiveThrow.value ?? 0) + 0.1;
+      }
+    }
     if (extraThrow) {
       effectiveThrowValue += (extraThrow.value ?? 0);
     }
     
-    // Calculate effective catch value: base + 0.1 if involves rotation
-    const baseEffectiveCatchValue = effectiveCatch?.value ?? 0;
-    const effectiveCatchHasRotation = effectiveCatch?.code === 'Catch8' ||
-      (catchDuringDB && (
-        ('db' in catchDuringDB && catchDuringDB.dbType === 'rotations') ||
-        'preAcrobaticElement' in catchDuringDB ||
-        'verticalRotation' in catchDuringDB
-      ));
-    const effectiveCatchValue = baseEffectiveCatchValue + (effectiveCatchHasRotation ? 0.1 : 0);
+    // Calculate effective catch value
+    let effectiveCatchValue = 0;
+    if (catchDuringDB) {
+      // Catch during DB: DB value + 0.1 for rotation
+      effectiveCatchValue = (catchDBInfo_save?.value ?? 0) + 0.1;
+    } else if (effectiveCatch) {
+      effectiveCatchValue = effectiveCatch.value ?? 0;
+      if (effectiveCatch.code === 'Catch8') effectiveCatchValue = 0.1;
+    }
     
     // Total = sum of all row values
     const effectiveTotalValue = effectiveThrowValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + effectiveCatchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
@@ -2012,15 +2035,24 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       axisLevelSymbol: axisLevelSymbol,
       isCustomRisk: true,
       apparatus: apparatus,
-      components: [...(effectiveThrow ? [{
+      components: [
+      // Throw component: either specific throw, throw during DB, or nothing
+      ...(effectiveThrow ? [{
         name: effectiveThrow.name,
         symbol: effectiveThrow.symbol_image || '',
         value: effectiveThrow.value ?? 0,
-        // Add rotation tag for Thr6 (standalone throw during rotation)
         ...(effectiveThrow.code === 'Thr6' ? {
           rotationTag: throwRotationSpec?.type === 'pre-acrobatic' ? 'ACRO' as const :
                        throwRotationSpec?.type === 'vertical' ? 'VER' as const : 'UNK' as const
         } : {})
+      }] : []),
+      // Throw during DB component (when no standard throw selected)
+      ...(throwDuringDB ? [{
+        name: `Throw during ${throwDBInfo_save?.type === 'pre-acrobatic' ? 'Pre-acrobatic' : throwDBInfo_save?.type === 'vertical' ? 'Vertical Rotation' : 'DB'}: ${throwDBInfo_save?.name || 'Element'}`,
+        symbol: throwDBInfo_save?.symbol_image || '',
+        value: (throwDBInfo_save?.value ?? 0) + 0.1,
+        rotationTag: throwDBInfo_save?.type === 'pre-acrobatic' ? 'ACRO' as const :
+                     throwDBInfo_save?.type === 'vertical' ? 'VER' as const : 'UNK' as const
       }] : []),
       // Thr2+Thr6 combo: include paired throw component
       ...(extraThrow ? [{
@@ -2040,8 +2072,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         symbol: t.symbol || '',
         value: t.value
       })),
-      // Add rotation components (including axis/level change)
-      ...rotationEntries.map(entry => {
+      // Add rotation components (including axis/level change) from effective entries
+      ...effectiveRotationEntries.map(entry => {
         if (entry.type === 'axis') {
           return {
             name: 'Axis/Level Change',
@@ -2050,10 +2082,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
           };
         }
         
-        // Determine rotation count
         const rotCount = entry.type === 'one' ? 1 : entry.type === 'two' ? 2 : (entry.seriesCount || 3);
         
-        // Determine specification label and tag
         let rotationSpec = 'Unspecified';
         let rotationTag: 'ACRO' | 'VER' | 'UNK' = 'UNK';
         
@@ -2081,16 +2111,25 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
           rotationSpec,
         };
       }),
+      // Catch component: either specific catch or catch during DB
       ...(effectiveCatch ? [{
         name: effectiveCatch.name,
         symbol: effectiveCatch.symbol_image || '',
         value: effectiveCatch.value ?? 0,
-        // Add rotation tag for Catch8 (catch during rotation)
         ...(effectiveCatch.code === 'Catch8' ? {
           rotationTag: catchRotationSpec?.type === 'pre-acrobatic' ? 'ACRO' as const :
                        catchRotationSpec?.type === 'vertical' ? 'VER' as const : 'UNK' as const
         } : {})
-      }] : []), ...catchCriteria.map(c => ({
+      }] : []),
+      // Catch during DB component (when no standard catch selected)
+      ...(catchDuringDB ? [{
+        name: `Catch during ${catchDBInfo_save?.type === 'pre-acrobatic' ? 'Pre-acrobatic' : catchDBInfo_save?.type === 'vertical' ? 'Vertical Rotation' : 'DB'}: ${catchDBInfo_save?.name || 'Element'}`,
+        symbol: catchDBInfo_save?.symbol_image || '',
+        value: (catchDBInfo_save?.value ?? 0) + 0.1,
+        rotationTag: catchDBInfo_save?.type === 'pre-acrobatic' ? 'ACRO' as const :
+                     catchDBInfo_save?.type === 'vertical' ? 'VER' as const : 'UNK' as const
+      }] : []),
+      ...catchCriteria.map(c => ({
         name: c.name,
         symbol: c.symbol || '',
         value: c.value
