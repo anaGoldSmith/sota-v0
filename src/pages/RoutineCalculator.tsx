@@ -103,6 +103,18 @@ interface RiskData {
   components: RiskComponent[];
   dbCount?: number;   // Number of DB elements in the risk (3 for non-R2, 0 for R2)
   dbValue?: number;   // Total DB value from thr_, utf_, catch_ components
+  // Full structured metadata for edit restoration
+  editMetadata?: {
+    rotationEntries?: any[];
+    throwRotationSpec?: any;
+    catchRotationSpec?: any;
+    throwDuringDB?: any;
+    catchDuringDB?: any;
+    extraThrow?: any;
+    thr2HasThr6?: boolean;
+    selectedThrowCode?: string;
+    selectedCatchCode?: string;
+  };
 }
 
 type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'DB/TE' | 'DB/TE/DA' | 'TE' | 'R' | 'R/DB' | 'Steps';
