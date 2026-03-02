@@ -79,7 +79,7 @@ interface RiskComponent {
   name: string;
   symbol: string;
   value: number;
-  rotationTag?: 'ACRO' | 'VER' | 'UNK'; // For rotation specification rows
+  rotationTag?: 'ACRO' | 'VER' | 'DB' | 'UNK'; // For rotation specification rows
   rotationCount?: number; // Number of rotations (1, 2, or series count)
   rotationSpec?: string; // Specification label (e.g., "Roll Forward")
 }
@@ -542,6 +542,7 @@ function SortableRow({
                              className={
                                component.rotationTag === 'ACRO' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border-orange-300' :
                                component.rotationTag === 'VER' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300' :
+                               component.rotationTag === 'DB' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300' :
                                'bg-muted text-muted-foreground border-border'
                              }
                            >

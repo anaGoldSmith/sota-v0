@@ -2052,7 +2052,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         symbol: throwDBInfo_save?.symbol_image || '',
         value: (throwDBInfo_save?.value ?? 0) + 0.1,
         rotationTag: throwDBInfo_save?.type === 'pre-acrobatic' ? 'ACRO' as const :
-                     throwDBInfo_save?.type === 'vertical' ? 'VER' as const : 'UNK' as const
+                     throwDBInfo_save?.type === 'vertical' ? 'VER' as const : 'DB' as const
       }] : []),
       // Thr2+Thr6 combo: include paired throw component
       ...(extraThrow ? [{
@@ -2085,7 +2085,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         const rotCount = entry.type === 'one' ? 1 : entry.type === 'two' ? 2 : (entry.seriesCount || 3);
         
         let rotationSpec = 'Unspecified';
-        let rotationTag: 'ACRO' | 'VER' | 'UNK' = 'UNK';
+        let rotationTag: 'ACRO' | 'VER' | 'DB' | 'UNK' = 'UNK';
         
         if (entry.specificationType === 'pre-acrobatic' && entry.selectedPreAcrobaticElement) {
           rotationSpec = entry.selectedPreAcrobaticElement.name;
@@ -2094,9 +2094,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
           const groupName = (entry.selectedVerticalRotation.group_name || '').charAt(0).toUpperCase() + (entry.selectedVerticalRotation.group_name || '').slice(1).toLowerCase();
           rotationSpec = `${groupName}: ${entry.selectedVerticalRotation.name}`;
           rotationTag = 'VER';
-        } else if (entry.specificationType === 'db-rotation' && entry.selectedDBElement) {
+      } else if (entry.specificationType === 'db-rotation' && entry.selectedDBElement) {
           rotationSpec = entry.selectedDBElement.name || entry.selectedDBElement.description || 'Element';
-          rotationTag = 'UNK';
+          rotationTag = 'DB';
         } else if (entry.specificationType) {
           rotationSpec = 'Unspecified';
           rotationTag = 'UNK';
@@ -2127,7 +2127,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         symbol: catchDBInfo_save?.symbol_image || '',
         value: (catchDBInfo_save?.value ?? 0) + 0.1,
         rotationTag: catchDBInfo_save?.type === 'pre-acrobatic' ? 'ACRO' as const :
-                     catchDBInfo_save?.type === 'vertical' ? 'VER' as const : 'UNK' as const
+                     catchDBInfo_save?.type === 'vertical' ? 'VER' as const : 'DB' as const
       }] : []),
       ...catchCriteria.map(c => ({
         name: c.name,
@@ -2136,7 +2136,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       }))],
       // Store full structured metadata for edit restoration
       editMetadata: {
-        rotationEntries: rotationEntries.map(entry => ({
+        rotationEntries: effectiveRotationEntries.map(entry => ({
           ...entry,
           selectedDBElement: entry.selectedDBElement ? { ...entry.selectedDBElement } : undefined,
           selectedVerticalRotation: entry.selectedVerticalRotation ? { ...entry.selectedVerticalRotation } : undefined,
