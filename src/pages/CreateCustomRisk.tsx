@@ -930,25 +930,11 @@ const CreateCustomRisk = () => {
     // Catch8 (catch during rotation) adds 1 rotation
     if (selectedCatch?.code === 'Catch8') total += 1;
     
-    // Throw during DB with rotation type adds 1 rotation (counts as 1 regardless of rotation count)
-    if (throwDuringDB) {
-      // Check if it's a rotation type (either db with rotations dbType, pre-acrobatic, or vertical)
-      if ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') {
-        total += 1;
-      } else if ('preAcrobaticElement' in throwDuringDB || 'verticalRotation' in throwDuringDB) {
-        total += 1;
-      }
-    }
+    // Throw during DB always adds 1 rotation (the throw itself involves a rotation)
+    if (throwDuringDB) total += 1;
     
-    // Catch during DB with rotation type adds 1 rotation (counts as 1 regardless of rotation count)
-    if (catchDuringDB) {
-      // Check if it's a rotation type (either db with rotations dbType, pre-acrobatic, or vertical)
-      if ('db' in catchDuringDB && catchDuringDB.dbType === 'rotations') {
-        total += 1;
-      } else if ('preAcrobaticElement' in catchDuringDB || 'verticalRotation' in catchDuringDB) {
-        total += 1;
-      }
-    }
+    // Catch during DB always adds 1 rotation (the catch itself involves a rotation)
+    if (catchDuringDB) total += 1;
     
     return total;
   };
@@ -1980,16 +1966,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       }, 0);
       if (effectiveThrow?.code === 'Thr6' || thr2HasThr6) rLevel += 1;
       if (effectiveCatch?.code === 'Catch8') rLevel += 1;
-      if (throwDuringDB && (
-        ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
-        'preAcrobaticElement' in throwDuringDB ||
-        'verticalRotation' in throwDuringDB
-      )) rLevel += 1;
-      if (catchDuringDB && (
-        ('db' in catchDuringDB && catchDuringDB.dbType === 'rotations') ||
-        'preAcrobaticElement' in catchDuringDB ||
-        'verticalRotation' in catchDuringDB
-      )) rLevel += 1;
+      // Throw/Catch during DB always adds +1 rotation to R subscript
+      if (throwDuringDB) rLevel += 1;
+      if (catchDuringDB) rLevel += 1;
       return rLevel;
     };
     let effectiveRLevel = calculateRLevel(false);
