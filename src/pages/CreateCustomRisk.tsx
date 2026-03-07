@@ -998,6 +998,15 @@ const CreateCustomRisk = () => {
     // Other catch types: base value only
     catchValue = selectedCatch.value ?? 0;
   }
+  // Extra catch combos: add values
+  extraCatches.forEach(c => { catchValue += c.value ?? 0; });
+  if (catchHasCatchDuringDB && extraCatchDuringDBData) {
+    const extraCatchDBInfoVal = getThrowCatchDBInfo(extraCatchDuringDBData);
+    catchValue += (extraCatchDBInfoVal?.value ?? 0) + 0.1;
+  }
+  if (catchHasCatch8) {
+    catchValue += 0.1;
+  }
   
   // Total value = sum of all row values (throw + throw criteria + rotations + catch + catch criteria)
   const totalValue = throwValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + catchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
