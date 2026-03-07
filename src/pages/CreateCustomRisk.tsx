@@ -1162,6 +1162,26 @@ const CreateCustomRisk = () => {
       if (meta.catchDuringDB) {
         setCatchDuringDB(meta.catchDuringDB);
       }
+      // Restore catch combo state
+      if (meta.extraCatches && meta.extraCatches.length > 0) {
+        const restoredExtraCatches = meta.extraCatches.map((c: any) => {
+          const found = dynamicCatches.find(dc => dc.code === c.code);
+          return found || c;
+        });
+        setExtraCatches(restoredExtraCatches);
+      }
+      if (meta.catchHasCatchDuringDB) {
+        setCatchHasCatchDuringDB(true);
+      }
+      if (meta.extraCatchDuringDBData) {
+        setExtraCatchDuringDBData(meta.extraCatchDuringDBData);
+      }
+      if (meta.catchHasCatch8) {
+        setCatchHasCatch8(true);
+      }
+      if (meta.extraCatch8RotationSpec) {
+        setExtraCatch8RotationSpec(meta.extraCatch8RotationSpec);
+      }
       // Restore rotation entries with full specification data
       if (meta.rotationEntries && meta.rotationEntries.length > 0) {
         const restoredEntries = meta.rotationEntries.map((entry: any) => ({
