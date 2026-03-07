@@ -838,6 +838,22 @@ const CreateCustomRisk = () => {
   const [thr2HasThr6, setThr2HasThr6] = useState(false);
   const extraThrowDropdownRef = useRef<HTMLDivElement>(null);
   
+  // Catch combo state: extra regular catches when primary is CatchDuringDB or Catch8
+  const [extraCatches, setExtraCatches] = useState<DynamicCatch[]>([]);
+  const [showExtraCatchDropdown, setShowExtraCatchDropdown] = useState(false);
+  const extraCatchDropdownRef = useRef<HTMLDivElement>(null);
+  // When primary is regular catch or Catch8, can add catch during DB
+  const [catchHasCatchDuringDB, setCatchHasCatchDuringDB] = useState(false);
+  const [extraCatchDuringDBData, setExtraCatchDuringDBData] = useState<ThrowCatchDuringDB | null>(null);
+  const [showExtraCatchDBDialog, setShowExtraCatchDBDialog] = useState(false);
+  // When primary is regular catch or CatchDuringDB, can add Catch8
+  const [catchHasCatch8, setCatchHasCatch8] = useState(false);
+  const [extraCatch8RotationSpec, setExtraCatch8RotationSpec] = useState<ThrowCatchRotationSpec>(null);
+  const [showExtraCatch8RotationSpecDropdown, setShowExtraCatch8RotationSpecDropdown] = useState(false);
+  const [showExtraCatch8VerticalDialog, setShowExtraCatch8VerticalDialog] = useState(false);
+  const [showExtraCatch8PreAcrobaticDialog, setShowExtraCatch8PreAcrobaticDialog] = useState(false);
+  const extraCatch8RotationSpecRef = useRef<HTMLDivElement>(null);
+  
   // Helper functions to extract data from discriminated union
   const getThrowCatchDBInfo = (data: ThrowCatchDuringDB | null) => {
     if (!data) return null;
