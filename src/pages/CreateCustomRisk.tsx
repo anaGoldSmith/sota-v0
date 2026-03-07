@@ -1093,8 +1093,6 @@ const CreateCustomRisk = () => {
 
     // If we have editMetadata, use it for full restoration
     const meta = existingRiskData.editMetadata;
-    console.log('[DEBUG] editMetadata:', JSON.stringify(meta, null, 2));
-    console.log('[DEBUG] existingRiskData keys:', Object.keys(existingRiskData));
     if (meta) {
       // Restore throw
       if (meta.selectedThrowCode) {
@@ -1130,15 +1128,25 @@ const CreateCustomRisk = () => {
       }
       // Restore rotation entries with full specification data
       if (meta.rotationEntries && meta.rotationEntries.length > 0) {
-        console.log('[DEBUG] Restoring rotation entries:', JSON.stringify(meta.rotationEntries));
         const restoredEntries = meta.rotationEntries.map((entry: any) => ({
           ...entry,
           id: entry.id || crypto.randomUUID(),
         }));
-        console.log('[DEBUG] Restored entries (has axis?):', restoredEntries.some((e: any) => e.type === 'axis'), restoredEntries.map((e: any) => e.type));
+        // Ensure axis/level change is included if present in components but missing from metadata
+        const components = existingRiskData.components as Array<{ name: string; symbol: string; value: number }>;
+        const hasAxisInEntries = restoredEntries.some((e: any) => e.type === 'axis');
+        const hasAxisInComponents = components?.some(c => c.name === 'Axis/Level Change');
+        if (!hasAxisInEntries && hasAxisInComponents) {
+          restoredEntries.push({ id: crypto.randomUUID(), type: 'axis' as const });
+        }
         setRotationEntries(restoredEntries);
       } else {
-        console.log('[DEBUG] No rotation entries in meta or empty');
+        // Even if no rotation entries in metadata, check components for axis/level change
+        const components = existingRiskData.components as Array<{ name: string; symbol: string; value: number }>;
+        const hasAxisInComponents = components?.some(c => c.name === 'Axis/Level Change');
+        if (hasAxisInComponents) {
+          setRotationEntries([{ id: crypto.randomUUID(), type: 'axis' as const }]);
+        }
       }
       // Restore throw/catch criteria from components
       const components = existingRiskData.components as Array<{ name: string; symbol: string; value: number }>;
