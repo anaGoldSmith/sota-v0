@@ -3575,7 +3575,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             </div>
                           )}
                         </div>
-                        {!catchHasCatch8 && (
+                        {!catchHasCatch8 && !catchHasCatchDuringDB && (
                           <Button
                             variant="ghost"
                             size="sm"
