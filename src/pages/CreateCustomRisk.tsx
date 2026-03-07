@@ -2139,6 +2139,15 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       effectiveCatchValue = effectiveCatch.value ?? 0;
       if (effectiveCatch.code === 'Catch8') effectiveCatchValue = 0.1;
     }
+    // Extra catch combos in save
+    extraCatches.forEach(c => { effectiveCatchValue += c.value ?? 0; });
+    if (catchHasCatchDuringDB && extraCatchDuringDBData) {
+      const extraCDBInfo = getThrowCatchDBInfo(extraCatchDuringDBData);
+      effectiveCatchValue += (extraCDBInfo?.value ?? 0) + 0.1;
+    }
+    if (catchHasCatch8) {
+      effectiveCatchValue += 0.1;
+    }
     
     // Total = sum of all row values
     const effectiveTotalValue = effectiveThrowValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + effectiveCatchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
