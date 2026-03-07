@@ -1093,6 +1093,8 @@ const CreateCustomRisk = () => {
 
     // If we have editMetadata, use it for full restoration
     const meta = existingRiskData.editMetadata;
+    console.log('[DEBUG] editMetadata:', JSON.stringify(meta, null, 2));
+    console.log('[DEBUG] existingRiskData keys:', Object.keys(existingRiskData));
     if (meta) {
       // Restore throw
       if (meta.selectedThrowCode) {
@@ -1128,10 +1130,15 @@ const CreateCustomRisk = () => {
       }
       // Restore rotation entries with full specification data
       if (meta.rotationEntries && meta.rotationEntries.length > 0) {
-        setRotationEntries(meta.rotationEntries.map((entry: any) => ({
+        console.log('[DEBUG] Restoring rotation entries:', JSON.stringify(meta.rotationEntries));
+        const restoredEntries = meta.rotationEntries.map((entry: any) => ({
           ...entry,
           id: entry.id || crypto.randomUUID(),
-        })));
+        }));
+        console.log('[DEBUG] Restored entries (has axis?):', restoredEntries.some((e: any) => e.type === 'axis'), restoredEntries.map((e: any) => e.type));
+        setRotationEntries(restoredEntries);
+      } else {
+        console.log('[DEBUG] No rotation entries in meta or empty');
       }
       // Restore throw/catch criteria from components
       const components = existingRiskData.components as Array<{ name: string; symbol: string; value: number }>;
