@@ -1128,10 +1128,25 @@ const CreateCustomRisk = () => {
       }
       // Restore rotation entries with full specification data
       if (meta.rotationEntries && meta.rotationEntries.length > 0) {
-        setRotationEntries(meta.rotationEntries.map((entry: any) => ({
+        const restoredEntries = meta.rotationEntries.map((entry: any) => ({
           ...entry,
           id: entry.id || crypto.randomUUID(),
-        })));
+        }));
+        // Ensure axis/level change is included if present in components but missing from metadata
+        const components = existingRiskData.components as Array<{ name: string; symbol: string; value: number }>;
+        const hasAxisInEntries = restoredEntries.some((e: any) => e.type === 'axis');
+        const hasAxisInComponents = components?.some(c => c.name === 'Axis/Level Change');
+        if (!hasAxisInEntries && hasAxisInComponents) {
+          restoredEntries.push({ id: crypto.randomUUID(), type: 'axis' as const });
+        }
+        setRotationEntries(restoredEntries);
+      } else {
+        // Even if no rotation entries in metadata, check components for axis/level change
+        const components = existingRiskData.components as Array<{ name: string; symbol: string; value: number }>;
+        const hasAxisInComponents = components?.some(c => c.name === 'Axis/Level Change');
+        if (hasAxisInComponents) {
+          setRotationEntries([{ id: crypto.randomUUID(), type: 'axis' as const }]);
+        }
       }
       // Restore throw/catch criteria from components
       const components = existingRiskData.components as Array<{ name: string; symbol: string; value: number }>;
