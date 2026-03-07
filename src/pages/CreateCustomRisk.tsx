@@ -1038,6 +1038,12 @@ const CreateCustomRisk = () => {
       if (extraThrowDropdownRef.current && !extraThrowDropdownRef.current.contains(event.target as Node)) {
         setShowExtraThrowDropdown(false);
       }
+      if (extraCatchDropdownRef.current && !extraCatchDropdownRef.current.contains(event.target as Node)) {
+        setShowExtraCatchDropdown(false);
+      }
+      if (extraCatch8RotationSpecRef.current && !extraCatch8RotationSpecRef.current.contains(event.target as Node)) {
+        setShowExtraCatch8RotationSpecDropdown(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
