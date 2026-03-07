@@ -952,6 +952,11 @@ const CreateCustomRisk = () => {
     // Catch during DB always adds 1 rotation (the catch itself involves a rotation)
     if (catchDuringDB) total += 1;
     
+    // Extra catch combos: catch during DB adds 1 rotation
+    if (catchHasCatchDuringDB && extraCatchDuringDBData) total += 1;
+    // Extra catch combos: Catch8 adds 1 rotation
+    if (catchHasCatch8) total += 1;
+    
     return total;
   };
   const rotationValue = getRotationValue();
