@@ -3903,7 +3903,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             </div>
                           )}
                         </div>
-                        {!catchHasCatchDuringDB && (
+                        {!catchHasCatchDuringDB && !catchHasCatch8 && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -3919,7 +3919,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                     {/* For regular catch (not Catch8): add catch during DB and catch during rotation */}
                     {selectedCatch && selectedCatch.code !== 'Catch8' && (
                       <>
-                        {!catchHasCatchDuringDB && (
+                        {!catchHasCatchDuringDB && !catchHasCatch8 && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -3930,7 +3930,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             Add catch during DB
                           </Button>
                         )}
-                        {!catchHasCatch8 && (
+                        {!catchHasCatch8 && !catchHasCatchDuringDB && (
                           <Button
                             variant="ghost"
                             size="sm"
