@@ -838,6 +838,22 @@ const CreateCustomRisk = () => {
   const [thr2HasThr6, setThr2HasThr6] = useState(false);
   const extraThrowDropdownRef = useRef<HTMLDivElement>(null);
   
+  // Catch combo state: extra regular catches when primary is CatchDuringDB or Catch8
+  const [extraCatches, setExtraCatches] = useState<DynamicCatch[]>([]);
+  const [showExtraCatchDropdown, setShowExtraCatchDropdown] = useState(false);
+  const extraCatchDropdownRef = useRef<HTMLDivElement>(null);
+  // When primary is regular catch or Catch8, can add catch during DB
+  const [catchHasCatchDuringDB, setCatchHasCatchDuringDB] = useState(false);
+  const [extraCatchDuringDBData, setExtraCatchDuringDBData] = useState<ThrowCatchDuringDB | null>(null);
+  const [showExtraCatchDBDialog, setShowExtraCatchDBDialog] = useState(false);
+  // When primary is regular catch or CatchDuringDB, can add Catch8
+  const [catchHasCatch8, setCatchHasCatch8] = useState(false);
+  const [extraCatch8RotationSpec, setExtraCatch8RotationSpec] = useState<ThrowCatchRotationSpec>(null);
+  const [showExtraCatch8RotationSpecDropdown, setShowExtraCatch8RotationSpecDropdown] = useState(false);
+  const [showExtraCatch8VerticalDialog, setShowExtraCatch8VerticalDialog] = useState(false);
+  const [showExtraCatch8PreAcrobaticDialog, setShowExtraCatch8PreAcrobaticDialog] = useState(false);
+  const extraCatch8RotationSpecRef = useRef<HTMLDivElement>(null);
+  
   // Helper functions to extract data from discriminated union
   const getThrowCatchDBInfo = (data: ThrowCatchDuringDB | null) => {
     if (!data) return null;
@@ -936,6 +952,11 @@ const CreateCustomRisk = () => {
     // Catch during DB always adds 1 rotation (the catch itself involves a rotation)
     if (catchDuringDB) total += 1;
     
+    // Extra catch combos: catch during DB adds 1 rotation
+    if (catchHasCatchDuringDB && extraCatchDuringDBData) total += 1;
+    // Extra catch combos: Catch8 adds 1 rotation
+    if (catchHasCatch8) total += 1;
+    
     return total;
   };
   const rotationValue = getRotationValue();
@@ -977,6 +998,15 @@ const CreateCustomRisk = () => {
     // Other catch types: base value only
     catchValue = selectedCatch.value ?? 0;
   }
+  // Extra catch combos: add values
+  extraCatches.forEach(c => { catchValue += c.value ?? 0; });
+  if (catchHasCatchDuringDB && extraCatchDuringDBData) {
+    const extraCatchDBInfoVal = getThrowCatchDBInfo(extraCatchDuringDBData);
+    catchValue += (extraCatchDBInfoVal?.value ?? 0) + 0.1;
+  }
+  if (catchHasCatch8) {
+    catchValue += 0.1;
+  }
   
   // Total value = sum of all row values (throw + throw criteria + rotations + catch + catch criteria)
   const totalValue = throwValue + throwCriteria.reduce((sum, item) => sum + item.value, 0) + rotationValue + catchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0);
@@ -1007,6 +1037,12 @@ const CreateCustomRisk = () => {
       }
       if (extraThrowDropdownRef.current && !extraThrowDropdownRef.current.contains(event.target as Node)) {
         setShowExtraThrowDropdown(false);
+      }
+      if (extraCatchDropdownRef.current && !extraCatchDropdownRef.current.contains(event.target as Node)) {
+        setShowExtraCatchDropdown(false);
+      }
+      if (extraCatch8RotationSpecRef.current && !extraCatch8RotationSpecRef.current.contains(event.target as Node)) {
+        setShowExtraCatch8RotationSpecDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -1125,6 +1161,26 @@ const CreateCustomRisk = () => {
       }
       if (meta.catchDuringDB) {
         setCatchDuringDB(meta.catchDuringDB);
+      }
+      // Restore catch combo state
+      if (meta.extraCatches && meta.extraCatches.length > 0) {
+        const restoredExtraCatches = meta.extraCatches.map((c: any) => {
+          const found = dynamicCatches.find(dc => dc.code === c.code);
+          return found || c;
+        });
+        setExtraCatches(restoredExtraCatches);
+      }
+      if (meta.catchHasCatchDuringDB) {
+        setCatchHasCatchDuringDB(true);
+      }
+      if (meta.extraCatchDuringDBData) {
+        setExtraCatchDuringDBData(meta.extraCatchDuringDBData);
+      }
+      if (meta.catchHasCatch8) {
+        setCatchHasCatch8(true);
+      }
+      if (meta.extraCatch8RotationSpec) {
+        setExtraCatch8RotationSpec(meta.extraCatch8RotationSpec);
       }
       // Restore rotation entries with full specification data
       if (meta.rotationEntries && meta.rotationEntries.length > 0) {
@@ -1634,6 +1690,13 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     setSelectedCatch(catchItem);
     setShowCatchDropdown(false);
     setCatchRotationSpec(null); // Reset rotation spec when catch changes
+    // Reset catch combo state
+    setExtraCatches([]);
+    setShowExtraCatchDropdown(false);
+    setCatchHasCatchDuringDB(false);
+    setExtraCatchDuringDBData(null);
+    setCatchHasCatch8(false);
+    setExtraCatch8RotationSpec(null);
 
     // Auto-add Cr2H when Catch3 is selected
     if (catchItem.code === 'Catch3') {
@@ -1650,6 +1713,65 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         setCatchCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]);
       }
     }
+  };
+  
+  // Handler for selecting extra regular catch (Catch2-7) when primary is CatchDuringDB or Catch8
+  const handleSelectExtraCatch = (catchItem: DynamicCatch) => {
+    // Only allow Catch2-7 (not Catch1, Catch8)
+    if (catchItem.code === 'Catch1' || catchItem.code === 'Catch8') return;
+    // Don't add duplicates
+    if (extraCatches.some(c => c.code === catchItem.code)) return;
+    setExtraCatches(prev => [...prev, catchItem]);
+    setShowExtraCatchDropdown(false);
+    
+    // Auto-add Cr2H when Catch3 is added as extra
+    if (catchItem.code === 'Catch3') {
+      const cr2h = generalCriteria.find(gc => gc.code === 'Cr2H');
+      if (cr2h && !selectedCatchCriteria.includes('Cr2H')) {
+        const newCriteria: CriteriaItem = {
+          id: `catch_${cr2h.code}`,
+          name: cr2h.name,
+          symbol: cr2h.symbol_image || undefined,
+          value: 0.1,
+          code: cr2h.code,
+          note: 'the criterion {Cr2H} is given for catches with rebounds on the arm(s) or other body parts'
+        };
+        setCatchCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]);
+      }
+    }
+  };
+  
+  // Handler to remove an extra catch
+  const handleRemoveExtraCatch = (code: string) => {
+    setExtraCatches(prev => prev.filter(c => c.code !== code));
+    // Remove auto-added Cr2H if Catch3 is being removed
+    if (code === 'Catch3') {
+      setCatchCriteria(prev => prev.filter(c => c.code !== 'Cr2H'));
+    }
+  };
+  
+  // Handler to add extra Catch during DB when primary is regular catch or Catch8
+  const handleSelectExtraCatchDuringDB = (db: any, dbType: 'jumps' | 'rotations', rotationCount?: number) => {
+    setCatchHasCatchDuringDB(true);
+    setExtraCatchDuringDBData({ db, dbType, rotationCount });
+    setShowExtraCatchDBDialog(false);
+  };
+  
+  // Handler to remove extra Catch during DB
+  const handleRemoveExtraCatchDuringDB = () => {
+    setCatchHasCatchDuringDB(false);
+    setExtraCatchDuringDBData(null);
+  };
+  
+  // Handler to add extra Catch8 (catch during rotation) when primary is regular catch or CatchDuringDB
+  const handleAddExtraCatch8 = () => {
+    setCatchHasCatch8(true);
+  };
+  
+  // Handler to remove extra Catch8
+  const handleRemoveExtraCatch8 = () => {
+    setCatchHasCatch8(false);
+    setExtraCatch8RotationSpec(null);
   };
   const handleToggleThrowCriteria = (criteria: GeneralCriteria) => {
     const isSelected = selectedThrowCriteria.includes(criteria.code);
@@ -1974,10 +2096,19 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       ...throwCriteria.filter(t => t.symbol).map(t => t.symbol!)
     ];
     
-    // Collect catch symbols (catch symbol + criteria symbols)
+    // Collect catch symbols (catch symbol + extra catches + criteria symbols)
     const catchSymbols: string[] = [
       ...(catchDuringDB && catchDBInfo_save?.symbol_image ? [catchDBInfo_save.symbol_image] :
           effectiveCatch?.symbol_image ? [effectiveCatch.symbol_image] : []),
+      ...extraCatches.filter(c => c.symbol_image).map(c => c.symbol_image!),
+      ...(catchHasCatchDuringDB && extraCatchDuringDBData ? (() => {
+        const extraCDBInfo = getThrowCatchDBInfo(extraCatchDuringDBData);
+        return extraCDBInfo?.symbol_image ? [extraCDBInfo.symbol_image] : [];
+      })() : []),
+      ...(catchHasCatch8 ? (() => {
+        const catch8Item = dynamicCatches.find(c => c.code === 'Catch8');
+        return catch8Item?.symbol_image ? [catch8Item.symbol_image] : [];
+      })() : []),
       ...catchCriteria.filter(c => c.symbol).map(c => c.symbol!)
     ];
 
@@ -2004,6 +2135,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       // Throw/Catch during DB always adds +1 rotation to R subscript
       if (throwDuringDB) rLevel += 1;
       if (catchDuringDB) rLevel += 1;
+      // Extra catch combos
+      if (catchHasCatchDuringDB && extraCatchDuringDBData) rLevel += 1;
+      if (catchHasCatch8) rLevel += 1;
       return rLevel;
     };
     let effectiveRLevel = calculateRLevel(false);
@@ -2033,6 +2167,15 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     } else if (effectiveCatch) {
       effectiveCatchValue = effectiveCatch.value ?? 0;
       if (effectiveCatch.code === 'Catch8') effectiveCatchValue = 0.1;
+    }
+    // Extra catch combos in save
+    extraCatches.forEach(c => { effectiveCatchValue += c.value ?? 0; });
+    if (catchHasCatchDuringDB && extraCatchDuringDBData) {
+      const extraCDBInfo = getThrowCatchDBInfo(extraCatchDuringDBData);
+      effectiveCatchValue += (extraCDBInfo?.value ?? 0) + 0.1;
+    }
+    if (catchHasCatch8) {
+      effectiveCatchValue += 0.1;
     }
     
     // Total = sum of all row values
@@ -2144,6 +2287,31 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         rotationTag: catchDBInfo_save?.type === 'pre-acrobatic' ? 'ACRO' as const :
                      catchDBInfo_save?.type === 'vertical' ? 'VER' as const : 'DB' as const
       }] : []),
+      // Extra catches combo components
+      ...extraCatches.map(c => ({
+        name: c.name,
+        symbol: c.symbol_image || '',
+        value: c.value ?? 0,
+      })),
+      // Extra Catch during DB (when primary is regular catch or Catch8)
+      ...(catchHasCatchDuringDB && extraCatchDuringDBData ? (() => {
+        const extraCDBInfo = getThrowCatchDBInfo(extraCatchDuringDBData);
+        return [{
+          name: `Catch during ${extraCDBInfo?.type === 'pre-acrobatic' ? 'Pre-acrobatic' : extraCDBInfo?.type === 'vertical' ? 'Vertical Rotation' : 'DB'}: ${extraCDBInfo?.name || 'Element'}`,
+          symbol: extraCDBInfo?.symbol_image || '',
+          value: (extraCDBInfo?.value ?? 0) + 0.1,
+          rotationTag: extraCDBInfo?.type === 'pre-acrobatic' ? 'ACRO' as const :
+                       extraCDBInfo?.type === 'vertical' ? 'VER' as const : 'DB' as const
+        }];
+      })() : []),
+      // Extra Catch8 (catch during rotation) component
+      ...(catchHasCatch8 ? [{
+        name: 'Catch during rotation',
+        symbol: dynamicCatches.find(c => c.code === 'Catch8')?.symbol_image || '',
+        value: 0.1,
+        rotationTag: extraCatch8RotationSpec?.type === 'pre-acrobatic' ? 'ACRO' as const :
+                     extraCatch8RotationSpec?.type === 'vertical' ? 'VER' as const : 'UNK' as const
+      }] : []),
       ...catchCriteria.map(c => ({
         name: c.name,
         symbol: c.symbol || '',
@@ -2165,6 +2333,12 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         thr2HasThr6,
         selectedThrowCode: effectiveThrow?.code,
         selectedCatchCode: effectiveCatch?.code,
+        // Catch combo metadata
+        extraCatches: extraCatches.map(c => ({ ...c })),
+        catchHasCatchDuringDB,
+        extraCatchDuringDBData: extraCatchDuringDBData ? JSON.parse(JSON.stringify(extraCatchDuringDBData)) : null,
+        catchHasCatch8,
+        extraCatch8RotationSpec: extraCatch8RotationSpec ? { ...extraCatch8RotationSpec } : null,
       },
     };
     setSavedRiskData(riskData);
@@ -3182,9 +3356,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           <GripVertical className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="w-16 flex justify-center py-4">
-                          {/* Stacked symbols: Standard catch on top, DB/rotation below */}
                           <div className="flex flex-col items-center gap-0">
-                            {/* Standard catch symbol - Catch1 */}
                             {dynamicCatches.find(c => c.code === 'Catch1')?.symbol_image ? (
                               <img 
                                 src={dynamicCatches.find(c => c.code === 'Catch1')!.symbol_image!} 
@@ -3195,7 +3367,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             ) : (
                               <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C</div>
                             )}
-                            {/* DB/Rotation symbol below */}
                             {isDBType && catchDuringDB.db.symbol_image ? (
                               <img 
                                 src={catchDuringDB.db.symbol_image.startsWith('http') 
@@ -3281,6 +3452,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             onClick={() => {
                               setCatchDuringDB(null);
                               setCatchCriteria([]);
+                              setExtraCatches([]);
+                              setCatchHasCatch8(false);
+                              setExtraCatch8RotationSpec(null);
                             }} 
                             className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                           >
@@ -3288,6 +3462,132 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </Button>
                         </div>
                       </div>
+                      
+                      {/* Extra catches sub-rows for CatchDuringDB */}
+                      {extraCatches.map(ec => (
+                        <div key={ec.id} className="flex items-center border-b border-border/50 bg-muted/20">
+                          <div className="w-8" />
+                          <div className="w-12 flex justify-center py-3">
+                            {ec.symbol_image ? (
+                              <img src={ec.symbol_image} alt={ec.name} className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                            ) : (
+                              <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
+                            )}
+                          </div>
+                          <div className="flex-1 py-3 px-4">
+                            <span className="text-xs text-muted-foreground italic">+ {ec.name}</span>
+                          </div>
+                          <div className="w-20 py-3 px-2 text-center border-l border-border relative">
+                            <p className="font-semibold text-primary text-sm">{ec.value ?? 0}</p>
+                            <Button variant="ghost" size="icon" onClick={() => handleRemoveExtraCatch(ec.code)} className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1">
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Extra Catch8 sub-row for CatchDuringDB */}
+                      {catchHasCatch8 && (
+                        <div className="flex items-center border-b border-border/50 bg-muted/20">
+                          <div className="w-8" />
+                          <div className="w-12 flex justify-center py-3">
+                            {dynamicCatches.find(c => c.code === 'Catch8')?.symbol_image ? (
+                              <img src={dynamicCatches.find(c => c.code === 'Catch8')!.symbol_image!} alt="Catch8" className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                            ) : (
+                              <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C8</div>
+                            )}
+                          </div>
+                          <div className="flex-1 py-3 px-4">
+                            <span className="text-xs text-muted-foreground italic">+ Catch during rotation</span>
+                            {/* Rotation spec for extra Catch8 */}
+                            <div className="relative" ref={extraCatch8RotationSpecRef}>
+                              {extraCatch8RotationSpec ? (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-xs text-muted-foreground italic">
+                                    {extraCatch8RotationSpec.type === 'vertical'
+                                      ? `Vertical ${(extraCatch8RotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (extraCatch8RotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${extraCatch8RotationSpec.verticalRotation?.name}`
+                                      : `Pre-acrobatic: ${extraCatch8RotationSpec.preAcrobaticElement?.name}`
+                                    }
+                                  </span>
+                                  <Button variant="ghost" size="sm" className="h-5 px-1 text-xs text-primary hover:bg-primary/10" onClick={() => setShowExtraCatch8RotationSpecDropdown(true)}>
+                                    Change
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30 mt-1" onClick={() => setShowExtraCatch8RotationSpecDropdown(true)}>
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Specify Rotation Type
+                                </Button>
+                              )}
+                              {showExtraCatch8RotationSpecDropdown && (
+                                <div className="fixed inset-0 z-[99]" onClick={() => setShowExtraCatch8RotationSpecDropdown(false)} />
+                              )}
+                              {showExtraCatch8RotationSpecDropdown && (
+                                <div className="absolute left-0 top-full mt-1 w-72 bg-background border border-border rounded-lg shadow-xl z-[100]">
+                                  <div className="p-2 border-b border-border flex items-center justify-between">
+                                    <span className="text-sm font-medium text-foreground">Select Rotation Type</span>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => setShowExtraCatch8RotationSpecDropdown(false)}>
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                  <div className="p-2 space-y-1">
+                                    <div className={`p-3 rounded hover:bg-muted cursor-pointer ${extraCatch8RotationSpec?.type === 'pre-acrobatic' ? 'bg-primary/10' : ''}`} onClick={() => { setShowExtraCatch8RotationSpecDropdown(false); setShowExtraCatch8PreAcrobaticDialog(true); }}>
+                                      <span className="text-sm text-foreground">Pre-acrobatic Elements</span>
+                                    </div>
+                                    <div className={`p-3 rounded hover:bg-muted cursor-pointer ${extraCatch8RotationSpec?.type === 'vertical' ? 'bg-primary/10' : ''}`} onClick={() => { setShowExtraCatch8RotationSpecDropdown(false); setShowExtraCatch8VerticalDialog(true); }}>
+                                      <span className="text-sm text-foreground">Vertical Rotations</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="w-20 py-3 px-2 text-center border-l border-border relative">
+                            <p className="font-semibold text-primary text-sm">0.1</p>
+                            <Button variant="ghost" size="icon" onClick={handleRemoveExtraCatch8} className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1">
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Add extra catch buttons for CatchDuringDB */}
+                      <div className="px-4 py-2 flex flex-wrap gap-2 border-b border-border/30">
+                        <div className="relative" ref={extraCatchDropdownRef}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                            onClick={() => setShowExtraCatchDropdown(!showExtraCatchDropdown)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add extra catch
+                          </Button>
+                          {showExtraCatchDropdown && (
+                            <div className="absolute left-0 top-full mt-1 w-72 bg-background border border-border rounded-lg shadow-xl z-[100] max-h-48 overflow-y-auto">
+                              {filteredCatches.filter(c => c.code !== 'Catch1' && c.code !== 'Catch8' && !extraCatches.some(ec => ec.code === c.code)).map(catchItem => (
+                                <div key={catchItem.id} className="flex items-center gap-2 p-2 hover:bg-muted cursor-pointer border-b border-border/50 last:border-b-0" onClick={() => handleSelectExtraCatch(catchItem)}>
+                                  {catchItem.symbol_image && <img src={catchItem.symbol_image} alt={catchItem.name} className="h-5 w-5 object-contain" onError={e => e.currentTarget.style.display = 'none'} />}
+                                  <span className="text-sm text-foreground flex-1">{catchItem.name}</span>
+                                  <span className="text-xs text-primary font-semibold">{catchItem.value ?? 0}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {!catchHasCatch8 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                            onClick={handleAddExtraCatch8}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add catch during rotation
+                          </Button>
+                        )}
+                      </div>
+                      
                       {/* Extra Catch Criteria for Catch during DB */}
                       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCatchCriteriaDragEnd}>
                         <SortableContext items={catchCriteria.map(c => c.id)} strategy={verticalListSortingStrategy}>
@@ -3372,12 +3672,10 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             </Button>
                           )}
                           
-                          {/* Backdrop for closing dropdown */}
                           {showCatchRotationSpecDropdown && (
                             <div className="fixed inset-0 z-[99]" onClick={() => setShowCatchRotationSpecDropdown(false)} />
                           )}
                           
-                          {/* Dropdown for rotation type selection */}
                           {showCatchRotationSpecDropdown && (
                             <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-[100]">
                               <div className="p-2 border-b border-border flex items-center justify-between">
@@ -3425,12 +3723,226 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           setSelectedCatch(null);
                           setCatchCriteria([]);
                           setCatchRotationSpec(null);
+                          setExtraCatches([]);
+                          setCatchHasCatchDuringDB(false);
+                          setExtraCatchDuringDBData(null);
+                          setCatchHasCatch8(false);
+                          setExtraCatch8RotationSpec(null);
                         }} 
                         className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                       >
                         <X className="h-3 w-3" />
                       </Button>
                     </div>
+                  </div>
+                  
+                  {/* Extra catches sub-rows for regular catch or Catch8 */}
+                  {extraCatches.map(ec => (
+                    <div key={ec.id} className="flex items-center border-b border-border/50 bg-muted/20">
+                      <div className="w-8" />
+                      <div className="w-12 flex justify-center py-3">
+                        {ec.symbol_image ? (
+                          <img src={ec.symbol_image} alt={ec.name} className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                        ) : (
+                          <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
+                        )}
+                      </div>
+                      <div className="flex-1 py-3 px-4">
+                        <span className="text-xs text-muted-foreground italic">+ {ec.name}</span>
+                      </div>
+                      <div className="w-20 py-3 px-2 text-center border-l border-border relative">
+                        <p className="font-semibold text-primary text-sm">{ec.value ?? 0}</p>
+                        <Button variant="ghost" size="icon" onClick={() => handleRemoveExtraCatch(ec.code)} className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1">
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Extra Catch during DB sub-row (for regular catch or Catch8 primary) */}
+                  {catchHasCatchDuringDB && extraCatchDuringDBData && (() => {
+                    const extraCDBInfo = getThrowCatchDBInfo(extraCatchDuringDBData);
+                    return (
+                      <div className="flex items-center border-b border-border/50 bg-muted/20">
+                        <div className="w-8" />
+                        <div className="w-12 flex justify-center py-3">
+                          {extraCDBInfo?.symbol_image ? (
+                            <img src={typeof extraCDBInfo.symbol_image === 'string' && extraCDBInfo.symbol_image.startsWith('http') ? extraCDBInfo.symbol_image : supabase.storage.from('jump-symbols').getPublicUrl(extraCDBInfo.symbol_image || '').data.publicUrl} alt="DB" className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                          ) : (
+                            <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">DB</div>
+                          )}
+                        </div>
+                        <div className="flex-1 py-3 px-4">
+                          <span className="text-xs text-muted-foreground italic">+ Catch during DB: {extraCDBInfo?.name || '—'}</span>
+                          <Button variant="ghost" size="sm" className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted ml-2" onClick={() => setShowExtraCatchDBDialog(true)}>
+                            <span className="text-xs">Change</span>
+                          </Button>
+                        </div>
+                        <div className="w-20 py-3 px-2 text-center border-l border-border relative">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors">
+                                <p className="font-semibold text-primary text-sm">{((extraCDBInfo?.value || 0) + 0.1).toFixed(1)}</p>
+                                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent side="left" className="w-auto p-3">
+                              <div className="text-sm space-y-2">
+                                <p className="font-medium text-foreground mb-2">Value Breakdown</p>
+                                <div className="flex justify-between gap-6">
+                                  <span className="text-muted-foreground">DB Value:</span>
+                                  <span className="font-medium">{(extraCDBInfo?.value || 0).toFixed(1)}</span>
+                                </div>
+                                <div className="flex justify-between gap-6">
+                                  <span className="text-muted-foreground">Extra rotation:</span>
+                                  <span className="font-medium text-green-600">+0.1</span>
+                                </div>
+                                <div className="border-t border-border pt-2 flex justify-between gap-6">
+                                  <span className="font-medium">Total:</span>
+                                  <span className="font-bold text-primary">{((extraCDBInfo?.value || 0) + 0.1).toFixed(1)}</span>
+                                </div>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                          <Button variant="ghost" size="icon" onClick={handleRemoveExtraCatchDuringDB} className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1">
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  
+                  {/* Extra Catch8 sub-row (for regular catch primary, not Catch8) */}
+                  {selectedCatch?.code !== 'Catch8' && catchHasCatch8 && (
+                    <div className="flex items-center border-b border-border/50 bg-muted/20">
+                      <div className="w-8" />
+                      <div className="w-12 flex justify-center py-3">
+                        {dynamicCatches.find(c => c.code === 'Catch8')?.symbol_image ? (
+                          <img src={dynamicCatches.find(c => c.code === 'Catch8')!.symbol_image!} alt="Catch8" className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                        ) : (
+                          <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C8</div>
+                        )}
+                      </div>
+                      <div className="flex-1 py-3 px-4">
+                        <span className="text-xs text-muted-foreground italic">+ Catch during rotation</span>
+                        <div className="relative" ref={extraCatch8RotationSpecRef}>
+                          {extraCatch8RotationSpec ? (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs text-muted-foreground italic">
+                                {extraCatch8RotationSpec.type === 'vertical'
+                                  ? `Vertical ${(extraCatch8RotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (extraCatch8RotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${extraCatch8RotationSpec.verticalRotation?.name}`
+                                  : `Pre-acrobatic: ${extraCatch8RotationSpec.preAcrobaticElement?.name}`
+                                }
+                              </span>
+                              <Button variant="ghost" size="sm" className="h-5 px-1 text-xs text-primary hover:bg-primary/10" onClick={() => setShowExtraCatch8RotationSpecDropdown(true)}>
+                                Change
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30 mt-1" onClick={() => setShowExtraCatch8RotationSpecDropdown(true)}>
+                              <Plus className="h-3 w-3 mr-1" />
+                              Specify Rotation Type
+                            </Button>
+                          )}
+                          {showExtraCatch8RotationSpecDropdown && (
+                            <div className="fixed inset-0 z-[99]" onClick={() => setShowExtraCatch8RotationSpecDropdown(false)} />
+                          )}
+                          {showExtraCatch8RotationSpecDropdown && (
+                            <div className="absolute left-0 top-full mt-1 w-72 bg-background border border-border rounded-lg shadow-xl z-[100]">
+                              <div className="p-2 border-b border-border flex items-center justify-between">
+                                <span className="text-sm font-medium text-foreground">Select Rotation Type</span>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => setShowExtraCatch8RotationSpecDropdown(false)}>
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <div className="p-2 space-y-1">
+                                <div className={`p-3 rounded hover:bg-muted cursor-pointer ${extraCatch8RotationSpec?.type === 'pre-acrobatic' ? 'bg-primary/10' : ''}`} onClick={() => { setShowExtraCatch8RotationSpecDropdown(false); setShowExtraCatch8PreAcrobaticDialog(true); }}>
+                                  <span className="text-sm text-foreground">Pre-acrobatic Elements</span>
+                                </div>
+                                <div className={`p-3 rounded hover:bg-muted cursor-pointer ${extraCatch8RotationSpec?.type === 'vertical' ? 'bg-primary/10' : ''}`} onClick={() => { setShowExtraCatch8RotationSpecDropdown(false); setShowExtraCatch8VerticalDialog(true); }}>
+                                  <span className="text-sm text-foreground">Vertical Rotations</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="w-20 py-3 px-2 text-center border-l border-border relative">
+                        <p className="font-semibold text-primary text-sm">0.1</p>
+                        <Button variant="ghost" size="icon" onClick={handleRemoveExtraCatch8} className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1">
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Add extra catch buttons for regular catch or Catch8 */}
+                  <div className="px-4 py-2 flex flex-wrap gap-2 border-b border-border/30">
+                    {/* For Catch8: add extra regular catches and catch during DB */}
+                    {selectedCatch?.code === 'Catch8' && (
+                      <>
+                        <div className="relative" ref={selectedCatch?.code === 'Catch8' ? extraCatchDropdownRef : undefined}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                            onClick={() => setShowExtraCatchDropdown(!showExtraCatchDropdown)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add extra catch
+                          </Button>
+                          {showExtraCatchDropdown && (
+                            <div className="absolute left-0 top-full mt-1 w-72 bg-background border border-border rounded-lg shadow-xl z-[100] max-h-48 overflow-y-auto">
+                              {filteredCatches.filter(c => c.code !== 'Catch1' && c.code !== 'Catch8' && !extraCatches.some(ec => ec.code === c.code)).map(catchItem => (
+                                <div key={catchItem.id} className="flex items-center gap-2 p-2 hover:bg-muted cursor-pointer border-b border-border/50 last:border-b-0" onClick={() => handleSelectExtraCatch(catchItem)}>
+                                  {catchItem.symbol_image && <img src={catchItem.symbol_image} alt={catchItem.name} className="h-5 w-5 object-contain" onError={e => e.currentTarget.style.display = 'none'} />}
+                                  <span className="text-sm text-foreground flex-1">{catchItem.name}</span>
+                                  <span className="text-xs text-primary font-semibold">{catchItem.value ?? 0}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {!catchHasCatchDuringDB && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                            onClick={() => setShowExtraCatchDBDialog(true)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add catch during DB
+                          </Button>
+                        )}
+                      </>
+                    )}
+                    {/* For regular catch (not Catch8): add catch during DB and catch during rotation */}
+                    {selectedCatch && selectedCatch.code !== 'Catch8' && (
+                      <>
+                        {!catchHasCatchDuringDB && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                            onClick={() => setShowExtraCatchDBDialog(true)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add catch during DB
+                          </Button>
+                        )}
+                        {!catchHasCatch8 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                            onClick={handleAddExtraCatch8}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add catch during rotation
+                          </Button>
+                        )}
+                      </>
+                    )}
                   </div>
                   
                   {/* Extra Catch Criteria */}
@@ -3729,6 +4241,39 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         onSelect={(element) => {
           setCatchRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
           setShowCatchPreAcrobaticDialog(false);
+        }}
+        rotationType="one"
+        isFirstRotation={true}
+      />
+
+      {/* Extra Catch during DB Dialog (when primary is regular catch or Catch8) */}
+      <DBDuringThrowCatchDialog
+        open={showExtraCatchDBDialog}
+        onOpenChange={setShowExtraCatchDBDialog}
+        type="catch"
+        onSelectDB={(db, dbType, rotationCount) => {
+          handleSelectExtraCatchDuringDB(db, dbType, rotationCount);
+        }}
+      />
+
+      {/* Extra Catch8 Rotation Specification Dialogs */}
+      <VerticalRotationSelectionDialog
+        open={showExtraCatch8VerticalDialog}
+        onOpenChange={setShowExtraCatch8VerticalDialog}
+        rotations={verticalRotations}
+        onSelect={(rotation) => {
+          setExtraCatch8RotationSpec({ type: 'vertical', verticalRotation: rotation });
+          setShowExtraCatch8VerticalDialog(false);
+        }}
+      />
+      
+      <PreAcrobaticSelectionDialog
+        open={showExtraCatch8PreAcrobaticDialog}
+        onOpenChange={setShowExtraCatch8PreAcrobaticDialog}
+        elements={preAcrobaticElements.filter(e => e.name?.toLowerCase() !== 'dive leap')}
+        onSelect={(element) => {
+          setExtraCatch8RotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
+          setShowExtraCatch8PreAcrobaticDialog(false);
         }}
         rotationType="one"
         isFirstRotation={true}
