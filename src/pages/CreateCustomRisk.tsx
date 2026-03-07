@@ -2096,10 +2096,19 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       ...throwCriteria.filter(t => t.symbol).map(t => t.symbol!)
     ];
     
-    // Collect catch symbols (catch symbol + criteria symbols)
+    // Collect catch symbols (catch symbol + extra catches + criteria symbols)
     const catchSymbols: string[] = [
       ...(catchDuringDB && catchDBInfo_save?.symbol_image ? [catchDBInfo_save.symbol_image] :
           effectiveCatch?.symbol_image ? [effectiveCatch.symbol_image] : []),
+      ...extraCatches.filter(c => c.symbol_image).map(c => c.symbol_image!),
+      ...(catchHasCatchDuringDB && extraCatchDuringDBData ? (() => {
+        const extraCDBInfo = getThrowCatchDBInfo(extraCatchDuringDBData);
+        return extraCDBInfo?.symbol_image ? [extraCDBInfo.symbol_image] : [];
+      })() : []),
+      ...(catchHasCatch8 ? (() => {
+        const catch8Item = dynamicCatches.find(c => c.code === 'Catch8');
+        return catch8Item?.symbol_image ? [catch8Item.symbol_image] : [];
+      })() : []),
       ...catchCriteria.filter(c => c.symbol).map(c => c.symbol!)
     ];
 
