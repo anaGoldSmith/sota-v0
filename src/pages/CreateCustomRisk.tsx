@@ -2106,6 +2106,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       // Throw/Catch during DB always adds +1 rotation to R subscript
       if (throwDuringDB) rLevel += 1;
       if (catchDuringDB) rLevel += 1;
+      // Extra catch combos
+      if (catchHasCatchDuringDB && extraCatchDuringDBData) rLevel += 1;
+      if (catchHasCatch8) rLevel += 1;
       return rLevel;
     };
     let effectiveRLevel = calculateRLevel(false);
