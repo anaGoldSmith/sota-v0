@@ -490,13 +490,13 @@ export default function SymbolManagement() {
     }
   };
 
-  const filteredSymbolData = Object.entries(symbolData).reduce((acc, [bucket, symbols]) => {
+  const filteredSymbolData = Object.entries(symbolData).reduce((acc, [key, symbols]) => {
     const filtered = symbols.filter(s => 
       s.file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.linkedCode?.toLowerCase().includes(searchQuery.toLowerCase())
     );
     if (filtered.length > 0) {
-      acc[bucket] = filtered;
+      acc[key] = filtered;
     }
     return acc;
   }, {} as Record<string, SymbolStatus[]>);
