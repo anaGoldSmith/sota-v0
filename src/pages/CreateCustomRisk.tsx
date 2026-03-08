@@ -4196,8 +4196,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         elements={preAcrobaticElements}
         onSelect={(element) => {
           if (element.name?.toLowerCase() === 'dive leap') {
-            // Use the dive leap prompt flow for extra throw context
-            setPendingDiveLeapContext({ source: 'throw', element });
+            setPendingDiveLeapContext({ source: 'extra-throw', element });
             setShowExtraThrowPreAcrobaticDialog(false);
             setShowDiveLeapPrompt(true);
             return;
