@@ -1715,14 +1715,7 @@ const RoutineCalculator = () => {
             <ArrowLeft className="h-6 w-6" />
           </Button>
           <h1 className="text-2xl font-bold">{isViewMode ? 'View Routine' : editingRoutineId ? 'Edit Routine' : 'Routine Calculator'}</h1>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowRulesDialog(true)}
-            title="Routine Rules"
-          >
-            <BookOpen className="h-6 w-6" />
-          </Button>
+          <div className="w-10" /> {/* Spacer for alignment */}
         </div>
       </header>
 
