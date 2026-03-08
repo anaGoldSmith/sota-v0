@@ -4042,6 +4042,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         rotationType="one"
         isFirstRotation={true}
       />
-    </div>;
+    </div>
+  );
 };
+
+export default CreateCustomRisk;
 export default CreateCustomRisk;
