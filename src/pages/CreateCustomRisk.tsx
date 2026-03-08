@@ -2003,12 +2003,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         rotationTag: throwDBInfo_save?.type === 'pre-acrobatic' ? 'ACRO' as const :
                      throwDBInfo_save?.type === 'vertical' ? 'VER' as const : 'DB' as const
       }] : []),
-        name: 'Throw during rotation',
-        symbol: dynamicThrows.find(t => t.code === 'Thr6')?.symbol_image || '',
-        value: 0.1,
-        rotationTag: throwRotationSpec?.type === 'pre-acrobatic' ? 'ACRO' as const :
-                     throwRotationSpec?.type === 'vertical' ? 'VER' as const : 'UNK' as const
-      }] : []),
       ...throwCriteria.map(t => ({
         name: t.name,
         symbol: t.symbol || '',
