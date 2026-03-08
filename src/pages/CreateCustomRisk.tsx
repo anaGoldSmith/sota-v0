@@ -2881,7 +2881,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       {/* Add Extra Throw Button for Throw during DB */}
                       {!extraThrow && (getCompatibleExtraThrows.length > 0 || getCompatiblePrimaryThrows.length > 0) && (
                         <div className="relative p-3 border-t border-dashed border-border/50" ref={extraThrowDropdownRef}>
-                          <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10 text-xs" onClick={() => setShowExtraThrowDropdown(!showExtraThrowDropdown)}>
+                          <Button variant="outline" size="sm" className="w-full text-primary border-primary/30 hover:bg-primary/5 text-xs" onClick={() => setShowExtraThrowDropdown(!showExtraThrowDropdown)}>
                             <Plus className="h-3 w-3 mr-1" />
                             Add Extra Throw
                           </Button>
