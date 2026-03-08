@@ -570,9 +570,12 @@ const RoutineCalculator = () => {
   const location = useLocation();
   const { toast } = useToast();
   
-  // Check if editing an existing routine
+  // Check if editing or viewing an existing routine
   const searchParams = new URLSearchParams(location.search);
   const editingRoutineId = searchParams.get('edit');
+  const viewingRoutineId = searchParams.get('view');
+  const loadRoutineId = editingRoutineId || viewingRoutineId;
+  const isViewMode = !!viewingRoutineId;
   
   const [jumpDialogOpen, setJumpDialogOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
