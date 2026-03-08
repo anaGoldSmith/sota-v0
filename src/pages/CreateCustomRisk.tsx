@@ -1141,13 +1141,13 @@ const CreateCustomRisk = () => {
         const catchItem = dynamicCatches.find(c => c.code === meta.selectedCatchCode);
         if (catchItem) setSelectedCatch(catchItem);
       }
-      // Restore extra throw and thr2+thr6 combo
-      if (meta.extraThrow) {
-        const et = dynamicThrows.find(t => t.code === meta.extraThrow.code);
-        if (et) setExtraThrow(et);
-      }
-      if (meta.thr2HasThr6) {
-        setThr2HasThr6(true);
+      // Restore extra throws
+      if (meta.extraThrows && meta.extraThrows.length > 0) {
+        const restoredExtraThrows = meta.extraThrows.map((t: any) => {
+          const found = dynamicThrows.find(dt => dt.code === t.code);
+          return found || t;
+        });
+        setExtraThrows(restoredExtraThrows);
       }
       // Restore throw/catch rotation specs
       if (meta.throwRotationSpec) {
