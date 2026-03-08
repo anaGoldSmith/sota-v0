@@ -92,26 +92,18 @@ interface DBForRisk {
 }
 // Generic Sortable Wrapper for any content
 const SortableItemWrapper = ({ id, children }: { id: string; children: React.ReactNode }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging, setActivatorNodeRef } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
-      {typeof children === 'object' && children !== null
-        ? React.Children.map(children, child => {
-            if (React.isValidElement(child)) {
-              return React.cloneElement(child as React.ReactElement<any>, { 
-                'data-sortable-listeners': listeners,
-                'data-sortable-activator-ref': setActivatorNodeRef,
-              });
-            }
-            return child;
-          })
-        : children}
-    </div>
+    <SortableListenersContext.Provider value={listeners}>
+      <div ref={setNodeRef} style={style} {...attributes}>
+        {children}
+      </div>
+    </SortableListenersContext.Provider>
   );
 };
 
