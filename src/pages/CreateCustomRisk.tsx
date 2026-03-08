@@ -2071,31 +2071,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         rotationTag: catchDBInfo_save?.type === 'pre-acrobatic' ? 'ACRO' as const :
                      catchDBInfo_save?.type === 'vertical' ? 'VER' as const : 'DB' as const
       }] : []),
-      // Extra catches combo components
-      ...extraCatches.map(c => ({
-        name: c.name,
-        symbol: c.symbol_image || '',
-        value: c.value ?? 0,
-      })),
-      // Extra Catch during DB (when primary is regular catch or Catch8)
-      ...(catchHasCatchDuringDB && extraCatchDuringDBData ? (() => {
-        const extraCDBInfo = getThrowCatchDBInfo(extraCatchDuringDBData);
-        return [{
-          name: `Catch during ${extraCDBInfo?.type === 'pre-acrobatic' ? 'Pre-acrobatic' : extraCDBInfo?.type === 'vertical' ? 'Vertical Rotation' : 'DB'}: ${extraCDBInfo?.name || 'Element'}`,
-          symbol: extraCDBInfo?.symbol_image || '',
-          value: (extraCDBInfo?.value ?? 0) + 0.1,
-          rotationTag: extraCDBInfo?.type === 'pre-acrobatic' ? 'ACRO' as const :
-                       extraCDBInfo?.type === 'vertical' ? 'VER' as const : 'DB' as const
-        }];
-      })() : []),
-      // Extra Catch8 (catch during rotation) component
-      ...(catchHasCatch8 ? [{
-        name: 'Catch during rotation',
-        symbol: dynamicCatches.find(c => c.code === 'Catch8')?.symbol_image || '',
-        value: 0.1,
-        rotationTag: extraCatch8RotationSpec?.type === 'pre-acrobatic' ? 'ACRO' as const :
-                     extraCatch8RotationSpec?.type === 'vertical' ? 'VER' as const : 'UNK' as const
-      }] : []),
       ...catchCriteria.map(c => ({
         name: c.name,
         symbol: c.symbol || '',
@@ -2113,16 +2088,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         catchRotationSpec: catchRotationSpec ? { ...catchRotationSpec } : null,
         throwDuringDB: throwDuringDB ? JSON.parse(JSON.stringify(throwDuringDB)) : null,
         catchDuringDB: catchDuringDB ? JSON.parse(JSON.stringify(catchDuringDB)) : null,
-        extraThrow: extraThrow ? { ...extraThrow } : null,
-        thr2HasThr6,
         selectedThrowCode: effectiveThrow?.code,
         selectedCatchCode: effectiveCatch?.code,
-        // Catch combo metadata
-        extraCatches: extraCatches.map(c => ({ ...c })),
-        catchHasCatchDuringDB,
-        extraCatchDuringDBData: extraCatchDuringDBData ? JSON.parse(JSON.stringify(extraCatchDuringDBData)) : null,
-        catchHasCatch8,
-        extraCatch8RotationSpec: extraCatch8RotationSpec ? { ...extraCatch8RotationSpec } : null,
       },
     };
     setSavedRiskData(riskData);
