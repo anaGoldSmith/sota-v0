@@ -553,11 +553,13 @@ export default function SymbolManagement() {
           <>
             <Accordion type="multiple" className="space-y-4">
               {SYMBOL_CATEGORIES.map(category => {
-                const symbols = filteredSymbolData[category.bucket] || [];
+                const key = category.folder ? `${category.bucket}/${category.folder}` : category.bucket;
+                const symbols = filteredSymbolData[key] || [];
                 const orphanedCount = symbols.filter(s => s.status === 'orphaned').length;
+                const isUploading = uploadingRegular[key] || false;
                 
                 return (
-                  <AccordionItem key={category.bucket} value={category.bucket} className="border rounded-lg bg-card">
+                  <AccordionItem key={key} value={key} className="border rounded-lg bg-card">
                     <AccordionTrigger className="px-6 hover:no-underline">
                       <div className="flex items-center justify-between w-full pr-4">
                         <div className="flex items-center gap-3">
@@ -570,6 +572,39 @@ export default function SymbolManagement() {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-6 pb-6">
+                      {/* Upload Section for uploadable categories */}
+                      {category.uploadable && (
+                        <div className="mb-4 p-4 bg-muted/50 border rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Image className="h-4 w-4 text-primary" />
+                              <span className="text-sm">Upload {category.name} Symbols (PNG files named by code, e.g. "1.101.png")</span>
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/png"
+                              multiple
+                              ref={(el) => { regularInputRefs.current[key] = el; }}
+                              className="hidden"
+                              onChange={(e) => {
+                                const files = e.target.files;
+                                if (files && files.length > 0) {
+                                  handleRegularSymbolUpload(files, category);
+                                  e.target.value = '';
+                                }
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => regularInputRefs.current[key]?.click()}
+                              disabled={isUploading}
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              {isUploading ? "Uploading..." : "Upload Symbols"}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                       {orphanedCount > 0 && (
                         <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center justify-between">
                           <div className="flex items-center gap-2">
