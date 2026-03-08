@@ -2678,32 +2678,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                             <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
                                           );
                                         })()}
-                                        {dbData?.symbol_image ? (
-                                          <img 
-                                            src={dbData.symbol_image.startsWith('http') 
-                                              ? dbData.symbol_image 
-                                              : supabase.storage.from('jump-symbols').getPublicUrl(dbData.symbol_image).data.publicUrl
-                                            } 
-                                            alt={dbData.name || 'Element'} 
-                                            className="h-8 w-8 object-contain -mt-1" 
-                                            onError={e => e.currentTarget.style.display = 'none'}
-                                          />
-                                        ) : isPreAcrobatic ? (
-                                          <div className="h-8 w-8 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium -mt-1">
-                                            PA
-                                          </div>
-                                        ) : isVertical ? (
-                                          <img 
-                                            src={multipleVerticalRotationsSymbol} 
-                                            alt="Vertical Rotation" 
-                                            className="h-8 w-8 object-contain -mt-1" 
-                                            style={{ mixBlendMode: 'multiply' }}
-                                          />
-                                        ) : (
-                                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
-                                            {throwInfo?.code || '—'}
-                                          </div>
-                                        )}
+                                        {/* Only show Thr7 symbol, not the DB element symbol */}
                                       </div>
                                     </div>
                                     <div className="flex-1 py-4 px-4">
@@ -3591,32 +3566,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                 <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C</div>
                               );
                             })()}
-                            {isDBType && catchDuringDB.db.symbol_image ? (
-                              <img 
-                                src={catchDuringDB.db.symbol_image.startsWith('http') 
-                                  ? catchDuringDB.db.symbol_image 
-                                  : supabase.storage.from('jump-symbols').getPublicUrl(catchDuringDB.db.symbol_image).data.publicUrl
-                                } 
-                                alt={catchDuringDB.db.name || 'Element'} 
-                                className="h-8 w-8 object-contain -mt-1" 
-                                onError={e => e.currentTarget.style.display = 'none'} 
-                              />
-                            ) : isPreAcrobatic ? (
-                              <div className="h-8 w-8 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium -mt-1">
-                                PA
-                              </div>
-                            ) : isVertical ? (
-                              <img 
-                                src={multipleVerticalRotationsSymbol} 
-                                alt="Vertical Rotation" 
-                                className="h-8 w-8 object-contain -mt-1" 
-                                style={{ mixBlendMode: 'multiply' }}
-                              />
-                            ) : (
-                              <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
-                                {catchInfo?.code || '—'}
-                              </div>
-                            )}
+                            {/* Only show Catch9 symbol, not the DB element symbol */}
                           </div>
                         </div>
                         <div className="flex-1 py-4 px-4">
