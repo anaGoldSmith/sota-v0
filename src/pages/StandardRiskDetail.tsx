@@ -1085,17 +1085,15 @@ const StandardRiskDetail = () => {
                       <div className="flex-1 py-4 px-4">
                         <span className="font-medium text-foreground text-sm">{criteria.name}</span>
                       </div>
-                      <div className="w-20 py-4 px-2 text-center border-l border-border">
+                      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
                         <p className="font-semibold text-primary">{criteria.value}</p>
-                      </div>
-                      <div className="w-10 flex justify-center py-4">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRemoveGeneralCatchCriteria(criteria.id)}
-                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                          className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
