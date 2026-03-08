@@ -2369,7 +2369,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
             </div>
             
             {/* Section Content */}
-            <div className="border-x border-b border-border rounded-b-lg bg-background overflow-visible">
+            <div className="border-x border-b border-border rounded-b-lg bg-background">
               {!selectedThrow && !throwDuringDB ? (
                 <div className="p-4" ref={throwDropdownRef}>
                   <Button 
@@ -2626,7 +2626,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             Add Extra Throw
                           </Button>
                           {showExtraThrowDropdown && (
-                            <div className="absolute left-full top-0 ml-2 w-full min-w-[320px] bg-background border border-border rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                            <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
                               {[...getCompatibleExtraThrows, ...getCompatiblePrimaryThrows].map(throwItem => {
                                 const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
                                 return (
@@ -2836,7 +2836,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       </Button>
                       
                       {showExtraThrowDropdown && (
-                        <div className="absolute left-full top-0 ml-2 w-full min-w-[320px] bg-background border border-border rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                        <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
                           {/* Show compatible extra throws (Thr6/Thr7) when primary is standard throw */}
                           {getCompatibleExtraThrows.map(throwItem => {
                             const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
@@ -3166,7 +3166,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
             </div>
             
             {/* Section Content */}
-            <div className="border-x border-b border-border rounded-b-lg bg-background overflow-visible">
+            <div className="border-x border-b border-border rounded-b-lg bg-background">
               {!selectedCatch && !catchDuringDB ? (
                 <div className="p-4" ref={catchDropdownRef}>
                   <Button 
@@ -3411,7 +3411,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             Add Extra Catch
                           </Button>
                           {showExtraCatchDropdown && (
-                            <div className="absolute left-full top-0 ml-2 w-full min-w-[320px] bg-background border border-border rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                            <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
                               {[...getCompatibleExtraCatches, ...getCompatiblePrimaryCatches].map(catchItem => {
                                 const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
                                 return (
@@ -3629,7 +3629,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       </Button>
                       
                       {showExtraCatchDropdown && (
-                        <div className="absolute left-full top-0 ml-2 w-full min-w-[320px] bg-background border border-border rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                        <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
                           {getCompatibleExtraCatches.map(catchItem => {
                             const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
                             return (
