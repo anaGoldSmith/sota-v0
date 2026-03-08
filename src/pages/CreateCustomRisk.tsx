@@ -2148,15 +2148,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       effectiveThrowValue = (throwDBInfo_save?.value ?? 0) + 0.1;
     } else if (effectiveThrow) {
       effectiveThrowValue = effectiveThrow.value ?? 0;
-      const hasRotation = effectiveThrow.code === 'Thr6' || thr2HasThr6;
-      if (hasRotation) effectiveThrowValue = 0.1; // Thr6 base is 0.1
-      if (thr2HasThr6 && effectiveThrow.code === 'Thr2') {
-        effectiveThrowValue = (effectiveThrow.value ?? 0) + 0.1;
+      if (effectiveThrow.code === 'Thr6') effectiveThrowValue = 0.1;
+    }
+    // Extra throws: add their values
+    extraThrows.forEach(t => {
+      if (t.code === 'Thr6') {
+        effectiveThrowValue += 0.1;
+      } else {
+        effectiveThrowValue += (t.value ?? 0);
       }
-    }
-    if (extraThrow) {
-      effectiveThrowValue += (extraThrow.value ?? 0);
-    }
+    });
     
     // Calculate effective catch value
     let effectiveCatchValue = 0;
