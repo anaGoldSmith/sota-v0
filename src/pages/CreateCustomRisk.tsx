@@ -3020,7 +3020,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                       <span className="text-sm text-muted-foreground italic">
                                         {extraThrowRotationSpec.type === 'vertical' 
                                           ? `Vertical ${(extraThrowRotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (extraThrowRotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${extraThrowRotationSpec.verticalRotation?.name}`
-                                          : `Pre-acrobatic: ${extraThrowRotationSpec.preAcrobaticElement?.name}`
+                                          : extraThrowRotationSpec.preAcrobaticElement?.name?.toLowerCase() === 'dive leap'
+                                            ? 'Dive leap, including Roll forward'
+                                            : `Pre-acrobatic: ${extraThrowRotationSpec.preAcrobaticElement?.name}`
                                         }
                                       </span>
                                       <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-primary hover:bg-primary/10" onClick={() => setShowExtraThrowRotationSpecDropdown(true)}>
