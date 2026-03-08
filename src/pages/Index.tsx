@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { User, MapPin, Calendar, ExternalLink } from "lucide-react";
+import landingBottomBg from "@/assets/landing-bottom-bg.jpg";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -128,7 +129,13 @@ const Index = () => {
         </section>
 
         {/* Two Column Layout: Tools and Events */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <section
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 relative rounded-xl p-8 overflow-hidden"
+        >
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-[0.07]"
+            style={{ backgroundImage: `url(${landingBottomBg})` }}
+          />
           {/* Tools Column */}
           <div>
             <h2 className="text-xl font-semibold mb-4 text-foreground">Tools</h2>
