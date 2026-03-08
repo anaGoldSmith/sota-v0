@@ -4047,4 +4047,3 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
 };
 
 export default CreateCustomRisk;
-export default CreateCustomRisk;
