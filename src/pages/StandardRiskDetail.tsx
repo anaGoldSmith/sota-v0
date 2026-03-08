@@ -1171,7 +1171,7 @@ const StandardRiskDetail = () => {
                       {showCatchDropdown && (
                         <div className="absolute top-full left-0 right-0 z-50 bg-background border border-border rounded-b-lg shadow-lg max-h-60 overflow-y-auto">
                           {filteredCatches
-                            .filter(c => !extraCatchCriteria.some(ec => ec.code === c.code))
+                            .filter(c => c.code !== 'Catch9' && !extraCatchCriteria.some(ec => ec.code === c.code))
                             .map(catchItem => (
                               <div
                                 key={catchItem.id}
