@@ -1638,9 +1638,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     setSelectedThrow(throwItem);
     setShowThrowDropdown(false);
     setThrowRotationSpec(null);
-    setExtraThrow(null);
+    setExtraThrows([]);
     setShowExtraThrowDropdown(false);
-    setThr2HasThr6(false);
 
     // Auto-add Cr2H when Thr2 is selected
     if (throwItem.code === 'Thr2') {
@@ -1659,32 +1658,36 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     }
   };
   
-  // Handler for selecting extra Thr2 when Thr6 is primary
+  // Handler for selecting extra throw (generic)
   const handleSelectExtraThrow = (throwItem: DynamicThrow) => {
-    if (throwItem.code !== 'Thr2') return;
-    setExtraThrow(throwItem);
+    if (extraThrows.some(t => t.code === throwItem.code)) return;
+    setExtraThrows(prev => [...prev, throwItem]);
     setShowExtraThrowDropdown(false);
     
-    // Auto-add Cr2H criteria (same as handleSelectThrow for Thr2)
-    const cr2h = generalCriteria.find(gc => gc.code === 'Cr2H');
-    if (cr2h && !selectedThrowCriteria.includes('Cr2H')) {
-      const newCriteria: CriteriaItem = {
-        id: `throw_${cr2h.code}`,
-        name: cr2h.name,
-        symbol: cr2h.symbol_image || undefined,
-        value: 0.1,
-        code: cr2h.code,
-        note: 'Without Hands: extra criteria added to throw after rolling the hoop on the floor'
-      };
-      setThrowCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]);
+    // Auto-add Cr2H criteria when Thr2 is added as extra
+    if (throwItem.code === 'Thr2') {
+      const cr2h = generalCriteria.find(gc => gc.code === 'Cr2H');
+      if (cr2h && !selectedThrowCriteria.includes('Cr2H')) {
+        const newCriteria: CriteriaItem = {
+          id: `throw_${cr2h.code}`,
+          name: cr2h.name,
+          symbol: cr2h.symbol_image || undefined,
+          value: 0.1,
+          code: cr2h.code,
+          note: 'Without Hands: extra criteria added to throw after rolling the hoop on the floor'
+        };
+        setThrowCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]);
+      }
     }
   };
   
-  // Handler to remove extra Thr2 from Thr6 combo
-  const handleRemoveExtraThrow = () => {
-    setExtraThrow(null);
-    // Remove auto-added Cr2H
-    setThrowCriteria(prev => prev.filter(c => c.code !== 'Cr2H'));
+  // Handler to remove extra throw
+  const handleRemoveExtraThrow = (code: string) => {
+    setExtraThrows(prev => prev.filter(t => t.code !== code));
+    // If removing Thr2, remove auto-added Cr2H (only if primary is not Thr2)
+    if (code === 'Thr2' && selectedThrow?.code !== 'Thr2') {
+      setThrowCriteria(prev => prev.filter(c => c.code !== 'Cr2H'));
+    }
   };
 
   const handleSelectCatch = (catchItem: DynamicCatch) => {
