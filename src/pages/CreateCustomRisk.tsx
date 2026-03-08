@@ -3891,9 +3891,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   {!extraCatch && (getCompatibleExtraCatches.length > 0 || getCompatiblePrimaryCatches.length > 0) && (
                     <div className="relative p-3 border-t border-dashed border-border/50" ref={extraCatchDropdownRef}>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="text-primary hover:bg-primary/10 text-xs"
+                        className="w-full text-primary border-primary/30 hover:bg-primary/5 text-xs"
                         onClick={() => setShowExtraCatchDropdown(!showExtraCatchDropdown)}
                       >
                         <Plus className="h-3 w-3 mr-1" />
