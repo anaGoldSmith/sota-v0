@@ -1761,7 +1761,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     }
     return ordered;
   };
-  };
 
   const handleCatchCriteriaDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
