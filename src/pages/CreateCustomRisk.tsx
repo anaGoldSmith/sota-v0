@@ -1948,7 +1948,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       const diveLeapIdx = actualRotations.indexOf(diveLeapRotEntry);
       
       // Check if throw has a rotation (meaning dive leap is NOT the first rotation overall)
-      const throwHasRotation = selectedThrow?.code === 'Thr6' || (selectedThrow?.code === 'Thr2' && thr2HasThr6) || 
+      const throwHasRotation = selectedThrow?.code === 'Thr6' || extraThrows.some(t => t.code === 'Thr6') || 
         (throwDuringDB && (
           ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
           'preAcrobaticElement' in throwDuringDB ||
