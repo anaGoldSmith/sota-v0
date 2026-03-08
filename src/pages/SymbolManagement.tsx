@@ -23,16 +23,18 @@ interface SymbolStatus {
 }
 
 const SYMBOL_CATEGORIES = [
-  { name: 'Jumps', bucket: 'jump-symbols', table: 'jumps', folder: null },
-  { name: 'Criteria', bucket: 'criteria-symbols', table: 'criteria', folder: null },
-  { name: 'Ball Bases', bucket: 'ball-bases-symbols', table: 'ball_technical_elements', folder: null },
-  { name: 'Ball Technical Elements', bucket: 'ball-technical-elements-symbols', table: 'ball_technical_elements', folder: null },
-  { name: 'Hoop Bases', bucket: 'hoop-bases-symbols', table: 'hoop_technical_elements', folder: null },
-  { name: 'Hoop Technical Elements', bucket: 'hoop-technical-elements-symbols', table: 'hoop_technical_elements', folder: null },
-  { name: 'Clubs Bases', bucket: 'clubs-bases-symbols', table: 'clubs_technical_elements', folder: null },
-  { name: 'Clubs Technical Elements', bucket: 'clubs-technical-elements-symbols', table: 'clubs_technical_elements', folder: null },
-  { name: 'Ribbon Bases', bucket: 'ribbon-bases-symbols', table: 'ribbon_technical_elements', folder: null },
-  { name: 'Ribbon Technical Elements', bucket: 'ribbon-technical-elements-symbols', table: 'ribbon_technical_elements', folder: null },
+  { name: 'Jumps', bucket: 'jump-symbols', table: 'jumps', folder: null, uploadable: true },
+  { name: 'Rotations', bucket: 'jump-symbols', table: 'rotations', folder: 'rotations', uploadable: true },
+  { name: 'Balances', bucket: 'jump-symbols', table: 'balances', folder: 'balances', uploadable: true },
+  { name: 'Criteria', bucket: 'criteria-symbols', table: 'criteria', folder: null, uploadable: false },
+  { name: 'Ball Bases', bucket: 'ball-bases-symbols', table: 'ball_technical_elements', folder: null, uploadable: false },
+  { name: 'Ball Technical Elements', bucket: 'ball-technical-elements-symbols', table: 'ball_technical_elements', folder: null, uploadable: false },
+  { name: 'Hoop Bases', bucket: 'hoop-bases-symbols', table: 'hoop_technical_elements', folder: null, uploadable: false },
+  { name: 'Hoop Technical Elements', bucket: 'hoop-technical-elements-symbols', table: 'hoop_technical_elements', folder: null, uploadable: false },
+  { name: 'Clubs Bases', bucket: 'clubs-bases-symbols', table: 'clubs_technical_elements', folder: null, uploadable: false },
+  { name: 'Clubs Technical Elements', bucket: 'clubs-technical-elements-symbols', table: 'clubs_technical_elements', folder: null, uploadable: false },
+  { name: 'Ribbon Bases', bucket: 'ribbon-bases-symbols', table: 'ribbon_technical_elements', folder: null, uploadable: false },
+  { name: 'Ribbon Technical Elements', bucket: 'ribbon-technical-elements-symbols', table: 'ribbon_technical_elements', folder: null, uploadable: false },
 ];
 
 const DYNAMIC_ELEMENTS_CATEGORIES = [
