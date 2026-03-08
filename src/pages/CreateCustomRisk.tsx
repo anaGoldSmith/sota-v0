@@ -3303,7 +3303,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           setSelectedCatch(null);
                           setCatchCriteria([]);
                           setCatchRotationSpec(null);
-                        }} 
+                          setExtraCatch(null);
+                        }}
                         className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                       >
                         <X className="h-3 w-3" />
