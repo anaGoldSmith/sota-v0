@@ -1075,6 +1075,18 @@ const CreateCustomRisk = () => {
         setPreAcrobaticElements(data as PreAcrobaticElement[]);
       }
     };
+    const loadThrowCombinations = async () => {
+      const { data, error } = await supabase.from('throw_combinations').select('code, Thr6, Thr7');
+      if (data && !error) {
+        setThrowCombinations(data);
+      }
+    };
+    const loadCatchCombinations = async () => {
+      const { data, error } = await supabase.from('catch_combinations').select('code, Catch8, Catch9');
+      if (data && !error) {
+        setCatchCombinations(data);
+      }
+    };
     loadSymbols();
     loadGeneralCriteria();
     loadDynamicThrows();
@@ -1082,6 +1094,8 @@ const CreateCustomRisk = () => {
     loadDbsForRisks();
     loadVerticalRotations();
     loadPreAcrobaticElements();
+    loadThrowCombinations();
+    loadCatchCombinations();
   }, []);
 
   // Pre-populate form when modifying an existing risk
