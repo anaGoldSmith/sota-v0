@@ -477,7 +477,11 @@ export const RotationSelectionDialog = ({
                                   className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative cursor-pointer"
                                   onClick={() => handleRotationClick(rotation)}
                                 >
-                                  Symbol
+                                  {rotation.symbol_image ? (
+                                    <img src={rotation.symbol_image} alt={rotation.description} className="w-full h-full object-contain" />
+                                  ) : (
+                                    "Symbol"
+                                  )}
                                   {(isSelected || isPreviouslySelected) && (
                                     <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5">
                                       <Check className="h-3 w-3" />
