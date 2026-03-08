@@ -2212,19 +2212,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         rotationTag: throwDBInfo_save?.type === 'pre-acrobatic' ? 'ACRO' as const :
                      throwDBInfo_save?.type === 'vertical' ? 'VER' as const : 'DB' as const
       }] : []),
-      // Thr2+Thr6 combo: include paired throw component
-      ...(extraThrow ? [{
-        name: extraThrow.name,
-        symbol: extraThrow.symbol_image || '',
-        value: extraThrow.value ?? 0
-      }] : []),
-      ...(thr2HasThr6 ? [{
-        name: 'Throw during rotation',
-        symbol: dynamicThrows.find(t => t.code === 'Thr6')?.symbol_image || '',
-        value: 0.1,
-        rotationTag: throwRotationSpec?.type === 'pre-acrobatic' ? 'ACRO' as const :
-                     throwRotationSpec?.type === 'vertical' ? 'VER' as const : 'UNK' as const
-      }] : []),
+      // Extra throws components
+      ...extraThrows.map(t => ({
+        name: t.name,
+        symbol: t.symbol_image || '',
+        value: t.code === 'Thr6' ? 0.1 : (t.value ?? 0),
+        ...(t.code === 'Thr6' ? {
+          rotationTag: throwRotationSpec?.type === 'pre-acrobatic' ? 'ACRO' as const :
+                       throwRotationSpec?.type === 'vertical' ? 'VER' as const : 'UNK' as const
+        } : {})
+      })),
       ...throwCriteria.map(t => ({
         name: t.name,
         symbol: t.symbol || '',
