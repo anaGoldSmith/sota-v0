@@ -2366,6 +2366,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         catchDuringDB: catchDuringDB ? JSON.parse(JSON.stringify(catchDuringDB)) : null,
         selectedThrowCode: effectiveThrow?.code,
         selectedCatchCode: effectiveCatch?.code,
+        extraThrow: extraThrow ? { ...extraThrow } : null,
+        extraCatch: extraCatch ? { ...extraCatch } : null,
+        extraThrowRotationSpec: extraThrowRotationSpec ? { ...extraThrowRotationSpec } : null,
       },
     };
     setSavedRiskData(riskData);
