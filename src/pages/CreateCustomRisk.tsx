@@ -922,6 +922,7 @@ const CreateCustomRisk = () => {
   // Calculate total rotations for R level
   // - Thr6/Catch8 (throw/catch during rotation) each add 1 rotation
   // - Throw/Catch during DB with rotation type (pre-acrobatic or vertical) each add 1 rotation
+  // - Extra Thr6/Catch8 also add 1 rotation each
   // - Note: Even if user specifies multiple rotations for throw/catch during DB, it only counts as 1 rotation for R level
   const getTotalRotations = (): number => {
     let total = rotationEntries.reduce((sum, entry) => {
@@ -943,6 +944,12 @@ const CreateCustomRisk = () => {
     
     // Catch during DB always adds 1 rotation (the catch itself involves a rotation)
     if (catchDuringDB) total += 1;
+    
+    // Extra Thr6 adds 1 rotation
+    if (extraThrow?.code === 'Thr6') total += 1;
+    
+    // Extra Catch8 adds 1 rotation
+    if (extraCatch?.code === 'Catch8') total += 1;
     
     return total;
   };
