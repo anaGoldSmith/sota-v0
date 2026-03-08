@@ -79,6 +79,7 @@ const Index = () => {
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           RG Score
         </h1>
+        <p className="text-xs text-muted-foreground italic">Check your D-score before the judges do</p>
         <Button 
           variant="ghost" 
           size="icon"
