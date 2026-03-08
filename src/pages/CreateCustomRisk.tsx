@@ -940,7 +940,7 @@ const CreateCustomRisk = () => {
     }, 0);
     
     // Thr6 (throw during rotation) adds 1 rotation
-    if (selectedThrow?.code === 'Thr6' || (selectedThrow?.code === 'Thr2' && thr2HasThr6)) total += 1;
+    if (selectedThrow?.code === 'Thr6' || extraThrows.some(t => t.code === 'Thr6')) total += 1;
     
     // Catch8 (catch during rotation) adds 1 rotation
     if (selectedCatch?.code === 'Catch8') total += 1;
