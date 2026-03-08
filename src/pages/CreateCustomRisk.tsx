@@ -2621,7 +2621,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       </div>
                       {/* Extra Throw Criteria for Throw during DB */}
                       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleThrowCriteriaDragEnd}>
-                        <SortableContext items={throwCriteria.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                        <SortableContext items={[...throwCriteria.map(c => c.id), ...(extraThrow ? ['extra-throw'] : [])]} strategy={verticalListSortingStrategy}>
                           {throwCriteria.map(item => (
                             <SortableCriteriaRow 
                               key={item.id} 
@@ -2630,35 +2630,17 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                               notesSymbolMap={notesSymbolMap}
                             />
                           ))}
+                          {extraThrow && (
+                            <SortableExtraRow
+                              id="extra-throw"
+                              item={extraThrow}
+                              displayValue={extraThrow.code === 'Thr6' ? '0.1' : (extraThrow.value ?? 0)}
+                              onRemove={() => setExtraThrow(null)}
+                              notesSymbolMap={notesSymbolMap}
+                            />
+                          )}
                         </SortableContext>
                       </DndContext>
-                      
-                      {/* Extra Throw Row for Throw during DB */}
-                      {extraThrow && (
-                        <div className="flex items-center border-b border-border">
-                          <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
-                            <GripVertical className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                          <div className="w-12 flex justify-center py-4">
-                            {extraThrow.symbol_image ? (
-                              <img src={extraThrow.symbol_image} alt={extraThrow.name} className="h-8 w-auto max-w-[40px] object-contain" onError={e => e.currentTarget.style.display = 'none'} />
-                            ) : (
-                              <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
-                            )}
-                          </div>
-                          <div className="flex-1 py-4 px-4">
-                            <span className="font-medium text-foreground text-sm">
-                              <NotesWithSymbols notes={extraThrow.name} symbolMap={notesSymbolMap} />
-                            </span>
-                          </div>
-                          <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                            <p className="font-semibold text-primary">{extraThrow.code === 'Thr6' ? '0.1' : (extraThrow.value ?? 0)}</p>
-                            <Button variant="ghost" size="icon" onClick={() => setExtraThrow(null)} className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1">
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      )}
                       
                       {/* Add Extra Throw Button for Throw during DB */}
                       {!extraThrow && (getCompatibleExtraThrows.length > 0 || getCompatiblePrimaryThrows.length > 0) && (
