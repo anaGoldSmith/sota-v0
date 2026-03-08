@@ -4268,7 +4268,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       <PreAcrobaticSelectionDialog
         open={showThrowPreAcrobaticDialog}
         onOpenChange={setShowThrowPreAcrobaticDialog}
-        elements={(hasDiveLeapInRotation || extraThrow?.code === 'Thr2' || (selectedThrow?.code === 'Thr2' && thr2HasThr6))
+        elements={(hasDiveLeapInRotation || extraThrows.some(t => t.code === 'Thr2') || selectedThrow?.code === 'Thr2')
           ? preAcrobaticElements.filter(e => e.name?.toLowerCase() !== 'dive leap')
           : preAcrobaticElements
         }
