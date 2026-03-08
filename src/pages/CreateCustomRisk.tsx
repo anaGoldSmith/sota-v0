@@ -2505,41 +2505,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         <NotesWithSymbols notes={selectedThrow?.name || ''} symbolMap={notesSymbolMap} />
                       </span>
                       
-                      {/* Thr2 → Thr6: Add button below text when Thr2 selected */}
-                      {selectedThrow?.code === 'Thr2' && !thr2HasThr6 && (
-                        <div className="mt-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
-                            onClick={() => setThr2HasThr6(true)}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add throw during rotation
-                          </Button>
-                        </div>
-                      )}
-                      
-                      {/* Thr2 + Thr6 combo label with remove */}
-                      {selectedThrow?.code === 'Thr2' && thr2HasThr6 && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-muted-foreground italic">+ Throw during rotation</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-5 w-5 text-destructive hover:bg-destructive/10"
-                            onClick={() => {
-                              setThr2HasThr6(false);
-                              setThrowRotationSpec(null);
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-
-                      {/* Rotation Type Specification for Thr6 or Thr2+Thr6 combo */}
-                      {(selectedThrow?.code === 'Thr6' || thr2HasThr6) && (
+                      {/* Rotation Type Specification for Thr6 */}
+                      {selectedThrow?.code === 'Thr6' && (
                         <div className="relative" ref={throwRotationSpecRef}>
                           {throwRotationSpec ? (
                             <div className="flex items-center gap-2 flex-wrap">
@@ -2613,74 +2580,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           )}
                         </div>
                       )}
-                      
-                      {/* Thr6 → Thr2: Extra throw sub-section (hidden if Dive Leap is the rotation) */}
-                      {selectedThrow?.code === 'Thr6' && !hasDiveLeapInThrow && (
-                        <div className="mt-2">
-                          {!extraThrow ? (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
-                              onClick={() => {
-                                const thr2Item = filteredThrows.find(t => t.code === 'Thr2');
-                                if (thr2Item) handleSelectExtraThrow(thr2Item);
-                              }}
-                            >
-                              <Plus className="h-3 w-3 mr-1" />
-                              Add throw after rolling the hoop on the floor
-                            </Button>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              {extraThrow.symbol_image && (
-                                <img src={extraThrow.symbol_image} alt={extraThrow.name} className="h-5 w-5 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
-                              )}
-                              <span className="text-xs text-muted-foreground italic">
-                                + <NotesWithSymbols notes={extraThrow.name} symbolMap={notesSymbolMap} />
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-5 w-5 text-destructive hover:bg-destructive/10"
-                                onClick={handleRemoveExtraThrow}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                      {((selectedThrow?.code === 'Thr6' && extraThrow) || (selectedThrow?.code === 'Thr2' && thr2HasThr6)) ? (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <button className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors">
-                              <p className="font-semibold text-primary">0.2</p>
-                              <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent side="left" className="w-auto p-3">
-                            <div className="text-sm space-y-2">
-                              <p className="font-medium text-foreground mb-2">Value Breakdown</p>
-                              <div className="flex justify-between gap-6">
-                                <span className="text-muted-foreground">{selectedThrow?.code === 'Thr6' ? 'Thr6 (rotation):' : 'Thr2:'}</span>
-                                <span className="font-medium">0.1</span>
-                              </div>
-                              <div className="flex justify-between gap-6">
-                                <span className="text-muted-foreground">{selectedThrow?.code === 'Thr6' ? 'Thr2:' : 'Thr6 (rotation):'}</span>
-                                <span className="font-medium">0.1</span>
-                              </div>
-                              <div className="border-t border-border pt-2 flex justify-between gap-6">
-                                <span className="font-medium">Total:</span>
-                                <span className="font-bold text-primary">0.2</span>
-                              </div>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      ) : (
-                        <p className="font-semibold text-primary">{selectedThrow?.code === 'Thr6' ? '0.1' : (selectedThrow?.value ?? 0)}</p>
-                      )}
+                      <p className="font-semibold text-primary">{selectedThrow?.code === 'Thr6' ? '0.1' : (selectedThrow?.value ?? 0)}</p>
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -2688,9 +2590,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           setSelectedThrow(null);
                           setThrowCriteria([]);
                           setThrowRotationSpec(null);
-                          setExtraThrow(null);
-                          setShowExtraThrowDropdown(false);
-                          setThr2HasThr6(false);
                         }} 
                         className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                       >
