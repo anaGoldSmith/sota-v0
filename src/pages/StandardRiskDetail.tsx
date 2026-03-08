@@ -919,14 +919,14 @@ const StandardRiskDetail = () => {
 
                   {/* Add Specific Throw Button - hidden for R2 and when one is already selected */}
                   {filteredThrows.length > 0 && !isR2 && extraThrowCriteria.length === 0 && (
-                    <div ref={throwDropdownRef} className="relative border-t border-border">
+                    <div ref={throwDropdownRef} className="relative p-3">
                       <Button
-                        variant="ghost"
-                        className="w-full py-3 text-primary hover:bg-primary/5 flex items-center justify-center gap-2"
+                        variant="outline"
+                        className="w-full py-3 text-primary border-primary/30 hover:bg-primary/5 flex items-center justify-center gap-2 rounded-lg"
                         onClick={() => setShowThrowDropdown(!showThrowDropdown)}
                       >
                         <Plus className="h-4 w-4" />
-                        <span>Add Specific Throw</span>
+                        <span>Add Extra Throw</span>
                         <ChevronDown className={`h-4 w-4 transition-transform ${showThrowDropdown ? 'rotate-180' : ''}`} />
                       </Button>
                       
