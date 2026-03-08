@@ -2650,17 +2650,17 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                         </Button>
                                       </div>
                                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                        {isDBType && (
+                                        {dbData && (
                                           <>
                                             <Badge variant="outline" className="text-xs bg-primary/5 border-primary/20 text-primary">
-                                              {throwDuringDB.dbType === 'jumps' ? 'JUMP' : 'ROTATION'}
+                                              {dbType === 'jumps' ? 'JUMP' : 'ROTATION'}
                                             </Badge>
                                             <span className="text-xs text-muted-foreground">
                                               {throwInfo?.name}
                                             </span>
-                                            {throwDuringDB.dbType === 'rotations' && throwDuringDB.rotationCount && throwDuringDB.rotationCount > 1 && (
+                                            {dbType === 'rotations' && rotationCount && rotationCount > 1 && (
                                               <Badge variant="secondary" className="text-xs">
-                                                ×{throwDuringDB.rotationCount}
+                                                ×{rotationCount}
                                               </Badge>
                                             )}
                                           </>
