@@ -2353,27 +2353,39 @@ const RoutineCalculator = () => {
             </Card>
           )}
 
-          {/* Save / Cancel Buttons */}
-          <div className="flex gap-4 pt-4">
-            <Button
-              variant="outline"
-              className="flex-1 h-12 text-base"
-              onClick={() => navigate('/routines')}
-            >
-              <X className="h-4 w-4 mr-2" /> Cancel
-            </Button>
-            <Button
-              className="flex-1 h-12 text-base"
-              onClick={() => {
-                const parts = [gymnastName, selectedApparatus, year].filter(Boolean);
-                const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
-                setRoutineSaveName(defaultName);
-                setSaveDialogOpen(true);
-              }}
-            >
-              <Save className="h-4 w-4 mr-2" /> Save
-            </Button>
-          </div>
+          {/* Save / Cancel / Back Buttons */}
+          {isViewMode ? (
+            <div className="flex gap-4 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1 h-12 text-base"
+                onClick={() => navigate('/routines')}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" /> Back to My Routines
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-4 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1 h-12 text-base"
+                onClick={() => navigate('/routines')}
+              >
+                <X className="h-4 w-4 mr-2" /> Cancel
+              </Button>
+              <Button
+                className="flex-1 h-12 text-base"
+                onClick={() => {
+                  const parts = [gymnastName, selectedApparatus, year].filter(Boolean);
+                  const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
+                  setRoutineSaveName(defaultName);
+                  setSaveDialogOpen(true);
+                }}
+              >
+                <Save className="h-4 w-4 mr-2" /> Save
+              </Button>
+            </div>
+          )}
         </div>
       </main>
 
