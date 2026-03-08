@@ -1725,6 +1725,8 @@ const RoutineCalculator = () => {
                 id="year"
                 type="text"
                 placeholder="E.g 2025"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
               />
             </div>
 
