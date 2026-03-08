@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, Calculator, GripVertical, ChevronDown, ChevronRight, MoreVertical, Pencil, Trash2, Info, Save, X } from "lucide-react";
+import { ArrowLeft, Calculator, GripVertical, ChevronDown, ChevronRight, MoreVertical, Pencil, Trash2, Info, Save, X, BookOpen, ClipboardCheck, Check, AlertCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -651,6 +651,8 @@ const RoutineCalculator = () => {
   const [showDBDASuccessDialog, setShowDBDASuccessDialog] = useState(false);
   const [showDBDAValidationDialog, setShowDBDAValidationDialog] = useState(false);
   const [sourceElementType, setSourceElementType] = useState<'jump' | 'rotation' | 'balance' | null>(null);
+  const [showRulesDialog, setShowRulesDialog] = useState(false);
+  const [showRoutineCheckDialog, setShowRoutineCheckDialog] = useState(false);
   
   // Track pending DB element when adding apparatus difficulty
   const [pendingDbElement, setPendingDbElement] = useState<{
@@ -1713,7 +1715,14 @@ const RoutineCalculator = () => {
             <ArrowLeft className="h-6 w-6" />
           </Button>
           <h1 className="text-2xl font-bold">{isViewMode ? 'View Routine' : editingRoutineId ? 'Edit Routine' : 'Routine Calculator'}</h1>
-          <div className="w-10" /> {/* Spacer for alignment */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowRulesDialog(true)}
+            title="Routine Rules"
+          >
+            <BookOpen className="h-6 w-6" />
+          </Button>
         </div>
       </header>
 
@@ -2376,6 +2385,13 @@ const RoutineCalculator = () => {
                 <X className="h-4 w-4 mr-2" /> Cancel
               </Button>
               <Button
+                variant="secondary"
+                className="flex-1 h-12 text-base"
+                onClick={() => setShowRoutineCheckDialog(true)}
+              >
+                <ClipboardCheck className="h-4 w-4 mr-2" /> Routine Check
+              </Button>
+              <Button
                 className="flex-1 h-12 text-base"
                 onClick={() => {
                   const parts = [gymnastName, selectedApparatus, year].filter(Boolean);
@@ -2741,6 +2757,115 @@ const RoutineCalculator = () => {
           setPendingElementInfo(prev => prev ? { ...prev, isSlowTurn: slowTurn } : null);
         }}
       />
+
+      {/* Rules Dialog */}
+      <Dialog open={showRulesDialog} onOpenChange={setShowRulesDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Routine Rules</DialogTitle>
+            <DialogDescription>Requirements for a valid routine composition.</DialogDescription>
+          </DialogHeader>
+          <div className="overflow-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="py-2 px-3 text-left font-medium text-muted-foreground">Item Type</th>
+                  <th className="py-2 px-3 text-left font-medium text-muted-foreground">Requirement</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { type: 'Risks (R)', req: 'Maximum 4' },
+                  { type: 'DA (Apparatus Difficulty)', req: 'Maximum 15' },
+                  { type: 'Dance Steps', req: 'Minimum 2' },
+                  { type: 'DB (Body Difficulty)', req: 'Maximum 8' },
+                  { type: 'DB — Jumps', req: 'At least 1' },
+                  { type: 'DB — Rotations', req: 'At least 1' },
+                  { type: 'DB — Balances', req: 'At least 1' },
+                ].map((rule, i) => (
+                  <tr key={i} className="border-b last:border-0">
+                    <td className="py-2 px-3">{rule.type}</td>
+                    <td className="py-2 px-3">{rule.req}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRulesDialog(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Routine Check Dialog */}
+      <Dialog open={showRoutineCheckDialog} onOpenChange={setShowRoutineCheckDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Routine Check</DialogTitle>
+            <DialogDescription>Validation results for the current routine.</DialogDescription>
+          </DialogHeader>
+          <div className="overflow-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="py-2 px-3 text-left font-medium text-muted-foreground">Rule</th>
+                  <th className="py-2 px-3 text-center font-medium text-muted-foreground">Current</th>
+                  <th className="py-2 px-3 text-center font-medium text-muted-foreground">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  const riskCount = routineElements.filter(el => el.type === 'R' || el.type === 'R/DB').length;
+                  const stepsCount = routineElements.filter(el => el.type === 'Steps').length;
+
+                  // DB groups: check elementType on dbData for explicit DB elements
+                  const hasJump = routineElements.some(el =>
+                    (el.type === 'DB' || el.type === 'DB/DA' || el.type === 'DB/TE' || el.type === 'DB/TE/DA') && el.dbData?.elementType === 'jump'
+                  );
+                  const hasRotation = routineElements.some(el =>
+                    (el.type === 'DB' || el.type === 'DB/DA' || el.type === 'DB/TE' || el.type === 'DB/TE/DA') && el.dbData?.elementType === 'rotation'
+                  );
+                  const hasBalance = routineElements.some(el =>
+                    (el.type === 'DB' || el.type === 'DB/DA' || el.type === 'DB/TE' || el.type === 'DB/TE/DA') && el.dbData?.elementType === 'balance'
+                  );
+
+                  // Risks also contain DB components (rotations) — check riskData
+                  const riskHasRotation = routineElements.some(el =>
+                    (el.type === 'R' || el.type === 'R/DB') && el.riskData?.components?.some(c => c.rotationTag === 'ACRO' || c.rotationTag === 'VER' || c.rotationTag === 'DB')
+                  );
+
+                  const checks = [
+                    { label: 'Risks (Max 4)', current: String(riskCount), pass: riskCount <= 4 },
+                    { label: 'DA (Max 15)', current: String(countDA), pass: countDA <= 15 },
+                    { label: 'Dance Steps (Min 2)', current: String(stepsCount), pass: stepsCount >= 2 },
+                    { label: 'DB Total (Max 8)', current: String(countDB), pass: countDB <= 8 },
+                    { label: 'DB — Jumps (Min 1)', current: hasJump ? 'Yes' : 'No', pass: hasJump },
+                    { label: 'DB — Rotations (Min 1)', current: (hasRotation || riskHasRotation) ? 'Yes' : 'No', pass: hasRotation || riskHasRotation },
+                    { label: 'DB — Balances (Min 1)', current: hasBalance ? 'Yes' : 'No', pass: hasBalance },
+                  ];
+
+                  return checks.map((check, i) => (
+                    <tr key={i} className="border-b last:border-0">
+                      <td className="py-2 px-3">{check.label}</td>
+                      <td className="py-2 px-3 text-center font-mono">{check.current}</td>
+                      <td className="py-2 px-3 text-center">
+                        {check.pass ? (
+                          <Check className="h-5 w-5 text-green-600 inline-block" />
+                        ) : (
+                          <AlertCircle className="h-5 w-5 text-destructive inline-block" />
+                        )}
+                      </td>
+                    </tr>
+                  ));
+                })()}
+              </tbody>
+            </table>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRoutineCheckDialog(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
