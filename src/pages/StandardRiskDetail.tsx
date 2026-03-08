@@ -663,7 +663,6 @@ const StandardRiskDetail = () => {
       <div className="w-20 py-4 px-2 text-center border-l border-border">
         <p className="font-semibold text-primary">{component.value ?? 0}</p>
       </div>
-      <div className="w-10" />
     </div>
   );
 
@@ -677,7 +676,6 @@ const StandardRiskDetail = () => {
         <div className="w-20 py-3 px-2 text-center border-l border-primary/30">
           <span className="text-sm font-semibold text-muted-foreground">Value</span>
         </div>
-        <div className="w-10" />
       </div>
       
       {/* Section Components */}
@@ -703,7 +701,6 @@ const StandardRiskDetail = () => {
             <div className="w-20 py-2 px-2 text-center border-l border-border">
               <p className="font-bold text-primary">{sectionTotal.toFixed(1)}</p>
             </div>
-            <div className="w-10" />
           </div>
         )}
       </div>
@@ -828,7 +825,6 @@ const StandardRiskDetail = () => {
                   <div className="w-20 py-3 px-2 text-center border-l border-primary/30">
                     <span className="text-sm font-semibold text-muted-foreground">Value</span>
                   </div>
-                  <div className="w-10" />
                 </div>
                 
                 {/* Section Components */}
@@ -867,17 +863,15 @@ const StandardRiskDetail = () => {
                       <div className="flex-1 py-4 px-4">
                         <span className="font-medium text-foreground text-sm">{criteria.name}</span>
                       </div>
-                      <div className="w-20 py-4 px-2 text-center border-l border-border">
+                      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
                         <p className="font-semibold text-primary">{criteria.value}</p>
-                      </div>
-                      <div className="w-10 flex justify-center py-4">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRemoveGeneralThrowCriteria(criteria.id)}
-                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                          className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
@@ -909,17 +903,15 @@ const StandardRiskDetail = () => {
                           <NotesWithSymbols notes={criteria.name} symbolMap={{}} />
                         </span>
                       </div>
-                      <div className="w-20 py-4 px-2 text-center border-l border-border">
+                      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
                         <p className="font-semibold text-primary">{criteria.value}</p>
-                      </div>
-                      <div className="w-10 flex justify-center py-4">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRemoveThrowCriteria(criteria.id)}
-                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                          className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
@@ -985,7 +977,6 @@ const StandardRiskDetail = () => {
                       <div className="w-20 py-2 px-2 text-center border-l border-border">
                         <p className="font-bold text-primary">{throwTotal.toFixed(1)}</p>
                       </div>
-                      <div className="w-10" />
                     </div>
                   )}
                 </div>
@@ -1055,7 +1046,6 @@ const StandardRiskDetail = () => {
                   <div className="w-20 py-3 px-2 text-center border-l border-primary/30">
                     <span className="text-sm font-semibold text-muted-foreground">Value</span>
                   </div>
-                  <div className="w-10" />
                 </div>
                 
                 {/* Section Components */}
@@ -1094,17 +1084,15 @@ const StandardRiskDetail = () => {
                       <div className="flex-1 py-4 px-4">
                         <span className="font-medium text-foreground text-sm">{criteria.name}</span>
                       </div>
-                      <div className="w-20 py-4 px-2 text-center border-l border-border">
+                      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
                         <p className="font-semibold text-primary">{criteria.value}</p>
-                      </div>
-                      <div className="w-10 flex justify-center py-4">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRemoveGeneralCatchCriteria(criteria.id)}
-                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                          className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
@@ -1152,17 +1140,15 @@ const StandardRiskDetail = () => {
                           )}
                         </div>
                       </div>
-                      <div className="w-20 py-4 px-2 text-center border-l border-border">
+                      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
                         <p className="font-semibold text-primary">{criteria.value}</p>
-                      </div>
-                      <div className="w-10 flex justify-center py-4">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRemoveCatchCriteria(criteria.id)}
-                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                          className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
@@ -1244,7 +1230,6 @@ const StandardRiskDetail = () => {
                       <div className="w-20 py-2 px-2 text-center border-l border-border">
                         <p className="font-bold text-primary">{catchTotal.toFixed(1)}</p>
                       </div>
-                      <div className="w-10" />
                     </div>
                   )}
                 </div>
