@@ -1914,7 +1914,7 @@ const RoutineCalculator = () => {
                 </div>
               );
             })()}
-          </div>
+          </div>}
 
           {/* Routine Elements Table */}
           {routineElements.length > 0 && (
