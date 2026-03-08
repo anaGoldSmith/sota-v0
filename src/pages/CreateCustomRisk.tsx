@@ -791,6 +791,18 @@ const CreateCustomRisk = () => {
   // Selected throw and catch
   const [selectedThrow, setSelectedThrow] = useState<DynamicThrow | null>(null);
   const [selectedCatch, setSelectedCatch] = useState<DynamicCatch | null>(null);
+  
+  // Extra throw/catch combo state
+  const [extraThrow, setExtraThrow] = useState<DynamicThrow | null>(null);
+  const [extraCatch, setExtraCatch] = useState<DynamicCatch | null>(null);
+  const [showExtraThrowDropdown, setShowExtraThrowDropdown] = useState(false);
+  const [showExtraCatchDropdown, setShowExtraCatchDropdown] = useState(false);
+  const extraThrowDropdownRef = useRef<HTMLDivElement>(null);
+  const extraCatchDropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Throw/catch combinations (compatibility matrices)
+  const [throwCombinations, setThrowCombinations] = useState<{ code: string; Thr6: string | null; Thr7: string | null }[]>([]);
+  const [catchCombinations, setCatchCombinations] = useState<{ code: string; Catch8: string | null; Catch9: string | null }[]>([]);
 
   // DB during throw/catch state
   const [showDBDuringThrowDialog, setShowDBDuringThrowDialog] = useState(false);
