@@ -291,6 +291,103 @@ export default function SymbolManagement() {
       setUploadingDynamic(prev => ({ ...prev, [category.folder]: false }));
     }
   };
+
+  const handleRegularSymbolUpload = async (
+    files: FileList,
+    category: typeof SYMBOL_CATEGORIES[number]
+  ) => {
+    const key = category.folder ? `${category.bucket}/${category.folder}` : category.bucket;
+    setUploadingRegular(prev => ({ ...prev, [key]: true }));
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+      const skippedCodes: string[] = [];
+
+      for (const file of Array.from(files)) {
+        const fileName = file.name;
+        const code = fileName.replace(/\.[^/.]+$/, ""); // Remove extension to get code
+
+        // Check if a record with this code exists
+        const { data: existingRecords, error: queryError } = await supabase
+          .from(category.table as any)
+          .select('id, code')
+          .eq('code', code)
+          .limit(1);
+
+        const existingRecord = existingRecords?.[0] || null;
+
+        if (queryError) {
+          console.error(`Error checking for ${code}:`, queryError);
+          errorCount++;
+          continue;
+        }
+
+        if (!existingRecord) {
+          console.warn(`No ${category.name} found with code: ${code}`);
+          skippedCodes.push(code);
+          errorCount++;
+          continue;
+        }
+
+        // Upload to storage (with folder path if specified)
+        const filePath = category.folder ? `${category.folder}/${fileName}` : fileName;
+        const { error: uploadError } = await supabase.storage
+          .from(category.bucket)
+          .upload(filePath, file, { upsert: true });
+
+        if (uploadError) {
+          console.error(`Error uploading symbol for ${code}:`, uploadError);
+          errorCount++;
+          continue;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from(category.bucket)
+          .getPublicUrl(filePath);
+
+        // Update the record with the symbol URL
+        const { error: updateError } = await supabase
+          .from(category.table as any)
+          .update({ symbol_image: publicUrl })
+          .eq('code', code);
+
+        if (updateError) {
+          console.error(`Error updating ${code} with symbol:`, updateError);
+          errorCount++;
+          continue;
+        }
+
+        successCount++;
+      }
+
+      if (successCount > 0) {
+        toast({
+          title: "Upload successful",
+          description: `Successfully uploaded ${successCount} ${category.name.toLowerCase()} symbol(s)`,
+        });
+      }
+      if (errorCount > 0) {
+        toast({
+          title: "Some uploads failed",
+          description: `${errorCount} symbol(s) could not be matched or uploaded${skippedCodes.length > 0 ? `. No match for: ${skippedCodes.slice(0, 5).join(', ')}${skippedCodes.length > 5 ? '...' : ''}` : ''}`,
+          variant: "destructive",
+        });
+      }
+
+      await loadAllSymbols();
+    } catch (error) {
+      console.error(`Error uploading ${category.name} symbols:`, error);
+      toast({
+        title: "Upload failed",
+        description: `Failed to upload ${category.name} symbols`,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingRegular(prev => ({ ...prev, [key]: false }));
+    }
+  };
+
   const handleDeleteSymbol = async () => {
     if (!deleteTarget) return;
 
