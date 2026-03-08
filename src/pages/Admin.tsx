@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, FileText, ListCheck, Settings, Zap } from "lucide-react";
+import { ArrowLeft, FileText, ListCheck, Settings, Zap, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -138,6 +138,21 @@ const Admin = () => {
               </div>
               <CardDescription>
                 Manage catches, throws, and general criteria
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card 
+            className="cursor-pointer hover:bg-accent transition-colors" 
+            onClick={() => navigate("/admin/landing-page")}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <LayoutDashboard className="h-8 w-8 text-primary" />
+                <CardTitle>Landing Page</CardTitle>
+              </div>
+              <CardDescription>
+                Manage events and front page images
               </CardDescription>
             </CardHeader>
           </Card>

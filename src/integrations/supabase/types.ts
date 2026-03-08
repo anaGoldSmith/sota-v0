@@ -485,6 +485,45 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          city: string | null
+          created_at: string
+          dates: string | null
+          disciplines: string | null
+          event_id: string
+          id: string
+          link: string | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          dates?: string | null
+          disciplines?: string | null
+          event_id: string
+          id?: string
+          link?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          dates?: string | null
+          disciplines?: string | null
+          event_id?: string
+          id?: string
+          link?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hoop_da: {
         Row: {
           code: string
