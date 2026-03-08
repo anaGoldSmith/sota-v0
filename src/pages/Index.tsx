@@ -75,11 +75,12 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border">
-        <div className="w-10" />
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-          RG Score
-        </h1>
-        <p className="text-xs text-muted-foreground italic">Check your D-score before the judges do</p>
+        <div className="flex flex-col items-start">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            RG Score
+          </h1>
+          <p className="text-[11px] text-muted-foreground italic -mt-0.5">Check your D-score before the judges do</p>
+        </div>
         <Button 
           variant="ghost" 
           size="icon"
