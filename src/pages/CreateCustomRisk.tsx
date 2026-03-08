@@ -4178,6 +4178,29 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         rotationType="one"
         isFirstRotation={true}
       />
+
+      {/* Extra Throw Rotation Specification Dialogs */}
+      <VerticalRotationSelectionDialog
+        open={showExtraThrowVerticalDialog}
+        onOpenChange={setShowExtraThrowVerticalDialog}
+        rotations={verticalRotations}
+        onSelect={(rotation) => {
+          setExtraThrowRotationSpec({ type: 'vertical', verticalRotation: rotation });
+          setShowExtraThrowVerticalDialog(false);
+        }}
+      />
+      
+      <PreAcrobaticSelectionDialog
+        open={showExtraThrowPreAcrobaticDialog}
+        onOpenChange={setShowExtraThrowPreAcrobaticDialog}
+        elements={preAcrobaticElements.filter(e => e.name?.toLowerCase() !== 'dive leap')}
+        onSelect={(element) => {
+          setExtraThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
+          setShowExtraThrowPreAcrobaticDialog(false);
+        }}
+        rotationType="one"
+        isFirstRotation={true}
+      />
     </div>
   ;
 };
