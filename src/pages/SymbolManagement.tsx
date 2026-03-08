@@ -94,8 +94,9 @@ export default function SymbolManagement() {
     const dynamicData: Record<string, SymbolStatus[]> = {};
 
     for (const category of SYMBOL_CATEGORIES) {
-      const symbols = await loadSymbolsForCategory(category.bucket, category.table, null);
-      allData[category.bucket] = symbols;
+      const symbols = await loadSymbolsForCategory(category.bucket, category.table, category.folder);
+      const key = category.folder ? `${category.bucket}/${category.folder}` : category.bucket;
+      allData[key] = symbols;
     }
 
     for (const category of DYNAMIC_ELEMENTS_CATEGORIES) {
