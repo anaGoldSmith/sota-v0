@@ -1736,7 +1736,7 @@ const RoutineCalculator = () => {
 
             <div className="space-y-2">
               <Label htmlFor="apparatus">Apparatus</Label>
-              <Select value={selectedApparatus ?? undefined} onValueChange={handleApparatusChange}>
+              <Select value={selectedApparatus ?? undefined} onValueChange={handleApparatusChange} disabled={isViewMode}>
                 <SelectTrigger id="apparatus">
                   <SelectValue placeholder="Select apparatus" />
                 </SelectTrigger>
