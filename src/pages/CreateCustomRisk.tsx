@@ -3442,45 +3442,35 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       
                       {/* Extra Catch Criteria for Catch during DB */}
                       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCatchCriteriaDragEnd}>
-                        <SortableContext items={catchCriteria.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                          {catchCriteria.map(item => (
-                            <SortableCriteriaRow 
-                              key={item.id} 
-                              item={item} 
-                              onRemove={(id) => setCatchCriteria(catchCriteria.filter(c => c.id !== id))}
-                              notesSymbolMap={notesSymbolMap}
-                            />
-                          ))}
+                        <SortableContext items={getCatchUnifiedOrder()} strategy={verticalListSortingStrategy}>
+                          {getCatchUnifiedOrder().map(id => {
+                            if (id === 'extra-catch' && extraCatch) {
+                              return (
+                                <SortableExtraRow
+                                  key="extra-catch"
+                                  id="extra-catch"
+                                  item={extraCatch}
+                                  displayValue={extraCatch.code === 'Catch8' ? '0.1' : (extraCatch.value ?? 0)}
+                                  onRemove={() => setExtraCatch(null)}
+                                  notesSymbolMap={notesSymbolMap}
+                                />
+                              );
+                            }
+                            const criteriaItem = catchCriteria.find(c => c.id === id);
+                            if (criteriaItem) {
+                              return (
+                                <SortableCriteriaRow 
+                                  key={criteriaItem.id} 
+                                  item={criteriaItem} 
+                                  onRemove={(cid) => setCatchCriteria(catchCriteria.filter(c => c.id !== cid))}
+                                  notesSymbolMap={notesSymbolMap}
+                                />
+                              );
+                            }
+                            return null;
+                          })}
                         </SortableContext>
                       </DndContext>
-                      
-                      {/* Extra Catch Row for Catch during DB */}
-                      {extraCatch && (
-                        <div className="flex items-center border-b border-border bg-muted/30">
-                          <div className="w-8 flex justify-center py-4">
-                            <div className="h-4 w-4" />
-                          </div>
-                          <div className="w-12 flex justify-center py-4">
-                            {extraCatch.symbol_image ? (
-                              <img src={extraCatch.symbol_image} alt={extraCatch.name} className="h-8 w-auto max-w-[40px] object-contain" onError={e => e.currentTarget.style.display = 'none'} />
-                            ) : (
-                              <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
-                            )}
-                          </div>
-                          <div className="flex-1 py-4 px-4">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">+</span>
-                              <span className="font-medium text-foreground text-sm">{extraCatch.name}</span>
-                            </div>
-                          </div>
-                          <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                            <p className="font-semibold text-primary">{extraCatch.code === 'Catch8' ? '0.1' : (extraCatch.value ?? 0)}</p>
-                            <Button variant="ghost" size="icon" onClick={() => setExtraCatch(null)} className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1">
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      )}
                       
                       {/* Add Extra Catch Button for Catch during DB */}
                       {!extraCatch && (getCompatibleExtraCatches.length > 0 || getCompatiblePrimaryCatches.length > 0) && (
