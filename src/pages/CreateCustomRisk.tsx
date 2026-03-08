@@ -3319,16 +3319,20 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         </div>
                         <div className="w-16 flex justify-center py-4">
                           <div className="flex flex-col items-center gap-0">
-                            {dynamicCatches.find(c => c.code === 'Catch1')?.symbol_image ? (
-                              <img 
-                                src={dynamicCatches.find(c => c.code === 'Catch1')!.symbol_image!} 
-                                alt="Standard Catch" 
-                                className="h-6 w-6 object-contain" 
-                                onError={e => e.currentTarget.style.display = 'none'} 
-                              />
-                            ) : (
-                              <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C</div>
-                            )}
+                            {(() => {
+                              const catch9 = dynamicCatches.find(c => c.code === 'Catch9');
+                              const catch9SymbolUrl = catch9?.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl('dynamic_catches/Catch9.png').data.publicUrl;
+                              return catch9SymbolUrl ? (
+                                <img 
+                                  src={catch9SymbolUrl} 
+                                  alt="Catch during DB" 
+                                  className="h-6 w-6 object-contain" 
+                                  onError={e => e.currentTarget.style.display = 'none'} 
+                                />
+                              ) : (
+                                <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C</div>
+                              );
+                            })()}
                             {isDBType && catchDuringDB.db.symbol_image ? (
                               <img 
                                 src={catchDuringDB.db.symbol_image.startsWith('http') 
