@@ -926,6 +926,8 @@ const CreateCustomRisk = () => {
 
   // Risk components state
   const [throwCriteria, setThrowCriteria] = useState<CriteriaItem[]>([]);
+  const [throwItemsOrder, setThrowItemsOrder] = useState<string[]>([]);
+  const [catchItemsOrder, setCatchItemsOrder] = useState<string[]>([]);
   const [rotationEntries, setRotationEntries] = useState<RotationEntry[]>([]);
   const [seriesCount, setSeriesCount] = useState<number>(3);
   const [showRotationDropdown, setShowRotationDropdown] = useState(false);
