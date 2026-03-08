@@ -2533,50 +2533,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   
                   {showThrowDropdown && (
                     <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                      {/* Throw during DB option */}
-                      <div 
-                        className={`flex items-center gap-3 p-3 border-b border-border ${hasDiveLeapInRotation ? 'opacity-40 cursor-not-allowed' : 'hover:bg-muted cursor-pointer'}`}
-                        onClick={() => {
-                          if (hasDiveLeapInRotation) return;
-                          setShowThrowDropdown(false);
-                          setShowDBDuringThrowDialog(true);
-                        }}
-                      >
-                        <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                          {dynamicThrows.find(t => t.code === 'Thr1')?.symbol_image ? (
-                            <img 
-                              src={dynamicThrows.find(t => t.code === 'Thr1')!.symbol_image!} 
-                              alt="Throw" 
-                              className="h-8 w-8 object-contain" 
-                              onError={e => e.currentTarget.style.display = 'none'} 
-                            />
-                          ) : (
-                            <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-foreground text-sm">Throw during DB <span className="text-foreground">(0.1 is added for extra rotation)</span></span>
-                          <p className="text-xs text-muted-foreground">
-                            {hasDiveLeapInRotation ? 'Not available when Dive Leap is in rotations' : 'Select a DB element performed during throw'}
-                          </p>
-                        </div>
-                        <div className="w-12 text-right flex-shrink-0 flex items-center justify-end gap-1">
-                          {hasDiveLeapInRotation ? (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <AlertCircle className="h-4 w-4 text-amber-500" />
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs bg-muted-foreground text-white">
-                                  <p>A dive leap can only count as a rotation if it is performed as the first rotation. Throw during DB would precede the dive leap, making it invalid.</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ) : (
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </div>
-                      </div>
+                      {/* Throws are now all from the database, including Thr7 (Throw during DB) */}
                       {filteredThrows.length === 0 ? (
                         <div className="p-4 text-center text-muted-foreground">
                           No throws available for this apparatus
@@ -2584,12 +2541,21 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       ) : filteredThrows.map(throwItem => {
                         const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
                         const isRotationThrow = throwItem.code === 'Thr6';
-                        const isDisabled = isRotationThrow && hasDiveLeapInRotation;
+                        const isThrowDuringDB = throwItem.code === 'Thr7';
+                        const isDisabled = (isRotationThrow || isThrowDuringDB) && hasDiveLeapInRotation;
                         return (
                           <div 
                             key={throwItem.id} 
                             className={`flex items-center gap-3 p-3 border-b border-border last:border-b-0 ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-muted cursor-pointer'}`}
-                            onClick={() => !isDisabled && handleSelectThrow(throwItem)}
+                            onClick={() => {
+                              if (isDisabled) return;
+                              if (isThrowDuringDB) {
+                                setShowThrowDropdown(false);
+                                setShowDBDuringThrowDialog(true);
+                              } else {
+                                handleSelectThrow(throwItem);
+                              }
+                            }}
                           >
                             <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
                               <img src={symbolUrl} alt={throwItem.name} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
@@ -2598,6 +2564,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                               <span className="text-foreground text-sm">
                                 <NotesWithSymbols notes={throwItem.name} symbolMap={notesSymbolMap} />
                               </span>
+                              {isThrowDuringDB && !isDisabled && (
+                                <p className="text-xs text-muted-foreground">Select a DB element performed during throw</p>
+                              )}
                               {isDisabled && (
                                 <p className="text-xs text-muted-foreground">Not available when Dive Leap is in rotations</p>
                               )}
@@ -2610,10 +2579,12 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                       <AlertCircle className="h-4 w-4 text-amber-500" />
                                     </TooltipTrigger>
                                     <TooltipContent className="max-w-xs bg-muted-foreground text-white">
-                                      <p>A dive leap can only count as a rotation if it is performed as the first rotation. Throw during rotation would precede the dive leap, making it invalid.</p>
+                                      <p>A dive leap can only count as a rotation if it is performed as the first rotation. This throw would precede the dive leap, making it invalid.</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
+                              ) : isThrowDuringDB ? (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
                               ) : (
                                 <span className="text-primary font-semibold">{throwItem.value ?? 0}</span>
                               )}
@@ -2641,17 +2612,21 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         <div className="w-16 flex justify-center py-4">
                           {/* Stacked symbols: Standard throw on top, DB/rotation below */}
                           <div className="flex flex-col items-center gap-0">
-                            {/* Standard throw symbol - Thr1 */}
-                            {dynamicThrows.find(t => t.code === 'Thr1')?.symbol_image ? (
-                              <img 
-                                src={dynamicThrows.find(t => t.code === 'Thr1')!.symbol_image!} 
-                                alt="Standard Throw" 
-                                className="h-6 w-6 object-contain" 
-                                onError={e => e.currentTarget.style.display = 'none'} 
-                              />
-                            ) : (
-                              <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
-                            )}
+                            {/* Thr7 (Throw during DB) symbol */}
+                            {(() => {
+                              const thr7 = dynamicThrows.find(t => t.code === 'Thr7');
+                              const thr7SymbolUrl = thr7?.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl('dynamic_throws/Thr7.png').data.publicUrl;
+                              return thr7SymbolUrl ? (
+                                <img 
+                                  src={thr7SymbolUrl} 
+                                  alt="Throw during DB" 
+                                  className="h-6 w-6 object-contain" 
+                                  onError={e => e.currentTarget.style.display = 'none'} 
+                                />
+                              ) : (
+                                <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
+                              );
+                            })()}
                             {/* DB/Rotation symbol below */}
                             {isDBType && throwDuringDB.db.symbol_image ? (
                               <img 
@@ -3274,51 +3249,34 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   
                   {showCatchDropdown && (
                     <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                      {/* Catch during DB option */}
-                      <div 
-                        className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border" 
-                        onClick={() => {
-                          setShowCatchDropdown(false);
-                          setShowDBDuringCatchDialog(true);
-                        }}
-                      >
-                        <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                          {dynamicCatches.find(c => c.code === 'Catch1')?.symbol_image ? (
-                            <img 
-                              src={dynamicCatches.find(c => c.code === 'Catch1')!.symbol_image!} 
-                              alt="Catch" 
-                              className="h-8 w-8 object-contain" 
-                              onError={e => e.currentTarget.style.display = 'none'} 
-                            />
-                          ) : (
-                            <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C</div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-foreground text-sm">Catch during DB <span className="text-foreground">(0.1 is added for extra rotation)</span></span>
-                          <p className="text-xs text-muted-foreground">Select a DB element performed during catch</p>
-                        </div>
-                        <div className="w-12 text-right flex-shrink-0 flex items-center justify-end gap-1">
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </div>
                       {filteredCatches.length === 0 ? (
                         <div className="p-4 text-center text-muted-foreground">
                           No catches available for this apparatus
                         </div>
                       ) : filteredCatches.map(catchItem => {
                         const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
+                        const isCatchDuringDB = catchItem.code === 'Catch9';
                         return (
                           <div 
                             key={catchItem.id} 
                             className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" 
-                            onClick={() => handleSelectCatch(catchItem)}
+                            onClick={() => {
+                              if (isCatchDuringDB) {
+                                setShowCatchDropdown(false);
+                                setShowDBDuringCatchDialog(true);
+                              } else {
+                                handleSelectCatch(catchItem);
+                              }
+                            }}
                           >
                             <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
                               <img src={symbolUrl} alt={catchItem.name} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
                             </div>
                             <div className="flex-1 min-w-0 flex items-center gap-2">
                               <span className="text-foreground text-sm">{catchItem.name}</span>
+                              {isCatchDuringDB && (
+                                <span className="text-xs text-muted-foreground">(select DB element)</span>
+                              )}
                               {catchItem.notes && (
                                 <TooltipProvider>
                                   <Tooltip>
@@ -3333,7 +3291,11 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                               )}
                             </div>
                             <div className="w-12 text-right flex-shrink-0">
-                              <span className="text-primary font-semibold">{catchItem.value ?? 0}</span>
+                              {isCatchDuringDB ? (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <span className="text-primary font-semibold">{catchItem.value ?? 0}</span>
+                              )}
                             </div>
                           </div>
                         );
@@ -3357,16 +3319,20 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         </div>
                         <div className="w-16 flex justify-center py-4">
                           <div className="flex flex-col items-center gap-0">
-                            {dynamicCatches.find(c => c.code === 'Catch1')?.symbol_image ? (
-                              <img 
-                                src={dynamicCatches.find(c => c.code === 'Catch1')!.symbol_image!} 
-                                alt="Standard Catch" 
-                                className="h-6 w-6 object-contain" 
-                                onError={e => e.currentTarget.style.display = 'none'} 
-                              />
-                            ) : (
-                              <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C</div>
-                            )}
+                            {(() => {
+                              const catch9 = dynamicCatches.find(c => c.code === 'Catch9');
+                              const catch9SymbolUrl = catch9?.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl('dynamic_catches/Catch9.png').data.publicUrl;
+                              return catch9SymbolUrl ? (
+                                <img 
+                                  src={catch9SymbolUrl} 
+                                  alt="Catch during DB" 
+                                  className="h-6 w-6 object-contain" 
+                                  onError={e => e.currentTarget.style.display = 'none'} 
+                                />
+                              ) : (
+                                <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C</div>
+                              );
+                            })()}
                             {isDBType && catchDuringDB.db.symbol_image ? (
                               <img 
                                 src={catchDuringDB.db.symbol_image.startsWith('http') 
@@ -3565,13 +3531,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </Button>
                           {showExtraCatchDropdown && (
                             <div className="absolute left-0 top-full mt-2 w-full min-w-[320px] bg-background border border-border rounded-lg shadow-lg z-[100] max-h-64 overflow-y-auto">
-                              {filteredCatches.filter(c => c.code !== 'Catch1' && !extraCatches.some(ec => ec.code === c.code) && !(c.code === 'Catch8' && catchHasCatch8)).map(catchItem => {
+                              {filteredCatches.filter(c => c.code !== 'Catch1' && !extraCatches.some(ec => ec.code === c.code) && !(c.code === 'Catch8' && catchHasCatch8) && !(c.code === 'Catch9' && catchHasCatchDuringDB)).map(catchItem => {
                                 const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
                                 return (
                                   <div key={catchItem.id} className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" onClick={() => {
                                     if (catchItem.code === 'Catch8') {
                                       handleAddExtraCatch8();
                                       setShowExtraCatchDropdown(false);
+                                    } else if (catchItem.code === 'Catch9') {
+                                      setShowExtraCatchDropdown(false);
+                                      setShowExtraCatchDBDialog(true);
                                     } else {
                                       handleSelectExtraCatch(catchItem);
                                     }
@@ -3910,13 +3879,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </Button>
                           {showExtraCatchDropdown && (
                             <div className="absolute left-0 top-full mt-2 w-full min-w-[320px] bg-background border border-border rounded-lg shadow-lg z-[100] max-h-64 overflow-y-auto">
-                              {filteredCatches.filter(c => c.code !== 'Catch1' && !extraCatches.some(ec => ec.code === c.code) && !(c.code === 'Catch8' && catchHasCatch8)).map(catchItem => {
+                              {filteredCatches.filter(c => c.code !== 'Catch1' && !extraCatches.some(ec => ec.code === c.code) && !(c.code === 'Catch8' && catchHasCatch8) && !(c.code === 'Catch9' && catchHasCatchDuringDB)).map(catchItem => {
                                 const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
                                 return (
                                   <div key={catchItem.id} className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" onClick={() => {
                                     if (catchItem.code === 'Catch8') {
                                       handleAddExtraCatch8();
                                       setShowExtraCatchDropdown(false);
+                                    } else if (catchItem.code === 'Catch9') {
+                                      setShowExtraCatchDropdown(false);
+                                      setShowExtraCatchDBDialog(true);
                                     } else {
                                       handleSelectExtraCatch(catchItem);
                                     }
@@ -3948,17 +3920,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             </div>
                           )}
                         </div>
-                        {!catchHasCatchDuringDB && !catchHasCatch8 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
-                            onClick={() => setShowExtraCatchDBDialog(true)}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add catch during DB
-                          </Button>
-                        )}
                       </>
                     )}
                     {/* For regular catch (not Catch8): add extra catches and catch during DB */}
@@ -3976,13 +3937,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </Button>
                           {showExtraCatchDropdown && (
                             <div className="absolute left-0 top-full mt-2 w-full min-w-[320px] bg-background border border-border rounded-lg shadow-lg z-[100] max-h-64 overflow-y-auto">
-                              {filteredCatches.filter(c => c.code !== 'Catch1' && c.code !== selectedCatch?.code && !extraCatches.some(ec => ec.code === c.code) && !(c.code === 'Catch8' && catchHasCatch8)).map(catchItem => {
+                              {filteredCatches.filter(c => c.code !== 'Catch1' && c.code !== selectedCatch?.code && !extraCatches.some(ec => ec.code === c.code) && !(c.code === 'Catch8' && catchHasCatch8) && !(c.code === 'Catch9' && catchHasCatchDuringDB)).map(catchItem => {
                                 const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
                                 return (
                                   <div key={catchItem.id} className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" onClick={() => {
                                     if (catchItem.code === 'Catch8') {
                                       handleAddExtraCatch8();
                                       setShowExtraCatchDropdown(false);
+                                    } else if (catchItem.code === 'Catch9') {
+                                      setShowExtraCatchDropdown(false);
+                                      setShowExtraCatchDBDialog(true);
                                     } else {
                                       handleSelectExtraCatch(catchItem);
                                     }
@@ -4014,17 +3978,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             </div>
                           )}
                         </div>
-                        {!catchHasCatchDuringDB && !catchHasCatch8 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
-                            onClick={() => setShowExtraCatchDBDialog(true)}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add catch during DB
-                          </Button>
-                        )}
                       </>
                     )}
                   </div>
