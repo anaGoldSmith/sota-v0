@@ -2211,49 +2211,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     const hasAxisChange = effectiveRotationEntries.some(e => e.type === 'axis');
     const axisLevelSymbol = hasAxisChange ? (symbols["axisLevelChange"] || '') : undefined;
 
-    // Calculate effective rLevel (for display only)
-    // excludeDiveLeap: when true, dive leap in Rotations section won't count as a rotation
-    const calculateRLevel = (excludeDiveLeap: boolean) => {
-      const hasRollForwardInEntries = rotationEntries.some(e => 
-        e.specificationType === 'pre-acrobatic' && 
-        e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'roll forward'
-      );
-      let rLevel = rotationEntries.reduce((sum, entry) => {
-        if (entry.type === 'axis') return sum;
-        if (excludeDiveLeap && entry.type === 'one' && 
-            entry.specificationType === 'pre-acrobatic' && 
-            entry.selectedPreAcrobaticElement?.name?.toLowerCase() === 'dive leap') {
-          return sum; // Skip dive leap
-        }
-        if (entry.type === 'one') return sum + 1;
-        if (entry.type === 'two') return sum + 2;
-        return sum + (entry.seriesCount || 3);
-      }, 0);
-      if (effectiveThrow?.code === 'Thr6') rLevel += 1;
-      // Dive Leap in throw includes Roll Forward - count it if not already in rotationEntries
-      if (effectiveThrow?.code === 'Thr6' && 
-          throwRotationSpec?.type === 'pre-acrobatic' && 
-          throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap' &&
-          !hasRollForwardInEntries) {
-        rLevel += 1;
-      }
-      if (effectiveCatch?.code === 'Catch8') rLevel += 1;
-      // Throw/Catch during DB always adds +1 rotation to R subscript
-      if (throwDuringDB) rLevel += 1;
-      if (catchDuringDB) rLevel += 1;
-      // Extra Thr6 with Dive Leap includes Roll Forward
-      if (extraThrow?.code === 'Thr6') {
-        // Note: extraThrow R-level contribution is already handled via effectiveThrow
-        // but if extraThrowRotationSpec has dive leap, count the included roll forward
-        if (extraThrowRotationSpec?.type === 'pre-acrobatic' && 
-            extraThrowRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap' &&
-            !hasRollForwardInEntries) {
-          rLevel += 1;
-        }
-      }
-      return rLevel;
-    };
-    let effectiveRLevel = calculateRLevel(false);
+    // Use the live rLevel from getTotalRotations() directly — no need to recalculate
+    let effectiveRLevel = rLevel;
     
     // Calculate effective throw value
     let effectiveThrowValue = 0;
