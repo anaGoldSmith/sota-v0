@@ -2577,127 +2577,158 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   
                   return (
                     <>
-                      <div className="flex items-center border-b border-border">
-                        <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
-                          <GripVertical className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="w-16 flex justify-center py-4">
-                          {/* Stacked symbols: Standard throw on top, DB/rotation below */}
-                          <div className="flex flex-col items-center gap-0">
-                            {/* Thr7 (Throw during DB) symbol */}
-                            {(() => {
-                              const thr7 = dynamicThrows.find(t => t.code === 'Thr7');
-                              const thr7SymbolUrl = thr7?.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl('dynamic_throws/Thr7.png').data.publicUrl;
-                              return thr7SymbolUrl ? (
-                                <img 
-                                  src={thr7SymbolUrl} 
-                                  alt="Throw during DB" 
-                                  className="h-6 w-6 object-contain" 
-                                  onError={e => e.currentTarget.style.display = 'none'} 
-                                />
-                              ) : (
-                                <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
-                              );
-                            })()}
-                            {/* DB/Rotation symbol below */}
-                            {isDBType && throwDuringDB.db.symbol_image ? (
-                              <img 
-                                src={throwDuringDB.db.symbol_image.startsWith('http') 
-                                  ? throwDuringDB.db.symbol_image 
-                                  : supabase.storage.from('jump-symbols').getPublicUrl(throwDuringDB.db.symbol_image).data.publicUrl
-                                } 
-                                alt={throwDuringDB.db.name || 'Element'} 
-                                className="h-8 w-8 object-contain -mt-1" 
-                                onError={e => e.currentTarget.style.display = 'none'} 
-                              />
-                            ) : isPreAcrobatic ? (
-                              <div className="h-8 w-8 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium -mt-1">
-                                PA
-                              </div>
-                            ) : isVertical ? (
-                              <img 
-                                src={multipleVerticalRotationsSymbol} 
-                                alt="Vertical Rotation" 
-                                className="h-8 w-8 object-contain -mt-1" 
-                                style={{ mixBlendMode: 'multiply' }}
-                              />
-                            ) : (
-                              <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
-                                {throwInfo?.code || '—'}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex-1 py-4 px-4">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-foreground text-sm">
-                              {isPreAcrobatic ? 'Throw during Pre-acrobatic' : isVertical ? 'Throw during Vertical Rotation' : 'Throw during DB'}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
-                              onClick={() => setShowDBDuringThrowDialog(true)}
-                            >
-                              <span className="text-xs">Change</span>
-                              <ChevronDown className="h-3 w-3 ml-1" />
-                            </Button>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {throwInfo?.name || '—'}
-                          </p>
-                        </div>
-                        <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <button className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors">
-                                <p className="font-semibold text-primary">{((throwInfo?.value || 0) + 0.1).toFixed(1)}</p>
-                                <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                              </button>
-                            </PopoverTrigger>
-                            <PopoverContent side="left" className="w-auto p-3">
-                              <div className="text-sm space-y-2">
-                                <p className="font-medium text-foreground mb-2">Value Breakdown</p>
-                                {isDBType && throwDuringDB.dbType === 'rotations' && throwDuringDB.rotationCount && throwDuringDB.rotationCount > 1 && (
-                                  <div className="flex justify-between gap-6">
-                                    <span className="text-muted-foreground">Rotations in DB:</span>
-                                    <span className="font-medium">{throwDuringDB.rotationCount}</span>
-                                  </div>
-                                )}
-                                <div className="flex justify-between gap-6">
-                                  <span className="text-muted-foreground">DB Value:</span>
-                                  <span className="font-medium">{(throwInfo?.value || 0).toFixed(1)}</span>
-                                </div>
-                                <div className="flex justify-between gap-6">
-                                  <span className="text-muted-foreground">Extra rotation:</span>
-                                  <span className="font-medium text-green-600">+0.1</span>
-                                </div>
-                                <div className="border-t border-border pt-2 flex justify-between gap-6">
-                                  <span className="font-medium">Total:</span>
-                                  <span className="font-bold text-primary">{((throwInfo?.value || 0) + 0.1).toFixed(1)}</span>
-                                </div>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => {
-                              setThrowDuringDB(null);
-                              setThrowCriteria([]);
-                              setExtraThrow(null);
-                            }} 
-                            className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                      {/* Extra Throw Criteria for Throw during DB */}
                       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleThrowCriteriaDragEnd}>
                         <SortableContext items={getThrowUnifiedOrder()} strategy={verticalListSortingStrategy}>
-                          {getThrowUnifiedOrder().map(id => {
-                            if (id === 'extra-throw' && extraThrow) {
+                          {getThrowUnifiedOrder().map(itemId => {
+                            if (itemId === 'primary-throw') {
+                              return (
+                                <SortableItemWrapper key="primary-throw" id="primary-throw">
+                                  <div className="flex items-center border-b border-border">
+                                    <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                                      <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                    </div>
+                                    <div className="w-16 flex justify-center py-4">
+                                      <div className="flex flex-col items-center gap-0">
+                                        {(() => {
+                                          const thr7 = dynamicThrows.find(t => t.code === 'Thr7');
+                                          const thr7SymbolUrl = thr7?.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl('dynamic_throws/Thr7.png').data.publicUrl;
+                                          return thr7SymbolUrl ? (
+                                            <img 
+                                              src={thr7SymbolUrl} 
+                                              alt="Throw during DB" 
+                                              className="h-6 w-6 object-contain" 
+                                              onError={e => e.currentTarget.style.display = 'none'} 
+                                            />
+                                          ) : (
+                                            <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
+                                          );
+                                        })()}
+                                        {isDBType && throwDuringDB.db.symbol_image ? (
+                                          <img 
+                                            src={throwDuringDB.db.symbol_image.startsWith('http') 
+                                              ? throwDuringDB.db.symbol_image 
+                                              : supabase.storage.from('jump-symbols').getPublicUrl(throwDuringDB.db.symbol_image).data.publicUrl
+                                            } 
+                                            alt={throwDuringDB.db.name || 'Element'} 
+                                            className="h-8 w-8 object-contain -mt-1" 
+                                            onError={e => e.currentTarget.style.display = 'none'} 
+                                          />
+                                        ) : isPreAcrobatic ? (
+                                          <div className="h-8 w-8 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium -mt-1">
+                                            PA
+                                          </div>
+                                        ) : isVertical ? (
+                                          <img 
+                                            src={multipleVerticalRotationsSymbol} 
+                                            alt="Vertical Rotation" 
+                                            className="h-8 w-8 object-contain -mt-1" 
+                                            style={{ mixBlendMode: 'multiply' }}
+                                          />
+                                        ) : (
+                                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground -mt-1">
+                                            {throwInfo?.code || '—'}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="flex-1 py-4 px-4">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium text-foreground text-sm">
+                                          {isPreAcrobatic ? 'Throw during Pre-acrobatic' : isVertical ? 'Throw during Vertical Rotation' : 'Throw during DB'}
+                                        </span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-5 px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
+                                          onClick={() => setShowDBDuringThrowDialog(true)}
+                                        >
+                                          <Edit2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                        {isDBType && (
+                                          <>
+                                            <Badge variant="outline" className="text-xs bg-primary/5 border-primary/20 text-primary">
+                                              {throwDuringDB.dbType === 'jumps' ? 'JUMP' : 'ROTATION'}
+                                            </Badge>
+                                            <span className="text-xs text-muted-foreground">
+                                              {throwInfo?.name}
+                                            </span>
+                                            {throwDuringDB.dbType === 'rotations' && throwDuringDB.rotationCount && throwDuringDB.rotationCount > 1 && (
+                                              <Badge variant="secondary" className="text-xs">
+                                                ×{throwDuringDB.rotationCount}
+                                              </Badge>
+                                            )}
+                                          </>
+                                        )}
+                                        {isPreAcrobatic && (
+                                          <>
+                                            <Badge variant="outline" className="text-xs bg-primary/5 border-primary/20 text-primary">
+                                              ACRO
+                                            </Badge>
+                                            <span className="text-xs text-muted-foreground">
+                                              {throwInfo?.name}
+                                            </span>
+                                          </>
+                                        )}
+                                        {isVertical && (
+                                          <>
+                                            <Badge variant="outline" className="text-xs bg-primary/5 border-primary/20 text-primary">
+                                              VER
+                                            </Badge>
+                                            <span className="text-xs text-muted-foreground">
+                                              {throwInfo?.name}
+                                            </span>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="w-20 py-4 px-2 text-center border-l border-border relative">
+                                      {isDBType && throwDuringDB.rotationCount && throwDuringDB.rotationCount > 1 ? (
+                                        <Popover>
+                                          <PopoverTrigger asChild>
+                                            <button className="font-semibold text-primary hover:underline cursor-pointer">
+                                              {((throwInfo?.value || 0) + 0.1).toFixed(1)}
+                                            </button>
+                                          </PopoverTrigger>
+                                          <PopoverContent className="w-auto p-3" side="left">
+                                            <div className="space-y-1 text-sm">
+                                              <div className="flex justify-between gap-6">
+                                                <span className="text-muted-foreground">Base value:</span>
+                                                <span className="font-medium">{throwInfo?.value || 0}</span>
+                                              </div>
+                                              <div className="flex justify-between gap-6">
+                                                <span className="text-muted-foreground">Extra rotation:</span>
+                                                <span className="font-medium text-green-600">+0.1</span>
+                                              </div>
+                                              <div className="border-t border-border pt-2 flex justify-between gap-6">
+                                                <span className="font-medium">Total:</span>
+                                                <span className="font-bold text-primary">{((throwInfo?.value || 0) + 0.1).toFixed(1)}</span>
+                                              </div>
+                                            </div>
+                                          </PopoverContent>
+                                        </Popover>
+                                      ) : (
+                                        <p className="font-semibold text-primary">{throwInfo?.value || 0}</p>
+                                      )}
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        onClick={() => {
+                                          setThrowDuringDB(null);
+                                          setThrowCriteria([]);
+                                          setExtraThrow(null);
+                                        }} 
+                                        className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </SortableItemWrapper>
+                              );
+                            }
+                            if (itemId === 'extra-throw' && extraThrow) {
                               return (
                                 <SortableExtraRow
                                   key="extra-throw"
@@ -2709,7 +2740,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                 />
                               );
                             }
-                            const criteriaItem = throwCriteria.find(c => c.id === id);
+                            const criteriaItem = throwCriteria.find(c => c.id === itemId);
                             if (criteriaItem) {
                               return (
                                 <SortableCriteriaRow 
