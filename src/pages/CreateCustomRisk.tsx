@@ -2641,17 +2641,21 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         <div className="w-16 flex justify-center py-4">
                           {/* Stacked symbols: Standard throw on top, DB/rotation below */}
                           <div className="flex flex-col items-center gap-0">
-                            {/* Standard throw symbol - Thr1 */}
-                            {dynamicThrows.find(t => t.code === 'Thr1')?.symbol_image ? (
-                              <img 
-                                src={dynamicThrows.find(t => t.code === 'Thr1')!.symbol_image!} 
-                                alt="Standard Throw" 
-                                className="h-6 w-6 object-contain" 
-                                onError={e => e.currentTarget.style.display = 'none'} 
-                              />
-                            ) : (
-                              <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
-                            )}
+                            {/* Thr7 (Throw during DB) symbol */}
+                            {(() => {
+                              const thr7 = dynamicThrows.find(t => t.code === 'Thr7');
+                              const thr7SymbolUrl = thr7?.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl('dynamic_throws/Thr7.png').data.publicUrl;
+                              return thr7SymbolUrl ? (
+                                <img 
+                                  src={thr7SymbolUrl} 
+                                  alt="Throw during DB" 
+                                  className="h-6 w-6 object-contain" 
+                                  onError={e => e.currentTarget.style.display = 'none'} 
+                                />
+                              ) : (
+                                <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
+                              );
+                            })()}
                             {/* DB/Rotation symbol below */}
                             {isDBType && throwDuringDB.db.symbol_image ? (
                               <img 
