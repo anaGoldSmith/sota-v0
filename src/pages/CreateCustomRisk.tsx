@@ -2574,6 +2574,10 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   const isDBType = 'db' in throwDuringDB;
                   const isPreAcrobatic = 'preAcrobaticElement' in throwDuringDB;
                   const isVertical = 'verticalRotation' in throwDuringDB;
+                  // Extract DB data for type-safe access inside nested callbacks
+                  const dbData = isDBType ? (throwDuringDB as any).db as { id: string; code: string; name: string | null; description: string; value: number; symbol_image: string | null } : null;
+                  const dbType = isDBType ? (throwDuringDB as any).dbType as 'jumps' | 'rotations' : null;
+                  const rotationCount = isDBType ? (throwDuringDB as any).rotationCount as number | undefined : undefined;
                   
                   return (
                     <>
