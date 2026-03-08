@@ -3531,13 +3531,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </Button>
                           {showExtraCatchDropdown && (
                             <div className="absolute left-0 top-full mt-2 w-full min-w-[320px] bg-background border border-border rounded-lg shadow-lg z-[100] max-h-64 overflow-y-auto">
-                              {filteredCatches.filter(c => c.code !== 'Catch1' && !extraCatches.some(ec => ec.code === c.code) && !(c.code === 'Catch8' && catchHasCatch8)).map(catchItem => {
+                              {filteredCatches.filter(c => c.code !== 'Catch1' && !extraCatches.some(ec => ec.code === c.code) && !(c.code === 'Catch8' && catchHasCatch8) && !(c.code === 'Catch9' && catchHasCatchDuringDB)).map(catchItem => {
                                 const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
                                 return (
                                   <div key={catchItem.id} className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" onClick={() => {
                                     if (catchItem.code === 'Catch8') {
                                       handleAddExtraCatch8();
                                       setShowExtraCatchDropdown(false);
+                                    } else if (catchItem.code === 'Catch9') {
+                                      setShowExtraCatchDropdown(false);
+                                      setShowExtraCatchDBDialog(true);
                                     } else {
                                       handleSelectExtraCatch(catchItem);
                                     }
