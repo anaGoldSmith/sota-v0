@@ -1690,6 +1690,11 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     throwRotationSpec?.type === 'pre-acrobatic' && 
     throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap';
   
+  // Check if Dive Leap is selected in the Extra Throw section (Thr6 with pre-acrobatic spec)
+  const hasDiveLeapInExtraThrow = extraThrow?.code === 'Thr6' && 
+    extraThrowRotationSpec?.type === 'pre-acrobatic' && 
+    extraThrowRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap';
+  
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -1999,6 +2004,21 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
           return { valid: true, message: "" };
         }
         // Even without roll forward, dive leap in throw + any rotation = valid
+        return { valid: true, message: "" };
+      }
+    }
+    
+    // Case 1b: Dive Leap in Extra Throw (Thr6 spec) + Roll Forward in rotations = valid R2
+    if (hasDiveLeapInExtraThrow) {
+      if (actualRotations.length >= 1) {
+        const hasRollForward = actualRotations.some(e => 
+          e.specificationType === 'pre-acrobatic' && 
+          e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'roll forward'
+        );
+        if (hasRollForward) {
+          return { valid: true, message: "" };
+        }
+        // Dive leap in extra throw + any rotation = valid
         return { valid: true, message: "" };
       }
     }
@@ -2768,7 +2788,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                           <span className="text-sm text-muted-foreground italic">
                                             {extraThrowRotationSpec.type === 'vertical' 
                                               ? `Vertical ${(extraThrowRotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (extraThrowRotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${extraThrowRotationSpec.verticalRotation?.name}`
-                                              : `Pre-acrobatic: ${extraThrowRotationSpec.preAcrobaticElement?.name}`
+                                              : extraThrowRotationSpec.preAcrobaticElement?.name?.toLowerCase() === 'dive leap'
+                                                ? 'Dive leap, including Roll forward'
+                                                : `Pre-acrobatic: ${extraThrowRotationSpec.preAcrobaticElement?.name}`
                                             }
                                           </span>
                                           <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-primary hover:bg-primary/10" onClick={() => setShowExtraThrowRotationSpecDropdown(true)}>
@@ -2892,7 +2914,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                           <span className="text-sm text-muted-foreground italic">
                                             {throwRotationSpec.type === 'vertical' 
                                               ? `Vertical ${(throwRotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (throwRotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${throwRotationSpec.verticalRotation?.name}`
-                                              : `Pre-acrobatic: ${throwRotationSpec.preAcrobaticElement?.name}`
+                                              : throwRotationSpec.preAcrobaticElement?.name?.toLowerCase() === 'dive leap'
+                                                ? 'Dive leap, including Roll forward'
+                                                : `Pre-acrobatic: ${throwRotationSpec.preAcrobaticElement?.name}`
                                             }
                                           </span>
                                           <Button
