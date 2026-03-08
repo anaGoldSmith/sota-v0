@@ -1834,35 +1834,43 @@ const RoutineCalculator = () => {
                     <span className="text-lg font-semibold mr-2">+</span> Dynamic Element (R)
                   </Button>
                   
-                  <Button 
-                    variant="outline"
-                    className={`h-16 text-base ${danceStepsEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
-                    disabled={!danceStepsEnabled}
-                    onClick={() => {
-                      if (danceStepsEnabled) {
-                        const newElement: RoutineElement = {
-                          id: `dance-steps-${Date.now()}`,
-                          type: 'Steps',
-                          symbolImages: [],
-                          value: 0,
-                          originalData: {} as any,
-                        };
-                        setRoutineElements(prev => [...prev, newElement]);
-                      }
-                    }}
-                  >
-                    <span className="text-lg font-semibold mr-2">+</span> Dance Steps
+                  <div className="relative">
+                    <Button 
+                      variant="outline"
+                      className={`h-16 text-base w-full ${danceStepsEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
+                      disabled={!danceStepsEnabled}
+                      onClick={() => {
+                        if (danceStepsEnabled) {
+                          const newElement: RoutineElement = {
+                            id: `dance-steps-${Date.now()}`,
+                            type: 'Steps',
+                            symbolImages: [],
+                            value: 0,
+                            originalData: {} as any,
+                          };
+                          setRoutineElements(prev => [...prev, newElement]);
+                        }
+                      }}
+                    >
+                      <span className="text-lg font-semibold mr-2">+</span> Dance Steps
+                    </Button>
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>
-                        <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Info className="h-4 w-4 ml-1 text-muted-foreground hover:text-foreground" />
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="absolute top-1 right-1 p-1 rounded-full hover:bg-muted"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
                           <p>Minimum 2 dance steps combinations, lasting 8 seconds each, must be performed in the routine. A 0.30 penalty will be applied for each missing combination of dance steps. Pre-acrobatic elements, high throws, and DA/DB elements valued at 0.20 or more are not allowed during dance step combinations.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                  </Button>
+                  </div>
                 </div>
               );
             })()}
