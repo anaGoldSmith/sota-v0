@@ -2646,9 +2646,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                               return (
                                 <SortableItemWrapper key="primary-throw" id="primary-throw">
                                   <div className="flex items-center border-b border-border">
-                                    <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                                    <SortableDragHandle className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
                                       <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                    </div>
+                                    </SortableDragHandle>
                                     <div className="w-16 flex justify-center py-4">
                                       <div className="flex flex-col items-center gap-0">
                                         {(() => {
