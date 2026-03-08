@@ -2129,7 +2129,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         if (entry.type === 'two') return sum + 2;
         return sum + (entry.seriesCount || 3);
       }, 0);
-      if (effectiveThrow?.code === 'Thr6' || thr2HasThr6) rLevel += 1;
+      if (effectiveThrow?.code === 'Thr6' || extraThrows.some(t => t.code === 'Thr6')) rLevel += 1;
       if (effectiveCatch?.code === 'Catch8') rLevel += 1;
       // Throw/Catch during DB always adds +1 rotation to R subscript
       if (throwDuringDB) rLevel += 1;
