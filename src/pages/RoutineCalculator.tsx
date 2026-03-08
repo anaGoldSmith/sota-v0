@@ -2433,7 +2433,7 @@ const RoutineCalculator = () => {
                     error = result.error;
                   }
                   if (error) throw error;
-                  toast({ title: "Routine saved!", description: `"${routineSaveName.trim()}" has been saved to My Routines.` });
+                  toast({ title: editingRoutineId ? "Routine updated!" : "Routine saved!", description: `"${routineSaveName.trim()}" has been saved to My Routines.` });
                   setSaveDialogOpen(false);
                   setRoutineElements([]);
                   setGymnastName('');
