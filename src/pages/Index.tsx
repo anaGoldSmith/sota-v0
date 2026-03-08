@@ -193,7 +193,7 @@ const Index = () => {
               {events.length > 2 && (
                 <Button
                   variant="outline"
-                  className="w-full mt-2 border-primary"
+                  className="w-full mt-2 border-border/80"
                   onClick={() => navigate("/events")}
                 >
                   View All Events
