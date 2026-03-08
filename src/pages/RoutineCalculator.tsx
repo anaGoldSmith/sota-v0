@@ -1839,7 +1839,14 @@ const RoutineCalculator = () => {
                     disabled={!danceStepsEnabled}
                     onClick={() => {
                       if (danceStepsEnabled) {
-                        setActiveCategory(activeCategory === "dance" ? null : "dance");
+                        const newElement: RoutineElement = {
+                          id: `dance-steps-${Date.now()}`,
+                          type: 'Steps',
+                          symbolImages: [],
+                          value: 0,
+                          originalData: {} as any,
+                        };
+                        setRoutineElements(prev => [...prev, newElement]);
                       }
                     }}
                   >
@@ -1848,13 +1855,6 @@ const RoutineCalculator = () => {
                 </div>
               );
             })()}
-
-            
-            {activeCategory === "dance" && (
-              <div className="pt-4 text-center text-muted-foreground">
-                Dance Steps configuration coming soon
-              </div>
-            )}
           </div>
 
           {/* Routine Elements Table */}
