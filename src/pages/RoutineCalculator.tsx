@@ -441,12 +441,10 @@ function SortableRow({
           } : undefined}
         >
           <div className="flex items-center gap-1">
-            {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB') && (
-              element.isExpanded ? 
-                <ChevronDown className="h-3 w-3 text-muted-foreground" /> : 
-                <ChevronRight className="h-3 w-3 text-muted-foreground" />
-            )}
             {itemNumber}
+            {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB') && (
+              <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${element.isExpanded ? '' : '-rotate-90'}`} />
+            )}
           </div>
         </TableCell>
         <TableCell className="w-12 px-2 font-medium">
