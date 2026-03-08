@@ -447,15 +447,23 @@ export default function SymbolManagement() {
     if (!cleanupTarget) return;
 
     try {
-      // Get the right symbol data based on whether it's a dynamic category
-      const isDynamic = !!cleanupTarget.folder;
-      const symbolsData = isDynamic 
-        ? dynamicSymbolData[cleanupTarget.folder!] 
-        : symbolData[cleanupTarget.bucket];
+      // Determine if this is a dynamic element category or a regular one
+      const isDynamicCategory = DYNAMIC_ELEMENTS_CATEGORIES.some(c => c.folder === cleanupTarget.folder);
+      
+      let symbolsData: SymbolStatus[] | undefined;
+      if (isDynamicCategory) {
+        symbolsData = dynamicSymbolData[cleanupTarget.folder!];
+      } else {
+        // Regular categories use bucket or bucket/folder as key
+        const key = cleanupTarget.folder 
+          ? `${cleanupTarget.bucket}/${cleanupTarget.folder}` 
+          : cleanupTarget.bucket;
+        symbolsData = symbolData[key];
+      }
 
       const orphanedFiles = (symbolsData || [])
         .filter(s => s.status === 'orphaned')
-        .map(s => isDynamic ? `${cleanupTarget.folder}/${s.file.name}` : s.file.name);
+        .map(s => cleanupTarget.folder ? `${cleanupTarget.folder}/${s.file.name}` : s.file.name);
 
       if (orphanedFiles.length === 0) {
         toast({
