@@ -2214,6 +2214,10 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     // Calculate effective rLevel (for display only)
     // excludeDiveLeap: when true, dive leap in Rotations section won't count as a rotation
     const calculateRLevel = (excludeDiveLeap: boolean) => {
+      const hasRollForwardInEntries = rotationEntries.some(e => 
+        e.specificationType === 'pre-acrobatic' && 
+        e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'roll forward'
+      );
       let rLevel = rotationEntries.reduce((sum, entry) => {
         if (entry.type === 'axis') return sum;
         if (excludeDiveLeap && entry.type === 'one' && 
@@ -2226,10 +2230,27 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         return sum + (entry.seriesCount || 3);
       }, 0);
       if (effectiveThrow?.code === 'Thr6') rLevel += 1;
+      // Dive Leap in throw includes Roll Forward - count it if not already in rotationEntries
+      if (effectiveThrow?.code === 'Thr6' && 
+          throwRotationSpec?.type === 'pre-acrobatic' && 
+          throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap' &&
+          !hasRollForwardInEntries) {
+        rLevel += 1;
+      }
       if (effectiveCatch?.code === 'Catch8') rLevel += 1;
       // Throw/Catch during DB always adds +1 rotation to R subscript
       if (throwDuringDB) rLevel += 1;
       if (catchDuringDB) rLevel += 1;
+      // Extra Thr6 with Dive Leap includes Roll Forward
+      if (extraThrow?.code === 'Thr6') {
+        // Note: extraThrow R-level contribution is already handled via effectiveThrow
+        // but if extraThrowRotationSpec has dive leap, count the included roll forward
+        if (extraThrowRotationSpec?.type === 'pre-acrobatic' && 
+            extraThrowRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap' &&
+            !hasRollForwardInEntries) {
+          rLevel += 1;
+        }
+      }
       return rLevel;
     };
     let effectiveRLevel = calculateRLevel(false);
