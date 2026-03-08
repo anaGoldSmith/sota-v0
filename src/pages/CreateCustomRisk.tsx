@@ -1502,7 +1502,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
   );
   
   // Check if Dive Leap is selected in the Throw section (Thr6 with pre-acrobatic spec)
-  const hasDiveLeapInThrow = (selectedThrow?.code === 'Thr6' || (selectedThrow?.code === 'Thr2' && thr2HasThr6)) && 
+  const hasDiveLeapInThrow = selectedThrow?.code === 'Thr6' && 
     throwRotationSpec?.type === 'pre-acrobatic' && 
     throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap';
   
