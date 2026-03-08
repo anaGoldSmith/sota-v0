@@ -651,6 +651,8 @@ const RoutineCalculator = () => {
   const [showDBDASuccessDialog, setShowDBDASuccessDialog] = useState(false);
   const [showDBDAValidationDialog, setShowDBDAValidationDialog] = useState(false);
   const [sourceElementType, setSourceElementType] = useState<'jump' | 'rotation' | 'balance' | null>(null);
+  const [showRulesDialog, setShowRulesDialog] = useState(false);
+  const [showRoutineCheckDialog, setShowRoutineCheckDialog] = useState(false);
   
   // Track pending DB element when adding apparatus difficulty
   const [pendingDbElement, setPendingDbElement] = useState<{
