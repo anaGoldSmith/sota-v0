@@ -3889,8 +3889,15 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </Button>
                           {showExtraCatchDropdown && (
                             <div className="absolute left-0 top-full mt-1 w-72 bg-background border border-border rounded-lg shadow-xl z-[100] max-h-48 overflow-y-auto">
-                              {filteredCatches.filter(c => c.code !== 'Catch1' && c.code !== 'Catch8' && !extraCatches.some(ec => ec.code === c.code)).map(catchItem => (
-                                <div key={catchItem.id} className="flex items-center gap-2 p-2 hover:bg-muted cursor-pointer border-b border-border/50 last:border-b-0" onClick={() => handleSelectExtraCatch(catchItem)}>
+                              {filteredCatches.filter(c => c.code !== 'Catch1' && !extraCatches.some(ec => ec.code === c.code) && !(c.code === 'Catch8' && catchHasCatch8)).map(catchItem => (
+                                <div key={catchItem.id} className="flex items-center gap-2 p-2 hover:bg-muted cursor-pointer border-b border-border/50 last:border-b-0" onClick={() => {
+                                  if (catchItem.code === 'Catch8') {
+                                    handleAddExtraCatch8();
+                                    setShowExtraCatchDropdown(false);
+                                  } else {
+                                    handleSelectExtraCatch(catchItem);
+                                  }
+                                }}>
                                   {catchItem.symbol_image && <img src={catchItem.symbol_image} alt={catchItem.name} className="h-5 w-5 object-contain" onError={e => e.currentTarget.style.display = 'none'} />}
                                   <span className="text-sm text-foreground flex-1">{catchItem.name}</span>
                                   <span className="text-xs text-primary font-semibold">{catchItem.value ?? 0}</span>
