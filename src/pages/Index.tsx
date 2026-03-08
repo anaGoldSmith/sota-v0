@@ -76,8 +76,8 @@ const Index = () => {
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex flex-col items-start">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            RG Score
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Rhythm. Gymnastics. Score.
           </h1>
           <p className="text-sm text-muted-foreground italic -mt-0.5">Check your D-score before the judges do</p>
         </div>
