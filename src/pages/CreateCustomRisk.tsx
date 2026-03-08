@@ -2688,7 +2688,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                       </div>
                                     </div>
                                     <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                                      {isDBType && throwDuringDB.rotationCount && throwDuringDB.rotationCount > 1 ? (
+                                      {dbData && rotationCount && rotationCount > 1 ? (
                                         <Popover>
                                           <PopoverTrigger asChild>
                                             <button className="font-semibold text-primary hover:underline cursor-pointer">
