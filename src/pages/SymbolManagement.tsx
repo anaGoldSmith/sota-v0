@@ -56,8 +56,10 @@ export default function SymbolManagement() {
   const [deleteTarget, setDeleteTarget] = useState<{ bucket: string; file: StorageFile; code: string | null; folder?: string | null } | null>(null);
   const [cleanupTarget, setCleanupTarget] = useState<{ bucket: string; category: string; folder?: string | null } | null>(null);
   const [uploadingDynamic, setUploadingDynamic] = useState<Record<string, boolean>>({});
+  const [uploadingRegular, setUploadingRegular] = useState<Record<string, boolean>>({});
   
   const dynamicInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const regularInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     checkAuth();
