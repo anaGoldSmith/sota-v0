@@ -1691,20 +1691,55 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     
-    // Build unified list: criteria items + extra-throw
-    const unifiedIds = [...throwCriteria.map(c => c.id), ...(extraThrow ? ['extra-throw'] : [])];
-    const oldIndex = unifiedIds.indexOf(String(active.id));
-    const newIndex = unifiedIds.indexOf(String(over.id));
+    // Build unified list from current order
+    const currentOrder = getThrowUnifiedOrder();
+    const oldIndex = currentOrder.indexOf(String(active.id));
+    const newIndex = currentOrder.indexOf(String(over.id));
     if (oldIndex === -1 || newIndex === -1) return;
     
-    const reordered = arrayMove(unifiedIds, oldIndex, newIndex);
+    const reordered = arrayMove(currentOrder, oldIndex, newIndex);
+    setThrowItemsOrder(reordered);
     
-    // Split back: filter out 'extra-throw' to get criteria order
+    // Also reorder criteria to match
     const newCriteriaIds = reordered.filter(id => id !== 'extra-throw');
     setThrowCriteria(prev => {
       const map = new Map(prev.map(c => [c.id, c]));
       return newCriteriaIds.map(id => map.get(id)!).filter(Boolean);
     });
+  };
+
+  // Compute unified throw items order, respecting user-defined order
+  const getThrowUnifiedOrder = () => {
+    const criteriaIds = throwCriteria.map(c => c.id);
+    const allIds = [...criteriaIds, ...(extraThrow ? ['extra-throw'] : [])];
+    
+    if (throwItemsOrder.length === 0) return allIds;
+    
+    // Filter saved order to only include currently existing items
+    const existing = new Set(allIds);
+    const ordered = throwItemsOrder.filter(id => existing.has(id));
+    // Add any new items not in saved order
+    const inOrder = new Set(ordered);
+    for (const id of allIds) {
+      if (!inOrder.has(id)) ordered.push(id);
+    }
+    return ordered;
+  };
+
+  // Compute unified catch items order
+  const getCatchUnifiedOrder = () => {
+    const criteriaIds = catchCriteria.map(c => c.id);
+    const allIds = [...criteriaIds, ...(extraCatch ? ['extra-catch'] : [])];
+    
+    if (catchItemsOrder.length === 0) return allIds;
+    
+    const existing = new Set(allIds);
+    const ordered = catchItemsOrder.filter(id => existing.has(id));
+    const inOrder = new Set(ordered);
+    for (const id of allIds) {
+      if (!inOrder.has(id)) ordered.push(id);
+    }
+    return ordered;
   };
 
   const handleCatchCriteriaDragEnd = (event: DragEndEvent) => {
