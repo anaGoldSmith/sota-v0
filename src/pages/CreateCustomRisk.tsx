@@ -3565,8 +3565,15 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </Button>
                           {showExtraCatchDropdown && (
                             <div className="absolute left-0 top-full mt-1 w-72 bg-background border border-border rounded-lg shadow-xl z-[100] max-h-48 overflow-y-auto">
-                              {filteredCatches.filter(c => c.code !== 'Catch1' && c.code !== 'Catch8' && !extraCatches.some(ec => ec.code === c.code)).map(catchItem => (
-                                <div key={catchItem.id} className="flex items-center gap-2 p-2 hover:bg-muted cursor-pointer border-b border-border/50 last:border-b-0" onClick={() => handleSelectExtraCatch(catchItem)}>
+                              {filteredCatches.filter(c => c.code !== 'Catch1' && !extraCatches.some(ec => ec.code === c.code) && !(c.code === 'Catch8' && catchHasCatch8)).map(catchItem => (
+                                <div key={catchItem.id} className="flex items-center gap-2 p-2 hover:bg-muted cursor-pointer border-b border-border/50 last:border-b-0" onClick={() => {
+                                  if (catchItem.code === 'Catch8') {
+                                    handleAddExtraCatch8();
+                                    setShowExtraCatchDropdown(false);
+                                  } else {
+                                    handleSelectExtraCatch(catchItem);
+                                  }
+                                }}>
                                   {catchItem.symbol_image && <img src={catchItem.symbol_image} alt={catchItem.name} className="h-5 w-5 object-contain" onError={e => e.currentTarget.style.display = 'none'} />}
                                   <span className="text-sm text-foreground flex-1">{catchItem.name}</span>
                                   <span className="text-xs text-primary font-semibold">{catchItem.value ?? 0}</span>
@@ -3575,17 +3582,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             </div>
                           )}
                         </div>
-                        {!catchHasCatch8 && !catchHasCatchDuringDB && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
-                            onClick={handleAddExtraCatch8}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add catch during rotation
-                          </Button>
-                        )}
                       </div>
                       
                       {/* Extra Catch Criteria for Catch during DB */}
@@ -3893,8 +3889,15 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           </Button>
                           {showExtraCatchDropdown && (
                             <div className="absolute left-0 top-full mt-1 w-72 bg-background border border-border rounded-lg shadow-xl z-[100] max-h-48 overflow-y-auto">
-                              {filteredCatches.filter(c => c.code !== 'Catch1' && c.code !== 'Catch8' && !extraCatches.some(ec => ec.code === c.code)).map(catchItem => (
-                                <div key={catchItem.id} className="flex items-center gap-2 p-2 hover:bg-muted cursor-pointer border-b border-border/50 last:border-b-0" onClick={() => handleSelectExtraCatch(catchItem)}>
+                              {filteredCatches.filter(c => c.code !== 'Catch1' && !extraCatches.some(ec => ec.code === c.code) && !(c.code === 'Catch8' && catchHasCatch8)).map(catchItem => (
+                                <div key={catchItem.id} className="flex items-center gap-2 p-2 hover:bg-muted cursor-pointer border-b border-border/50 last:border-b-0" onClick={() => {
+                                  if (catchItem.code === 'Catch8') {
+                                    handleAddExtraCatch8();
+                                    setShowExtraCatchDropdown(false);
+                                  } else {
+                                    handleSelectExtraCatch(catchItem);
+                                  }
+                                }}>
                                   {catchItem.symbol_image && <img src={catchItem.symbol_image} alt={catchItem.name} className="h-5 w-5 object-contain" onError={e => e.currentTarget.style.display = 'none'} />}
                                   <span className="text-sm text-foreground flex-1">{catchItem.name}</span>
                                   <span className="text-xs text-primary font-semibold">{catchItem.value ?? 0}</span>
@@ -3916,9 +3919,38 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         )}
                       </>
                     )}
-                    {/* For regular catch (not Catch8): add catch during DB and catch during rotation */}
+                    {/* For regular catch (not Catch8): add extra catches and catch during DB */}
                     {selectedCatch && selectedCatch.code !== 'Catch8' && (
                       <>
+                        <div className="relative" ref={selectedCatch?.code !== 'Catch8' ? extraCatchDropdownRef : undefined}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                            onClick={() => setShowExtraCatchDropdown(!showExtraCatchDropdown)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add extra catch
+                          </Button>
+                          {showExtraCatchDropdown && (
+                            <div className="absolute left-0 top-full mt-1 w-72 bg-background border border-border rounded-lg shadow-xl z-[100] max-h-48 overflow-y-auto">
+                              {filteredCatches.filter(c => c.code !== 'Catch1' && c.code !== selectedCatch?.code && !extraCatches.some(ec => ec.code === c.code) && !(c.code === 'Catch8' && catchHasCatch8)).map(catchItem => (
+                                <div key={catchItem.id} className="flex items-center gap-2 p-2 hover:bg-muted cursor-pointer border-b border-border/50 last:border-b-0" onClick={() => {
+                                  if (catchItem.code === 'Catch8') {
+                                    handleAddExtraCatch8();
+                                    setShowExtraCatchDropdown(false);
+                                  } else {
+                                    handleSelectExtraCatch(catchItem);
+                                  }
+                                }}>
+                                  {catchItem.symbol_image && <img src={catchItem.symbol_image} alt={catchItem.name} className="h-5 w-5 object-contain" onError={e => e.currentTarget.style.display = 'none'} />}
+                                  <span className="text-sm text-foreground flex-1">{catchItem.name}</span>
+                                  <span className="text-xs text-primary font-semibold">{catchItem.value ?? 0}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                         {!catchHasCatchDuringDB && !catchHasCatch8 && (
                           <Button
                             variant="ghost"
@@ -3928,17 +3960,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           >
                             <Plus className="h-3 w-3 mr-1" />
                             Add catch during DB
-                          </Button>
-                        )}
-                        {!catchHasCatch8 && !catchHasCatchDuringDB && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
-                            onClick={handleAddExtraCatch8}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add catch during rotation
                           </Button>
                         )}
                       </>
