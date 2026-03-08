@@ -481,6 +481,8 @@ export default function SymbolManagement() {
         .filter(s => s.status === 'orphaned')
         .map(s => cleanupTarget.folder ? `${cleanupTarget.folder}/${s.file.name}` : s.file.name);
 
+      console.log('isDynamicCategory:', isDynamicCategory, 'symbolsData length:', symbolsData?.length, 'orphanedFiles:', orphanedFiles);
+
       if (orphanedFiles.length === 0) {
         toast({
           title: "No orphaned files",
@@ -490,9 +492,11 @@ export default function SymbolManagement() {
         return;
       }
 
-      const { error } = await supabase.storage
+      const { data: removeData, error } = await supabase.storage
         .from(cleanupTarget.bucket)
         .remove(orphanedFiles);
+
+      console.log('Cleanup remove result:', JSON.stringify(removeData), 'error:', error);
 
       if (error) throw error;
 
