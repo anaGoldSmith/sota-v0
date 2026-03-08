@@ -1940,14 +1940,11 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         if (entry.type === 'two') return sum + 2;
         return sum + (entry.seriesCount || 3);
       }, 0);
-      if (effectiveThrow?.code === 'Thr6' || thr2HasThr6) rLevel += 1;
+      if (effectiveThrow?.code === 'Thr6') rLevel += 1;
       if (effectiveCatch?.code === 'Catch8') rLevel += 1;
       // Throw/Catch during DB always adds +1 rotation to R subscript
       if (throwDuringDB) rLevel += 1;
       if (catchDuringDB) rLevel += 1;
-      // Extra catch combos
-      if (catchHasCatchDuringDB && extraCatchDuringDBData) rLevel += 1;
-      if (catchHasCatch8) rLevel += 1;
       return rLevel;
     };
     let effectiveRLevel = calculateRLevel(false);
