@@ -1147,6 +1147,9 @@ const CreateCustomRisk = () => {
       if (catchRotationSpecRef.current && !catchRotationSpecRef.current.contains(event.target as Node)) {
         setShowCatchRotationSpecDropdown(false);
       }
+      if (extraThrowRotationSpecRef.current && !extraThrowRotationSpecRef.current.contains(event.target as Node)) {
+        setShowExtraThrowRotationSpecDropdown(false);
+      }
       if (extraThrowDropdownRef.current && !extraThrowDropdownRef.current.contains(event.target as Node)) {
         setShowExtraThrowDropdown(false);
       }
