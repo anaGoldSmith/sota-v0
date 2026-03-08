@@ -3920,17 +3920,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             </div>
                           )}
                         </div>
-                        {!catchHasCatchDuringDB && !catchHasCatch8 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
-                            onClick={() => setShowExtraCatchDBDialog(true)}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add catch during DB
-                          </Button>
-                        )}
                       </>
                     )}
                     {/* For regular catch (not Catch8): add extra catches and catch during DB */}
