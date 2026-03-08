@@ -616,7 +616,7 @@ export default function SymbolManagement() {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => setCleanupTarget({ bucket: category.bucket, category: category.name })}
+                            onClick={() => setCleanupTarget({ bucket: category.bucket, category: category.name, folder: category.folder })}
                           >
                             Cleanup Orphaned
                           </Button>
