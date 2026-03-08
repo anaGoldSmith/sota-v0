@@ -832,10 +832,9 @@ const CreateCustomRisk = () => {
   const throwRotationSpecRef = useRef<HTMLDivElement>(null);
   const catchRotationSpecRef = useRef<HTMLDivElement>(null);
   
-  // Thr2+Thr6 combo state
-  const [extraThrow, setExtraThrow] = useState<DynamicThrow | null>(null);
+  // Extra throws state (generic, like catches)
+  const [extraThrows, setExtraThrows] = useState<DynamicThrow[]>([]);
   const [showExtraThrowDropdown, setShowExtraThrowDropdown] = useState(false);
-  const [thr2HasThr6, setThr2HasThr6] = useState(false);
   const extraThrowDropdownRef = useRef<HTMLDivElement>(null);
   
   // Catch combo state: extra regular catches when primary is CatchDuringDB or Catch8
