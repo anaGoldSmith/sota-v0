@@ -3411,21 +3411,18 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             Add Extra Catch
                           </Button>
                           {showExtraCatchDropdown && (
-                            <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
-                              <div className="p-2 border-b border-border">
-                                <span className="text-sm font-medium text-foreground">Compatible Catches</span>
-                              </div>
+                            <div className="absolute left-full top-0 ml-2 w-full min-w-[320px] bg-background border border-border rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
                               {[...getCompatibleExtraCatches, ...getCompatiblePrimaryCatches].map(catchItem => {
                                 const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
                                 return (
                                   <div key={catchItem.id} className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" onClick={() => { setExtraCatch(catchItem); setShowExtraCatchDropdown(false); }}>
-                                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
-                                      <img src={symbolUrl} alt={catchItem.name} className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                                    <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
+                                      <img src={symbolUrl} alt={catchItem.name} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <span className="text-foreground text-sm">{catchItem.name}</span>
                                     </div>
-                                    <div className="w-10 text-right flex-shrink-0">
+                                    <div className="w-12 text-right flex-shrink-0">
                                       <span className="text-primary font-semibold">{catchItem.code === 'Catch8' ? '0.1' : (catchItem.value ?? 0)}</span>
                                     </div>
                                   </div>
