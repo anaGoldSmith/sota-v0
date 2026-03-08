@@ -1155,8 +1155,8 @@ const StandardRiskDetail = () => {
                     </div>
                   ))}
 
-                  {/* Add Specific Catch Button - hidden for R2 and when one is already selected */}
-                  {filteredCatches.length > 0 && !isR2 && extraCatchCriteria.length === 0 && (
+                  {/* Add Extra Catch Button - hidden for R2 and when one is already selected, excludes Catch during DB */}
+                  {filteredCatches.filter(c => c.code !== 'Catch9').length > 0 && !isR2 && extraCatchCriteria.length === 0 && (
                     <div ref={catchDropdownRef} className="relative border-t border-border">
                       <Button
                         variant="ghost"
@@ -1164,14 +1164,14 @@ const StandardRiskDetail = () => {
                         onClick={() => setShowCatchDropdown(!showCatchDropdown)}
                       >
                         <Plus className="h-4 w-4" />
-                        <span>Add Specific Catch</span>
+                        <span>Add Extra Catch</span>
                         <ChevronDown className={`h-4 w-4 transition-transform ${showCatchDropdown ? 'rotate-180' : ''}`} />
                       </Button>
                       
                       {showCatchDropdown && (
                         <div className="absolute top-full left-0 right-0 z-50 bg-background border border-border rounded-b-lg shadow-lg max-h-60 overflow-y-auto">
                           {filteredCatches
-                            .filter(c => !extraCatchCriteria.some(ec => ec.code === c.code))
+                            .filter(c => c.code !== 'Catch9' && !extraCatchCriteria.some(ec => ec.code === c.code))
                             .map(catchItem => (
                               <div
                                 key={catchItem.id}
