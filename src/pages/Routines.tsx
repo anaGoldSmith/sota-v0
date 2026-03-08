@@ -119,6 +119,13 @@ const Routines = () => {
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => navigate(`/routine-calculator?view=${routine.id}`)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => navigate(`/routine-calculator?edit=${routine.id}`)}
                       >
                         <Pencil className="h-4 w-4" />
