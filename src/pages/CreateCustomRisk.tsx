@@ -1920,7 +1920,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       e.specificationType === 'pre-acrobatic' && 
       e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'dive leap'
     ) || (throwRotationSpec?.type === 'pre-acrobatic' && 
-      throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap');
+      throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap')
+    || (extraThrowRotationSpec?.type === 'pre-acrobatic' && 
+      extraThrowRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap');
     if (hasDiveLeap) return 'ok';
     
     const hasAxisChange = rotationEntries.some(e => e.type === 'axis');
