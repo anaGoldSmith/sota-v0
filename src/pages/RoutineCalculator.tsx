@@ -627,11 +627,11 @@ const RoutineCalculator = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [routineLoaded, setRoutineLoaded] = useState(false);
   
-  // Load existing routine when editing
+  // Load existing routine when editing or viewing
   useEffect(() => {
-    if (editingRoutineId && !routineLoaded) {
+    if (loadRoutineId && !routineLoaded) {
       const loadRoutine = async () => {
-        const { data, error } = await (supabase.from('routines' as any).select('*').eq('id', editingRoutineId).single() as any);
+        const { data, error } = await (supabase.from('routines' as any).select('*').eq('id', loadRoutineId).single() as any);
         if (error) {
           toast({ title: "Error loading routine", description: error.message, variant: "destructive" });
           return;
@@ -646,7 +646,7 @@ const RoutineCalculator = () => {
       };
       loadRoutine();
     }
-  }, [editingRoutineId, routineLoaded]);
+  }, [loadRoutineId, routineLoaded]);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDBDASuccessDialog, setShowDBDASuccessDialog] = useState(false);
   const [showDBDAValidationDialog, setShowDBDAValidationDialog] = useState(false);
