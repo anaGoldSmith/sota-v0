@@ -90,6 +90,21 @@ interface DBForRisk {
   turn_degrees: string | null;
   symbol_image: string | null;
 }
+
+// Context for passing sortable drag listeners to drag handles
+const SortableListenersContext = React.createContext<Record<string, any> | undefined>(undefined);
+const useSortableListeners = () => React.useContext(SortableListenersContext);
+
+// Drag handle that consumes listeners from SortableItemWrapper context
+const SortableDragHandle = ({ className, children }: { className?: string; children: React.ReactNode }) => {
+  const listeners = useSortableListeners();
+  return (
+    <div className={className} {...(listeners || {})}>
+      {children}
+    </div>
+  );
+};
+
 // Generic Sortable Wrapper for any content
 const SortableItemWrapper = ({ id, children }: { id: string; children: React.ReactNode }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
