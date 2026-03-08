@@ -1715,14 +1715,7 @@ const RoutineCalculator = () => {
             <ArrowLeft className="h-6 w-6" />
           </Button>
           <h1 className="text-2xl font-bold">{isViewMode ? 'View Routine' : editingRoutineId ? 'Edit Routine' : 'Routine Calculator'}</h1>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowRulesDialog(true)}
-            title="Routine Rules"
-          >
-            <BookOpen className="h-6 w-6" />
-          </Button>
+          <div className="w-10" /> {/* Spacer for alignment */}
         </div>
       </header>
 
@@ -1932,7 +1925,12 @@ const RoutineCalculator = () => {
             <Card className="p-6">
               <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold">Routine Elements</h2>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowRulesDialog(true)} title="Routine Rules">
+                      <BookOpen className="h-5 w-5" />
+                    </Button>
+                    <h2 className="text-xl font-semibold">Routine Elements</h2>
+                  </div>
                   <div className="flex items-center gap-4">
                     <div className="text-sm space-y-1">
                       <div className="flex items-center gap-3">
