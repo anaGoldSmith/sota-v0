@@ -2369,7 +2369,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
             </div>
             
             {/* Section Content */}
-            <div className="border-x border-b border-border rounded-b-lg bg-background">
+            <div className="border-x border-b border-border rounded-b-lg bg-background overflow-visible">
               {!selectedThrow && !throwDuringDB ? (
                 <div className="p-4" ref={throwDropdownRef}>
                   <Button 
@@ -3166,7 +3166,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
             </div>
             
             {/* Section Content */}
-            <div className="border-x border-b border-border rounded-b-lg bg-background">
+            <div className="border-x border-b border-border rounded-b-lg bg-background overflow-visible">
               {!selectedCatch && !catchDuringDB ? (
                 <div className="p-4" ref={catchDropdownRef}>
                   <Button 
