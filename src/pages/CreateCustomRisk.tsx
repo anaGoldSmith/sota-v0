@@ -112,9 +112,10 @@ interface SortableExtraRowProps {
   displayValue: string | number;
   onRemove: () => void;
   notesSymbolMap: Record<string, string>;
+  children?: React.ReactNode;
 }
 
-const SortableExtraRow = ({ id, item, displayValue, onRemove, notesSymbolMap }: SortableExtraRowProps) => {
+const SortableExtraRow = ({ id, item, displayValue, onRemove, notesSymbolMap, children }: SortableExtraRowProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   
   const style = {
@@ -139,6 +140,7 @@ const SortableExtraRow = ({ id, item, displayValue, onRemove, notesSymbolMap }: 
         <span className="font-medium text-foreground text-sm">
           <NotesWithSymbols notes={item.name} symbolMap={notesSymbolMap} />
         </span>
+        {children}
       </div>
       <div className="w-20 py-4 px-2 text-center border-l border-border relative">
         <p className="font-semibold text-primary">{displayValue}</p>
