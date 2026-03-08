@@ -2607,15 +2607,15 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                             <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
                                           );
                                         })()}
-                                        {isDBType && throwDuringDB.db.symbol_image ? (
+                                        {dbData?.symbol_image ? (
                                           <img 
-                                            src={throwDuringDB.db.symbol_image.startsWith('http') 
-                                              ? throwDuringDB.db.symbol_image 
-                                              : supabase.storage.from('jump-symbols').getPublicUrl(throwDuringDB.db.symbol_image).data.publicUrl
+                                            src={dbData.symbol_image.startsWith('http') 
+                                              ? dbData.symbol_image 
+                                              : supabase.storage.from('jump-symbols').getPublicUrl(dbData.symbol_image).data.publicUrl
                                             } 
-                                            alt={throwDuringDB.db.name || 'Element'} 
+                                            alt={dbData.name || 'Element'} 
                                             className="h-8 w-8 object-contain -mt-1" 
-                                            onError={e => e.currentTarget.style.display = 'none'} 
+                                            onError={e => e.currentTarget.style.display = 'none'}
                                           />
                                         ) : isPreAcrobatic ? (
                                           <div className="h-8 w-8 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium -mt-1">
