@@ -921,7 +921,7 @@ const CreateCustomRisk = () => {
     }, 0);
     
     // Thr6 (throw during rotation) adds 1 rotation
-    if (selectedThrow?.code === 'Thr6' || (selectedThrow?.code === 'Thr2' && thr2HasThr6)) total += 1;
+    if (selectedThrow?.code === 'Thr6') total += 1;
     
     // Catch8 (catch during rotation) adds 1 rotation
     if (selectedCatch?.code === 'Catch8') total += 1;
@@ -931,11 +931,6 @@ const CreateCustomRisk = () => {
     
     // Catch during DB always adds 1 rotation (the catch itself involves a rotation)
     if (catchDuringDB) total += 1;
-    
-    // Extra catch combos: catch during DB adds 1 rotation
-    if (catchHasCatchDuringDB && extraCatchDuringDBData) total += 1;
-    // Extra catch combos: Catch8 adds 1 rotation
-    if (catchHasCatch8) total += 1;
     
     return total;
   };
