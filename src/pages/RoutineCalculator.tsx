@@ -1066,6 +1066,10 @@ const RoutineCalculator = () => {
 
   const getSymbolUrl = (symbolImage: string | null, bucketName: string) => {
     if (!symbolImage) return null;
+    // If already a full URL, return as-is
+    if (symbolImage.startsWith('http://') || symbolImage.startsWith('https://')) {
+      return symbolImage;
+    }
     const { data: { publicUrl } } = supabase.storage
       .from(bucketName)
       .getPublicUrl(symbolImage);
