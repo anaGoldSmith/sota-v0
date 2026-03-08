@@ -820,7 +820,7 @@ const CreateCustomRisk = () => {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDiveLeapWarning, setShowDiveLeapWarning] = useState(false);
   const [showDiveLeapPrompt, setShowDiveLeapPrompt] = useState(false);
-  const [pendingDiveLeapContext, setPendingDiveLeapContext] = useState<{ source: 'throw' | 'rotation'; entryId?: string; element: PreAcrobaticElement } | null>(null);
+  const [pendingDiveLeapContext, setPendingDiveLeapContext] = useState<{ source: 'throw' | 'rotation' | 'extra-throw'; entryId?: string; element: PreAcrobaticElement } | null>(null);
   const [savedRiskData, setSavedRiskData] = useState<any>(null);
   const [showAxisWarningDialog, setShowAxisWarningDialog] = useState(false);
 
