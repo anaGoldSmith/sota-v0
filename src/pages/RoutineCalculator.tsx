@@ -1766,14 +1766,14 @@ const RoutineCalculator = () => {
 
             <div className="space-y-2">
               <Label htmlFor="rulebook">Rulebook</Label>
-              <Select disabled={isViewMode}>
+              <Select defaultValue="fig-cop-2025-2028" disabled={isViewMode}>
                 <SelectTrigger id="rulebook">
                   <SelectValue placeholder="Select rulebook" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="fig-cop-2025-2028">FIG CoP 2025-2028</SelectItem>
-                  <SelectItem value="sky-grace">Sky Grace</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="sky-grace" disabled className="opacity-40 cursor-not-allowed">Sky Grace (coming soon)</SelectItem>
+                  <SelectItem value="other" disabled className="opacity-40 cursor-not-allowed">Other (coming soon)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
