@@ -90,6 +90,51 @@ interface DBForRisk {
   symbol_image: string | null;
 }
 
+// Sortable Extra Throw/Catch Row Component
+interface SortableExtraRowProps {
+  id: string;
+  item: DynamicThrow | DynamicCatch;
+  displayValue: string | number;
+  onRemove: () => void;
+  notesSymbolMap: Record<string, string>;
+}
+
+const SortableExtraRow = ({ id, item, displayValue, onRemove, notesSymbolMap }: SortableExtraRowProps) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center border-b border-border last:border-b-0">
+      <div {...attributes} {...listeners} className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <div className="w-12 flex justify-center py-4">
+        {item.symbol_image ? (
+          <img src={item.symbol_image} alt={item.name} className="h-8 w-auto max-w-[40px] object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+        ) : (
+          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
+        )}
+      </div>
+      <div className="flex-1 py-4 px-4">
+        <span className="font-medium text-foreground text-sm">
+          <NotesWithSymbols notes={item.name} symbolMap={notesSymbolMap} />
+        </span>
+      </div>
+      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
+        <p className="font-semibold text-primary">{displayValue}</p>
+        <Button variant="ghost" size="icon" onClick={onRemove} className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1">
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 // Sortable Criteria Row Component for throw/catch criteria
 interface SortableCriteriaRowProps {
   item: CriteriaItem;
