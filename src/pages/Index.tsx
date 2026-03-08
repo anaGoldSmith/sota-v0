@@ -108,11 +108,11 @@ const Index = () => {
           {/* Events Column */}
           <div>
             <h2 className="text-xl font-semibold mb-4 text-foreground">Events</h2>
-            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+            <div className="space-y-4">
               {events.length === 0 ? (
                 <p className="text-muted-foreground text-sm">No events available</p>
               ) : (
-                events.map((event) => (
+                events.slice(0, 2).map((event) => (
                   <div key={event.id} className="p-6 border-2 border-primary/30 rounded-xl hover:bg-accent transition-colors">
                     <h3 className="text-lg font-semibold mb-2 text-foreground">{event.title}</h3>
                     {event.dates && (
@@ -137,6 +137,15 @@ const Index = () => {
                     )}
                   </div>
                 ))
+              )}
+              {events.length > 2 && (
+                <Button
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={() => navigate("/events")}
+                >
+                  View All Events
+                </Button>
               )}
             </div>
           </div>
