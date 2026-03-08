@@ -2757,128 +2757,129 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                     </>
                   );
                 })()
-              ) : (
+               ) : (
                 <>
-                  {/* Selected Throw Row */}
-                  <div className="flex items-center border-b border-border">
-                    <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
-                      <GripVertical className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div className="w-12 flex justify-center py-4">
-                      {selectedThrow?.symbol_image ? (
-                        <img 
-                          src={selectedThrow.symbol_image} 
-                          alt={selectedThrow.name} 
-                          className="h-8 w-auto max-w-[40px] object-contain" 
-                          onError={e => e.currentTarget.style.display = 'none'} 
-                        />
-                      ) : (
-                        <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
-                      )}
-                    </div>
-                    <div className="flex-1 py-4 px-4">
-                      <span className="font-medium text-foreground text-sm">
-                        <NotesWithSymbols notes={selectedThrow?.name || ''} symbolMap={notesSymbolMap} />
-                      </span>
-                      
-                      {/* Rotation Type Specification for Thr6 */}
-                      {selectedThrow?.code === 'Thr6' && (
-                        <div className="relative" ref={throwRotationSpecRef}>
-                          {throwRotationSpec ? (
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-sm text-muted-foreground italic">
-                                {throwRotationSpec.type === 'vertical' 
-                                  ? `Vertical ${(throwRotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (throwRotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${throwRotationSpec.verticalRotation?.name}`
-                                  : `Pre-acrobatic: ${throwRotationSpec.preAcrobaticElement?.name}`
-                                }
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 px-2 text-xs text-primary hover:bg-primary/10"
-                                onClick={() => setShowThrowRotationSpecDropdown(true)}
-                              >
-                                Change Rotation
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
-                              onClick={() => setShowThrowRotationSpecDropdown(true)}
-                            >
-                              <Plus className="h-3 w-3 mr-1" />
-                              Specify Rotation Type
-                            </Button>
-                          )}
-                          
-                          {/* Backdrop for closing dropdown */}
-                          {showThrowRotationSpecDropdown && (
-                            <div className="fixed inset-0 z-[99]" onClick={() => setShowThrowRotationSpecDropdown(false)} />
-                          )}
-                          
-                          {/* Dropdown for rotation type selection */}
-                          {showThrowRotationSpecDropdown && (
-                            <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-[100]">
-                              <div className="p-2 border-b border-border flex items-center justify-between">
-                                <span className="text-sm font-medium text-foreground">Select Rotation Type</span>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                                  onClick={() => setShowThrowRotationSpecDropdown(false)}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                              <div className="p-2 space-y-1">
-                                <div 
-                                  className={`p-3 rounded hover:bg-muted cursor-pointer ${throwRotationSpec?.type === 'pre-acrobatic' ? 'bg-primary/10' : ''}`}
-                                  onClick={() => {
-                                    setShowThrowRotationSpecDropdown(false);
-                                    setShowThrowPreAcrobaticDialog(true);
-                                  }}
-                                >
-                                  <span className="text-sm text-foreground">Pre-acrobatic Elements</span>
-                                </div>
-                                <div 
-                                  className={`p-3 rounded hover:bg-muted cursor-pointer ${throwRotationSpec?.type === 'vertical' ? 'bg-primary/10' : ''}`}
-                                  onClick={() => {
-                                    setShowThrowRotationSpecDropdown(false);
-                                    setShowThrowVerticalDialog(true);
-                                  }}
-                                >
-                                  <span className="text-sm text-foreground">Vertical Rotations</span>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                      <p className="font-semibold text-primary">{selectedThrow?.code === 'Thr6' ? '0.1' : (selectedThrow?.value ?? 0)}</p>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => {
-                          setSelectedThrow(null);
-                          setThrowCriteria([]);
-                          setThrowRotationSpec(null);
-                          setExtraThrow(null);
-                        }}
-                        className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Extra Throw Criteria */}
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleThrowCriteriaDragEnd}>
                     <SortableContext items={getThrowUnifiedOrder()} strategy={verticalListSortingStrategy}>
                       {getThrowUnifiedOrder().map(id => {
+                        if (id === 'primary-throw' && selectedThrow) {
+                          return (
+                            <SortableItemWrapper key="primary-throw" id="primary-throw">
+                              <div className="flex items-center border-b border-border">
+                                <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                                <div className="w-12 flex justify-center py-4">
+                                  {selectedThrow?.symbol_image ? (
+                                    <img 
+                                      src={selectedThrow.symbol_image} 
+                                      alt={selectedThrow.name} 
+                                      className="h-8 w-auto max-w-[40px] object-contain" 
+                                      onError={e => e.currentTarget.style.display = 'none'} 
+                                    />
+                                  ) : (
+                                    <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
+                                  )}
+                                </div>
+                                <div className="flex-1 py-4 px-4">
+                                  <span className="font-medium text-foreground text-sm">
+                                    <NotesWithSymbols notes={selectedThrow?.name || ''} symbolMap={notesSymbolMap} />
+                                  </span>
+                                  
+                                  {/* Rotation Type Specification for Thr6 */}
+                                  {selectedThrow?.code === 'Thr6' && (
+                                    <div className="relative" ref={throwRotationSpecRef}>
+                                      {throwRotationSpec ? (
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <span className="text-sm text-muted-foreground italic">
+                                            {throwRotationSpec.type === 'vertical' 
+                                              ? `Vertical ${(throwRotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (throwRotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${throwRotationSpec.verticalRotation?.name}`
+                                              : `Pre-acrobatic: ${throwRotationSpec.preAcrobaticElement?.name}`
+                                            }
+                                          </span>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 px-2 text-xs text-primary hover:bg-primary/10"
+                                            onClick={() => setShowThrowRotationSpecDropdown(true)}
+                                          >
+                                            Change Rotation
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                                          onClick={() => setShowThrowRotationSpecDropdown(true)}
+                                        >
+                                          <Plus className="h-3 w-3 mr-1" />
+                                          Specify Rotation Type
+                                        </Button>
+                                      )}
+                                      
+                                      {showThrowRotationSpecDropdown && (
+                                        <div className="fixed inset-0 z-[99]" onClick={() => setShowThrowRotationSpecDropdown(false)} />
+                                      )}
+                                      
+                                      {showThrowRotationSpecDropdown && (
+                                        <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-[100]">
+                                          <div className="p-2 border-b border-border flex items-center justify-between">
+                                            <span className="text-sm font-medium text-foreground">Select Rotation Type</span>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                              onClick={() => setShowThrowRotationSpecDropdown(false)}
+                                            >
+                                              <X className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                          <div className="p-2 space-y-1">
+                                            <div 
+                                              className={`p-3 rounded hover:bg-muted cursor-pointer ${throwRotationSpec?.type === 'pre-acrobatic' ? 'bg-primary/10' : ''}`}
+                                              onClick={() => {
+                                                setShowThrowRotationSpecDropdown(false);
+                                                setShowThrowPreAcrobaticDialog(true);
+                                              }}
+                                            >
+                                              <span className="text-sm text-foreground">Pre-acrobatic Elements</span>
+                                            </div>
+                                            <div 
+                                              className={`p-3 rounded hover:bg-muted cursor-pointer ${throwRotationSpec?.type === 'vertical' ? 'bg-primary/10' : ''}`}
+                                              onClick={() => {
+                                                setShowThrowRotationSpecDropdown(false);
+                                                setShowThrowVerticalDialog(true);
+                                              }}
+                                            >
+                                              <span className="text-sm text-foreground">Vertical Rotations</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="w-20 py-4 px-2 text-center border-l border-border relative">
+                                  <p className="font-semibold text-primary">{selectedThrow?.code === 'Thr6' ? '0.1' : (selectedThrow?.value ?? 0)}</p>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    onClick={() => {
+                                      setSelectedThrow(null);
+                                      setThrowCriteria([]);
+                                      setThrowRotationSpec(null);
+                                      setExtraThrow(null);
+                                    }}
+                                    className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </SortableItemWrapper>
+                          );
+                        }
                         if (id === 'extra-throw' && extraThrow) {
                           return (
                             <SortableExtraRow
