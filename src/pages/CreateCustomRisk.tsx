@@ -2630,7 +2630,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                               {[...getCompatibleExtraThrows, ...getCompatiblePrimaryThrows].map(throwItem => {
                                 const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
                                 return (
-                                  <div key={throwItem.id} className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" onClick={() => { setExtraThrow(throwItem); setShowExtraThrowDropdown(false); }}>
+                                  <div key={throwItem.id} className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" onClick={() => { setExtraThrow(throwItem); setShowExtraThrowDropdown(false); if (throwItem.code === 'Thr2') { const cr2h = generalCriteria.find(gc => gc.code === 'Cr2H'); if (cr2h && !selectedThrowCriteria.includes('Cr2H')) { const newCriteria: CriteriaItem = { id: `throw_${cr2h.code}`, name: cr2h.name, symbol: cr2h.symbol_image || undefined, value: 0.1, code: cr2h.code, note: 'Without Hands: extra criteria added to throw after rolling the hoop on the floor' }; setThrowCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]); } } }}>
                                     <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
                                       <img src={symbolUrl} alt={throwItem.name} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
                                     </div>
