@@ -2781,9 +2781,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   
                   {/* Extra Throw Row */}
                   {extraThrow && (
-                    <div className="flex items-center border-b border-border bg-muted/30">
-                      <div className="w-8 flex justify-center py-4">
-                        <div className="h-4 w-4" />
+                    <div className="flex items-center border-b border-border">
+                      <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                        <GripVertical className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <div className="w-12 flex justify-center py-4">
                         {extraThrow.symbol_image ? (
@@ -2798,12 +2798,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         )}
                       </div>
                       <div className="flex-1 py-4 px-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">+</span>
-                          <span className="font-medium text-foreground text-sm">
-                            <NotesWithSymbols notes={extraThrow.name} symbolMap={notesSymbolMap} />
-                          </span>
-                        </div>
+                        <span className="font-medium text-foreground text-sm">
+                          <NotesWithSymbols notes={extraThrow.name} symbolMap={notesSymbolMap} />
+                        </span>
                       </div>
                       <div className="w-20 py-4 px-2 text-center border-l border-border relative">
                         <p className="font-semibold text-primary">{extraThrow.code === 'Thr6' ? '0.1' : (extraThrow.value ?? 0)}</p>
