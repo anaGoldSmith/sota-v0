@@ -662,6 +662,7 @@ const StandardRiskDetail = () => {
       <div className="w-20 py-4 px-2 text-center border-l border-border">
         <p className="font-semibold text-primary">{component.value ?? 0}</p>
       </div>
+      <div className="w-10" />
     </div>
   );
 
@@ -675,6 +676,7 @@ const StandardRiskDetail = () => {
         <div className="w-20 py-3 px-2 text-center border-l border-primary/30">
           <span className="text-sm font-semibold text-muted-foreground">Value</span>
         </div>
+        <div className="w-10" />
       </div>
       
       {/* Section Components */}
@@ -699,6 +701,7 @@ const StandardRiskDetail = () => {
             <div className="w-20 py-2 px-2 text-center border-l border-border">
               <p className="font-bold text-primary">{sectionTotal.toFixed(1)}</p>
             </div>
+            <div className="w-10" />
           </div>
         )}
       </div>
@@ -823,6 +826,7 @@ const StandardRiskDetail = () => {
                   <div className="w-20 py-3 px-2 text-center border-l border-primary/30">
                     <span className="text-sm font-semibold text-muted-foreground">Value</span>
                   </div>
+                  <div className="w-10" />
                 </div>
                 
                 {/* Section Components */}
@@ -843,7 +847,7 @@ const StandardRiskDetail = () => {
                       key={criteria.id} 
                       className="flex items-center border-b border-border"
                     >
-                      <div className="w-12 flex justify-center py-4">
+                      <div className="w-16 flex justify-center py-4">
                         {criteria.symbol_image ? (
                           <img 
                             src={criteria.symbol_image} 
@@ -882,7 +886,7 @@ const StandardRiskDetail = () => {
                       key={criteria.id} 
                       className={`flex items-center ${index !== extraThrowCriteria.length - 1 ? 'border-b border-border' : ''}`}
                     >
-                      <div className="w-12 flex justify-center py-4">
+                      <div className="w-16 flex justify-center py-4">
                         {criteria.symbol_image ? (
                           <img 
                             src={criteria.symbol_image} 
@@ -976,6 +980,7 @@ const StandardRiskDetail = () => {
                       <div className="w-20 py-2 px-2 text-center border-l border-border">
                         <p className="font-bold text-primary">{throwTotal.toFixed(1)}</p>
                       </div>
+                      <div className="w-10" />
                     </div>
                   )}
                 </div>
@@ -1045,6 +1050,7 @@ const StandardRiskDetail = () => {
                   <div className="w-20 py-3 px-2 text-center border-l border-primary/30">
                     <span className="text-sm font-semibold text-muted-foreground">Value</span>
                   </div>
+                  <div className="w-10" />
                 </div>
                 
                 {/* Section Components */}
@@ -1065,7 +1071,7 @@ const StandardRiskDetail = () => {
                       key={criteria.id} 
                       className="flex items-center border-b border-border"
                     >
-                      <div className="w-12 flex justify-center py-4">
+                      <div className="w-16 flex justify-center py-4">
                         {criteria.symbol_image ? (
                           <img 
                             src={criteria.symbol_image} 
@@ -1104,7 +1110,7 @@ const StandardRiskDetail = () => {
                       key={criteria.id} 
                       className={`flex items-center ${index !== extraCatchCriteria.length - 1 ? 'border-b border-border' : ''}`}
                     >
-                      <div className="w-12 flex justify-center py-4">
+                      <div className="w-16 flex justify-center py-4">
                         {criteria.symbol_image ? (
                           <img 
                             src={criteria.symbol_image} 
@@ -1230,6 +1236,7 @@ const StandardRiskDetail = () => {
                       <div className="w-20 py-2 px-2 text-center border-l border-border">
                         <p className="font-bold text-primary">{catchTotal.toFixed(1)}</p>
                       </div>
+                      <div className="w-10" />
                     </div>
                   )}
                 </div>
