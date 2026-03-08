@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Plus, CheckCircle, X, ChevronDown, ChevronRight, Info, GripVertical, AlertCircle } from "lucide-react";
+import { ArrowLeft, Plus, CheckCircle, X, ChevronDown, ChevronRight, Info, GripVertical, AlertCircle, Edit2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -2574,6 +2575,10 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   const isDBType = 'db' in throwDuringDB;
                   const isPreAcrobatic = 'preAcrobaticElement' in throwDuringDB;
                   const isVertical = 'verticalRotation' in throwDuringDB;
+                  // Extract DB data for type-safe access inside nested callbacks
+                  const dbData = isDBType ? (throwDuringDB as any).db as { id: string; code: string; name: string | null; description: string; value: number; symbol_image: string | null } : null;
+                  const dbType = isDBType ? (throwDuringDB as any).dbType as 'jumps' | 'rotations' : null;
+                  const rotationCount = isDBType ? (throwDuringDB as any).rotationCount as number | undefined : undefined;
                   
                   return (
                     <>
@@ -2603,15 +2608,15 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                             <div className="h-6 w-6 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
                                           );
                                         })()}
-                                        {isDBType && throwDuringDB.db.symbol_image ? (
+                                        {dbData?.symbol_image ? (
                                           <img 
-                                            src={throwDuringDB.db.symbol_image.startsWith('http') 
-                                              ? throwDuringDB.db.symbol_image 
-                                              : supabase.storage.from('jump-symbols').getPublicUrl(throwDuringDB.db.symbol_image).data.publicUrl
+                                            src={dbData.symbol_image.startsWith('http') 
+                                              ? dbData.symbol_image 
+                                              : supabase.storage.from('jump-symbols').getPublicUrl(dbData.symbol_image).data.publicUrl
                                             } 
-                                            alt={throwDuringDB.db.name || 'Element'} 
+                                            alt={dbData.name || 'Element'} 
                                             className="h-8 w-8 object-contain -mt-1" 
-                                            onError={e => e.currentTarget.style.display = 'none'} 
+                                            onError={e => e.currentTarget.style.display = 'none'}
                                           />
                                         ) : isPreAcrobatic ? (
                                           <div className="h-8 w-8 bg-primary/10 rounded flex items-center justify-center text-xs text-primary font-medium -mt-1">
@@ -2646,17 +2651,17 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                         </Button>
                                       </div>
                                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                        {isDBType && (
+                                        {dbData && (
                                           <>
                                             <Badge variant="outline" className="text-xs bg-primary/5 border-primary/20 text-primary">
-                                              {throwDuringDB.dbType === 'jumps' ? 'JUMP' : 'ROTATION'}
+                                              {dbType === 'jumps' ? 'JUMP' : 'ROTATION'}
                                             </Badge>
                                             <span className="text-xs text-muted-foreground">
                                               {throwInfo?.name}
                                             </span>
-                                            {throwDuringDB.dbType === 'rotations' && throwDuringDB.rotationCount && throwDuringDB.rotationCount > 1 && (
+                                            {dbType === 'rotations' && rotationCount && rotationCount > 1 && (
                                               <Badge variant="secondary" className="text-xs">
-                                                ×{throwDuringDB.rotationCount}
+                                                ×{rotationCount}
                                               </Badge>
                                             )}
                                           </>
@@ -2684,7 +2689,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                       </div>
                                     </div>
                                     <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                                      {isDBType && throwDuringDB.rotationCount && throwDuringDB.rotationCount > 1 ? (
+                                      {dbData && rotationCount && rotationCount > 1 ? (
                                         <Popover>
                                           <PopoverTrigger asChild>
                                             <button className="font-semibold text-primary hover:underline cursor-pointer">
