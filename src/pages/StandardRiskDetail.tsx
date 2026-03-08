@@ -843,16 +843,6 @@ const StandardRiskDetail = () => {
                       key={criteria.id} 
                       className="flex items-center border-b border-border"
                     >
-                      <div className="w-10 flex justify-center py-4">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveGeneralThrowCriteria(criteria.id)}
-                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
                       <div className="w-12 flex justify-center py-4">
                         {criteria.symbol_image ? (
                           <img 
@@ -873,6 +863,16 @@ const StandardRiskDetail = () => {
                       <div className="w-20 py-4 px-2 text-center border-l border-border">
                         <p className="font-semibold text-primary">{criteria.value}</p>
                       </div>
+                      <div className="w-10 flex justify-center py-4">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveGeneralThrowCriteria(criteria.id)}
+                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                   
@@ -882,16 +882,6 @@ const StandardRiskDetail = () => {
                       key={criteria.id} 
                       className={`flex items-center ${index !== extraThrowCriteria.length - 1 ? 'border-b border-border' : ''}`}
                     >
-                      <div className="w-10 flex justify-center py-4">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveThrowCriteria(criteria.id)}
-                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
                       <div className="w-12 flex justify-center py-4">
                         {criteria.symbol_image ? (
                           <img 
@@ -913,6 +903,16 @@ const StandardRiskDetail = () => {
                       </div>
                       <div className="w-20 py-4 px-2 text-center border-l border-border">
                         <p className="font-semibold text-primary">{criteria.value}</p>
+                      </div>
+                      <div className="w-10 flex justify-center py-4">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveThrowCriteria(criteria.id)}
+                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -1065,16 +1065,6 @@ const StandardRiskDetail = () => {
                       key={criteria.id} 
                       className="flex items-center border-b border-border"
                     >
-                      <div className="w-10 flex justify-center py-4">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveGeneralCatchCriteria(criteria.id)}
-                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
                       <div className="w-12 flex justify-center py-4">
                         {criteria.symbol_image ? (
                           <img 
@@ -1095,6 +1085,16 @@ const StandardRiskDetail = () => {
                       <div className="w-20 py-4 px-2 text-center border-l border-border">
                         <p className="font-semibold text-primary">{criteria.value}</p>
                       </div>
+                      <div className="w-10 flex justify-center py-4">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveGeneralCatchCriteria(criteria.id)}
+                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                   
@@ -1104,16 +1104,6 @@ const StandardRiskDetail = () => {
                       key={criteria.id} 
                       className={`flex items-center ${index !== extraCatchCriteria.length - 1 ? 'border-b border-border' : ''}`}
                     >
-                      <div className="w-10 flex justify-center py-4">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveCatchCriteria(criteria.id)}
-                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
                       <div className="w-12 flex justify-center py-4">
                         {criteria.symbol_image ? (
                           <img 
@@ -1151,6 +1141,16 @@ const StandardRiskDetail = () => {
                       </div>
                       <div className="w-20 py-4 px-2 text-center border-l border-border">
                         <p className="font-semibold text-primary">{criteria.value}</p>
+                      </div>
+                      <div className="w-10 flex justify-center py-4">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveCatchCriteria(criteria.id)}
+                          className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   ))}
