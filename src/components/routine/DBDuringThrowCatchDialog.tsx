@@ -56,7 +56,7 @@ export const DBDuringThrowCatchDialog = ({
   const [selectedRotationId, setSelectedRotationId] = useState<string | null>(null);
 
   // Fetch all DBs for risks
-  const { data: dbsForRisks = [], isLoading } = useQuery({
+  const { data: rawDbsForRisks = [], isLoading: isLoadingDbs } = useQuery({
     queryKey: ["dbs-for-risks"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -68,6 +68,47 @@ export const DBDuringThrowCatchDialog = ({
     },
     enabled: open,
   });
+
+  // Fetch symbol images from jumps and rotations tables to fill missing symbols
+  const { data: jumpSymbols = [] } = useQuery({
+    queryKey: ["jump-symbols-map"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("jumps")
+        .select("code, symbol_image")
+        .not("symbol_image", "is", null);
+      if (error) throw error;
+      return data as { code: string; symbol_image: string | null }[];
+    },
+    enabled: open,
+  });
+
+  const { data: rotationSymbols = [] } = useQuery({
+    queryKey: ["rotation-symbols-map"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rotations")
+        .select("code, symbol_image")
+        .not("symbol_image", "is", null);
+      if (error) throw error;
+      return data as { code: string; symbol_image: string | null }[];
+    },
+    enabled: open,
+  });
+
+  // Merge symbol images from jumps/rotations into dbs_for_risks entries
+  const dbsForRisks = useMemo(() => {
+    const symbolMap = new Map<string, string>();
+    jumpSymbols.forEach(j => { if (j.symbol_image) symbolMap.set(j.code, j.symbol_image); });
+    rotationSymbols.forEach(r => { if (r.symbol_image) symbolMap.set(r.code, r.symbol_image); });
+    
+    return rawDbsForRisks.map(db => ({
+      ...db,
+      symbol_image: db.symbol_image || symbolMap.get(db.code) || null,
+    }));
+  }, [rawDbsForRisks, jumpSymbols, rotationSymbols]);
+
+  const isLoading = isLoadingDbs;
 
   // Filter by db_group
   const jumpsDBs = useMemo(() => 
