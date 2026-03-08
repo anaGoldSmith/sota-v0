@@ -3975,21 +3975,42 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             Add extra catch
                           </Button>
                           {showExtraCatchDropdown && (
-                            <div className="absolute left-0 top-full mt-1 w-72 bg-background border border-border rounded-lg shadow-xl z-[100] max-h-48 overflow-y-auto">
-                              {filteredCatches.filter(c => c.code !== 'Catch1' && c.code !== selectedCatch?.code && !extraCatches.some(ec => ec.code === c.code) && !(c.code === 'Catch8' && catchHasCatch8)).map(catchItem => (
-                                <div key={catchItem.id} className="flex items-center gap-2 p-2 hover:bg-muted cursor-pointer border-b border-border/50 last:border-b-0" onClick={() => {
-                                  if (catchItem.code === 'Catch8') {
-                                    handleAddExtraCatch8();
-                                    setShowExtraCatchDropdown(false);
-                                  } else {
-                                    handleSelectExtraCatch(catchItem);
-                                  }
-                                }}>
-                                  {catchItem.symbol_image && <img src={catchItem.symbol_image} alt={catchItem.name} className="h-5 w-5 object-contain" onError={e => e.currentTarget.style.display = 'none'} />}
-                                  <span className="text-sm text-foreground flex-1">{catchItem.name}</span>
-                                  <span className="text-xs text-primary font-semibold">{catchItem.value ?? 0}</span>
-                                </div>
-                              ))}
+                            <div className="absolute left-0 top-full mt-2 w-full min-w-[320px] bg-background border border-border rounded-lg shadow-lg z-[100] max-h-64 overflow-y-auto">
+                              {filteredCatches.filter(c => c.code !== 'Catch1' && c.code !== selectedCatch?.code && !extraCatches.some(ec => ec.code === c.code) && !(c.code === 'Catch8' && catchHasCatch8)).map(catchItem => {
+                                const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
+                                return (
+                                  <div key={catchItem.id} className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" onClick={() => {
+                                    if (catchItem.code === 'Catch8') {
+                                      handleAddExtraCatch8();
+                                      setShowExtraCatchDropdown(false);
+                                    } else {
+                                      handleSelectExtraCatch(catchItem);
+                                    }
+                                  }}>
+                                    <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
+                                      <img src={symbolUrl} alt={catchItem.name} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                                    </div>
+                                    <div className="flex-1 min-w-0 flex items-center gap-2">
+                                      <span className="text-foreground text-sm">{catchItem.name}</span>
+                                      {catchItem.notes && (
+                                        <TooltipProvider>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <Info className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-sm">
+                                              <NotesWithSymbols notes={catchItem.notes} symbolMap={notesSymbolMap} />
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      )}
+                                    </div>
+                                    <div className="w-12 text-right flex-shrink-0">
+                                      <span className="text-primary font-semibold">{catchItem.value ?? 0}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
