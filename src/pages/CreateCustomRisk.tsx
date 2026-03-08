@@ -4079,7 +4079,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         isFirstRotation={true}
       />
     </div>
-  );
+  ;
 };
 
 export default CreateCustomRisk;
