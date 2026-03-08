@@ -2709,6 +2709,126 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       ))}
                     </SortableContext>
                   </DndContext>
+                  
+                  {/* Extra Throw Row */}
+                  {extraThrow && (
+                    <div className="flex items-center border-b border-border bg-muted/30">
+                      <div className="w-8 flex justify-center py-4">
+                        <div className="h-4 w-4" />
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
+                        {extraThrow.symbol_image ? (
+                          <img 
+                            src={extraThrow.symbol_image} 
+                            alt={extraThrow.name} 
+                            className="h-8 w-auto max-w-[40px] object-contain" 
+                            onError={e => e.currentTarget.style.display = 'none'} 
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
+                        )}
+                      </div>
+                      <div className="flex-1 py-4 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">+</span>
+                          <span className="font-medium text-foreground text-sm">
+                            <NotesWithSymbols notes={extraThrow.name} symbolMap={notesSymbolMap} />
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
+                        <p className="font-semibold text-primary">{extraThrow.code === 'Thr6' ? '0.1' : (extraThrow.value ?? 0)}</p>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => setExtraThrow(null)} 
+                          className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Add Extra Throw Button */}
+                  {!extraThrow && (getCompatibleExtraThrows.length > 0 || getCompatiblePrimaryThrows.length > 0) && (
+                    <div className="relative p-3 border-t border-dashed border-border/50" ref={extraThrowDropdownRef}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-primary hover:bg-primary/10 text-xs"
+                        onClick={() => setShowExtraThrowDropdown(!showExtraThrowDropdown)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add Extra Throw
+                      </Button>
+                      
+                      {showExtraThrowDropdown && (
+                        <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                          <div className="p-2 border-b border-border">
+                            <span className="text-sm font-medium text-foreground">Compatible Throws</span>
+                          </div>
+                          {/* Show compatible extra throws (Thr6/Thr7) when primary is standard throw */}
+                          {getCompatibleExtraThrows.map(throwItem => {
+                            const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
+                            return (
+                              <div 
+                                key={throwItem.id} 
+                                className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                                onClick={() => {
+                                  setExtraThrow(throwItem);
+                                  setShowExtraThrowDropdown(false);
+                                }}
+                              >
+                                <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                                  <img src={symbolUrl} alt={throwItem.name} className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-foreground text-sm">
+                                    <NotesWithSymbols notes={throwItem.name} symbolMap={notesSymbolMap} />
+                                  </span>
+                                </div>
+                                <div className="w-10 text-right flex-shrink-0">
+                                  <span className="text-primary font-semibold">{throwItem.code === 'Thr6' ? '0.1' : (throwItem.value ?? 0)}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {/* Show compatible primary throws when Thr6/Thr7 is selected first */}
+                          {getCompatiblePrimaryThrows.map(throwItem => {
+                            const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
+                            return (
+                              <div 
+                                key={throwItem.id} 
+                                className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                                onClick={() => {
+                                  setExtraThrow(throwItem);
+                                  setShowExtraThrowDropdown(false);
+                                }}
+                              >
+                                <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                                  <img src={symbolUrl} alt={throwItem.name} className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-foreground text-sm">
+                                    <NotesWithSymbols notes={throwItem.name} symbolMap={notesSymbolMap} />
+                                  </span>
+                                </div>
+                                <div className="w-10 text-right flex-shrink-0">
+                                  <span className="text-primary font-semibold">{throwItem.value ?? 0}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {getCompatibleExtraThrows.length === 0 && getCompatiblePrimaryThrows.length === 0 && (
+                            <div className="p-4 text-center text-muted-foreground text-sm">
+                              No compatible throws available
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
             </div>
