@@ -848,9 +848,6 @@ const StandardRiskDetail = () => {
                       key={criteria.id} 
                       className="flex items-center border-b border-border"
                     >
-                      <div className="w-8 flex justify-center py-4">
-                        <GripVertical className="h-4 w-4 text-muted-foreground/40" />
-                      </div>
                       <div className="w-12 flex justify-center py-4">
                         {criteria.symbol_image ? (
                           <img 
