@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import { Menu, User, MapPin, Calendar, ExternalLink } from "lucide-react";
+import { User, MapPin, Calendar, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import heroImage from "@/assets/rhythmic-gymnastics-hero.jpg";
 
 interface Event {
   id: string;
@@ -26,6 +25,8 @@ const parseDateStart = (dates: string | null): Date | null => {
 const Index = () => {
   const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>([]);
+  const [heroImages, setHeroImages] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -44,17 +45,39 @@ const Index = () => {
         setEvents(sorted);
       }
     };
+
+    const loadHeroImages = async () => {
+      const { data, error } = await supabase.storage
+        .from("landing-page-images")
+        .list("", { limit: 20 });
+      if (!error && data && data.length > 0) {
+        const urls = data
+          .filter(f => f.name && !f.name.startsWith("."))
+          .map(f => supabase.storage.from("landing-page-images").getPublicUrl(f.name).data.publicUrl);
+        setHeroImages(urls);
+      }
+    };
+
     loadEvents();
+    loadHeroImages();
   }, []);
 
-  return <div className="min-h-screen bg-background">
+  // Cycle through images every 4 seconds
+  useEffect(() => {
+    if (heroImages.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentImageIndex(prev => (prev + 1) % heroImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [heroImages.length]);
+
+  return (
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border">
-        <Button variant="ghost" size="icon" className="rounded-full text-lg">
-          <Menu className="h-10 w-10" strokeWidth={2.5} />
-        </Button>
+        <div className="w-10" />
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-          Sport Space
+          RG Score
         </h1>
         <Button 
           variant="ghost" 
@@ -67,19 +90,38 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        {/* Available Sports Section */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-foreground">Available Sports</h2>
-          <div className="inline-block">
-            <Button variant="default" size="lg" className="rounded-full px-8 py-6 text-lg font-medium bg-primary hover:bg-primary/90">
-              Rhythmic Gymnastics
-            </Button>
-          </div>
-        </section>
-
-        {/* Hero Image Section */}
-        <section className="mb-8 rounded-xl overflow-hidden shadow-lg">
-          <img src={heroImage} alt="Rhythmic Gymnastics Performance" className="w-full h-[250px] object-cover" />
+        {/* Hero Image Carousel */}
+        <section className="mb-8 rounded-xl overflow-hidden shadow-lg relative">
+          {heroImages.length > 0 ? (
+            <div className="relative w-full h-[350px] md:h-[450px]">
+              {heroImages.map((url, index) => (
+                <img
+                  key={url}
+                  src={url}
+                  alt={`Rhythmic Gymnastics ${index + 1}`}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+                    index === currentImageIndex ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              ))}
+              {/* Dots indicator */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+                {heroImages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      index === currentImageIndex ? "bg-primary" : "bg-background/50"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="w-full h-[350px] md:h-[450px] bg-muted flex items-center justify-center text-muted-foreground">
+              Loading...
+            </div>
+          )}
         </section>
 
         {/* Two Column Layout: Tools and Events */}
@@ -151,6 +193,7 @@ const Index = () => {
           </div>
         </section>
       </main>
-    </div>;
+    </div>
+  );
 };
 export default Index;
