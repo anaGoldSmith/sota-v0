@@ -791,6 +791,18 @@ const CreateCustomRisk = () => {
   // Selected throw and catch
   const [selectedThrow, setSelectedThrow] = useState<DynamicThrow | null>(null);
   const [selectedCatch, setSelectedCatch] = useState<DynamicCatch | null>(null);
+  
+  // Extra throw/catch combo state
+  const [extraThrow, setExtraThrow] = useState<DynamicThrow | null>(null);
+  const [extraCatch, setExtraCatch] = useState<DynamicCatch | null>(null);
+  const [showExtraThrowDropdown, setShowExtraThrowDropdown] = useState(false);
+  const [showExtraCatchDropdown, setShowExtraCatchDropdown] = useState(false);
+  const extraThrowDropdownRef = useRef<HTMLDivElement>(null);
+  const extraCatchDropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Throw/catch combinations (compatibility matrices)
+  const [throwCombinations, setThrowCombinations] = useState<{ code: string; Thr6: string | null; Thr7: string | null }[]>([]);
+  const [catchCombinations, setCatchCombinations] = useState<{ code: string; Catch8: string | null; Catch9: string | null }[]>([]);
 
   // DB during throw/catch state
   const [showDBDuringThrowDialog, setShowDBDuringThrowDialog] = useState(false);
@@ -910,6 +922,7 @@ const CreateCustomRisk = () => {
   // Calculate total rotations for R level
   // - Thr6/Catch8 (throw/catch during rotation) each add 1 rotation
   // - Throw/Catch during DB with rotation type (pre-acrobatic or vertical) each add 1 rotation
+  // - Extra Thr6/Catch8 also add 1 rotation each
   // - Note: Even if user specifies multiple rotations for throw/catch during DB, it only counts as 1 rotation for R level
   const getTotalRotations = (): number => {
     let total = rotationEntries.reduce((sum, entry) => {
@@ -932,15 +945,62 @@ const CreateCustomRisk = () => {
     // Catch during DB always adds 1 rotation (the catch itself involves a rotation)
     if (catchDuringDB) total += 1;
     
+    // Extra Thr6 adds 1 rotation
+    if (extraThrow?.code === 'Thr6') total += 1;
+    
+    // Extra Catch8 adds 1 rotation
+    if (extraCatch?.code === 'Catch8') total += 1;
+    
     return total;
   };
   const rotationValue = getRotationValue();
   const rLevel = getTotalRotations();
 
+  // Helper: Get compatible extra throws for current selected throw
+  const getCompatibleExtraThrows = useMemo(() => {
+    if (!selectedThrow) return [];
+    const combo = throwCombinations.find(c => c.code === selectedThrow.code);
+    const compatibleCodes: string[] = [];
+    if (combo?.Thr6 === 'Y') compatibleCodes.push('Thr6');
+    if (combo?.Thr7 === 'Y') compatibleCodes.push('Thr7');
+    return dynamicThrows.filter(t => compatibleCodes.includes(t.code) && isApplicableForApparatus(t, apparatusCode));
+  }, [selectedThrow, throwCombinations, dynamicThrows, apparatusCode]);
+
+  // Helper: Get compatible primary throws when extra throw (Thr6/Thr7) is selected first
+  const getCompatiblePrimaryThrows = useMemo(() => {
+    if (!selectedThrow || (selectedThrow.code !== 'Thr6' && selectedThrow.code !== 'Thr7')) return [];
+    const extraCode = selectedThrow.code;
+    return throwCombinations
+      .filter(c => c[extraCode as 'Thr6' | 'Thr7'] === 'Y')
+      .map(c => dynamicThrows.find(t => t.code === c.code))
+      .filter((t): t is DynamicThrow => t !== undefined && isApplicableForApparatus(t, apparatusCode));
+  }, [selectedThrow, throwCombinations, dynamicThrows, apparatusCode]);
+
+  // Helper: Get compatible extra catches for current selected catch
+  const getCompatibleExtraCatches = useMemo(() => {
+    if (!selectedCatch) return [];
+    const combo = catchCombinations.find(c => c.code === selectedCatch.code);
+    const compatibleCodes: string[] = [];
+    if (combo?.Catch8 === 'Y') compatibleCodes.push('Catch8');
+    if (combo?.Catch9 === 'Y') compatibleCodes.push('Catch9');
+    return dynamicCatches.filter(c => compatibleCodes.includes(c.code) && isApplicableForApparatus(c, apparatusCode));
+  }, [selectedCatch, catchCombinations, dynamicCatches, apparatusCode]);
+
+  // Helper: Get compatible primary catches when extra catch (Catch8/Catch9) is selected first
+  const getCompatiblePrimaryCatches = useMemo(() => {
+    if (!selectedCatch || (selectedCatch.code !== 'Catch8' && selectedCatch.code !== 'Catch9')) return [];
+    const extraCode = selectedCatch.code;
+    return catchCombinations
+      .filter(c => c[extraCode as 'Catch8' | 'Catch9'] === 'Y')
+      .map(c => dynamicCatches.find(ct => ct.code === c.code))
+      .filter((c): c is DynamicCatch => c !== undefined && isApplicableForApparatus(c, apparatusCode));
+  }, [selectedCatch, catchCombinations, dynamicCatches, apparatusCode]);
+
   // Calculate throw row value:
   // - Thr6 (throw during rotation): always 0.1
   // - Throw during DB: DB value + 0.1 (always add 0.1 for rotation as risk component)
   // - Other throws: base value only
+  // - Extra throw adds its value
   const throwDBInfo = getThrowCatchDBInfo(throwDuringDB);
   let throwValue = 0;
   if (throwDuringDB) {
@@ -950,11 +1010,20 @@ const CreateCustomRisk = () => {
   } else if (selectedThrow) {
     throwValue = selectedThrow.value ?? 0;
   }
+  // Add extra throw value
+  if (extraThrow) {
+    if (extraThrow.code === 'Thr6') {
+      throwValue += 0.1;
+    } else {
+      throwValue += extraThrow.value ?? 0;
+    }
+  }
   
   // Calculate catch row value:
   // - Catch8 (catch during rotation): always 0.1
   // - Catch during DB: DB value + 0.1 (always add 0.1 for rotation as risk component)
   // - Other catches: base value only
+  // - Extra catch adds its value
   const catchDBInfo = getThrowCatchDBInfo(catchDuringDB);
   let catchValue = 0;
   if (catchDuringDB) {
@@ -966,6 +1035,14 @@ const CreateCustomRisk = () => {
   } else if (selectedCatch) {
     // Other catch types: base value only
     catchValue = selectedCatch.value ?? 0;
+  }
+  // Add extra catch value
+  if (extraCatch) {
+    if (extraCatch.code === 'Catch8') {
+      catchValue += 0.1;
+    } else {
+      catchValue += extraCatch.value ?? 0;
+    }
   }
   
   // Total value = sum of all row values (throw + throw criteria + rotations + catch + catch criteria)
@@ -994,6 +1071,12 @@ const CreateCustomRisk = () => {
       }
       if (catchRotationSpecRef.current && !catchRotationSpecRef.current.contains(event.target as Node)) {
         setShowCatchRotationSpecDropdown(false);
+      }
+      if (extraThrowDropdownRef.current && !extraThrowDropdownRef.current.contains(event.target as Node)) {
+        setShowExtraThrowDropdown(false);
+      }
+      if (extraCatchDropdownRef.current && !extraCatchDropdownRef.current.contains(event.target as Node)) {
+        setShowExtraCatchDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -1063,6 +1146,18 @@ const CreateCustomRisk = () => {
         setPreAcrobaticElements(data as PreAcrobaticElement[]);
       }
     };
+    const loadThrowCombinations = async () => {
+      const { data, error } = await supabase.from('throw_combinations').select('code, Thr6, Thr7');
+      if (data && !error) {
+        setThrowCombinations(data);
+      }
+    };
+    const loadCatchCombinations = async () => {
+      const { data, error } = await supabase.from('catch_combinations').select('code, Catch8, Catch9');
+      if (data && !error) {
+        setCatchCombinations(data);
+      }
+    };
     loadSymbols();
     loadGeneralCriteria();
     loadDynamicThrows();
@@ -1070,6 +1165,8 @@ const CreateCustomRisk = () => {
     loadDbsForRisks();
     loadVerticalRotations();
     loadPreAcrobaticElements();
+    loadThrowCombinations();
+    loadCatchCombinations();
   }, []);
 
   // Pre-populate form when modifying an existing risk
@@ -2590,7 +2687,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           setSelectedThrow(null);
                           setThrowCriteria([]);
                           setThrowRotationSpec(null);
-                        }} 
+                          setExtraThrow(null);
+                        }}
                         className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                       >
                         <X className="h-3 w-3" />
@@ -2611,6 +2709,126 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       ))}
                     </SortableContext>
                   </DndContext>
+                  
+                  {/* Extra Throw Row */}
+                  {extraThrow && (
+                    <div className="flex items-center border-b border-border bg-muted/30">
+                      <div className="w-8 flex justify-center py-4">
+                        <div className="h-4 w-4" />
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
+                        {extraThrow.symbol_image ? (
+                          <img 
+                            src={extraThrow.symbol_image} 
+                            alt={extraThrow.name} 
+                            className="h-8 w-auto max-w-[40px] object-contain" 
+                            onError={e => e.currentTarget.style.display = 'none'} 
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
+                        )}
+                      </div>
+                      <div className="flex-1 py-4 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">+</span>
+                          <span className="font-medium text-foreground text-sm">
+                            <NotesWithSymbols notes={extraThrow.name} symbolMap={notesSymbolMap} />
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
+                        <p className="font-semibold text-primary">{extraThrow.code === 'Thr6' ? '0.1' : (extraThrow.value ?? 0)}</p>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => setExtraThrow(null)} 
+                          className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Add Extra Throw Button */}
+                  {!extraThrow && (getCompatibleExtraThrows.length > 0 || getCompatiblePrimaryThrows.length > 0) && (
+                    <div className="relative p-3 border-t border-dashed border-border/50" ref={extraThrowDropdownRef}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-primary hover:bg-primary/10 text-xs"
+                        onClick={() => setShowExtraThrowDropdown(!showExtraThrowDropdown)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add Extra Throw
+                      </Button>
+                      
+                      {showExtraThrowDropdown && (
+                        <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                          <div className="p-2 border-b border-border">
+                            <span className="text-sm font-medium text-foreground">Compatible Throws</span>
+                          </div>
+                          {/* Show compatible extra throws (Thr6/Thr7) when primary is standard throw */}
+                          {getCompatibleExtraThrows.map(throwItem => {
+                            const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
+                            return (
+                              <div 
+                                key={throwItem.id} 
+                                className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                                onClick={() => {
+                                  setExtraThrow(throwItem);
+                                  setShowExtraThrowDropdown(false);
+                                }}
+                              >
+                                <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                                  <img src={symbolUrl} alt={throwItem.name} className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-foreground text-sm">
+                                    <NotesWithSymbols notes={throwItem.name} symbolMap={notesSymbolMap} />
+                                  </span>
+                                </div>
+                                <div className="w-10 text-right flex-shrink-0">
+                                  <span className="text-primary font-semibold">{throwItem.code === 'Thr6' ? '0.1' : (throwItem.value ?? 0)}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {/* Show compatible primary throws when Thr6/Thr7 is selected first */}
+                          {getCompatiblePrimaryThrows.map(throwItem => {
+                            const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
+                            return (
+                              <div 
+                                key={throwItem.id} 
+                                className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                                onClick={() => {
+                                  setExtraThrow(throwItem);
+                                  setShowExtraThrowDropdown(false);
+                                }}
+                              >
+                                <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                                  <img src={symbolUrl} alt={throwItem.name} className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-foreground text-sm">
+                                    <NotesWithSymbols notes={throwItem.name} symbolMap={notesSymbolMap} />
+                                  </span>
+                                </div>
+                                <div className="w-10 text-right flex-shrink-0">
+                                  <span className="text-primary font-semibold">{throwItem.value ?? 0}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {getCompatibleExtraThrows.length === 0 && getCompatiblePrimaryThrows.length === 0 && (
+                            <div className="p-4 text-center text-muted-foreground text-sm">
+                              No compatible throws available
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -3205,7 +3423,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           setSelectedCatch(null);
                           setCatchCriteria([]);
                           setCatchRotationSpec(null);
-                        }} 
+                          setExtraCatch(null);
+                        }}
                         className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                       >
                         <X className="h-3 w-3" />
@@ -3226,6 +3445,118 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       ))}
                     </SortableContext>
                   </DndContext>
+                  
+                  {/* Extra Catch Row */}
+                  {extraCatch && (
+                    <div className="flex items-center border-b border-border bg-muted/30">
+                      <div className="w-8 flex justify-center py-4">
+                        <div className="h-4 w-4" />
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
+                        {extraCatch.symbol_image ? (
+                          <img 
+                            src={extraCatch.symbol_image} 
+                            alt={extraCatch.name} 
+                            className="h-8 w-auto max-w-[40px] object-contain" 
+                            onError={e => e.currentTarget.style.display = 'none'} 
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
+                        )}
+                      </div>
+                      <div className="flex-1 py-4 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">+</span>
+                          <span className="font-medium text-foreground text-sm">{extraCatch.name}</span>
+                        </div>
+                      </div>
+                      <div className="w-20 py-4 px-2 text-center border-l border-border relative">
+                        <p className="font-semibold text-primary">{extraCatch.code === 'Catch8' ? '0.1' : (extraCatch.value ?? 0)}</p>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => setExtraCatch(null)} 
+                          className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Add Extra Catch Button */}
+                  {!extraCatch && (getCompatibleExtraCatches.length > 0 || getCompatiblePrimaryCatches.length > 0) && (
+                    <div className="relative p-3 border-t border-dashed border-border/50" ref={extraCatchDropdownRef}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-primary hover:bg-primary/10 text-xs"
+                        onClick={() => setShowExtraCatchDropdown(!showExtraCatchDropdown)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add Extra Catch
+                      </Button>
+                      
+                      {showExtraCatchDropdown && (
+                        <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                          <div className="p-2 border-b border-border">
+                            <span className="text-sm font-medium text-foreground">Compatible Catches</span>
+                          </div>
+                          {getCompatibleExtraCatches.map(catchItem => {
+                            const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
+                            return (
+                              <div 
+                                key={catchItem.id} 
+                                className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                                onClick={() => {
+                                  setExtraCatch(catchItem);
+                                  setShowExtraCatchDropdown(false);
+                                }}
+                              >
+                                <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                                  <img src={symbolUrl} alt={catchItem.name} className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-foreground text-sm">{catchItem.name}</span>
+                                </div>
+                                <div className="w-10 text-right flex-shrink-0">
+                                  <span className="text-primary font-semibold">{catchItem.code === 'Catch8' ? '0.1' : (catchItem.value ?? 0)}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {getCompatiblePrimaryCatches.map(catchItem => {
+                            const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
+                            return (
+                              <div 
+                                key={catchItem.id} 
+                                className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                                onClick={() => {
+                                  setExtraCatch(catchItem);
+                                  setShowExtraCatchDropdown(false);
+                                }}
+                              >
+                                <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                                  <img src={symbolUrl} alt={catchItem.name} className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-foreground text-sm">{catchItem.name}</span>
+                                </div>
+                                <div className="w-10 text-right flex-shrink-0">
+                                  <span className="text-primary font-semibold">{catchItem.value ?? 0}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {getCompatibleExtraCatches.length === 0 && getCompatiblePrimaryCatches.length === 0 && (
+                            <div className="p-4 text-center text-muted-foreground text-sm">
+                              No compatible catches available
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
             </div>
