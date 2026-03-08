@@ -2385,6 +2385,13 @@ const RoutineCalculator = () => {
                 <X className="h-4 w-4 mr-2" /> Cancel
               </Button>
               <Button
+                variant="secondary"
+                className="flex-1 h-12 text-base"
+                onClick={() => setShowRoutineCheckDialog(true)}
+              >
+                <ClipboardCheck className="h-4 w-4 mr-2" /> Routine Check
+              </Button>
+              <Button
                 className="flex-1 h-12 text-base"
                 onClick={() => {
                   const parts = [gymnastName, selectedApparatus, year].filter(Boolean);
