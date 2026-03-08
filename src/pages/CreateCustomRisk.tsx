@@ -1744,13 +1744,21 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
 
   const handleCatchCriteriaDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setCatchCriteria((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
+    if (!over || active.id === over.id) return;
+    
+    const currentOrder = getCatchUnifiedOrder();
+    const oldIndex = currentOrder.indexOf(String(active.id));
+    const newIndex = currentOrder.indexOf(String(over.id));
+    if (oldIndex === -1 || newIndex === -1) return;
+    
+    const reordered = arrayMove(currentOrder, oldIndex, newIndex);
+    setCatchItemsOrder(reordered);
+    
+    const newCriteriaIds = reordered.filter(id => id !== 'extra-catch');
+    setCatchCriteria(prev => {
+      const map = new Map(prev.map(c => [c.id, c]));
+      return newCriteriaIds.map(id => map.get(id)!).filter(Boolean);
+    });
   };
   const handleSelectThrow = (throwItem: DynamicThrow) => {
     setSelectedThrow(throwItem);
