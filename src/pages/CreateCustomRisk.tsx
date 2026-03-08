@@ -1320,6 +1320,16 @@ const CreateCustomRisk = () => {
       if (meta.catchDuringDB) {
         setCatchDuringDB(meta.catchDuringDB);
       }
+      // Restore extra throw/catch combos
+      if (meta.extraThrow) {
+        setExtraThrow(meta.extraThrow);
+      }
+      if (meta.extraCatch) {
+        setExtraCatch(meta.extraCatch);
+      }
+      if (meta.extraThrowRotationSpec) {
+        setExtraThrowRotationSpec(meta.extraThrowRotationSpec);
+      }
       // Restore rotation entries with full specification data
       if (meta.rotationEntries && meta.rotationEntries.length > 0) {
         const restoredEntries = meta.rotationEntries.map((entry: any) => ({
@@ -2366,6 +2376,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         catchDuringDB: catchDuringDB ? JSON.parse(JSON.stringify(catchDuringDB)) : null,
         selectedThrowCode: effectiveThrow?.code,
         selectedCatchCode: effectiveCatch?.code,
+        extraThrow: extraThrow ? { ...extraThrow } : null,
+        extraCatch: extraCatch ? { ...extraCatch } : null,
+        extraThrowRotationSpec: extraThrowRotationSpec ? { ...extraThrowRotationSpec } : null,
       },
     };
     setSavedRiskData(riskData);
