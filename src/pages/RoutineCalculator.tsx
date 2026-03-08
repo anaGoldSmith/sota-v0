@@ -1758,6 +1758,7 @@ const RoutineCalculator = () => {
                 placeholder="E.g 2025"
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
+                disabled={isViewMode}
               />
             </div>
 
