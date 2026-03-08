@@ -1231,7 +1231,6 @@ const StandardRiskDetail = () => {
                         <p className="font-bold text-primary">{catchTotal.toFixed(1)}</p>
                       </div>
                     </div>
-                    </div>
                   )}
                 </div>
               </div>
