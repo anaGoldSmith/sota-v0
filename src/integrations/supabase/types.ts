@@ -911,6 +911,51 @@ export type Database = {
         }
         Relationships: []
       }
+      routines: {
+        Row: {
+          apparatus: string | null
+          created_at: string
+          elements: Json
+          gymnast_name: string | null
+          id: string
+          name: string
+          rulebook: string | null
+          total_da: number | null
+          total_db: number | null
+          updated_at: string
+          user_id: string
+          year: string | null
+        }
+        Insert: {
+          apparatus?: string | null
+          created_at?: string
+          elements?: Json
+          gymnast_name?: string | null
+          id?: string
+          name: string
+          rulebook?: string | null
+          total_da?: number | null
+          total_db?: number | null
+          updated_at?: string
+          user_id: string
+          year?: string | null
+        }
+        Update: {
+          apparatus?: string | null
+          created_at?: string
+          elements?: Json
+          gymnast_name?: string | null
+          id?: string
+          name?: string
+          rulebook?: string | null
+          total_da?: number | null
+          total_db?: number | null
+          updated_at?: string
+          user_id?: string
+          year?: string | null
+        }
+        Relationships: []
+      }
       rulebooks: {
         Row: {
           category: string
