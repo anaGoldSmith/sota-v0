@@ -161,6 +161,30 @@ export type Database = {
         }
         Relationships: []
       }
+      catch_combinations: {
+        Row: {
+          Catch8: string | null
+          Catch9: string | null
+          code: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          Catch8?: string | null
+          Catch9?: string | null
+          code: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          Catch8?: string | null
+          Catch9?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       clubs_da: {
         Row: {
           code: string
@@ -917,6 +941,30 @@ export type Database = {
           id?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      throw_combinations: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          Thr6: string | null
+          Thr7: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          Thr6?: string | null
+          Thr7?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          Thr6?: string | null
+          Thr7?: string | null
         }
         Relationships: []
       }
