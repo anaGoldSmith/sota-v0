@@ -3981,10 +3981,19 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   )}
                 </>
               )}
+              {/* Catch Section Total */}
+              {(selectedCatch || catchDuringDB) && (
+                <div className="flex items-center border-t border-border bg-muted/30">
+                  <div className="flex-1 py-2 px-4">
+                    <span className="font-medium text-muted-foreground text-sm">Section Total</span>
+                  </div>
+                  <div className="w-20 py-2 px-2 text-center border-l border-border">
+                    <p className="font-bold text-primary">{(catchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0)).toFixed(1)}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Action Buttons */}
           <div className="flex gap-4 justify-center pt-4">
             <Button className="px-8 bg-primary hover:bg-primary/90 text-primary-foreground" onClick={handleSave}>
               Save
