@@ -29,6 +29,8 @@ const DynamicElementsConfiguration = () => {
   const dbsForRisksInputRef = useRef<HTMLInputElement>(null);
   const verticalRotationsInputRef = useRef<HTMLInputElement>(null);
   const preAcrobaticElementsInputRef = useRef<HTMLInputElement>(null);
+  const throwCombinationsInputRef = useRef<HTMLInputElement>(null);
+  const catchCombinationsInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
