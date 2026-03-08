@@ -1005,6 +1005,19 @@ const CreateCustomRisk = () => {
     // Thr6 (throw during rotation) adds 1 rotation
     if (selectedThrow?.code === 'Thr6') total += 1;
     
+    // Dive Leap in throw includes a Roll Forward which counts as an additional rotation
+    // Only add if Roll Forward is not already separately in rotationEntries
+    const hasRollForwardInEntries = rotationEntries.some(e => 
+      e.specificationType === 'pre-acrobatic' && 
+      e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'roll forward'
+    );
+    if (selectedThrow?.code === 'Thr6' && 
+        throwRotationSpec?.type === 'pre-acrobatic' && 
+        throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap' &&
+        !hasRollForwardInEntries) {
+      total += 1; // Count the included roll forward
+    }
+    
     // Catch8 (catch during rotation) adds 1 rotation
     if (selectedCatch?.code === 'Catch8') total += 1;
     
@@ -1016,6 +1029,14 @@ const CreateCustomRisk = () => {
     
     // Extra Thr6 adds 1 rotation
     if (extraThrow?.code === 'Thr6') total += 1;
+    
+    // Dive Leap in extra throw includes a Roll Forward which counts as an additional rotation
+    if (extraThrow?.code === 'Thr6' && 
+        extraThrowRotationSpec?.type === 'pre-acrobatic' && 
+        extraThrowRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap' &&
+        !hasRollForwardInEntries) {
+      total += 1; // Count the included roll forward
+    }
     
     // Extra Catch8 adds 1 rotation
     if (extraCatch?.code === 'Catch8') total += 1;
