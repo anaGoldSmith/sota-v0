@@ -1246,7 +1246,8 @@ const StandardRiskDetail = () => {
                   {/* Section Total */}
                   {(catchComponents.length > 0 || extraCatchCriteria.length > 0 || generalCatchCriteria.length > 0) && (
                     <div className="flex items-center border-t border-border bg-muted/30">
-                      <div className="w-16 py-2" />
+                      <div className="w-8 py-2" />
+                      <div className="w-12 py-2" />
                       <div className="flex-1 py-2 px-4">
                         <span className="font-medium text-muted-foreground text-sm">Section Total</span>
                       </div>
