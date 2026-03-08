@@ -141,7 +141,7 @@ export default function SymbolManagement() {
 
       // Map files to their status
       const symbolStatuses: SymbolStatus[] = (files || [])
-        .filter(file => file.name !== '.emptyFolderPlaceholder')
+        .filter(file => file.name !== '.emptyFolderPlaceholder' && file.name.includes('.'))
         .map(file => {
           const filePath = folder ? `${folder}/${file.name}` : file.name;
           const { data: { publicUrl } } = supabase.storage
