@@ -389,7 +389,12 @@ export default function SymbolManagement() {
   };
 
   const handleDeleteSymbol = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget) {
+      console.error('handleDeleteSymbol called but deleteTarget is null');
+      return;
+    }
+
+    console.log('Deleting symbol:', JSON.stringify(deleteTarget));
 
     try {
       // Build the file path (include folder for dynamic elements)
@@ -397,10 +402,14 @@ export default function SymbolManagement() {
         ? `${deleteTarget.folder}/${deleteTarget.file.name}` 
         : deleteTarget.file.name;
 
+      console.log('Removing from bucket:', deleteTarget.bucket, 'path:', filePath);
+
       // Delete from storage
-      const { error: storageError } = await supabase.storage
+      const { data: removeData, error: storageError } = await supabase.storage
         .from(deleteTarget.bucket)
         .remove([filePath]);
+
+      console.log('Storage remove result:', JSON.stringify(removeData), 'error:', storageError);
 
       if (storageError) throw storageError;
 
@@ -408,10 +417,12 @@ export default function SymbolManagement() {
       if (deleteTarget.code) {
         // Check if it's a dynamic element category
         const dynamicCategory = DYNAMIC_ELEMENTS_CATEGORIES.find(c => c.folder === deleteTarget.folder);
-        const regularCategory = SYMBOL_CATEGORIES.find(c => c.bucket === deleteTarget.bucket);
+        const regularCategory = SYMBOL_CATEGORIES.find(c => 
+          c.bucket === deleteTarget.bucket && c.folder === deleteTarget.folder
+        );
         const category = dynamicCategory || regularCategory;
         
-        if (category) {
+        if (category && category.table) {
           const codeColumn = category.table === 'prerecorded_risk_components' 
             ? 'risk_component_code' 
             : category.table === 'prerecorded_risks'
@@ -435,7 +446,7 @@ export default function SymbolManagement() {
       console.error('Error deleting symbol:', error);
       toast({
         title: "Error",
-        description: "Failed to delete symbol",
+        description: `Failed to delete symbol: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
@@ -444,7 +455,12 @@ export default function SymbolManagement() {
   };
 
   const handleCleanupOrphaned = async () => {
-    if (!cleanupTarget) return;
+    if (!cleanupTarget) {
+      console.error('handleCleanupOrphaned called but cleanupTarget is null');
+      return;
+    }
+
+    console.log('Cleanup target:', JSON.stringify(cleanupTarget));
 
     try {
       // Determine if this is a dynamic element category or a regular one
@@ -465,6 +481,8 @@ export default function SymbolManagement() {
         .filter(s => s.status === 'orphaned')
         .map(s => cleanupTarget.folder ? `${cleanupTarget.folder}/${s.file.name}` : s.file.name);
 
+      console.log('isDynamicCategory:', isDynamicCategory, 'symbolsData length:', symbolsData?.length, 'orphanedFiles:', orphanedFiles);
+
       if (orphanedFiles.length === 0) {
         toast({
           title: "No orphaned files",
@@ -474,9 +492,11 @@ export default function SymbolManagement() {
         return;
       }
 
-      const { error } = await supabase.storage
+      const { data: removeData, error } = await supabase.storage
         .from(cleanupTarget.bucket)
         .remove(orphanedFiles);
+
+      console.log('Cleanup remove result:', JSON.stringify(removeData), 'error:', error);
 
       if (error) throw error;
 
