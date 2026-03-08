@@ -2836,7 +2836,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       </Button>
                       
                       {showExtraThrowDropdown && (
-                        <div className="absolute left-full top-0 ml-2 w-full min-w-[320px] bg-background border border-border rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                        <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
                           {/* Show compatible extra throws (Thr6/Thr7) when primary is standard throw */}
                           {getCompatibleExtraThrows.map(throwItem => {
                             const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
