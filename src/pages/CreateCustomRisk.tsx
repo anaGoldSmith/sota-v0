@@ -956,45 +956,49 @@ const CreateCustomRisk = () => {
   const rotationValue = getRotationValue();
   const rLevel = getTotalRotations();
 
+  // Determine the effective throw/catch code for compatibility lookup
+  const effectiveThrowCode = throwDuringDB ? 'Thr7' : selectedThrow?.code || null;
+  const effectiveCatchCode = catchDuringDB ? 'Catch9' : selectedCatch?.code || null;
+
   // Helper: Get compatible extra throws for current selected throw
   const getCompatibleExtraThrows = useMemo(() => {
-    if (!selectedThrow) return [];
-    const combo = throwCombinations.find(c => c.code === selectedThrow.code);
+    if (!effectiveThrowCode) return [];
+    const combo = throwCombinations.find(c => c.code === effectiveThrowCode);
     const compatibleCodes: string[] = [];
     if (combo?.Thr6 === 'Y') compatibleCodes.push('Thr6');
     if (combo?.Thr7 === 'Y') compatibleCodes.push('Thr7');
-    return dynamicThrows.filter(t => compatibleCodes.includes(t.code) && isApplicableForApparatus(t, apparatusCode));
-  }, [selectedThrow, throwCombinations, dynamicThrows, apparatusCode]);
+    // Don't show the same code as primary
+    return dynamicThrows.filter(t => compatibleCodes.includes(t.code) && t.code !== effectiveThrowCode && isApplicableForApparatus(t, apparatusCode));
+  }, [effectiveThrowCode, throwCombinations, dynamicThrows, apparatusCode]);
 
   // Helper: Get compatible primary throws when extra throw (Thr6/Thr7) is selected first
   const getCompatiblePrimaryThrows = useMemo(() => {
-    if (!selectedThrow || (selectedThrow.code !== 'Thr6' && selectedThrow.code !== 'Thr7')) return [];
-    const extraCode = selectedThrow.code;
+    if (!effectiveThrowCode || (effectiveThrowCode !== 'Thr6' && effectiveThrowCode !== 'Thr7')) return [];
     return throwCombinations
-      .filter(c => c[extraCode as 'Thr6' | 'Thr7'] === 'Y')
+      .filter(c => c[effectiveThrowCode as 'Thr6' | 'Thr7'] === 'Y')
       .map(c => dynamicThrows.find(t => t.code === c.code))
       .filter((t): t is DynamicThrow => t !== undefined && isApplicableForApparatus(t, apparatusCode));
-  }, [selectedThrow, throwCombinations, dynamicThrows, apparatusCode]);
+  }, [effectiveThrowCode, throwCombinations, dynamicThrows, apparatusCode]);
 
   // Helper: Get compatible extra catches for current selected catch
   const getCompatibleExtraCatches = useMemo(() => {
-    if (!selectedCatch) return [];
-    const combo = catchCombinations.find(c => c.code === selectedCatch.code);
+    if (!effectiveCatchCode) return [];
+    const combo = catchCombinations.find(c => c.code === effectiveCatchCode);
     const compatibleCodes: string[] = [];
     if (combo?.Catch8 === 'Y') compatibleCodes.push('Catch8');
     if (combo?.Catch9 === 'Y') compatibleCodes.push('Catch9');
-    return dynamicCatches.filter(c => compatibleCodes.includes(c.code) && isApplicableForApparatus(c, apparatusCode));
-  }, [selectedCatch, catchCombinations, dynamicCatches, apparatusCode]);
+    // Don't show the same code as primary
+    return dynamicCatches.filter(c => compatibleCodes.includes(c.code) && c.code !== effectiveCatchCode && isApplicableForApparatus(c, apparatusCode));
+  }, [effectiveCatchCode, catchCombinations, dynamicCatches, apparatusCode]);
 
   // Helper: Get compatible primary catches when extra catch (Catch8/Catch9) is selected first
   const getCompatiblePrimaryCatches = useMemo(() => {
-    if (!selectedCatch || (selectedCatch.code !== 'Catch8' && selectedCatch.code !== 'Catch9')) return [];
-    const extraCode = selectedCatch.code;
+    if (!effectiveCatchCode || (effectiveCatchCode !== 'Catch8' && effectiveCatchCode !== 'Catch9')) return [];
     return catchCombinations
-      .filter(c => c[extraCode as 'Catch8' | 'Catch9'] === 'Y')
+      .filter(c => c[effectiveCatchCode as 'Catch8' | 'Catch9'] === 'Y')
       .map(c => dynamicCatches.find(ct => ct.code === c.code))
       .filter((c): c is DynamicCatch => c !== undefined && isApplicableForApparatus(c, apparatusCode));
-  }, [selectedCatch, catchCombinations, dynamicCatches, apparatusCode]);
+  }, [effectiveCatchCode, catchCombinations, dynamicCatches, apparatusCode]);
 
   // Calculate throw row value:
   // - Thr6 (throw during rotation): always 0.1
