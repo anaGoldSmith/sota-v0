@@ -455,7 +455,12 @@ export default function SymbolManagement() {
   };
 
   const handleCleanupOrphaned = async () => {
-    if (!cleanupTarget) return;
+    if (!cleanupTarget) {
+      console.error('handleCleanupOrphaned called but cleanupTarget is null');
+      return;
+    }
+
+    console.log('Cleanup target:', JSON.stringify(cleanupTarget));
 
     try {
       // Determine if this is a dynamic element category or a regular one
