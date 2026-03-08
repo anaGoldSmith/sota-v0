@@ -90,6 +90,21 @@ interface DBForRisk {
   turn_degrees: string | null;
   symbol_image: string | null;
 }
+
+// Context for passing sortable drag listeners to drag handles
+const SortableListenersContext = React.createContext<Record<string, any> | undefined>(undefined);
+const useSortableListeners = () => React.useContext(SortableListenersContext);
+
+// Drag handle that consumes listeners from SortableItemWrapper context
+const SortableDragHandle = ({ className, children }: { className?: string; children: React.ReactNode }) => {
+  const listeners = useSortableListeners();
+  return (
+    <div className={className} {...(listeners || {})}>
+      {children}
+    </div>
+  );
+};
+
 // Generic Sortable Wrapper for any content
 const SortableItemWrapper = ({ id, children }: { id: string; children: React.ReactNode }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
@@ -99,9 +114,11 @@ const SortableItemWrapper = ({ id, children }: { id: string; children: React.Rea
     opacity: isDragging ? 0.5 : 1,
   };
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {children}
-    </div>
+    <SortableListenersContext.Provider value={listeners}>
+      <div ref={setNodeRef} style={style} {...attributes}>
+        {children}
+      </div>
+    </SortableListenersContext.Provider>
   );
 };
 
@@ -2629,9 +2646,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                               return (
                                 <SortableItemWrapper key="primary-throw" id="primary-throw">
                                   <div className="flex items-center border-b border-border">
-                                    <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                                    <SortableDragHandle className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
                                       <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                    </div>
+                                    </SortableDragHandle>
                                     <div className="w-16 flex justify-center py-4">
                                       <div className="flex flex-col items-center gap-0">
                                         {(() => {
@@ -2889,9 +2906,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           return (
                             <SortableItemWrapper key="primary-throw" id="primary-throw">
                               <div className="flex items-center border-b border-border">
-                                <div className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
+                                <SortableDragHandle className="w-8 flex justify-center py-4 cursor-grab active:cursor-grabbing">
                                   <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                </div>
+                                </SortableDragHandle>
                                 <div className="w-12 flex justify-center py-4">
                                   {selectedThrow?.symbol_image ? (
                                     <img 
