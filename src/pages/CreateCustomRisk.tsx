@@ -1616,6 +1616,10 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       setThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
       // Dive leap in throw counts as rotation, so auto-add axis/level change
       autoAddAxisChangeForThrowDiveLeap();
+    } else if (source === 'extra-throw') {
+      // Apply dive leap to extra throw rotation spec
+      setExtraThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
+      autoAddAxisChangeForThrowDiveLeap();
     } else if (source === 'rotation' && entryId) {
       // Apply dive leap to the rotation entry (applyPreAcrobaticElement handles axis auto-add)
       applyPreAcrobaticElement(entryId, element);
