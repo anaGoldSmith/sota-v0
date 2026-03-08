@@ -1,9 +1,33 @@
-import { Menu, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Menu, User, MapPin, Calendar, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/rhythmic-gymnastics-hero.jpg";
+
+interface Event {
+  id: string;
+  title: string;
+  dates: string | null;
+  city: string | null;
+  link: string | null;
+}
+
 const Index = () => {
   const navigate = useNavigate();
+  const [events, setEvents] = useState<Event[]>([]);
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("id, title, dates, city, link")
+        .order("dates", { ascending: true })
+        .limit(10);
+      if (data) setEvents(data);
+    };
+    loadEvents();
+  }, []);
 
   return <div className="min-h-screen bg-background">
       {/* Header */}
