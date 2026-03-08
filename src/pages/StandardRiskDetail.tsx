@@ -1114,6 +1114,7 @@ const StandardRiskDetail = () => {
                       key={criteria.id} 
                       className={`flex items-center ${index !== extraCatchCriteria.length - 1 ? 'border-b border-border' : ''}`}
                     >
+                      <div className="w-8 py-4" />
                       <div className="w-12 flex justify-center py-4">
                         {criteria.symbol_image ? (
                           <img 
