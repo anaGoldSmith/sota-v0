@@ -89,8 +89,22 @@ interface DBForRisk {
   turn_degrees: string | null;
   symbol_image: string | null;
 }
+// Generic Sortable Wrapper for any content
+const SortableItemWrapper = ({ id, children }: { id: string; children: React.ReactNode }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </div>
+  );
+};
 
-// Sortable Extra Throw/Catch Row Component
+
 interface SortableExtraRowProps {
   id: string;
   item: DynamicThrow | DynamicCatch;
