@@ -133,7 +133,7 @@ const Index = () => {
           className="grid grid-cols-1 md:grid-cols-2 gap-8 relative rounded-xl p-8 overflow-hidden"
         >
           <div
-            className="absolute inset-0 bg-cover bg-center opacity-[0.15]"
+            className="absolute inset-0 bg-cover bg-center opacity-[0.25]"
             style={{ backgroundImage: `url(${landingBottomBg})` }}
           />
           {/* Tools Column */}
