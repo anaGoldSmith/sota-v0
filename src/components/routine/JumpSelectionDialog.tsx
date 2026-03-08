@@ -417,7 +417,11 @@ export const JumpSelectionDialog = ({
                                 )}
                                 {/* Symbol image */}
                                 <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1">
-                                  Symbol
+                                  {jump.symbol_image ? (
+                                    <img src={jump.symbol_image} alt={jump.description} className="w-full h-full object-contain" />
+                                  ) : (
+                                    "Symbol"
+                                  )}
                                 </div>
                                 {/* Turn degrees */}
                                 {jump.turn_degrees && jump.turn_degrees !== "NA" && <span className="text-xs text-muted-foreground">
