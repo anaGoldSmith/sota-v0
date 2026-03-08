@@ -2430,7 +2430,10 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                   </Tooltip>
                                 </TooltipProvider>
                               ) : isThrowDuringDB ? (
-                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                <div className="flex items-center gap-1">
+                                  <span className="text-primary font-semibold text-xs">{throwItem.value ?? 0}</span>
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                </div>
                               ) : (
                                 <span className="text-primary font-semibold">{throwItem.value ?? 0}</span>
                               )}
