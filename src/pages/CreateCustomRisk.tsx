@@ -1560,9 +1560,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     setSelectedThrow(throwItem);
     setShowThrowDropdown(false);
     setThrowRotationSpec(null);
-    setExtraThrow(null);
-    setShowExtraThrowDropdown(false);
-    setThr2HasThr6(false);
 
     // Auto-add Cr2H when Thr2 is selected
     if (throwItem.code === 'Thr2') {
@@ -1580,46 +1577,11 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       }
     }
   };
-  
-  // Handler for selecting extra Thr2 when Thr6 is primary
-  const handleSelectExtraThrow = (throwItem: DynamicThrow) => {
-    if (throwItem.code !== 'Thr2') return;
-    setExtraThrow(throwItem);
-    setShowExtraThrowDropdown(false);
-    
-    // Auto-add Cr2H criteria (same as handleSelectThrow for Thr2)
-    const cr2h = generalCriteria.find(gc => gc.code === 'Cr2H');
-    if (cr2h && !selectedThrowCriteria.includes('Cr2H')) {
-      const newCriteria: CriteriaItem = {
-        id: `throw_${cr2h.code}`,
-        name: cr2h.name,
-        symbol: cr2h.symbol_image || undefined,
-        value: 0.1,
-        code: cr2h.code,
-        note: 'Without Hands: extra criteria added to throw after rolling the hoop on the floor'
-      };
-      setThrowCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]);
-    }
-  };
-  
-  // Handler to remove extra Thr2 from Thr6 combo
-  const handleRemoveExtraThrow = () => {
-    setExtraThrow(null);
-    // Remove auto-added Cr2H
-    setThrowCriteria(prev => prev.filter(c => c.code !== 'Cr2H'));
-  };
 
   const handleSelectCatch = (catchItem: DynamicCatch) => {
     setSelectedCatch(catchItem);
     setShowCatchDropdown(false);
-    setCatchRotationSpec(null); // Reset rotation spec when catch changes
-    // Reset catch combo state
-    setExtraCatches([]);
-    setShowExtraCatchDropdown(false);
-    setCatchHasCatchDuringDB(false);
-    setExtraCatchDuringDBData(null);
-    setCatchHasCatch8(false);
-    setExtraCatch8RotationSpec(null);
+    setCatchRotationSpec(null);
 
     // Auto-add Cr2H when Catch3 is selected
     if (catchItem.code === 'Catch3') {
@@ -1636,65 +1598,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         setCatchCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]);
       }
     }
-  };
-  
-  // Handler for selecting extra regular catch (Catch2-7) when primary is CatchDuringDB or Catch8
-  const handleSelectExtraCatch = (catchItem: DynamicCatch) => {
-    // Only allow Catch2-7 (not Catch1, Catch8)
-    if (catchItem.code === 'Catch1' || catchItem.code === 'Catch8') return;
-    // Don't add duplicates
-    if (extraCatches.some(c => c.code === catchItem.code)) return;
-    setExtraCatches(prev => [...prev, catchItem]);
-    setShowExtraCatchDropdown(false);
-    
-    // Auto-add Cr2H when Catch3 is added as extra
-    if (catchItem.code === 'Catch3') {
-      const cr2h = generalCriteria.find(gc => gc.code === 'Cr2H');
-      if (cr2h && !selectedCatchCriteria.includes('Cr2H')) {
-        const newCriteria: CriteriaItem = {
-          id: `catch_${cr2h.code}`,
-          name: cr2h.name,
-          symbol: cr2h.symbol_image || undefined,
-          value: 0.1,
-          code: cr2h.code,
-          note: 'the criterion {Cr2H} is given for catches with rebounds on the arm(s) or other body parts'
-        };
-        setCatchCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]);
-      }
-    }
-  };
-  
-  // Handler to remove an extra catch
-  const handleRemoveExtraCatch = (code: string) => {
-    setExtraCatches(prev => prev.filter(c => c.code !== code));
-    // Remove auto-added Cr2H if Catch3 is being removed
-    if (code === 'Catch3') {
-      setCatchCriteria(prev => prev.filter(c => c.code !== 'Cr2H'));
-    }
-  };
-  
-  // Handler to add extra Catch during DB when primary is regular catch or Catch8
-  const handleSelectExtraCatchDuringDB = (db: any, dbType: 'jumps' | 'rotations', rotationCount?: number) => {
-    setCatchHasCatchDuringDB(true);
-    setExtraCatchDuringDBData({ db, dbType, rotationCount });
-    setShowExtraCatchDBDialog(false);
-  };
-  
-  // Handler to remove extra Catch during DB
-  const handleRemoveExtraCatchDuringDB = () => {
-    setCatchHasCatchDuringDB(false);
-    setExtraCatchDuringDBData(null);
-  };
-  
-  // Handler to add extra Catch8 (catch during rotation) when primary is regular catch or CatchDuringDB
-  const handleAddExtraCatch8 = () => {
-    setCatchHasCatch8(true);
-  };
-  
-  // Handler to remove extra Catch8
-  const handleRemoveExtraCatch8 = () => {
-    setCatchHasCatch8(false);
-    setExtraCatch8RotationSpec(null);
   };
   const handleToggleThrowCriteria = (criteria: GeneralCriteria) => {
     const isSelected = selectedThrowCriteria.includes(criteria.code);
