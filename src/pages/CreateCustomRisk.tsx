@@ -3411,7 +3411,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             Add Extra Catch
                           </Button>
                           {showExtraCatchDropdown && (
-                            <div className="absolute left-full top-0 ml-2 w-full min-w-[320px] bg-background border border-border rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                            <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
                               {[...getCompatibleExtraCatches, ...getCompatiblePrimaryCatches].map(catchItem => {
                                 const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
                                 return (
