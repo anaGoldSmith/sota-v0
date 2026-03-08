@@ -1156,10 +1156,10 @@ const StandardRiskDetail = () => {
 
                   {/* Add Extra Catch Button - hidden for R2 and when one is already selected, excludes Catch during DB */}
                   {filteredCatches.filter(c => c.code !== 'Catch9').length > 0 && !isR2 && extraCatchCriteria.length === 0 && (
-                    <div ref={catchDropdownRef} className="relative border-t border-border">
+                    <div ref={catchDropdownRef} className="relative p-3">
                       <Button
-                        variant="ghost"
-                        className="w-full py-3 text-primary hover:bg-primary/5 flex items-center justify-center gap-2"
+                        variant="outline"
+                        className="w-full py-3 text-primary border-primary/30 hover:bg-primary/5 flex items-center justify-center gap-2 rounded-lg"
                         onClick={() => setShowCatchDropdown(!showCatchDropdown)}
                       >
                         <Plus className="h-4 w-4" />
