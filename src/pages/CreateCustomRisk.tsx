@@ -2008,6 +2008,21 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       }
     }
     
+    // Case 1b: Dive Leap in Extra Throw (Thr6 spec) + Roll Forward in rotations = valid R2
+    if (hasDiveLeapInExtraThrow) {
+      if (actualRotations.length >= 1) {
+        const hasRollForward = actualRotations.some(e => 
+          e.specificationType === 'pre-acrobatic' && 
+          e.selectedPreAcrobaticElement?.name?.toLowerCase() === 'roll forward'
+        );
+        if (hasRollForward) {
+          return { valid: true, message: "" };
+        }
+        // Dive leap in extra throw + any rotation = valid
+        return { valid: true, message: "" };
+      }
+    }
+    
     // Dive Leap in Rotation section
     const diveLeapRotEntry = actualRotations.find(e => 
       e.specificationType === 'pre-acrobatic' && 
