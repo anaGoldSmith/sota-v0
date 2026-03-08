@@ -1705,7 +1705,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     
-    // Build unified list from current order
     const currentOrder = getThrowUnifiedOrder();
     const oldIndex = currentOrder.indexOf(String(active.id));
     const newIndex = currentOrder.indexOf(String(over.id));
@@ -1714,8 +1713,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     const reordered = arrayMove(currentOrder, oldIndex, newIndex);
     setThrowItemsOrder(reordered);
     
-    // Also reorder criteria to match
-    const newCriteriaIds = reordered.filter(id => id !== 'extra-throw');
+    const newCriteriaIds = reordered.filter(id => id !== 'extra-throw' && id !== 'primary-throw');
     setThrowCriteria(prev => {
       const map = new Map(prev.map(c => [c.id, c]));
       return newCriteriaIds.map(id => map.get(id)!).filter(Boolean);
@@ -1725,14 +1723,17 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
   // Compute unified throw items order, respecting user-defined order
   const getThrowUnifiedOrder = () => {
     const criteriaIds = throwCriteria.map(c => c.id);
-    const allIds = [...criteriaIds, ...(extraThrow ? ['extra-throw'] : [])];
+    const hasPrimary = !!(selectedThrow || throwDuringDB);
+    const allIds = [
+      ...(hasPrimary ? ['primary-throw'] : []),
+      ...criteriaIds,
+      ...(extraThrow ? ['extra-throw'] : []),
+    ];
     
     if (throwItemsOrder.length === 0) return allIds;
     
-    // Filter saved order to only include currently existing items
     const existing = new Set(allIds);
     const ordered = throwItemsOrder.filter(id => existing.has(id));
-    // Add any new items not in saved order
     const inOrder = new Set(ordered);
     for (const id of allIds) {
       if (!inOrder.has(id)) ordered.push(id);
@@ -1743,7 +1744,12 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
   // Compute unified catch items order
   const getCatchUnifiedOrder = () => {
     const criteriaIds = catchCriteria.map(c => c.id);
-    const allIds = [...criteriaIds, ...(extraCatch ? ['extra-catch'] : [])];
+    const hasPrimary = !!(selectedCatch || catchDuringDB);
+    const allIds = [
+      ...(hasPrimary ? ['primary-catch'] : []),
+      ...criteriaIds,
+      ...(extraCatch ? ['extra-catch'] : []),
+    ];
     
     if (catchItemsOrder.length === 0) return allIds;
     
@@ -1754,6 +1760,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       if (!inOrder.has(id)) ordered.push(id);
     }
     return ordered;
+  };
   };
 
   const handleCatchCriteriaDragEnd = (event: DragEndEvent) => {
