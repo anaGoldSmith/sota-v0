@@ -2407,16 +2407,31 @@ const RoutineCalculator = () => {
                     setIsSaving(false);
                     return;
                   }
-                  const { error } = await supabase.from('routines' as any).insert({
-                    user_id: user.id,
-                    name: routineSaveName.trim(),
-                    apparatus: selectedApparatus,
-                    year: year || null,
-                    gymnast_name: gymnastName || null,
-                    elements: routineElements as any,
-                    total_db: totalDB,
-                    total_da: totalDA,
-                  } as any);
+                  let error;
+                  if (editingRoutineId) {
+                    const result = await (supabase.from('routines' as any).update({
+                      name: routineSaveName.trim(),
+                      apparatus: selectedApparatus,
+                      year: year || null,
+                      gymnast_name: gymnastName || null,
+                      elements: routineElements as any,
+                      total_db: totalDB,
+                      total_da: totalDA,
+                    } as any).eq('id', editingRoutineId) as any);
+                    error = result.error;
+                  } else {
+                    const result = await supabase.from('routines' as any).insert({
+                      user_id: user.id,
+                      name: routineSaveName.trim(),
+                      apparatus: selectedApparatus,
+                      year: year || null,
+                      gymnast_name: gymnastName || null,
+                      elements: routineElements as any,
+                      total_db: totalDB,
+                      total_da: totalDA,
+                    } as any);
+                    error = result.error;
+                  }
                   if (error) throw error;
                   toast({ title: "Routine saved!", description: `"${routineSaveName.trim()}" has been saved to My Routines.` });
                   setSaveDialogOpen(false);
