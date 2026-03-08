@@ -23,16 +23,18 @@ interface SymbolStatus {
 }
 
 const SYMBOL_CATEGORIES = [
-  { name: 'Jumps', bucket: 'jump-symbols', table: 'jumps', folder: null },
-  { name: 'Criteria', bucket: 'criteria-symbols', table: 'criteria', folder: null },
-  { name: 'Ball Bases', bucket: 'ball-bases-symbols', table: 'ball_technical_elements', folder: null },
-  { name: 'Ball Technical Elements', bucket: 'ball-technical-elements-symbols', table: 'ball_technical_elements', folder: null },
-  { name: 'Hoop Bases', bucket: 'hoop-bases-symbols', table: 'hoop_technical_elements', folder: null },
-  { name: 'Hoop Technical Elements', bucket: 'hoop-technical-elements-symbols', table: 'hoop_technical_elements', folder: null },
-  { name: 'Clubs Bases', bucket: 'clubs-bases-symbols', table: 'clubs_technical_elements', folder: null },
-  { name: 'Clubs Technical Elements', bucket: 'clubs-technical-elements-symbols', table: 'clubs_technical_elements', folder: null },
-  { name: 'Ribbon Bases', bucket: 'ribbon-bases-symbols', table: 'ribbon_technical_elements', folder: null },
-  { name: 'Ribbon Technical Elements', bucket: 'ribbon-technical-elements-symbols', table: 'ribbon_technical_elements', folder: null },
+  { name: 'Jumps', bucket: 'jump-symbols', table: 'jumps', folder: null, uploadable: true },
+  { name: 'Rotations', bucket: 'jump-symbols', table: 'rotations', folder: 'rotations', uploadable: true },
+  { name: 'Balances', bucket: 'jump-symbols', table: 'balances', folder: 'balances', uploadable: true },
+  { name: 'Criteria', bucket: 'criteria-symbols', table: 'criteria', folder: null, uploadable: false },
+  { name: 'Ball Bases', bucket: 'ball-bases-symbols', table: 'ball_technical_elements', folder: null, uploadable: false },
+  { name: 'Ball Technical Elements', bucket: 'ball-technical-elements-symbols', table: 'ball_technical_elements', folder: null, uploadable: false },
+  { name: 'Hoop Bases', bucket: 'hoop-bases-symbols', table: 'hoop_technical_elements', folder: null, uploadable: false },
+  { name: 'Hoop Technical Elements', bucket: 'hoop-technical-elements-symbols', table: 'hoop_technical_elements', folder: null, uploadable: false },
+  { name: 'Clubs Bases', bucket: 'clubs-bases-symbols', table: 'clubs_technical_elements', folder: null, uploadable: false },
+  { name: 'Clubs Technical Elements', bucket: 'clubs-technical-elements-symbols', table: 'clubs_technical_elements', folder: null, uploadable: false },
+  { name: 'Ribbon Bases', bucket: 'ribbon-bases-symbols', table: 'ribbon_technical_elements', folder: null, uploadable: false },
+  { name: 'Ribbon Technical Elements', bucket: 'ribbon-technical-elements-symbols', table: 'ribbon_technical_elements', folder: null, uploadable: false },
 ];
 
 const DYNAMIC_ELEMENTS_CATEGORIES = [
@@ -54,8 +56,10 @@ export default function SymbolManagement() {
   const [deleteTarget, setDeleteTarget] = useState<{ bucket: string; file: StorageFile; code: string | null; folder?: string | null } | null>(null);
   const [cleanupTarget, setCleanupTarget] = useState<{ bucket: string; category: string; folder?: string | null } | null>(null);
   const [uploadingDynamic, setUploadingDynamic] = useState<Record<string, boolean>>({});
+  const [uploadingRegular, setUploadingRegular] = useState<Record<string, boolean>>({});
   
   const dynamicInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const regularInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     checkAuth();
@@ -90,8 +94,9 @@ export default function SymbolManagement() {
     const dynamicData: Record<string, SymbolStatus[]> = {};
 
     for (const category of SYMBOL_CATEGORIES) {
-      const symbols = await loadSymbolsForCategory(category.bucket, category.table, null);
-      allData[category.bucket] = symbols;
+      const symbols = await loadSymbolsForCategory(category.bucket, category.table, category.folder);
+      const key = category.folder ? `${category.bucket}/${category.folder}` : category.bucket;
+      allData[key] = symbols;
     }
 
     for (const category of DYNAMIC_ELEMENTS_CATEGORIES) {
@@ -286,6 +291,103 @@ export default function SymbolManagement() {
       setUploadingDynamic(prev => ({ ...prev, [category.folder]: false }));
     }
   };
+
+  const handleRegularSymbolUpload = async (
+    files: FileList,
+    category: typeof SYMBOL_CATEGORIES[number]
+  ) => {
+    const key = category.folder ? `${category.bucket}/${category.folder}` : category.bucket;
+    setUploadingRegular(prev => ({ ...prev, [key]: true }));
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+      const skippedCodes: string[] = [];
+
+      for (const file of Array.from(files)) {
+        const fileName = file.name;
+        const code = fileName.replace(/\.[^/.]+$/, ""); // Remove extension to get code
+
+        // Check if a record with this code exists
+        const { data: existingRecords, error: queryError } = await supabase
+          .from(category.table as any)
+          .select('id, code')
+          .eq('code', code)
+          .limit(1);
+
+        const existingRecord = existingRecords?.[0] || null;
+
+        if (queryError) {
+          console.error(`Error checking for ${code}:`, queryError);
+          errorCount++;
+          continue;
+        }
+
+        if (!existingRecord) {
+          console.warn(`No ${category.name} found with code: ${code}`);
+          skippedCodes.push(code);
+          errorCount++;
+          continue;
+        }
+
+        // Upload to storage (with folder path if specified)
+        const filePath = category.folder ? `${category.folder}/${fileName}` : fileName;
+        const { error: uploadError } = await supabase.storage
+          .from(category.bucket)
+          .upload(filePath, file, { upsert: true });
+
+        if (uploadError) {
+          console.error(`Error uploading symbol for ${code}:`, uploadError);
+          errorCount++;
+          continue;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from(category.bucket)
+          .getPublicUrl(filePath);
+
+        // Update the record with the symbol URL
+        const { error: updateError } = await supabase
+          .from(category.table as any)
+          .update({ symbol_image: publicUrl })
+          .eq('code', code);
+
+        if (updateError) {
+          console.error(`Error updating ${code} with symbol:`, updateError);
+          errorCount++;
+          continue;
+        }
+
+        successCount++;
+      }
+
+      if (successCount > 0) {
+        toast({
+          title: "Upload successful",
+          description: `Successfully uploaded ${successCount} ${category.name.toLowerCase()} symbol(s)`,
+        });
+      }
+      if (errorCount > 0) {
+        toast({
+          title: "Some uploads failed",
+          description: `${errorCount} symbol(s) could not be matched or uploaded${skippedCodes.length > 0 ? `. No match for: ${skippedCodes.slice(0, 5).join(', ')}${skippedCodes.length > 5 ? '...' : ''}` : ''}`,
+          variant: "destructive",
+        });
+      }
+
+      await loadAllSymbols();
+    } catch (error) {
+      console.error(`Error uploading ${category.name} symbols:`, error);
+      toast({
+        title: "Upload failed",
+        description: `Failed to upload ${category.name} symbols`,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingRegular(prev => ({ ...prev, [key]: false }));
+    }
+  };
+
   const handleDeleteSymbol = async () => {
     if (!deleteTarget) return;
 
@@ -388,13 +490,13 @@ export default function SymbolManagement() {
     }
   };
 
-  const filteredSymbolData = Object.entries(symbolData).reduce((acc, [bucket, symbols]) => {
+  const filteredSymbolData = Object.entries(symbolData).reduce((acc, [key, symbols]) => {
     const filtered = symbols.filter(s => 
       s.file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.linkedCode?.toLowerCase().includes(searchQuery.toLowerCase())
     );
     if (filtered.length > 0) {
-      acc[bucket] = filtered;
+      acc[key] = filtered;
     }
     return acc;
   }, {} as Record<string, SymbolStatus[]>);
@@ -451,11 +553,13 @@ export default function SymbolManagement() {
           <>
             <Accordion type="multiple" className="space-y-4">
               {SYMBOL_CATEGORIES.map(category => {
-                const symbols = filteredSymbolData[category.bucket] || [];
+                const key = category.folder ? `${category.bucket}/${category.folder}` : category.bucket;
+                const symbols = filteredSymbolData[key] || [];
                 const orphanedCount = symbols.filter(s => s.status === 'orphaned').length;
+                const isUploading = uploadingRegular[key] || false;
                 
                 return (
-                  <AccordionItem key={category.bucket} value={category.bucket} className="border rounded-lg bg-card">
+                  <AccordionItem key={key} value={key} className="border rounded-lg bg-card">
                     <AccordionTrigger className="px-6 hover:no-underline">
                       <div className="flex items-center justify-between w-full pr-4">
                         <div className="flex items-center gap-3">
@@ -468,6 +572,39 @@ export default function SymbolManagement() {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-6 pb-6">
+                      {/* Upload Section for uploadable categories */}
+                      {category.uploadable && (
+                        <div className="mb-4 p-4 bg-muted/50 border rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Image className="h-4 w-4 text-primary" />
+                              <span className="text-sm">Upload {category.name} Symbols (PNG files named by code, e.g. "1.101.png")</span>
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/png"
+                              multiple
+                              ref={(el) => { regularInputRefs.current[key] = el; }}
+                              className="hidden"
+                              onChange={(e) => {
+                                const files = e.target.files;
+                                if (files && files.length > 0) {
+                                  handleRegularSymbolUpload(files, category);
+                                  e.target.value = '';
+                                }
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => regularInputRefs.current[key]?.click()}
+                              disabled={isUploading}
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              {isUploading ? "Uploading..." : "Upload Symbols"}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                       {orphanedCount > 0 && (
                         <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -479,7 +616,7 @@ export default function SymbolManagement() {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => setCleanupTarget({ bucket: category.bucket, category: category.name })}
+                            onClick={() => setCleanupTarget({ bucket: category.bucket, category: category.name, folder: category.folder })}
                           >
                             Cleanup Orphaned
                           </Button>
@@ -523,7 +660,8 @@ export default function SymbolManagement() {
                                     onClick={() => setDeleteTarget({ 
                                       bucket: category.bucket, 
                                       file: symbol.file,
-                                      code: symbol.linkedCode 
+                                      code: symbol.linkedCode,
+                                      folder: category.folder
                                     })}
                                   >
                                     <Trash2 className="h-3 w-3 mr-1" />
