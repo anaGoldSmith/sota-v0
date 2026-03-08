@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, FileText, ListCheck, Settings, Zap } from "lucide-react";
+import { ArrowLeft, FileText, ListCheck, Settings, Zap, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
