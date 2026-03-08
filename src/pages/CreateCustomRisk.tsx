@@ -2533,50 +2533,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   
                   {showThrowDropdown && (
                     <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                      {/* Throw during DB option */}
-                      <div 
-                        className={`flex items-center gap-3 p-3 border-b border-border ${hasDiveLeapInRotation ? 'opacity-40 cursor-not-allowed' : 'hover:bg-muted cursor-pointer'}`}
-                        onClick={() => {
-                          if (hasDiveLeapInRotation) return;
-                          setShowThrowDropdown(false);
-                          setShowDBDuringThrowDialog(true);
-                        }}
-                      >
-                        <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                          {dynamicThrows.find(t => t.code === 'Thr1')?.symbol_image ? (
-                            <img 
-                              src={dynamicThrows.find(t => t.code === 'Thr1')!.symbol_image!} 
-                              alt="Throw" 
-                              className="h-8 w-8 object-contain" 
-                              onError={e => e.currentTarget.style.display = 'none'} 
-                            />
-                          ) : (
-                            <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">T</div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-foreground text-sm">Throw during DB <span className="text-foreground">(0.1 is added for extra rotation)</span></span>
-                          <p className="text-xs text-muted-foreground">
-                            {hasDiveLeapInRotation ? 'Not available when Dive Leap is in rotations' : 'Select a DB element performed during throw'}
-                          </p>
-                        </div>
-                        <div className="w-12 text-right flex-shrink-0 flex items-center justify-end gap-1">
-                          {hasDiveLeapInRotation ? (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <AlertCircle className="h-4 w-4 text-amber-500" />
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs bg-muted-foreground text-white">
-                                  <p>A dive leap can only count as a rotation if it is performed as the first rotation. Throw during DB would precede the dive leap, making it invalid.</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ) : (
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </div>
-                      </div>
+                      {/* Throws are now all from the database, including Thr7 (Throw during DB) */}
                       {filteredThrows.length === 0 ? (
                         <div className="p-4 text-center text-muted-foreground">
                           No throws available for this apparatus
