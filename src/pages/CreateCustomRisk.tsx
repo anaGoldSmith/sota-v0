@@ -969,17 +969,19 @@ const CreateCustomRisk = () => {
   let throwValue = 0;
   if (throwDuringDB) {
     throwValue = (throwDBInfo?.value ?? 0) + 0.1;
-  } else if (selectedThrow?.code === 'Thr6' && extraThrow?.code === 'Thr2') {
-    // Thr6+Thr2 combo: 0.1 (rotation) + Thr2 value
-    throwValue = 0.1 + (extraThrow.value ?? 0);
-  } else if (selectedThrow?.code === 'Thr2' && thr2HasThr6) {
-    // Thr2+Thr6 combo: Thr2 value + 0.1 (rotation)
-    throwValue = (selectedThrow.value ?? 0) + 0.1;
   } else if (selectedThrow?.code === 'Thr6') {
     throwValue = 0.1;
   } else if (selectedThrow) {
     throwValue = selectedThrow.value ?? 0;
   }
+  // Extra throws: add their values
+  extraThrows.forEach(t => {
+    if (t.code === 'Thr6') {
+      throwValue += 0.1;
+    } else {
+      throwValue += t.value ?? 0;
+    }
+  });
   
   // Calculate catch row value:
   // - Catch8 (catch during rotation): always 0.1
