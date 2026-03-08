@@ -2675,24 +2675,33 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       </div>
                       {/* Extra Throw Criteria for Throw during DB */}
                       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleThrowCriteriaDragEnd}>
-                        <SortableContext items={[...throwCriteria.map(c => c.id), ...(extraThrow ? ['extra-throw'] : [])]} strategy={verticalListSortingStrategy}>
-                          {throwCriteria.map(item => (
-                            <SortableCriteriaRow 
-                              key={item.id} 
-                              item={item} 
-                              onRemove={(id) => setThrowCriteria(throwCriteria.filter(t => t.id !== id))}
-                              notesSymbolMap={notesSymbolMap}
-                            />
-                          ))}
-                          {extraThrow && (
-                            <SortableExtraRow
-                              id="extra-throw"
-                              item={extraThrow}
-                              displayValue={extraThrow.code === 'Thr6' ? '0.1' : (extraThrow.value ?? 0)}
-                              onRemove={() => setExtraThrow(null)}
-                              notesSymbolMap={notesSymbolMap}
-                            />
-                          )}
+                        <SortableContext items={getThrowUnifiedOrder()} strategy={verticalListSortingStrategy}>
+                          {getThrowUnifiedOrder().map(id => {
+                            if (id === 'extra-throw' && extraThrow) {
+                              return (
+                                <SortableExtraRow
+                                  key="extra-throw"
+                                  id="extra-throw"
+                                  item={extraThrow}
+                                  displayValue={extraThrow.code === 'Thr6' ? '0.1' : (extraThrow.value ?? 0)}
+                                  onRemove={() => setExtraThrow(null)}
+                                  notesSymbolMap={notesSymbolMap}
+                                />
+                              );
+                            }
+                            const criteriaItem = throwCriteria.find(c => c.id === id);
+                            if (criteriaItem) {
+                              return (
+                                <SortableCriteriaRow 
+                                  key={criteriaItem.id} 
+                                  item={criteriaItem} 
+                                  onRemove={(cid) => setThrowCriteria(throwCriteria.filter(t => t.id !== cid))}
+                                  notesSymbolMap={notesSymbolMap}
+                                />
+                              );
+                            }
+                            return null;
+                          })}
                         </SortableContext>
                       </DndContext>
                       
