@@ -949,10 +949,51 @@ const CreateCustomRisk = () => {
   const rotationValue = getRotationValue();
   const rLevel = getTotalRotations();
 
+  // Helper: Get compatible extra throws for current selected throw
+  const getCompatibleExtraThrows = useMemo(() => {
+    if (!selectedThrow) return [];
+    const combo = throwCombinations.find(c => c.code === selectedThrow.code);
+    const compatibleCodes: string[] = [];
+    if (combo?.Thr6 === 'Y') compatibleCodes.push('Thr6');
+    if (combo?.Thr7 === 'Y') compatibleCodes.push('Thr7');
+    return dynamicThrows.filter(t => compatibleCodes.includes(t.code) && isApplicableForApparatus(t, apparatusCode));
+  }, [selectedThrow, throwCombinations, dynamicThrows, apparatusCode]);
+
+  // Helper: Get compatible primary throws when extra throw (Thr6/Thr7) is selected first
+  const getCompatiblePrimaryThrows = useMemo(() => {
+    if (!selectedThrow || (selectedThrow.code !== 'Thr6' && selectedThrow.code !== 'Thr7')) return [];
+    const extraCode = selectedThrow.code;
+    return throwCombinations
+      .filter(c => c[extraCode as 'Thr6' | 'Thr7'] === 'Y')
+      .map(c => dynamicThrows.find(t => t.code === c.code))
+      .filter((t): t is DynamicThrow => t !== undefined && isApplicableForApparatus(t, apparatusCode));
+  }, [selectedThrow, throwCombinations, dynamicThrows, apparatusCode]);
+
+  // Helper: Get compatible extra catches for current selected catch
+  const getCompatibleExtraCatches = useMemo(() => {
+    if (!selectedCatch) return [];
+    const combo = catchCombinations.find(c => c.code === selectedCatch.code);
+    const compatibleCodes: string[] = [];
+    if (combo?.Catch8 === 'Y') compatibleCodes.push('Catch8');
+    if (combo?.Catch9 === 'Y') compatibleCodes.push('Catch9');
+    return dynamicCatches.filter(c => compatibleCodes.includes(c.code) && isApplicableForApparatus(c, apparatusCode));
+  }, [selectedCatch, catchCombinations, dynamicCatches, apparatusCode]);
+
+  // Helper: Get compatible primary catches when extra catch (Catch8/Catch9) is selected first
+  const getCompatiblePrimaryCatches = useMemo(() => {
+    if (!selectedCatch || (selectedCatch.code !== 'Catch8' && selectedCatch.code !== 'Catch9')) return [];
+    const extraCode = selectedCatch.code;
+    return catchCombinations
+      .filter(c => c[extraCode as 'Catch8' | 'Catch9'] === 'Y')
+      .map(c => dynamicCatches.find(ct => ct.code === c.code))
+      .filter((c): c is DynamicCatch => c !== undefined && isApplicableForApparatus(c, apparatusCode));
+  }, [selectedCatch, catchCombinations, dynamicCatches, apparatusCode]);
+
   // Calculate throw row value:
   // - Thr6 (throw during rotation): always 0.1
   // - Throw during DB: DB value + 0.1 (always add 0.1 for rotation as risk component)
   // - Other throws: base value only
+  // - Extra throw adds its value
   const throwDBInfo = getThrowCatchDBInfo(throwDuringDB);
   let throwValue = 0;
   if (throwDuringDB) {
@@ -962,11 +1003,20 @@ const CreateCustomRisk = () => {
   } else if (selectedThrow) {
     throwValue = selectedThrow.value ?? 0;
   }
+  // Add extra throw value
+  if (extraThrow) {
+    if (extraThrow.code === 'Thr6') {
+      throwValue += 0.1;
+    } else {
+      throwValue += extraThrow.value ?? 0;
+    }
+  }
   
   // Calculate catch row value:
   // - Catch8 (catch during rotation): always 0.1
   // - Catch during DB: DB value + 0.1 (always add 0.1 for rotation as risk component)
   // - Other catches: base value only
+  // - Extra catch adds its value
   const catchDBInfo = getThrowCatchDBInfo(catchDuringDB);
   let catchValue = 0;
   if (catchDuringDB) {
@@ -978,6 +1028,14 @@ const CreateCustomRisk = () => {
   } else if (selectedCatch) {
     // Other catch types: base value only
     catchValue = selectedCatch.value ?? 0;
+  }
+  // Add extra catch value
+  if (extraCatch) {
+    if (extraCatch.code === 'Catch8') {
+      catchValue += 0.1;
+    } else {
+      catchValue += extraCatch.value ?? 0;
+    }
   }
   
   // Total value = sum of all row values (throw + throw criteria + rotations + catch + catch criteria)
