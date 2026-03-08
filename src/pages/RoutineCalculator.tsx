@@ -3,8 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, Calculator, GripVertical, ChevronDown, ChevronRight, MoreVertical, Pencil, Trash2, Info } from "lucide-react";
+import { ArrowLeft, Calculator, GripVertical, ChevronDown, ChevronRight, MoreVertical, Pencil, Trash2, Info, Save, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RotationIcon, JumpIcon, BalanceIcon } from "@/components/icons/DbSymbols";
 import { NotesWithSymbols } from "@/components/routine/NotesWithSymbols";
@@ -611,6 +612,11 @@ const RoutineCalculator = () => {
   useEffect(() => {
     localStorage.setItem('routineElements', JSON.stringify(routineElements));
   }, [routineElements]);
+  const [gymnastName, setGymnastName] = useState('');
+  const [year, setYear] = useState('');
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [routineSaveName, setRoutineSaveName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDBDASuccessDialog, setShowDBDASuccessDialog] = useState(false);
   const [showDBDAValidationDialog, setShowDBDAValidationDialog] = useState(false);
@@ -1692,6 +1698,8 @@ const RoutineCalculator = () => {
                 id="name"
                 type="text"
                 placeholder="E.g. E. Kanaeva"
+                value={gymnastName}
+                onChange={(e) => setGymnastName(e.target.value)}
               />
             </div>
 
@@ -1717,6 +1725,8 @@ const RoutineCalculator = () => {
                 id="year"
                 type="text"
                 placeholder="E.g 2025"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
               />
             </div>
 
@@ -2312,8 +2322,96 @@ const RoutineCalculator = () => {
               </div>
             </Card>
           )}
+
+          {/* Save / Cancel Buttons */}
+          <div className="flex gap-4 pt-4">
+            <Button
+              variant="outline"
+              className="flex-1 h-12 text-base"
+              onClick={() => navigate('/routines')}
+            >
+              <X className="h-4 w-4 mr-2" /> Cancel
+            </Button>
+            <Button
+              className="flex-1 h-12 text-base"
+              onClick={() => {
+                const parts = [gymnastName, selectedApparatus, year].filter(Boolean);
+                const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
+                setRoutineSaveName(defaultName);
+                setSaveDialogOpen(true);
+              }}
+            >
+              <Save className="h-4 w-4 mr-2" /> Save
+            </Button>
+          </div>
         </div>
       </main>
+
+      {/* Save Routine Dialog */}
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Save Routine</DialogTitle>
+            <DialogDescription>Review and edit the routine name before saving.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="routine-name">Routine Name</Label>
+              <Input
+                id="routine-name"
+                value={routineSaveName}
+                onChange={(e) => setRoutineSaveName(e.target.value)}
+                placeholder="Enter routine name"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={isSaving || !routineSaveName.trim()}
+              onClick={async () => {
+                setIsSaving(true);
+                try {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) {
+                    toast({ title: "Please log in", description: "You need to be logged in to save routines.", variant: "destructive" });
+                    setIsSaving(false);
+                    return;
+                  }
+                  const { error } = await supabase.from('routines' as any).insert({
+                    user_id: user.id,
+                    name: routineSaveName.trim(),
+                    apparatus: selectedApparatus,
+                    year: year || null,
+                    gymnast_name: gymnastName || null,
+                    elements: routineElements as any,
+                    total_db: totalDB,
+                    total_da: totalDA,
+                  } as any);
+                  if (error) throw error;
+                  toast({ title: "Routine saved!", description: `"${routineSaveName.trim()}" has been saved to My Routines.` });
+                  setSaveDialogOpen(false);
+                  setRoutineElements([]);
+                  setGymnastName('');
+                  setYear('');
+                  setSelectedApparatus(null);
+                  localStorage.removeItem('routineElements');
+                  localStorage.removeItem('selectedApparatus');
+                  navigate('/routines');
+                } catch (err: any) {
+                  toast({ title: "Error saving routine", description: err.message, variant: "destructive" });
+                } finally {
+                  setIsSaving(false);
+                }
+              }}
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Jump Selection Dialog */}
       <JumpSelectionDialog
