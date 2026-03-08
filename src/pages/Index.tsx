@@ -78,7 +78,7 @@ const Index = () => {
         <div className="w-10" />
         <div className="flex flex-col items-center">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Rhythm. Gymnastics. Score. — RGS
+            Rhythm. Gymnastics. Score.
           </h1>
           <p className="text-sm text-muted-foreground italic -mt-0.5">Check your D-score before the judges do</p>
         </div>
