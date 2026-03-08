@@ -893,6 +893,7 @@ const CreateCustomRisk = () => {
   
   const [throwRotationSpec, setThrowRotationSpec] = useState<ThrowCatchRotationSpec>(null);
   const [catchRotationSpec, setCatchRotationSpec] = useState<ThrowCatchRotationSpec>(null);
+  const [extraThrowRotationSpec, setExtraThrowRotationSpec] = useState<ThrowCatchRotationSpec>(null);
   
   // UI states for rotation spec dropdowns/dialogs
   const [showThrowRotationSpecDropdown, setShowThrowRotationSpecDropdown] = useState(false);
@@ -901,8 +902,12 @@ const CreateCustomRisk = () => {
   const [showCatchRotationSpecDropdown, setShowCatchRotationSpecDropdown] = useState(false);
   const [showCatchVerticalDialog, setShowCatchVerticalDialog] = useState(false);
   const [showCatchPreAcrobaticDialog, setShowCatchPreAcrobaticDialog] = useState(false);
+  const [showExtraThrowRotationSpecDropdown, setShowExtraThrowRotationSpecDropdown] = useState(false);
+  const [showExtraThrowVerticalDialog, setShowExtraThrowVerticalDialog] = useState(false);
+  const [showExtraThrowPreAcrobaticDialog, setShowExtraThrowPreAcrobaticDialog] = useState(false);
   const throwRotationSpecRef = useRef<HTMLDivElement>(null);
   const catchRotationSpecRef = useRef<HTMLDivElement>(null);
+  const extraThrowRotationSpecRef = useRef<HTMLDivElement>(null);
   
   // (Extra throw/catch combo state removed)
   
