@@ -2977,9 +2977,53 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                               id="extra-throw"
                               item={extraThrow}
                               displayValue={extraThrow.code === 'Thr6' ? '0.1' : (extraThrow.value ?? 0)}
-                              onRemove={() => setExtraThrow(null)}
+                              onRemove={() => { setExtraThrow(null); setExtraThrowRotationSpec(null); }}
                               notesSymbolMap={notesSymbolMap}
-                            />
+                            >
+                              {extraThrow.code === 'Thr6' && (
+                                <div className="relative mt-1" ref={extraThrowRotationSpecRef}>
+                                  {extraThrowRotationSpec ? (
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-sm text-muted-foreground italic">
+                                        {extraThrowRotationSpec.type === 'vertical' 
+                                          ? `Vertical ${(extraThrowRotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (extraThrowRotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${extraThrowRotationSpec.verticalRotation?.name}`
+                                          : `Pre-acrobatic: ${extraThrowRotationSpec.preAcrobaticElement?.name}`
+                                        }
+                                      </span>
+                                      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-primary hover:bg-primary/10" onClick={() => setShowExtraThrowRotationSpecDropdown(true)}>
+                                        Change Rotation
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30" onClick={() => setShowExtraThrowRotationSpecDropdown(true)}>
+                                      <Plus className="h-3 w-3 mr-1" />
+                                      Specify Rotation Type
+                                    </Button>
+                                  )}
+                                  {showExtraThrowRotationSpecDropdown && (
+                                    <div className="fixed inset-0 z-[99]" onClick={() => setShowExtraThrowRotationSpecDropdown(false)} />
+                                  )}
+                                  {showExtraThrowRotationSpecDropdown && (
+                                    <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-[100]">
+                                      <div className="p-2 border-b border-border flex items-center justify-between">
+                                        <span className="text-sm font-medium text-foreground">Select Rotation Type</span>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => setShowExtraThrowRotationSpecDropdown(false)}>
+                                          <X className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                      <div className="p-2 space-y-1">
+                                        <div className={`p-3 rounded hover:bg-muted cursor-pointer ${extraThrowRotationSpec?.type === 'pre-acrobatic' ? 'bg-primary/10' : ''}`} onClick={() => { setShowExtraThrowRotationSpecDropdown(false); setShowExtraThrowPreAcrobaticDialog(true); }}>
+                                          <span className="text-sm text-foreground">Pre-acrobatic Elements</span>
+                                        </div>
+                                        <div className={`p-3 rounded hover:bg-muted cursor-pointer ${extraThrowRotationSpec?.type === 'vertical' ? 'bg-primary/10' : ''}`} onClick={() => { setShowExtraThrowRotationSpecDropdown(false); setShowExtraThrowVerticalDialog(true); }}>
+                                          <span className="text-sm text-foreground">Vertical Rotations</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </SortableExtraRow>
                           );
                         }
                         const criteriaItem = throwCriteria.find(c => c.id === id);
