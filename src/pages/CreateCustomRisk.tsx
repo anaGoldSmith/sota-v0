@@ -2326,8 +2326,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         catchRotationSpec: catchRotationSpec ? { ...catchRotationSpec } : null,
         throwDuringDB: throwDuringDB ? JSON.parse(JSON.stringify(throwDuringDB)) : null,
         catchDuringDB: catchDuringDB ? JSON.parse(JSON.stringify(catchDuringDB)) : null,
-        extraThrow: extraThrow ? { ...extraThrow } : null,
-        thr2HasThr6,
+        extraThrows: extraThrows.map(t => ({ ...t })),
         selectedThrowCode: effectiveThrow?.code,
         selectedCatchCode: effectiveCatch?.code,
         // Catch combo metadata
