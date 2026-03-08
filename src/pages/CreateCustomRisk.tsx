@@ -1956,14 +1956,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       effectiveThrowValue = (throwDBInfo_save?.value ?? 0) + 0.1;
     } else if (effectiveThrow) {
       effectiveThrowValue = effectiveThrow.value ?? 0;
-      const hasRotation = effectiveThrow.code === 'Thr6' || thr2HasThr6;
-      if (hasRotation) effectiveThrowValue = 0.1; // Thr6 base is 0.1
-      if (thr2HasThr6 && effectiveThrow.code === 'Thr2') {
-        effectiveThrowValue = (effectiveThrow.value ?? 0) + 0.1;
-      }
-    }
-    if (extraThrow) {
-      effectiveThrowValue += (extraThrow.value ?? 0);
+      if (effectiveThrow.code === 'Thr6') effectiveThrowValue = 0.1;
     }
     
     // Calculate effective catch value
@@ -1974,15 +1967,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     } else if (effectiveCatch) {
       effectiveCatchValue = effectiveCatch.value ?? 0;
       if (effectiveCatch.code === 'Catch8') effectiveCatchValue = 0.1;
-    }
-    // Extra catch combos in save
-    extraCatches.forEach(c => { effectiveCatchValue += c.value ?? 0; });
-    if (catchHasCatchDuringDB && extraCatchDuringDBData) {
-      const extraCDBInfo = getThrowCatchDBInfo(extraCatchDuringDBData);
-      effectiveCatchValue += (extraCDBInfo?.value ?? 0) + 0.1;
-    }
-    if (catchHasCatch8) {
-      effectiveCatchValue += 0.1;
     }
     
     // Total = sum of all row values
