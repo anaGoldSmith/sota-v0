@@ -1433,7 +1433,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
   const handleSelectPreAcrobaticElement = (id: string, element: PreAcrobaticElement) => {
     // Check if Dive Leap is being selected
     if (element.name?.toLowerCase() === 'dive leap') {
-      const throwHasRotation = selectedThrow?.code === 'Thr6' || (selectedThrow?.code === 'Thr2' && thr2HasThr6) || 
+      const throwHasRotation = selectedThrow?.code === 'Thr6' || extraThrows.some(t => t.code === 'Thr6') || 
         (throwDuringDB && (
           ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
           'preAcrobaticElement' in throwDuringDB ||
