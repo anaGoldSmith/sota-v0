@@ -2761,7 +2761,7 @@ const RoutineCalculator = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Routine Rules</DialogTitle>
-            <DialogDescription>Requirements for a valid routine composition.</DialogDescription>
+            <DialogDescription>Requirements for a valid routine under FIG CoP.</DialogDescription>
           </DialogHeader>
           <div className="overflow-auto">
             <table className="w-full text-sm">
