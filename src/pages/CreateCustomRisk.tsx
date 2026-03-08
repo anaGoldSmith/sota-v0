@@ -2101,7 +2101,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     );
     
     if (diveLeapInRotations) {
-      const throwHasRotation = selectedThrow?.code === 'Thr6' || (selectedThrow?.code === 'Thr2' && thr2HasThr6) || 
+      const throwHasRotation = selectedThrow?.code === 'Thr6' || 
         (throwDuringDB && (
           ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
           'preAcrobaticElement' in throwDuringDB ||
