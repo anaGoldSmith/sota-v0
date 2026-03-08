@@ -612,6 +612,11 @@ const RoutineCalculator = () => {
   useEffect(() => {
     localStorage.setItem('routineElements', JSON.stringify(routineElements));
   }, [routineElements]);
+  const [gymnastName, setGymnastName] = useState('');
+  const [year, setYear] = useState('');
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [routineSaveName, setRoutineSaveName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDBDASuccessDialog, setShowDBDASuccessDialog] = useState(false);
   const [showDBDAValidationDialog, setShowDBDAValidationDialog] = useState(false);
