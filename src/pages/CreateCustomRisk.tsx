@@ -961,6 +961,10 @@ const CreateCustomRisk = () => {
   const effectiveCatchCode = catchDuringDB ? 'Catch9' : selectedCatch?.code || null;
 
   // Helper: Get compatible extra throws for current selected throw
+  const isApplicableForApparatusOrAll = (item: { apparatus: string }) => {
+    return apparatusCode ? isApplicableForApparatus(item, apparatusCode) : true;
+  };
+
   const getCompatibleExtraThrows = useMemo(() => {
     if (!effectiveThrowCode) return [];
     const combo = throwCombinations.find(c => c.code === effectiveThrowCode);
@@ -968,7 +972,7 @@ const CreateCustomRisk = () => {
     if (combo?.Thr6 === 'Y') compatibleCodes.push('Thr6');
     if (combo?.Thr7 === 'Y') compatibleCodes.push('Thr7');
     // Don't show the same code as primary
-    return dynamicThrows.filter(t => compatibleCodes.includes(t.code) && t.code !== effectiveThrowCode && isApplicableForApparatus(t, apparatusCode));
+    return dynamicThrows.filter(t => compatibleCodes.includes(t.code) && t.code !== effectiveThrowCode && isApplicableForApparatusOrAll(t));
   }, [effectiveThrowCode, throwCombinations, dynamicThrows, apparatusCode]);
 
   // Helper: Get compatible primary throws when extra throw (Thr6/Thr7) is selected first
@@ -977,7 +981,7 @@ const CreateCustomRisk = () => {
     return throwCombinations
       .filter(c => c[effectiveThrowCode as 'Thr6' | 'Thr7'] === 'Y')
       .map(c => dynamicThrows.find(t => t.code === c.code))
-      .filter((t): t is DynamicThrow => t !== undefined && isApplicableForApparatus(t, apparatusCode));
+      .filter((t): t is DynamicThrow => t !== undefined && isApplicableForApparatusOrAll(t));
   }, [effectiveThrowCode, throwCombinations, dynamicThrows, apparatusCode]);
 
   // Helper: Get compatible extra catches for current selected catch
@@ -988,7 +992,7 @@ const CreateCustomRisk = () => {
     if (combo?.Catch8 === 'Y') compatibleCodes.push('Catch8');
     if (combo?.Catch9 === 'Y') compatibleCodes.push('Catch9');
     // Don't show the same code as primary
-    return dynamicCatches.filter(c => compatibleCodes.includes(c.code) && c.code !== effectiveCatchCode && isApplicableForApparatus(c, apparatusCode));
+    return dynamicCatches.filter(c => compatibleCodes.includes(c.code) && c.code !== effectiveCatchCode && isApplicableForApparatusOrAll(c));
   }, [effectiveCatchCode, catchCombinations, dynamicCatches, apparatusCode]);
 
   // Helper: Get compatible primary catches when extra catch (Catch8/Catch9) is selected first
@@ -997,7 +1001,7 @@ const CreateCustomRisk = () => {
     return catchCombinations
       .filter(c => c[effectiveCatchCode as 'Catch8' | 'Catch9'] === 'Y')
       .map(c => dynamicCatches.find(ct => ct.code === c.code))
-      .filter((c): c is DynamicCatch => c !== undefined && isApplicableForApparatus(c, apparatusCode));
+      .filter((c): c is DynamicCatch => c !== undefined && isApplicableForApparatusOrAll(c));
   }, [effectiveCatchCode, catchCombinations, dynamicCatches, apparatusCode]);
 
   // Calculate throw row value:
