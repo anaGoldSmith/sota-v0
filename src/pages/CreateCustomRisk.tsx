@@ -832,10 +832,9 @@ const CreateCustomRisk = () => {
   const throwRotationSpecRef = useRef<HTMLDivElement>(null);
   const catchRotationSpecRef = useRef<HTMLDivElement>(null);
   
-  // Thr2+Thr6 combo state
-  const [extraThrow, setExtraThrow] = useState<DynamicThrow | null>(null);
+  // Extra throws state (generic, like catches)
+  const [extraThrows, setExtraThrows] = useState<DynamicThrow[]>([]);
   const [showExtraThrowDropdown, setShowExtraThrowDropdown] = useState(false);
-  const [thr2HasThr6, setThr2HasThr6] = useState(false);
   const extraThrowDropdownRef = useRef<HTMLDivElement>(null);
   
   // Catch combo state: extra regular catches when primary is CatchDuringDB or Catch8
@@ -941,7 +940,7 @@ const CreateCustomRisk = () => {
     }, 0);
     
     // Thr6 (throw during rotation) adds 1 rotation
-    if (selectedThrow?.code === 'Thr6' || (selectedThrow?.code === 'Thr2' && thr2HasThr6)) total += 1;
+    if (selectedThrow?.code === 'Thr6' || extraThrows.some(t => t.code === 'Thr6')) total += 1;
     
     // Catch8 (catch during rotation) adds 1 rotation
     if (selectedCatch?.code === 'Catch8') total += 1;
@@ -970,17 +969,19 @@ const CreateCustomRisk = () => {
   let throwValue = 0;
   if (throwDuringDB) {
     throwValue = (throwDBInfo?.value ?? 0) + 0.1;
-  } else if (selectedThrow?.code === 'Thr6' && extraThrow?.code === 'Thr2') {
-    // Thr6+Thr2 combo: 0.1 (rotation) + Thr2 value
-    throwValue = 0.1 + (extraThrow.value ?? 0);
-  } else if (selectedThrow?.code === 'Thr2' && thr2HasThr6) {
-    // Thr2+Thr6 combo: Thr2 value + 0.1 (rotation)
-    throwValue = (selectedThrow.value ?? 0) + 0.1;
   } else if (selectedThrow?.code === 'Thr6') {
     throwValue = 0.1;
   } else if (selectedThrow) {
     throwValue = selectedThrow.value ?? 0;
   }
+  // Extra throws: add their values
+  extraThrows.forEach(t => {
+    if (t.code === 'Thr6') {
+      throwValue += 0.1;
+    } else {
+      throwValue += t.value ?? 0;
+    }
+  });
   
   // Calculate catch row value:
   // - Catch8 (catch during rotation): always 0.1
@@ -1140,13 +1141,13 @@ const CreateCustomRisk = () => {
         const catchItem = dynamicCatches.find(c => c.code === meta.selectedCatchCode);
         if (catchItem) setSelectedCatch(catchItem);
       }
-      // Restore extra throw and thr2+thr6 combo
-      if (meta.extraThrow) {
-        const et = dynamicThrows.find(t => t.code === meta.extraThrow.code);
-        if (et) setExtraThrow(et);
-      }
-      if (meta.thr2HasThr6) {
-        setThr2HasThr6(true);
+      // Restore extra throws
+      if (meta.extraThrows && meta.extraThrows.length > 0) {
+        const restoredExtraThrows = meta.extraThrows.map((t: any) => {
+          const found = dynamicThrows.find(dt => dt.code === t.code);
+          return found || t;
+        });
+        setExtraThrows(restoredExtraThrows);
       }
       // Restore throw/catch rotation specs
       if (meta.throwRotationSpec) {
@@ -1432,7 +1433,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
   const handleSelectPreAcrobaticElement = (id: string, element: PreAcrobaticElement) => {
     // Check if Dive Leap is being selected
     if (element.name?.toLowerCase() === 'dive leap') {
-      const throwHasRotation = selectedThrow?.code === 'Thr6' || (selectedThrow?.code === 'Thr2' && thr2HasThr6) || 
+      const throwHasRotation = selectedThrow?.code === 'Thr6' || extraThrows.some(t => t.code === 'Thr6') || 
         (throwDuringDB && (
           ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
           'preAcrobaticElement' in throwDuringDB ||
@@ -1579,7 +1580,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
   );
   
   // Check if Dive Leap is selected in the Throw section (Thr6 with pre-acrobatic spec)
-  const hasDiveLeapInThrow = (selectedThrow?.code === 'Thr6' || (selectedThrow?.code === 'Thr2' && thr2HasThr6)) && 
+  const hasDiveLeapInThrow = (selectedThrow?.code === 'Thr6' || extraThrows.some(t => t.code === 'Thr6')) && 
     throwRotationSpec?.type === 'pre-acrobatic' && 
     throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap';
   
@@ -1637,9 +1638,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     setSelectedThrow(throwItem);
     setShowThrowDropdown(false);
     setThrowRotationSpec(null);
-    setExtraThrow(null);
+    setExtraThrows([]);
     setShowExtraThrowDropdown(false);
-    setThr2HasThr6(false);
 
     // Auto-add Cr2H when Thr2 is selected
     if (throwItem.code === 'Thr2') {
@@ -1658,32 +1658,36 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     }
   };
   
-  // Handler for selecting extra Thr2 when Thr6 is primary
+  // Handler for selecting extra throw (generic)
   const handleSelectExtraThrow = (throwItem: DynamicThrow) => {
-    if (throwItem.code !== 'Thr2') return;
-    setExtraThrow(throwItem);
+    if (extraThrows.some(t => t.code === throwItem.code)) return;
+    setExtraThrows(prev => [...prev, throwItem]);
     setShowExtraThrowDropdown(false);
     
-    // Auto-add Cr2H criteria (same as handleSelectThrow for Thr2)
-    const cr2h = generalCriteria.find(gc => gc.code === 'Cr2H');
-    if (cr2h && !selectedThrowCriteria.includes('Cr2H')) {
-      const newCriteria: CriteriaItem = {
-        id: `throw_${cr2h.code}`,
-        name: cr2h.name,
-        symbol: cr2h.symbol_image || undefined,
-        value: 0.1,
-        code: cr2h.code,
-        note: 'Without Hands: extra criteria added to throw after rolling the hoop on the floor'
-      };
-      setThrowCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]);
+    // Auto-add Cr2H criteria when Thr2 is added as extra
+    if (throwItem.code === 'Thr2') {
+      const cr2h = generalCriteria.find(gc => gc.code === 'Cr2H');
+      if (cr2h && !selectedThrowCriteria.includes('Cr2H')) {
+        const newCriteria: CriteriaItem = {
+          id: `throw_${cr2h.code}`,
+          name: cr2h.name,
+          symbol: cr2h.symbol_image || undefined,
+          value: 0.1,
+          code: cr2h.code,
+          note: 'Without Hands: extra criteria added to throw after rolling the hoop on the floor'
+        };
+        setThrowCriteria(prev => [...prev.filter(c => c.code !== 'Cr2H'), newCriteria]);
+      }
     }
   };
   
-  // Handler to remove extra Thr2 from Thr6 combo
-  const handleRemoveExtraThrow = () => {
-    setExtraThrow(null);
-    // Remove auto-added Cr2H
-    setThrowCriteria(prev => prev.filter(c => c.code !== 'Cr2H'));
+  // Handler to remove extra throw
+  const handleRemoveExtraThrow = (code: string) => {
+    setExtraThrows(prev => prev.filter(t => t.code !== code));
+    // If removing Thr2, remove auto-added Cr2H (only if primary is not Thr2)
+    if (code === 'Thr2' && selectedThrow?.code !== 'Thr2') {
+      setThrowCriteria(prev => prev.filter(c => c.code !== 'Cr2H'));
+    }
   };
 
   const handleSelectCatch = (catchItem: DynamicCatch) => {
@@ -1944,7 +1948,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       const diveLeapIdx = actualRotations.indexOf(diveLeapRotEntry);
       
       // Check if throw has a rotation (meaning dive leap is NOT the first rotation overall)
-      const throwHasRotation = selectedThrow?.code === 'Thr6' || (selectedThrow?.code === 'Thr2' && thr2HasThr6) || 
+      const throwHasRotation = selectedThrow?.code === 'Thr6' || extraThrows.some(t => t.code === 'Thr6') || 
         (throwDuringDB && (
           ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
           'preAcrobaticElement' in throwDuringDB ||
@@ -2086,13 +2090,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     const throwSymbols: string[] = [
       ...(throwDuringDB && throwDBInfo_save?.symbol_image ? [throwDBInfo_save.symbol_image] : 
           effectiveThrow?.symbol_image ? [effectiveThrow.symbol_image] : []),
-      // Thr6+Thr2 combo: include Thr2 symbol after Thr6
-      ...(extraThrow?.symbol_image ? [extraThrow.symbol_image] : []),
-      // Thr2+Thr6 combo: include Thr6 symbol after Thr2
-      ...(thr2HasThr6 ? (() => {
-        const thr6Item = dynamicThrows.find(t => t.code === 'Thr6');
-        return thr6Item?.symbol_image ? [thr6Item.symbol_image] : [];
-      })() : []),
+      // Extra throws: include all extra throw symbols
+      ...extraThrows.filter(t => t.symbol_image).map(t => t.symbol_image!),
       ...throwCriteria.filter(t => t.symbol).map(t => t.symbol!)
     ];
     
@@ -2130,7 +2129,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         if (entry.type === 'two') return sum + 2;
         return sum + (entry.seriesCount || 3);
       }, 0);
-      if (effectiveThrow?.code === 'Thr6' || thr2HasThr6) rLevel += 1;
+      if (effectiveThrow?.code === 'Thr6' || extraThrows.some(t => t.code === 'Thr6')) rLevel += 1;
       if (effectiveCatch?.code === 'Catch8') rLevel += 1;
       // Throw/Catch during DB always adds +1 rotation to R subscript
       if (throwDuringDB) rLevel += 1;
@@ -2149,15 +2148,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       effectiveThrowValue = (throwDBInfo_save?.value ?? 0) + 0.1;
     } else if (effectiveThrow) {
       effectiveThrowValue = effectiveThrow.value ?? 0;
-      const hasRotation = effectiveThrow.code === 'Thr6' || thr2HasThr6;
-      if (hasRotation) effectiveThrowValue = 0.1; // Thr6 base is 0.1
-      if (thr2HasThr6 && effectiveThrow.code === 'Thr2') {
-        effectiveThrowValue = (effectiveThrow.value ?? 0) + 0.1;
+      if (effectiveThrow.code === 'Thr6') effectiveThrowValue = 0.1;
+    }
+    // Extra throws: add their values
+    extraThrows.forEach(t => {
+      if (t.code === 'Thr6') {
+        effectiveThrowValue += 0.1;
+      } else {
+        effectiveThrowValue += (t.value ?? 0);
       }
-    }
-    if (extraThrow) {
-      effectiveThrowValue += (extraThrow.value ?? 0);
-    }
+    });
     
     // Calculate effective catch value
     let effectiveCatchValue = 0;
@@ -2212,19 +2212,16 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         rotationTag: throwDBInfo_save?.type === 'pre-acrobatic' ? 'ACRO' as const :
                      throwDBInfo_save?.type === 'vertical' ? 'VER' as const : 'DB' as const
       }] : []),
-      // Thr2+Thr6 combo: include paired throw component
-      ...(extraThrow ? [{
-        name: extraThrow.name,
-        symbol: extraThrow.symbol_image || '',
-        value: extraThrow.value ?? 0
-      }] : []),
-      ...(thr2HasThr6 ? [{
-        name: 'Throw during rotation',
-        symbol: dynamicThrows.find(t => t.code === 'Thr6')?.symbol_image || '',
-        value: 0.1,
-        rotationTag: throwRotationSpec?.type === 'pre-acrobatic' ? 'ACRO' as const :
-                     throwRotationSpec?.type === 'vertical' ? 'VER' as const : 'UNK' as const
-      }] : []),
+      // Extra throws components
+      ...extraThrows.map(t => ({
+        name: t.name,
+        symbol: t.symbol_image || '',
+        value: t.code === 'Thr6' ? 0.1 : (t.value ?? 0),
+        ...(t.code === 'Thr6' ? {
+          rotationTag: throwRotationSpec?.type === 'pre-acrobatic' ? 'ACRO' as const :
+                       throwRotationSpec?.type === 'vertical' ? 'VER' as const : 'UNK' as const
+        } : {})
+      })),
       ...throwCriteria.map(t => ({
         name: t.name,
         symbol: t.symbol || '',
@@ -2329,8 +2326,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         catchRotationSpec: catchRotationSpec ? { ...catchRotationSpec } : null,
         throwDuringDB: throwDuringDB ? JSON.parse(JSON.stringify(throwDuringDB)) : null,
         catchDuringDB: catchDuringDB ? JSON.parse(JSON.stringify(catchDuringDB)) : null,
-        extraThrow: extraThrow ? { ...extraThrow } : null,
-        thr2HasThr6,
+        extraThrows: extraThrows.map(t => ({ ...t })),
         selectedThrowCode: effectiveThrow?.code,
         selectedCatchCode: effectiveCatch?.code,
         // Catch combo metadata
@@ -2350,7 +2346,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     );
     
     if (diveLeapInRotations) {
-      const throwHasRotation = selectedThrow?.code === 'Thr6' || (selectedThrow?.code === 'Thr2' && thr2HasThr6) || 
+      const throwHasRotation = selectedThrow?.code === 'Thr6' || extraThrows.some(t => t.code === 'Thr6') || 
         (throwDuringDB && (
           ('db' in throwDuringDB && throwDuringDB.dbType === 'rotations') ||
           'preAcrobaticElement' in throwDuringDB ||
@@ -2785,41 +2781,28 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         <NotesWithSymbols notes={selectedThrow?.name || ''} symbolMap={notesSymbolMap} />
                       </span>
                       
-                      {/* Thr2 → Thr6: Add button below text when Thr2 selected */}
-                      {selectedThrow?.code === 'Thr2' && !thr2HasThr6 && (
-                        <div className="mt-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
-                            onClick={() => setThr2HasThr6(true)}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add throw during rotation
-                          </Button>
-                        </div>
-                      )}
-                      
-                      {/* Thr2 + Thr6 combo label with remove */}
-                      {selectedThrow?.code === 'Thr2' && thr2HasThr6 && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-muted-foreground italic">+ Throw during rotation</span>
+                      {/* Extra throws display */}
+                      {extraThrows.map(et => (
+                        <div key={et.id} className="flex items-center gap-2 mt-1">
+                          {et.symbol_image && (
+                            <img src={et.symbol_image} alt={et.name} className="h-5 w-5 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                          )}
+                          <span className="text-xs text-muted-foreground italic">
+                            + <NotesWithSymbols notes={et.name} symbolMap={notesSymbolMap} />
+                          </span>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-5 w-5 text-destructive hover:bg-destructive/10"
-                            onClick={() => {
-                              setThr2HasThr6(false);
-                              setThrowRotationSpec(null);
-                            }}
+                            onClick={() => handleRemoveExtraThrow(et.code)}
                           >
                             <X className="h-3 w-3" />
                           </Button>
                         </div>
-                      )}
+                      ))}
 
-                      {/* Rotation Type Specification for Thr6 or Thr2+Thr6 combo */}
-                      {(selectedThrow?.code === 'Thr6' || thr2HasThr6) && (
+                      {/* Rotation Type Specification for Thr6 or extra Thr6 */}
+                      {(selectedThrow?.code === 'Thr6' || extraThrows.some(t => t.code === 'Thr6')) && (
                         <div className="relative" ref={throwRotationSpecRef}>
                           {throwRotationSpec ? (
                             <div className="flex items-center gap-2 flex-wrap">
@@ -2894,49 +2877,45 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                         </div>
                       )}
                       
-                      {/* Thr6 → Thr2: Extra throw sub-section (hidden if Dive Leap is the rotation) */}
-                      {selectedThrow?.code === 'Thr6' && !hasDiveLeapInThrow && (
-                        <div className="mt-2">
-                          {!extraThrow ? (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
-                              onClick={() => {
-                                const thr2Item = filteredThrows.find(t => t.code === 'Thr2');
-                                if (thr2Item) handleSelectExtraThrow(thr2Item);
-                              }}
-                            >
-                              <Plus className="h-3 w-3 mr-1" />
-                              Add throw after rolling the hoop on the floor
-                            </Button>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              {extraThrow.symbol_image && (
-                                <img src={extraThrow.symbol_image} alt={extraThrow.name} className="h-5 w-5 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
-                              )}
-                              <span className="text-xs text-muted-foreground italic">
-                                + <NotesWithSymbols notes={extraThrow.name} symbolMap={notesSymbolMap} />
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-5 w-5 text-destructive hover:bg-destructive/10"
-                                onClick={handleRemoveExtraThrow}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      {/* Add extra throw dropdown */}
+                      <div className="mt-2 relative" ref={extraThrowDropdownRef}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs text-primary hover:bg-primary/10 border border-dashed border-primary/30"
+                          onClick={() => setShowExtraThrowDropdown(!showExtraThrowDropdown)}
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add extra throw
+                        </Button>
+                        {showExtraThrowDropdown && (
+                          <div className="absolute left-0 top-full mt-2 w-full min-w-[320px] bg-background border border-border rounded-lg shadow-lg z-[100] max-h-64 overflow-y-auto">
+                            {filteredThrows.filter(t => t.code !== 'Thr1' && t.code !== selectedThrow?.code && !extraThrows.some(et => et.code === t.code)).map(throwItem => {
+                              const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
+                              return (
+                                <div key={throwItem.id} className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" onClick={() => handleSelectExtraThrow(throwItem)}>
+                                  <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
+                                    <img src={symbolUrl} alt={throwItem.name} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                                  </div>
+                                  <div className="flex-1 min-w-0 flex items-center gap-2">
+                                    <span className="text-foreground text-sm"><NotesWithSymbols notes={throwItem.name} symbolMap={notesSymbolMap} /></span>
+                                  </div>
+                                  <div className="w-12 text-right flex-shrink-0">
+                                    <span className="text-primary font-semibold">{throwItem.code === 'Thr6' ? 0.1 : (throwItem.value ?? 0)}</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="w-20 py-4 px-2 text-center border-l border-border relative">
-                      {((selectedThrow?.code === 'Thr6' && extraThrow) || (selectedThrow?.code === 'Thr2' && thr2HasThr6)) ? (
+                      {extraThrows.length > 0 ? (
                         <Popover>
                           <PopoverTrigger asChild>
                             <button className="flex items-center justify-center gap-1 cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors">
-                              <p className="font-semibold text-primary">0.2</p>
+                              <p className="font-semibold text-primary">{throwValue.toFixed(1)}</p>
                               <ChevronDown className="h-3 w-3 text-muted-foreground" />
                             </button>
                           </PopoverTrigger>
@@ -2944,16 +2923,18 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             <div className="text-sm space-y-2">
                               <p className="font-medium text-foreground mb-2">Value Breakdown</p>
                               <div className="flex justify-between gap-6">
-                                <span className="text-muted-foreground">{selectedThrow?.code === 'Thr6' ? 'Thr6 (rotation):' : 'Thr2:'}</span>
-                                <span className="font-medium">0.1</span>
+                                <span className="text-muted-foreground">{selectedThrow?.name}:</span>
+                                <span className="font-medium">{selectedThrow?.code === 'Thr6' ? '0.1' : (selectedThrow?.value ?? 0)}</span>
                               </div>
-                              <div className="flex justify-between gap-6">
-                                <span className="text-muted-foreground">{selectedThrow?.code === 'Thr6' ? 'Thr2:' : 'Thr6 (rotation):'}</span>
-                                <span className="font-medium">0.1</span>
-                              </div>
+                              {extraThrows.map(et => (
+                                <div key={et.id} className="flex justify-between gap-6">
+                                  <span className="text-muted-foreground">{et.name}:</span>
+                                  <span className="font-medium">{et.code === 'Thr6' ? '0.1' : (et.value ?? 0)}</span>
+                                </div>
+                              ))}
                               <div className="border-t border-border pt-2 flex justify-between gap-6">
                                 <span className="font-medium">Total:</span>
-                                <span className="font-bold text-primary">0.2</span>
+                                <span className="font-bold text-primary">{throwValue.toFixed(1)}</span>
                               </div>
                             </div>
                           </PopoverContent>
@@ -2968,9 +2949,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           setSelectedThrow(null);
                           setThrowCriteria([]);
                           setThrowRotationSpec(null);
-                          setExtraThrow(null);
+                          setExtraThrows([]);
                           setShowExtraThrowDropdown(false);
-                          setThr2HasThr6(false);
                         }} 
                         className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                       >
@@ -4288,7 +4268,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       <PreAcrobaticSelectionDialog
         open={showThrowPreAcrobaticDialog}
         onOpenChange={setShowThrowPreAcrobaticDialog}
-        elements={(hasDiveLeapInRotation || extraThrow?.code === 'Thr2' || (selectedThrow?.code === 'Thr2' && thr2HasThr6))
+        elements={(hasDiveLeapInRotation || extraThrows.some(t => t.code === 'Thr2') || selectedThrow?.code === 'Thr2')
           ? preAcrobaticElements.filter(e => e.name?.toLowerCase() !== 'dive leap')
           : preAcrobaticElements
         }
