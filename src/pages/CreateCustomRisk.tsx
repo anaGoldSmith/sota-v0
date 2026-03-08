@@ -2430,7 +2430,10 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                   </Tooltip>
                                 </TooltipProvider>
                               ) : isThrowDuringDB ? (
-                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                <div className="flex items-center gap-1">
+                                  <span className="text-primary font-semibold text-xs">{throwItem.value ?? 0}</span>
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                </div>
                               ) : (
                                 <span className="text-primary font-semibold">{throwItem.value ?? 0}</span>
                               )}
@@ -3220,9 +3223,12 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                 </TooltipProvider>
                               )}
                             </div>
-                            <div className="w-12 text-right flex-shrink-0">
+                            <div className="w-12 text-right flex-shrink-0 flex items-center justify-end gap-1">
                               {isCatchDuringDB ? (
-                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                <>
+                                  <span className="text-primary font-semibold text-xs">{catchItem.value ?? 0}</span>
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                </>
                               ) : (
                                 <span className="text-primary font-semibold">{catchItem.value ?? 0}</span>
                               )}
