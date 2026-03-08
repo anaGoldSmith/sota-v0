@@ -416,6 +416,78 @@ const DynamicElementsConfiguration = () => {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Throw Combinations CSV Upload */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <FileText className="h-8 w-8 text-primary" />
+                <CardTitle>Throw Combinations</CardTitle>
+              </div>
+              <CardDescription>
+                Upload CSV with columns: code, Thr6, Thr7 (Y/N values)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <input
+                type="file"
+                accept=".csv"
+                ref={throwCombinationsInputRef}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleCsvUpload(file, 'import-throw-combinations-csv', setUploadingThrowCombinations, 'throw combinations');
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <Button
+                onClick={() => throwCombinationsInputRef.current?.click()}
+                disabled={uploadingThrowCombinations}
+                className="w-full"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {uploadingThrowCombinations ? "Uploading..." : "Upload Throw Combinations CSV"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Catch Combinations CSV Upload */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <FileText className="h-8 w-8 text-primary" />
+                <CardTitle>Catch Combinations</CardTitle>
+              </div>
+              <CardDescription>
+                Upload CSV with columns: code, Catch8, Catch9 (Y/N values)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <input
+                type="file"
+                accept=".csv"
+                ref={catchCombinationsInputRef}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleCsvUpload(file, 'import-catch-combinations-csv', setUploadingCatchCombinations, 'catch combinations');
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <Button
+                onClick={() => catchCombinationsInputRef.current?.click()}
+                disabled={uploadingCatchCombinations}
+                className="w-full"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {uploadingCatchCombinations ? "Uploading..." : "Upload Catch Combinations CSV"}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
       </main>
