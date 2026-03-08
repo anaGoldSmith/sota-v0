@@ -945,12 +945,6 @@ const CreateCustomRisk = () => {
   let throwValue = 0;
   if (throwDuringDB) {
     throwValue = (throwDBInfo?.value ?? 0) + 0.1;
-  } else if (selectedThrow?.code === 'Thr6' && extraThrow?.code === 'Thr2') {
-    // Thr6+Thr2 combo: 0.1 (rotation) + Thr2 value
-    throwValue = 0.1 + (extraThrow.value ?? 0);
-  } else if (selectedThrow?.code === 'Thr2' && thr2HasThr6) {
-    // Thr2+Thr6 combo: Thr2 value + 0.1 (rotation)
-    throwValue = (selectedThrow.value ?? 0) + 0.1;
   } else if (selectedThrow?.code === 'Thr6') {
     throwValue = 0.1;
   } else if (selectedThrow) {
@@ -972,15 +966,6 @@ const CreateCustomRisk = () => {
   } else if (selectedCatch) {
     // Other catch types: base value only
     catchValue = selectedCatch.value ?? 0;
-  }
-  // Extra catch combos: add values
-  extraCatches.forEach(c => { catchValue += c.value ?? 0; });
-  if (catchHasCatchDuringDB && extraCatchDuringDBData) {
-    const extraCatchDBInfoVal = getThrowCatchDBInfo(extraCatchDuringDBData);
-    catchValue += (extraCatchDBInfoVal?.value ?? 0) + 0.1;
-  }
-  if (catchHasCatch8) {
-    catchValue += 0.1;
   }
   
   // Total value = sum of all row values (throw + throw criteria + rotations + catch + catch criteria)
