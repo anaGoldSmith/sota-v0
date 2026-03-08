@@ -2565,7 +2565,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                 <NotesWithSymbols notes={throwItem.name} symbolMap={notesSymbolMap} />
                               </span>
                               {isThrowDuringDB && !isDisabled && (
-                                <p className="text-xs text-muted-foreground">Select a DB element performed during throw</p>
+                                <span className="text-xs text-muted-foreground ml-1">(select DB element)</span>
                               )}
                               {isDisabled && (
                                 <p className="text-xs text-muted-foreground">Not available when Dive Leap is in rotations</p>
