@@ -141,6 +141,21 @@ const Admin = () => {
               </CardDescription>
             </CardHeader>
           </Card>
+
+          <Card 
+            className="cursor-pointer hover:bg-accent transition-colors" 
+            onClick={() => navigate("/admin/landing-page")}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <LayoutDashboard className="h-8 w-8 text-primary" />
+                <CardTitle>Landing Page</CardTitle>
+              </div>
+              <CardDescription>
+                Manage events and front page images
+              </CardDescription>
+            </CardHeader>
+          </Card>
         </div>
       </main>
     </div>
