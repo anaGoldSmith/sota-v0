@@ -2789,7 +2789,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                             {extraThrowRotationSpec.type === 'vertical' 
                                               ? `Vertical ${(extraThrowRotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (extraThrowRotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${extraThrowRotationSpec.verticalRotation?.name}`
                                               : extraThrowRotationSpec.preAcrobaticElement?.name?.toLowerCase() === 'dive leap'
-                                                ? 'Dive leap, including Roll forward'
+                                                ? 'Pre-acrobatic: Dive leap, including Roll forward'
                                                 : `Pre-acrobatic: ${extraThrowRotationSpec.preAcrobaticElement?.name}`
                                             }
                                           </span>
@@ -2915,7 +2915,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                             {throwRotationSpec.type === 'vertical' 
                                               ? `Vertical ${(throwRotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (throwRotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${throwRotationSpec.verticalRotation?.name}`
                                               : throwRotationSpec.preAcrobaticElement?.name?.toLowerCase() === 'dive leap'
-                                                ? 'Dive leap, including Roll forward'
+                                                ? 'Pre-acrobatic: Dive leap, including Roll forward'
                                                 : `Pre-acrobatic: ${throwRotationSpec.preAcrobaticElement?.name}`
                                             }
                                           </span>
@@ -3021,7 +3021,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                         {extraThrowRotationSpec.type === 'vertical' 
                                           ? `Vertical ${(extraThrowRotationSpec.verticalRotation?.group_name || '').charAt(0).toUpperCase() + (extraThrowRotationSpec.verticalRotation?.group_name || '').slice(1).toLowerCase()} Rotation: ${extraThrowRotationSpec.verticalRotation?.name}`
                                           : extraThrowRotationSpec.preAcrobaticElement?.name?.toLowerCase() === 'dive leap'
-                                            ? 'Dive leap, including Roll forward'
+                                            ? 'Pre-acrobatic: Dive leap, including Roll forward'
                                             : `Pre-acrobatic: ${extraThrowRotationSpec.preAcrobaticElement?.name}`
                                         }
                                       </span>
