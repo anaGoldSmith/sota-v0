@@ -11,7 +11,17 @@ interface Event {
   dates: string | null;
   city: string | null;
   link: string | null;
+  event_id: string;
 }
+
+// Parse "DD/MM/YYYY" from the start of a date range like "02/07/2026 - 04/07/2026"
+const parseDateStart = (dates: string | null): Date | null => {
+  if (!dates) return null;
+  const match = dates.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (!match) return null;
+  const [, day, month, year] = match;
+  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+};
 
 const Index = () => {
   const navigate = useNavigate();
@@ -21,10 +31,18 @@ const Index = () => {
     const loadEvents = async () => {
       const { data } = await supabase
         .from("events")
-        .select("id, title, dates, city, link")
-        .order("dates", { ascending: true })
-        .limit(10);
-      if (data) setEvents(data);
+        .select("id, event_id, title, dates, city, link");
+      if (data) {
+        const sorted = [...data].sort((a, b) => {
+          const dateA = parseDateStart(a.dates);
+          const dateB = parseDateStart(b.dates);
+          if (!dateA && !dateB) return 0;
+          if (!dateA) return 1;
+          if (!dateB) return -1;
+          return dateA.getTime() - dateB.getTime();
+        });
+        setEvents(sorted);
+      }
     };
     loadEvents();
   }, []);
