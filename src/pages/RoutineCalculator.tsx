@@ -1709,7 +1709,7 @@ const RoutineCalculator = () => {
           >
             <ArrowLeft className="h-6 w-6" />
           </Button>
-          <h1 className="text-2xl font-bold">Routine Calculator</h1>
+          <h1 className="text-2xl font-bold">{editingRoutineId ? 'Edit Routine' : 'Routine Calculator'}</h1>
           <div className="w-10" /> {/* Spacer for alignment */}
         </div>
       </header>
