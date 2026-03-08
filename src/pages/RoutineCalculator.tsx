@@ -626,10 +626,11 @@ const RoutineCalculator = () => {
   const [routineSaveName, setRoutineSaveName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [routineLoaded, setRoutineLoaded] = useState(false);
+  const [lastLoadedId, setLastLoadedId] = useState<string | null>(null);
   
   // Load existing routine when editing or viewing
   useEffect(() => {
-    if (loadRoutineId && !routineLoaded) {
+    if (loadRoutineId && loadRoutineId !== lastLoadedId) {
       const loadRoutine = async () => {
         const { data, error } = await (supabase.from('routines' as any).select('*').eq('id', loadRoutineId).single() as any);
         if (error) {
@@ -642,11 +643,16 @@ const RoutineCalculator = () => {
           setSelectedApparatus(data.apparatus as ApparatusType || null);
           setRoutineElements(data.elements || []);
           setRoutineLoaded(true);
+          setLastLoadedId(loadRoutineId);
         }
       };
       loadRoutine();
+    } else if (!loadRoutineId && lastLoadedId) {
+      // Navigated to new routine (no edit/view param) — clear loaded state
+      setLastLoadedId(null);
+      setRoutineLoaded(false);
     }
-  }, [loadRoutineId, routineLoaded]);
+  }, [loadRoutineId]);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDBDASuccessDialog, setShowDBDASuccessDialog] = useState(false);
   const [showDBDAValidationDialog, setShowDBDAValidationDialog] = useState(false);
