@@ -2881,7 +2881,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       {/* Add Extra Throw Button for Throw during DB */}
                       {!extraThrow && (getCompatibleExtraThrows.length > 0 || getCompatiblePrimaryThrows.length > 0) && (
                         <div className="relative p-3 border-t border-dashed border-border/50" ref={extraThrowDropdownRef}>
-                          <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10 text-xs" onClick={() => setShowExtraThrowDropdown(!showExtraThrowDropdown)}>
+                          <Button variant="outline" size="sm" className="w-full text-primary border-primary/30 hover:bg-primary/5 text-xs" onClick={() => setShowExtraThrowDropdown(!showExtraThrowDropdown)}>
                             <Plus className="h-3 w-3 mr-1" />
                             Add Extra Throw
                           </Button>
@@ -3114,9 +3114,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   {!extraThrow && (getCompatibleExtraThrows.length > 0 || getCompatiblePrimaryThrows.length > 0) && (
                     <div className="relative p-3 border-t border-dashed border-border/50" ref={extraThrowDropdownRef}>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="text-primary hover:bg-primary/10 text-xs"
+                        className="w-full text-primary border-primary/30 hover:bg-primary/5 text-xs"
                         onClick={() => setShowExtraThrowDropdown(!showExtraThrowDropdown)}
                       >
                         <Plus className="h-3 w-3 mr-1" />
@@ -3201,6 +3201,17 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                     </div>
                   )}
                 </>
+              )}
+              {/* Throw Section Total */}
+              {(selectedThrow || throwDuringDB) && (
+                <div className="flex items-center border-t border-border bg-muted/30">
+                  <div className="flex-1 py-2 px-4">
+                    <span className="font-medium text-muted-foreground text-sm">Section Total</span>
+                  </div>
+                  <div className="w-20 py-2 px-2 text-center border-l border-border">
+                    <p className="font-bold text-primary">{(throwValue + throwCriteria.reduce((sum, item) => sum + item.value, 0)).toFixed(1)}</p>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -3391,6 +3402,17 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   </SortableContext>
                 </DndContext>
               </div>
+              {/* Rotations Section Total */}
+              {rotationEntries.length > 0 && (
+                <div className="flex items-center border-t border-border bg-muted/30">
+                  <div className="flex-1 py-2 px-4">
+                    <span className="font-medium text-muted-foreground text-sm">Section Total</span>
+                  </div>
+                  <div className="w-20 py-2 px-2 text-center border-l border-border">
+                    <p className="font-bold text-primary">{rotationValue.toFixed(1)}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -3698,7 +3720,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       {/* Add Extra Catch Button for Catch during DB */}
                       {!extraCatch && (getCompatibleExtraCatches.length > 0 || getCompatiblePrimaryCatches.length > 0) && (
                         <div className="relative p-3 border-t border-dashed border-border/50" ref={extraCatchDropdownRef}>
-                          <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10 text-xs" onClick={() => setShowExtraCatchDropdown(!showExtraCatchDropdown)}>
+                          <Button variant="outline" size="sm" className="w-full text-primary border-primary/30 hover:bg-primary/5 text-xs" onClick={() => setShowExtraCatchDropdown(!showExtraCatchDropdown)}>
                             <Plus className="h-3 w-3 mr-1" />
                             Add Extra Catch
                           </Button>
@@ -3891,9 +3913,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   {!extraCatch && (getCompatibleExtraCatches.length > 0 || getCompatiblePrimaryCatches.length > 0) && (
                     <div className="relative p-3 border-t border-dashed border-border/50" ref={extraCatchDropdownRef}>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="text-primary hover:bg-primary/10 text-xs"
+                        className="w-full text-primary border-primary/30 hover:bg-primary/5 text-xs"
                         onClick={() => setShowExtraCatchDropdown(!showExtraCatchDropdown)}
                       >
                         <Plus className="h-3 w-3 mr-1" />
@@ -3959,10 +3981,19 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   )}
                 </>
               )}
+              {/* Catch Section Total */}
+              {(selectedCatch || catchDuringDB) && (
+                <div className="flex items-center border-t border-border bg-muted/30">
+                  <div className="flex-1 py-2 px-4">
+                    <span className="font-medium text-muted-foreground text-sm">Section Total</span>
+                  </div>
+                  <div className="w-20 py-2 px-2 text-center border-l border-border">
+                    <p className="font-bold text-primary">{(catchValue + catchCriteria.reduce((sum, item) => sum + item.value, 0)).toFixed(1)}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Action Buttons */}
           <div className="flex gap-4 justify-center pt-4">
             <Button className="px-8 bg-primary hover:bg-primary/90 text-primary-foreground" onClick={handleSave}>
               Save
