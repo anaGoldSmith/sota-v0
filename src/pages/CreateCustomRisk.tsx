@@ -3559,7 +3559,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                 <img 
                                   src={catch9SymbolUrl} 
                                   alt="Catch during DB" 
-                                  className="h-6 w-6 object-contain" 
+                                   className="h-10 w-10 object-contain"
                                   onError={e => e.currentTarget.style.display = 'none'} 
                                 />
                               ) : (
