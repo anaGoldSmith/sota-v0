@@ -3249,51 +3249,34 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                   
                   {showCatchDropdown && (
                     <div className="mt-2 w-full bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                      {/* Catch during DB option */}
-                      <div 
-                        className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border" 
-                        onClick={() => {
-                          setShowCatchDropdown(false);
-                          setShowDBDuringCatchDialog(true);
-                        }}
-                      >
-                        <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                          {dynamicCatches.find(c => c.code === 'Catch1')?.symbol_image ? (
-                            <img 
-                              src={dynamicCatches.find(c => c.code === 'Catch1')!.symbol_image!} 
-                              alt="Catch" 
-                              className="h-8 w-8 object-contain" 
-                              onError={e => e.currentTarget.style.display = 'none'} 
-                            />
-                          ) : (
-                            <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">C</div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-foreground text-sm">Catch during DB <span className="text-foreground">(0.1 is added for extra rotation)</span></span>
-                          <p className="text-xs text-muted-foreground">Select a DB element performed during catch</p>
-                        </div>
-                        <div className="w-12 text-right flex-shrink-0 flex items-center justify-end gap-1">
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </div>
                       {filteredCatches.length === 0 ? (
                         <div className="p-4 text-center text-muted-foreground">
                           No catches available for this apparatus
                         </div>
                       ) : filteredCatches.map(catchItem => {
                         const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
+                        const isCatchDuringDB = catchItem.code === 'Catch9';
                         return (
                           <div 
                             key={catchItem.id} 
                             className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" 
-                            onClick={() => handleSelectCatch(catchItem)}
+                            onClick={() => {
+                              if (isCatchDuringDB) {
+                                setShowCatchDropdown(false);
+                                setShowDBDuringCatchDialog(true);
+                              } else {
+                                handleSelectCatch(catchItem);
+                              }
+                            }}
                           >
                             <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
                               <img src={symbolUrl} alt={catchItem.name} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
                             </div>
                             <div className="flex-1 min-w-0 flex items-center gap-2">
                               <span className="text-foreground text-sm">{catchItem.name}</span>
+                              {isCatchDuringDB && (
+                                <span className="text-xs text-muted-foreground">(select DB element)</span>
+                              )}
                               {catchItem.notes && (
                                 <TooltipProvider>
                                   <Tooltip>
@@ -3308,7 +3291,11 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                               )}
                             </div>
                             <div className="w-12 text-right flex-shrink-0">
-                              <span className="text-primary font-semibold">{catchItem.value ?? 0}</span>
+                              {isCatchDuringDB ? (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <span className="text-primary font-semibold">{catchItem.value ?? 0}</span>
+                              )}
                             </div>
                           </div>
                         );
