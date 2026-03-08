@@ -2541,12 +2541,21 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                       ) : filteredThrows.map(throwItem => {
                         const symbolUrl = throwItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_throws/${throwItem.code}.png`).data.publicUrl;
                         const isRotationThrow = throwItem.code === 'Thr6';
-                        const isDisabled = isRotationThrow && hasDiveLeapInRotation;
+                        const isThrowDuringDB = throwItem.code === 'Thr7';
+                        const isDisabled = (isRotationThrow || isThrowDuringDB) && hasDiveLeapInRotation;
                         return (
                           <div 
                             key={throwItem.id} 
                             className={`flex items-center gap-3 p-3 border-b border-border last:border-b-0 ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-muted cursor-pointer'}`}
-                            onClick={() => !isDisabled && handleSelectThrow(throwItem)}
+                            onClick={() => {
+                              if (isDisabled) return;
+                              if (isThrowDuringDB) {
+                                setShowThrowDropdown(false);
+                                setShowDBDuringThrowDialog(true);
+                              } else {
+                                handleSelectThrow(throwItem);
+                              }
+                            }}
                           >
                             <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
                               <img src={symbolUrl} alt={throwItem.name} className="h-8 w-8 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
@@ -2555,6 +2564,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                               <span className="text-foreground text-sm">
                                 <NotesWithSymbols notes={throwItem.name} symbolMap={notesSymbolMap} />
                               </span>
+                              {isThrowDuringDB && !isDisabled && (
+                                <p className="text-xs text-muted-foreground">Select a DB element performed during throw</p>
+                              )}
                               {isDisabled && (
                                 <p className="text-xs text-muted-foreground">Not available when Dive Leap is in rotations</p>
                               )}
@@ -2567,10 +2579,12 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                       <AlertCircle className="h-4 w-4 text-amber-500" />
                                     </TooltipTrigger>
                                     <TooltipContent className="max-w-xs bg-muted-foreground text-white">
-                                      <p>A dive leap can only count as a rotation if it is performed as the first rotation. Throw during rotation would precede the dive leap, making it invalid.</p>
+                                      <p>A dive leap can only count as a rotation if it is performed as the first rotation. This throw would precede the dive leap, making it invalid.</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
+                              ) : isThrowDuringDB ? (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
                               ) : (
                                 <span className="text-primary font-semibold">{throwItem.value ?? 0}</span>
                               )}
