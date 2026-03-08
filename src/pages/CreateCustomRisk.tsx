@@ -2090,13 +2090,8 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     const throwSymbols: string[] = [
       ...(throwDuringDB && throwDBInfo_save?.symbol_image ? [throwDBInfo_save.symbol_image] : 
           effectiveThrow?.symbol_image ? [effectiveThrow.symbol_image] : []),
-      // Thr6+Thr2 combo: include Thr2 symbol after Thr6
-      ...(extraThrow?.symbol_image ? [extraThrow.symbol_image] : []),
-      // Thr2+Thr6 combo: include Thr6 symbol after Thr2
-      ...(thr2HasThr6 ? (() => {
-        const thr6Item = dynamicThrows.find(t => t.code === 'Thr6');
-        return thr6Item?.symbol_image ? [thr6Item.symbol_image] : [];
-      })() : []),
+      // Extra throws: include all extra throw symbols
+      ...extraThrows.filter(t => t.symbol_image).map(t => t.symbol_image!),
       ...throwCriteria.filter(t => t.symbol).map(t => t.symbol!)
     ];
     
