@@ -1687,13 +1687,22 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
 
   const handleThrowCriteriaDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setThrowCriteria((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
+    if (!over || active.id === over.id) return;
+    
+    // Build unified list: criteria items + extra-throw
+    const unifiedIds = [...throwCriteria.map(c => c.id), ...(extraThrow ? ['extra-throw'] : [])];
+    const oldIndex = unifiedIds.indexOf(String(active.id));
+    const newIndex = unifiedIds.indexOf(String(over.id));
+    if (oldIndex === -1 || newIndex === -1) return;
+    
+    const reordered = arrayMove(unifiedIds, oldIndex, newIndex);
+    
+    // Split back: filter out 'extra-throw' to get criteria order
+    const newCriteriaIds = reordered.filter(id => id !== 'extra-throw');
+    setThrowCriteria(prev => {
+      const map = new Map(prev.map(c => [c.id, c]));
+      return newCriteriaIds.map(id => map.get(id)!).filter(Boolean);
+    });
   };
 
   const handleCatchCriteriaDragEnd = (event: DragEndEvent) => {
