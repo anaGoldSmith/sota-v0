@@ -2961,6 +2961,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                                       setThrowCriteria([]);
                                       setThrowRotationSpec(null);
                                       setExtraThrow(null);
+                                      setExtraThrowRotationSpec(null);
                                     }}
                                     className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                                   >
