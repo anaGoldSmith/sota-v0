@@ -1852,6 +1852,16 @@ const RoutineCalculator = () => {
                     }}
                   >
                     <span className="text-lg font-semibold mr-2">+</span> Dance Steps
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Info className="h-4 w-4 ml-1 text-muted-foreground hover:text-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                          <p>Minimum 2 dance steps combinations, lasting 8 seconds each, must be performed in the routine. A 0.30 penalty will be applied for each missing combination of dance steps. Pre-acrobatic elements, high throws, and DA/DB elements valued at 0.20 or more are not allowed during dance step combinations.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </Button>
                 </div>
               );
