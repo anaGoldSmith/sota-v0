@@ -79,12 +79,14 @@ serve(async (req) => {
     }
 
     const catches = parsed.data.map((row: any) => {
+      const rawValue = row.value?.trim();
       return {
         code: row.code?.trim() || '',
         apparatus: row.apparatus?.trim() || '',
         extra_criteria: row.extra_criteria?.trim() || null,
         name: row.name?.trim() || '',
         notes: row.notes?.trim() || null,
+        value: rawValue && !isNaN(Number(rawValue)) ? Number(rawValue) : null,
       };
     }).filter(c => c.code && c.apparatus && c.name);
 
