@@ -3348,6 +3348,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                             onClick={() => {
                               setCatchDuringDB(null);
                               setCatchCriteria([]);
+                              setExtraCatch(null);
                             }} 
                             className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1"
                           >
@@ -3369,6 +3370,67 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
                           ))}
                         </SortableContext>
                       </DndContext>
+                      
+                      {/* Extra Catch Row for Catch during DB */}
+                      {extraCatch && (
+                        <div className="flex items-center border-b border-border bg-muted/30">
+                          <div className="w-8 flex justify-center py-4">
+                            <div className="h-4 w-4" />
+                          </div>
+                          <div className="w-12 flex justify-center py-4">
+                            {extraCatch.symbol_image ? (
+                              <img src={extraCatch.symbol_image} alt={extraCatch.name} className="h-8 w-auto max-w-[40px] object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                            ) : (
+                              <div className="h-8 w-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">—</div>
+                            )}
+                          </div>
+                          <div className="flex-1 py-4 px-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">+</span>
+                              <span className="font-medium text-foreground text-sm">{extraCatch.name}</span>
+                            </div>
+                          </div>
+                          <div className="w-20 py-4 px-2 text-center border-l border-border relative">
+                            <p className="font-semibold text-primary">{extraCatch.code === 'Catch8' ? '0.1' : (extraCatch.value ?? 0)}</p>
+                            <Button variant="ghost" size="icon" onClick={() => setExtraCatch(null)} className="h-5 w-5 text-destructive hover:bg-destructive/10 absolute top-1 right-1">
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Add Extra Catch Button for Catch during DB */}
+                      {!extraCatch && (getCompatibleExtraCatches.length > 0 || getCompatiblePrimaryCatches.length > 0) && (
+                        <div className="relative p-3 border-t border-dashed border-border/50" ref={extraCatchDropdownRef}>
+                          <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10 text-xs" onClick={() => setShowExtraCatchDropdown(!showExtraCatchDropdown)}>
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add Extra Catch
+                          </Button>
+                          {showExtraCatchDropdown && (
+                            <div className="absolute left-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                              <div className="p-2 border-b border-border">
+                                <span className="text-sm font-medium text-foreground">Compatible Catches</span>
+                              </div>
+                              {[...getCompatibleExtraCatches, ...getCompatiblePrimaryCatches].map(catchItem => {
+                                const symbolUrl = catchItem.symbol_image || supabase.storage.from('dynamic-element-symbols').getPublicUrl(`dynamic_catches/${catchItem.code}.png`).data.publicUrl;
+                                return (
+                                  <div key={catchItem.id} className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0" onClick={() => { setExtraCatch(catchItem); setShowExtraCatchDropdown(false); }}>
+                                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                                      <img src={symbolUrl} alt={catchItem.name} className="h-6 w-6 object-contain" onError={e => e.currentTarget.style.display = 'none'} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-foreground text-sm">{catchItem.name}</span>
+                                    </div>
+                                    <div className="w-10 text-right flex-shrink-0">
+                                      <span className="text-primary font-semibold">{catchItem.code === 'Catch8' ? '0.1' : (catchItem.value ?? 0)}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </>
                   );
                 })()
