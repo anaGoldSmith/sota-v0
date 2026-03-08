@@ -450,10 +450,12 @@ function SortableRow({
           </div>
         </TableCell>
         <TableCell className="w-12 px-2 font-medium">
-          {element.type}
+          {element.type === 'Steps' ? 'S' : element.type}
         </TableCell>
         <TableCell className="px-2">
-          {(element.type === 'R' || element.type === 'R/DB') ? renderRiskSymbols() : renderSymbols(element.symbolImages)}
+          {element.type === 'Steps' ? (
+            <span className="text-sm font-medium text-foreground">Dance Steps</span>
+          ) : (element.type === 'R' || element.type === 'R/DB') ? renderRiskSymbols() : renderSymbols(element.symbolImages)}
         </TableCell>
         <TableCell className="w-16 px-2 text-right font-mono font-semibold">
           {element.value.toFixed(1)}
@@ -1839,7 +1841,14 @@ const RoutineCalculator = () => {
                     disabled={!danceStepsEnabled}
                     onClick={() => {
                       if (danceStepsEnabled) {
-                        setActiveCategory(activeCategory === "dance" ? null : "dance");
+                        const newElement: RoutineElement = {
+                          id: `dance-steps-${Date.now()}`,
+                          type: 'Steps',
+                          symbolImages: [],
+                          value: 0,
+                          originalData: {} as any,
+                        };
+                        setRoutineElements(prev => [...prev, newElement]);
                       }
                     }}
                   >
@@ -1848,13 +1857,6 @@ const RoutineCalculator = () => {
                 </div>
               );
             })()}
-
-            
-            {activeCategory === "dance" && (
-              <div className="pt-4 text-center text-muted-foreground">
-                Dance Steps configuration coming soon
-              </div>
-            )}
           </div>
 
           {/* Routine Elements Table */}
