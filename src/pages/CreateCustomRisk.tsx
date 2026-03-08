@@ -1774,7 +1774,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     const reordered = arrayMove(currentOrder, oldIndex, newIndex);
     setCatchItemsOrder(reordered);
     
-    const newCriteriaIds = reordered.filter(id => id !== 'extra-catch');
+    const newCriteriaIds = reordered.filter(id => id !== 'extra-catch' && id !== 'primary-catch');
     setCatchCriteria(prev => {
       const map = new Map(prev.map(c => [c.id, c]));
       return newCriteriaIds.map(id => map.get(id)!).filter(Boolean);
