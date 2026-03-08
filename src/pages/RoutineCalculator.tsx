@@ -1775,8 +1775,8 @@ const RoutineCalculator = () => {
             </div>
           </div>
 
-          {/* Category Buttons */}
-          <div className="space-y-4">
+          {/* Category Buttons - hidden in view mode */}
+          {!isViewMode && <div className="space-y-4">
             <h2 className="text-xl font-semibold text-foreground">Construct Routine</h2>
             
             {/* Button enable/disable logic based on apparatus selection */}
