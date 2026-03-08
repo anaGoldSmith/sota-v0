@@ -1698,6 +1698,8 @@ const RoutineCalculator = () => {
                 id="name"
                 type="text"
                 placeholder="E.g. E. Kanaeva"
+                value={gymnastName}
+                onChange={(e) => setGymnastName(e.target.value)}
               />
             </div>
 
