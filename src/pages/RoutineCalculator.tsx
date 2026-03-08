@@ -569,6 +569,11 @@ const RoutineCalculator = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  
+  // Check if editing an existing routine
+  const searchParams = new URLSearchParams(location.search);
+  const editingRoutineId = searchParams.get('edit');
+  
   const [jumpDialogOpen, setJumpDialogOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
   const [rotationDialogOpen, setRotationDialogOpen] = useState(false);
@@ -617,6 +622,28 @@ const RoutineCalculator = () => {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [routineSaveName, setRoutineSaveName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [routineLoaded, setRoutineLoaded] = useState(false);
+  
+  // Load existing routine when editing
+  useEffect(() => {
+    if (editingRoutineId && !routineLoaded) {
+      const loadRoutine = async () => {
+        const { data, error } = await (supabase.from('routines' as any).select('*').eq('id', editingRoutineId).single() as any);
+        if (error) {
+          toast({ title: "Error loading routine", description: error.message, variant: "destructive" });
+          return;
+        }
+        if (data) {
+          setGymnastName(data.gymnast_name || '');
+          setYear(data.year || '');
+          setSelectedApparatus(data.apparatus as ApparatusType || null);
+          setRoutineElements(data.elements || []);
+          setRoutineLoaded(true);
+        }
+      };
+      loadRoutine();
+    }
+  }, [editingRoutineId, routineLoaded]);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDBDASuccessDialog, setShowDBDASuccessDialog] = useState(false);
   const [showDBDAValidationDialog, setShowDBDAValidationDialog] = useState(false);
@@ -1682,7 +1709,7 @@ const RoutineCalculator = () => {
           >
             <ArrowLeft className="h-6 w-6" />
           </Button>
-          <h1 className="text-2xl font-bold">Routine Calculator</h1>
+          <h1 className="text-2xl font-bold">{editingRoutineId ? 'Edit Routine' : 'Routine Calculator'}</h1>
           <div className="w-10" /> {/* Spacer for alignment */}
         </div>
       </header>
@@ -2380,18 +2407,33 @@ const RoutineCalculator = () => {
                     setIsSaving(false);
                     return;
                   }
-                  const { error } = await supabase.from('routines' as any).insert({
-                    user_id: user.id,
-                    name: routineSaveName.trim(),
-                    apparatus: selectedApparatus,
-                    year: year || null,
-                    gymnast_name: gymnastName || null,
-                    elements: routineElements as any,
-                    total_db: totalDB,
-                    total_da: totalDA,
-                  } as any);
+                  let error;
+                  if (editingRoutineId) {
+                    const result = await (supabase.from('routines' as any).update({
+                      name: routineSaveName.trim(),
+                      apparatus: selectedApparatus,
+                      year: year || null,
+                      gymnast_name: gymnastName || null,
+                      elements: routineElements as any,
+                      total_db: totalDB,
+                      total_da: totalDA,
+                    } as any).eq('id', editingRoutineId) as any);
+                    error = result.error;
+                  } else {
+                    const result = await supabase.from('routines' as any).insert({
+                      user_id: user.id,
+                      name: routineSaveName.trim(),
+                      apparatus: selectedApparatus,
+                      year: year || null,
+                      gymnast_name: gymnastName || null,
+                      elements: routineElements as any,
+                      total_db: totalDB,
+                      total_da: totalDA,
+                    } as any);
+                    error = result.error;
+                  }
                   if (error) throw error;
-                  toast({ title: "Routine saved!", description: `"${routineSaveName.trim()}" has been saved to My Routines.` });
+                  toast({ title: editingRoutineId ? "Routine updated!" : "Routine saved!", description: `"${routineSaveName.trim()}" has been saved to My Routines.` });
                   setSaveDialogOpen(false);
                   setRoutineElements([]);
                   setGymnastName('');
