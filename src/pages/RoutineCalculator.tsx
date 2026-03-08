@@ -570,9 +570,12 @@ const RoutineCalculator = () => {
   const location = useLocation();
   const { toast } = useToast();
   
-  // Check if editing an existing routine
+  // Check if editing or viewing an existing routine
   const searchParams = new URLSearchParams(location.search);
   const editingRoutineId = searchParams.get('edit');
+  const viewingRoutineId = searchParams.get('view');
+  const loadRoutineId = editingRoutineId || viewingRoutineId;
+  const isViewMode = !!viewingRoutineId;
   
   const [jumpDialogOpen, setJumpDialogOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
@@ -624,11 +627,11 @@ const RoutineCalculator = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [routineLoaded, setRoutineLoaded] = useState(false);
   
-  // Load existing routine when editing
+  // Load existing routine when editing or viewing
   useEffect(() => {
-    if (editingRoutineId && !routineLoaded) {
+    if (loadRoutineId && !routineLoaded) {
       const loadRoutine = async () => {
-        const { data, error } = await (supabase.from('routines' as any).select('*').eq('id', editingRoutineId).single() as any);
+        const { data, error } = await (supabase.from('routines' as any).select('*').eq('id', loadRoutineId).single() as any);
         if (error) {
           toast({ title: "Error loading routine", description: error.message, variant: "destructive" });
           return;
@@ -643,7 +646,7 @@ const RoutineCalculator = () => {
       };
       loadRoutine();
     }
-  }, [editingRoutineId, routineLoaded]);
+  }, [loadRoutineId, routineLoaded]);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDBDASuccessDialog, setShowDBDASuccessDialog] = useState(false);
   const [showDBDAValidationDialog, setShowDBDAValidationDialog] = useState(false);
@@ -1709,7 +1712,7 @@ const RoutineCalculator = () => {
           >
             <ArrowLeft className="h-6 w-6" />
           </Button>
-          <h1 className="text-2xl font-bold">{editingRoutineId ? 'Edit Routine' : 'Routine Calculator'}</h1>
+          <h1 className="text-2xl font-bold">{isViewMode ? 'View Routine' : editingRoutineId ? 'Edit Routine' : 'Routine Calculator'}</h1>
           <div className="w-10" /> {/* Spacer for alignment */}
         </div>
       </header>
@@ -1727,12 +1730,13 @@ const RoutineCalculator = () => {
                 placeholder="E.g. E. Kanaeva"
                 value={gymnastName}
                 onChange={(e) => setGymnastName(e.target.value)}
+                disabled={isViewMode}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="apparatus">Apparatus</Label>
-              <Select value={selectedApparatus ?? undefined} onValueChange={handleApparatusChange}>
+              <Select value={selectedApparatus ?? undefined} onValueChange={handleApparatusChange} disabled={isViewMode}>
                 <SelectTrigger id="apparatus">
                   <SelectValue placeholder="Select apparatus" />
                 </SelectTrigger>
@@ -1754,12 +1758,13 @@ const RoutineCalculator = () => {
                 placeholder="E.g 2025"
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
+                disabled={isViewMode}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="rulebook">Rulebook</Label>
-              <Select>
+              <Select disabled={isViewMode}>
                 <SelectTrigger id="rulebook">
                   <SelectValue placeholder="Select rulebook" />
                 </SelectTrigger>
@@ -1772,8 +1777,8 @@ const RoutineCalculator = () => {
             </div>
           </div>
 
-          {/* Category Buttons */}
-          <div className="space-y-4">
+          {/* Category Buttons - hidden in view mode */}
+          {!isViewMode && <div className="space-y-4">
             <h2 className="text-xl font-semibold text-foreground">Construct Routine</h2>
             
             {/* Button enable/disable logic based on apparatus selection */}
@@ -1911,7 +1916,7 @@ const RoutineCalculator = () => {
                 </div>
               );
             })()}
-          </div>
+          </div>}
 
           {/* Routine Elements Table */}
           {routineElements.length > 0 && (
@@ -2350,27 +2355,39 @@ const RoutineCalculator = () => {
             </Card>
           )}
 
-          {/* Save / Cancel Buttons */}
-          <div className="flex gap-4 pt-4">
-            <Button
-              variant="outline"
-              className="flex-1 h-12 text-base"
-              onClick={() => navigate('/routines')}
-            >
-              <X className="h-4 w-4 mr-2" /> Cancel
-            </Button>
-            <Button
-              className="flex-1 h-12 text-base"
-              onClick={() => {
-                const parts = [gymnastName, selectedApparatus, year].filter(Boolean);
-                const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
-                setRoutineSaveName(defaultName);
-                setSaveDialogOpen(true);
-              }}
-            >
-              <Save className="h-4 w-4 mr-2" /> Save
-            </Button>
-          </div>
+          {/* Save / Cancel / Back Buttons */}
+          {isViewMode ? (
+            <div className="flex gap-4 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1 h-12 text-base"
+                onClick={() => navigate('/routines')}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" /> Back to My Routines
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-4 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1 h-12 text-base"
+                onClick={() => navigate('/routines')}
+              >
+                <X className="h-4 w-4 mr-2" /> Cancel
+              </Button>
+              <Button
+                className="flex-1 h-12 text-base"
+                onClick={() => {
+                  const parts = [gymnastName, selectedApparatus, year].filter(Boolean);
+                  const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
+                  setRoutineSaveName(defaultName);
+                  setSaveDialogOpen(true);
+                }}
+              >
+                <Save className="h-4 w-4 mr-2" /> Save
+              </Button>
+            </div>
+          )}
         </div>
       </main>
 
