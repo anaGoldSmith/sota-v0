@@ -634,6 +634,7 @@ const StandardRiskDetail = () => {
       key={component.id} 
       className={`flex items-center ${!isLast ? 'border-b border-border' : ''}`}
     >
+      <div className="w-8 py-4" />
       <div className="w-12 flex justify-center py-4">
         {component.symbol_image ? (
           <img 
