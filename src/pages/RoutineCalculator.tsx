@@ -1730,6 +1730,7 @@ const RoutineCalculator = () => {
                 placeholder="E.g. E. Kanaeva"
                 value={gymnastName}
                 onChange={(e) => setGymnastName(e.target.value)}
+                disabled={isViewMode}
               />
             </div>
 
