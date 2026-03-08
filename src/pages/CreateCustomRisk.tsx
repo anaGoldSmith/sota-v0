@@ -1091,14 +1091,6 @@ const CreateCustomRisk = () => {
         const catchItem = dynamicCatches.find(c => c.code === meta.selectedCatchCode);
         if (catchItem) setSelectedCatch(catchItem);
       }
-      // Restore extra throw and thr2+thr6 combo
-      if (meta.extraThrow) {
-        const et = dynamicThrows.find(t => t.code === meta.extraThrow.code);
-        if (et) setExtraThrow(et);
-      }
-      if (meta.thr2HasThr6) {
-        setThr2HasThr6(true);
-      }
       // Restore throw/catch rotation specs
       if (meta.throwRotationSpec) {
         setThrowRotationSpec(meta.throwRotationSpec);
@@ -1112,26 +1104,6 @@ const CreateCustomRisk = () => {
       }
       if (meta.catchDuringDB) {
         setCatchDuringDB(meta.catchDuringDB);
-      }
-      // Restore catch combo state
-      if (meta.extraCatches && meta.extraCatches.length > 0) {
-        const restoredExtraCatches = meta.extraCatches.map((c: any) => {
-          const found = dynamicCatches.find(dc => dc.code === c.code);
-          return found || c;
-        });
-        setExtraCatches(restoredExtraCatches);
-      }
-      if (meta.catchHasCatchDuringDB) {
-        setCatchHasCatchDuringDB(true);
-      }
-      if (meta.extraCatchDuringDBData) {
-        setExtraCatchDuringDBData(meta.extraCatchDuringDBData);
-      }
-      if (meta.catchHasCatch8) {
-        setCatchHasCatch8(true);
-      }
-      if (meta.extraCatch8RotationSpec) {
-        setExtraCatch8RotationSpec(meta.extraCatch8RotationSpec);
       }
       // Restore rotation entries with full specification data
       if (meta.rotationEntries && meta.rotationEntries.length > 0) {
