@@ -18,6 +18,8 @@ const DynamicElementsConfiguration = () => {
   const [uploadingDBsForRisks, setUploadingDBsForRisks] = useState(false);
   const [uploadingVerticalRotations, setUploadingVerticalRotations] = useState(false);
   const [uploadingPreAcrobaticElements, setUploadingPreAcrobaticElements] = useState(false);
+  const [uploadingThrowCombinations, setUploadingThrowCombinations] = useState(false);
+  const [uploadingCatchCombinations, setUploadingCatchCombinations] = useState(false);
   
   const catchesInputRef = useRef<HTMLInputElement>(null);
   const throwsInputRef = useRef<HTMLInputElement>(null);
