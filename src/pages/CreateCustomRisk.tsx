@@ -820,7 +820,7 @@ const CreateCustomRisk = () => {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDiveLeapWarning, setShowDiveLeapWarning] = useState(false);
   const [showDiveLeapPrompt, setShowDiveLeapPrompt] = useState(false);
-  const [pendingDiveLeapContext, setPendingDiveLeapContext] = useState<{ source: 'throw' | 'rotation'; entryId?: string; element: PreAcrobaticElement } | null>(null);
+  const [pendingDiveLeapContext, setPendingDiveLeapContext] = useState<{ source: 'throw' | 'rotation' | 'extra-throw'; entryId?: string; element: PreAcrobaticElement } | null>(null);
   const [savedRiskData, setSavedRiskData] = useState<any>(null);
   const [showAxisWarningDialog, setShowAxisWarningDialog] = useState(false);
 
@@ -1616,6 +1616,10 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       setThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
       // Dive leap in throw counts as rotation, so auto-add axis/level change
       autoAddAxisChangeForThrowDiveLeap();
+    } else if (source === 'extra-throw') {
+      // Apply dive leap to extra throw rotation spec
+      setExtraThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
+      autoAddAxisChangeForThrowDiveLeap();
     } else if (source === 'rotation' && entryId) {
       // Apply dive leap to the rotation entry (applyPreAcrobaticElement handles axis auto-add)
       applyPreAcrobaticElement(entryId, element);
@@ -1661,6 +1665,9 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     if (source === 'throw') {
       setThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
       // Dive leap in throw counts as rotation, so auto-add axis/level change
+      autoAddAxisChangeForThrowDiveLeap();
+    } else if (source === 'extra-throw') {
+      setExtraThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
       autoAddAxisChangeForThrowDiveLeap();
     } else if (source === 'rotation' && entryId) {
       applyPreAcrobaticElement(entryId, element);
@@ -4193,8 +4200,14 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       <PreAcrobaticSelectionDialog
         open={showExtraThrowPreAcrobaticDialog}
         onOpenChange={setShowExtraThrowPreAcrobaticDialog}
-        elements={preAcrobaticElements.filter(e => e.name?.toLowerCase() !== 'dive leap')}
+        elements={preAcrobaticElements}
         onSelect={(element) => {
+          if (element.name?.toLowerCase() === 'dive leap') {
+            setPendingDiveLeapContext({ source: 'extra-throw', element });
+            setShowExtraThrowPreAcrobaticDialog(false);
+            setShowDiveLeapPrompt(true);
+            return;
+          }
           setExtraThrowRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
           setShowExtraThrowPreAcrobaticDialog(false);
         }}
