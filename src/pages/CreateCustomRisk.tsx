@@ -3472,7 +3472,7 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
       <PreAcrobaticSelectionDialog
         open={showThrowPreAcrobaticDialog}
         onOpenChange={setShowThrowPreAcrobaticDialog}
-        elements={(hasDiveLeapInRotation || extraThrow?.code === 'Thr2' || (selectedThrow?.code === 'Thr2' && thr2HasThr6))
+        elements={hasDiveLeapInRotation
           ? preAcrobaticElements.filter(e => e.name?.toLowerCase() !== 'dive leap')
           : preAcrobaticElements
         }
@@ -3509,39 +3509,6 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
         onSelect={(element) => {
           setCatchRotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
           setShowCatchPreAcrobaticDialog(false);
-        }}
-        rotationType="one"
-        isFirstRotation={true}
-      />
-
-      {/* Extra Catch during DB Dialog (when primary is regular catch or Catch8) */}
-      <DBDuringThrowCatchDialog
-        open={showExtraCatchDBDialog}
-        onOpenChange={setShowExtraCatchDBDialog}
-        type="catch"
-        onSelectDB={(db, dbType, rotationCount) => {
-          handleSelectExtraCatchDuringDB(db, dbType, rotationCount);
-        }}
-      />
-
-      {/* Extra Catch8 Rotation Specification Dialogs */}
-      <VerticalRotationSelectionDialog
-        open={showExtraCatch8VerticalDialog}
-        onOpenChange={setShowExtraCatch8VerticalDialog}
-        rotations={verticalRotations}
-        onSelect={(rotation) => {
-          setExtraCatch8RotationSpec({ type: 'vertical', verticalRotation: rotation });
-          setShowExtraCatch8VerticalDialog(false);
-        }}
-      />
-      
-      <PreAcrobaticSelectionDialog
-        open={showExtraCatch8PreAcrobaticDialog}
-        onOpenChange={setShowExtraCatch8PreAcrobaticDialog}
-        elements={preAcrobaticElements.filter(e => e.name?.toLowerCase() !== 'dive leap')}
-        onSelect={(element) => {
-          setExtraCatch8RotationSpec({ type: 'pre-acrobatic', preAcrobaticElement: element });
-          setShowExtraCatch8PreAcrobaticDialog(false);
         }}
         rotationType="one"
         isFirstRotation={true}
