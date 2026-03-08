@@ -1690,6 +1690,11 @@ const handleUpdateSpecificationType = (id: string, specificationType: RotationSp
     throwRotationSpec?.type === 'pre-acrobatic' && 
     throwRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap';
   
+  // Check if Dive Leap is selected in the Extra Throw section (Thr6 with pre-acrobatic spec)
+  const hasDiveLeapInExtraThrow = extraThrow?.code === 'Thr6' && 
+    extraThrowRotationSpec?.type === 'pre-acrobatic' && 
+    extraThrowRotationSpec?.preAcrobaticElement?.name?.toLowerCase() === 'dive leap';
+  
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
