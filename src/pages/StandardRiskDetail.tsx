@@ -1047,7 +1047,6 @@ const StandardRiskDetail = () => {
                   <div className="w-20 py-3 px-2 text-center border-l border-primary/30">
                     <span className="text-sm font-semibold text-muted-foreground">Value</span>
                   </div>
-                  <div className="w-10" />
                 </div>
                 
                 {/* Section Components */}
