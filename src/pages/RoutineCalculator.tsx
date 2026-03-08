@@ -569,6 +569,11 @@ const RoutineCalculator = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  
+  // Check if editing an existing routine
+  const searchParams = new URLSearchParams(location.search);
+  const editingRoutineId = searchParams.get('edit');
+  
   const [jumpDialogOpen, setJumpDialogOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
   const [rotationDialogOpen, setRotationDialogOpen] = useState(false);
@@ -617,6 +622,28 @@ const RoutineCalculator = () => {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [routineSaveName, setRoutineSaveName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [routineLoaded, setRoutineLoaded] = useState(false);
+  
+  // Load existing routine when editing
+  useEffect(() => {
+    if (editingRoutineId && !routineLoaded) {
+      const loadRoutine = async () => {
+        const { data, error } = await (supabase.from('routines' as any).select('*').eq('id', editingRoutineId).single() as any);
+        if (error) {
+          toast({ title: "Error loading routine", description: error.message, variant: "destructive" });
+          return;
+        }
+        if (data) {
+          setGymnastName(data.gymnast_name || '');
+          setYear(data.year || '');
+          setSelectedApparatus(data.apparatus as ApparatusType || null);
+          setRoutineElements(data.elements || []);
+          setRoutineLoaded(true);
+        }
+      };
+      loadRoutine();
+    }
+  }, [editingRoutineId, routineLoaded]);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDBDASuccessDialog, setShowDBDASuccessDialog] = useState(false);
   const [showDBDAValidationDialog, setShowDBDAValidationDialog] = useState(false);
