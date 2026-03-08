@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, CheckCircle, Plus, X, ChevronDown, Info } from "lucide-react";
+import { ArrowLeft, CheckCircle, Plus, X, ChevronDown, Info, GripVertical } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -634,7 +634,10 @@ const StandardRiskDetail = () => {
       key={component.id} 
       className={`flex items-center ${!isLast ? 'border-b border-border' : ''}`}
     >
-      <div className="w-16 flex justify-center py-4">
+      <div className="w-8 flex justify-center py-4">
+        <GripVertical className="h-4 w-4 text-muted-foreground/40" />
+      </div>
+      <div className="w-12 flex justify-center py-4">
         {component.symbol_image ? (
           <img 
             src={component.symbol_image} 
@@ -694,7 +697,8 @@ const StandardRiskDetail = () => {
         {/* Section Total */}
         {sectionComponents.length > 0 && (
           <div className="flex items-center border-t border-border bg-muted/30">
-            <div className="w-16 py-2" />
+            <div className="w-8 py-2" />
+            <div className="w-12 py-2" />
             <div className="flex-1 py-2 px-4">
               <span className="font-medium text-muted-foreground text-sm">Section Total</span>
             </div>
@@ -847,7 +851,10 @@ const StandardRiskDetail = () => {
                       key={criteria.id} 
                       className="flex items-center border-b border-border"
                     >
-                      <div className="w-16 flex justify-center py-4">
+                      <div className="w-8 flex justify-center py-4">
+                        <GripVertical className="h-4 w-4 text-muted-foreground/40" />
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
                         {criteria.symbol_image ? (
                           <img 
                             src={criteria.symbol_image} 
@@ -886,7 +893,10 @@ const StandardRiskDetail = () => {
                       key={criteria.id} 
                       className={`flex items-center ${index !== extraThrowCriteria.length - 1 ? 'border-b border-border' : ''}`}
                     >
-                      <div className="w-16 flex justify-center py-4">
+                      <div className="w-8 flex justify-center py-4">
+                        <GripVertical className="h-4 w-4 text-muted-foreground/40" />
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
                         {criteria.symbol_image ? (
                           <img 
                             src={criteria.symbol_image} 
@@ -973,7 +983,8 @@ const StandardRiskDetail = () => {
                   {/* Section Total */}
                   {(throwComponents.length > 0 || extraThrowCriteria.length > 0 || generalThrowCriteria.length > 0) && (
                     <div className="flex items-center border-t border-border bg-muted/30">
-                      <div className="w-16 py-2" />
+                      <div className="w-8 py-2" />
+                      <div className="w-12 py-2" />
                       <div className="flex-1 py-2 px-4">
                         <span className="font-medium text-muted-foreground text-sm">Section Total</span>
                       </div>
@@ -1071,7 +1082,10 @@ const StandardRiskDetail = () => {
                       key={criteria.id} 
                       className="flex items-center border-b border-border"
                     >
-                      <div className="w-16 flex justify-center py-4">
+                      <div className="w-8 flex justify-center py-4">
+                        <GripVertical className="h-4 w-4 text-muted-foreground/40" />
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
                         {criteria.symbol_image ? (
                           <img 
                             src={criteria.symbol_image} 
@@ -1110,7 +1124,10 @@ const StandardRiskDetail = () => {
                       key={criteria.id} 
                       className={`flex items-center ${index !== extraCatchCriteria.length - 1 ? 'border-b border-border' : ''}`}
                     >
-                      <div className="w-16 flex justify-center py-4">
+                      <div className="w-8 flex justify-center py-4">
+                        <GripVertical className="h-4 w-4 text-muted-foreground/40" />
+                      </div>
+                      <div className="w-12 flex justify-center py-4">
                         {criteria.symbol_image ? (
                           <img 
                             src={criteria.symbol_image} 
@@ -1229,7 +1246,8 @@ const StandardRiskDetail = () => {
                   {/* Section Total */}
                   {(catchComponents.length > 0 || extraCatchCriteria.length > 0 || generalCatchCriteria.length > 0) && (
                     <div className="flex items-center border-t border-border bg-muted/30">
-                      <div className="w-16 py-2" />
+                      <div className="w-8 py-2" />
+                      <div className="w-12 py-2" />
                       <div className="flex-1 py-2 px-4">
                         <span className="font-medium text-muted-foreground text-sm">Section Total</span>
                       </div>
