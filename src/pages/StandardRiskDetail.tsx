@@ -978,7 +978,6 @@ const StandardRiskDetail = () => {
                         <p className="font-bold text-primary">{throwTotal.toFixed(1)}</p>
                       </div>
                     </div>
-                    </div>
                   )}
                 </div>
               </div>
