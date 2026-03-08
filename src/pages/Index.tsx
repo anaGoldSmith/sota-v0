@@ -165,7 +165,7 @@ const Index = () => {
                 <p className="text-muted-foreground text-sm">No events available</p>
               ) : (
                 events.slice(0, 2).map((event) => (
-                  <div key={event.id} className="p-6 border-2 border-primary/30 rounded-xl hover:bg-accent transition-colors">
+                  <div key={event.id} className="p-6 border-2 border-primary rounded-xl hover:bg-accent transition-colors">
                     <h3 className="text-lg font-semibold mb-2 text-foreground">{event.title}</h3>
                     {event.dates && (
                       <p className="text-sm text-muted-foreground flex items-center gap-1.5 mb-1">
