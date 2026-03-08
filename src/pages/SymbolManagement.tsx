@@ -660,7 +660,8 @@ export default function SymbolManagement() {
                                     onClick={() => setDeleteTarget({ 
                                       bucket: category.bucket, 
                                       file: symbol.file,
-                                      code: symbol.linkedCode 
+                                      code: symbol.linkedCode,
+                                      folder: category.folder
                                     })}
                                   >
                                     <Trash2 className="h-3 w-3 mr-1" />
