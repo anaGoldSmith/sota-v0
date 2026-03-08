@@ -49,6 +49,7 @@ const App = () => (
           <Route path="/create-custom-risk" element={<CreateCustomRisk />} />
           <Route path="/admin/dynamic-elements-configuration" element={<DynamicElementsConfiguration />} />
           <Route path="/admin/landing-page" element={<LandingPageAdmin />} />
+          <Route path="/events" element={<Events />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
