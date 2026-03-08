@@ -701,6 +701,7 @@ const StandardRiskDetail = () => {
             <div className="w-20 py-2 px-2 text-center border-l border-border">
               <p className="font-bold text-primary">{sectionTotal.toFixed(1)}</p>
             </div>
+            <div className="w-10" />
           </div>
         )}
       </div>
