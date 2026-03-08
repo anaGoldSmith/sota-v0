@@ -662,6 +662,7 @@ const StandardRiskDetail = () => {
       <div className="w-20 py-4 px-2 text-center border-l border-border">
         <p className="font-semibold text-primary">{component.value ?? 0}</p>
       </div>
+      <div className="w-10" />
     </div>
   );
 
