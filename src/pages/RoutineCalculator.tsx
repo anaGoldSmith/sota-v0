@@ -2262,7 +2262,7 @@ const RoutineCalculator = () => {
                                                     {te.symbolImage ? (
                                                       <img src={te.symbolImage} alt={te.name} className="h-6 w-6 object-contain" />
                                                     ) : (
-                                                      <div className="h-6 w-6 bg-muted rounded" />
+                                                      <div className="h-6 w-6 bg-white dark:bg-background rounded border border-border/30" />
                                                     )}
                                                   </td>
                                                   <td className="py-2 px-4 font-medium">
