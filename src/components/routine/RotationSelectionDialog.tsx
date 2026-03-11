@@ -474,7 +474,7 @@ export const RotationSelectionDialog = ({
                               <div className="flex flex-col items-center gap-2">
                                 {/* Symbol image */}
                                  <div 
-                                  className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative cursor-pointer"
+                                  className="w-16 h-16 bg-white dark:bg-background rounded flex items-center justify-center text-xs text-muted-foreground mb-1 relative cursor-pointer"
                                   onClick={() => handleRotationClick(rotation)}
                                 >
                                   {rotation.symbol_image ? (

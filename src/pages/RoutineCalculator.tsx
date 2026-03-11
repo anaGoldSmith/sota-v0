@@ -420,7 +420,7 @@ function SortableRow({
       <TableRow 
         ref={isMainRow ? setNodeRef : undefined} 
         style={isMainRow ? style : undefined}
-        className={!isMainRow ? "bg-muted/20" : ""}
+        className={!isMainRow ? "bg-white dark:bg-background" : ""}
       >
         <TableCell className="w-8 px-1">
           {isMainRow ? (
@@ -498,11 +498,11 @@ function SortableRow({
       
       {/* Expanded Risk Details Table */}
       {(element.type === 'R' || element.type === 'R/DB') && element.isExpanded && element.riskData && (
-        <TableRow className="bg-muted/10">
+        <TableRow className="bg-white dark:bg-background">
           <TableCell colSpan={6} className="p-4">
             <div className="ml-8 border rounded-lg overflow-hidden">
               <table className="w-full">
-                 <thead className="bg-muted/30">
+                 <thead className="bg-muted/20">
                    <tr>
                      <th className="py-2 px-4 text-center text-sm font-semibold text-muted-foreground">Type</th>
                      <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Symbol</th>
@@ -512,7 +512,7 @@ function SortableRow({
                   </thead>
                   <tbody>
                     {element.riskData.components.map((component, idx) => (
-                      <tr key={idx} className={idx % 2 === 1 ? "bg-secondary/10" : ""}>
+                      <tr key={idx} className="border-b border-border/30 last:border-b-0">
                         <td className="py-2 px-4 text-center">
                           {component.rotationTag && (
                             <Badge 
@@ -538,7 +538,7 @@ function SortableRow({
                           ) : component.name.toLowerCase().includes('series') || (component.rotationTag && component.rotationCount && component.rotationCount >= 3) ? (
                             <span className="text-lg font-bold text-foreground">S</span>
                           ) : (
-                            <div className="h-6 w-6 bg-muted rounded" />
+                            <div className="h-6 w-6 bg-white dark:bg-background rounded border border-border/30" />
                           )}
                         </td>
                         <td className="py-2 px-4 font-medium">
@@ -2017,11 +2017,11 @@ const RoutineCalculator = () => {
                             const isJumpSeriesBreakdown = element.dbData.isJumpSeries && element.dbData.jumpCount && element.dbData.jumpCount > 1;
                             
                             rows.push(
-                              <TableRow key={`${element.id}-expanded`} className="bg-muted/10">
+                              <TableRow key={`${element.id}-expanded`} className="bg-white dark:bg-background">
                                 <TableCell colSpan={6} className="p-4">
                                   <div className="ml-8 border rounded-lg overflow-hidden">
                                     <table className="w-full">
-                                      <thead className="bg-muted/30">
+                                      <thead className="bg-muted/20">
                                         <tr>
                                           {isJumpSeriesBreakdown && (
                                             <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground w-16">Jump</th>
@@ -2054,7 +2054,7 @@ const RoutineCalculator = () => {
                                           
                                           return (
                                             <>
-                                              <tr className="bg-secondary/10">
+                                              <tr className="border-b border-border/30">
                                                 {isJumpSeriesBreakdown && (
                                                   <td className="py-2 px-4"></td>
                                                 )}
@@ -2156,7 +2156,7 @@ const RoutineCalculator = () => {
                                               const te = element.teElements?.find(t => t.id === orderItem.id);
                                               if (!te) return null;
                                               return (
-                                                <tr key={te.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                <tr key={te.id} className="border-b border-border/30 last:border-b-0">
                                                   {isJumpSeriesBreakdown && (
                                                     <td className="py-2 px-4">
                                                       {jumpSymbol ? (
@@ -2197,7 +2197,7 @@ const RoutineCalculator = () => {
                                               const da = element.daElements?.find(d => d.id === orderItem.id);
                                               if (!da) return null;
                                               return (
-                                                <tr key={da.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                <tr key={da.id} className="border-b border-border/30 last:border-b-0">
                                                   {isJumpSeriesBreakdown && (
                                                     <td className="py-2 px-4">
                                                       {jumpSymbol ? (
@@ -2241,7 +2241,7 @@ const RoutineCalculator = () => {
                                                 : null;
                                               
                                               return (
-                                                <tr key={te.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                <tr key={te.id} className="border-b border-border/30 last:border-b-0">
                                                   {isJumpSeriesBreakdown && (
                                                     <td className="py-2 px-4">
                                                       {jumpSymbol ? (
@@ -2290,7 +2290,7 @@ const RoutineCalculator = () => {
                                                 : null;
                                               
                                               return (
-                                                <tr key={da.id} className={rowIndex % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                <tr key={da.id} className="border-b border-border/30 last:border-b-0">
                                                   {isJumpSeriesBreakdown && (
                                                     <td className="py-2 px-4">
                                                       {jumpSymbol ? (

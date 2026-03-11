@@ -377,7 +377,7 @@ export const TechnicalElementsSelectionDialog = ({
                           onClick={handleClick}
                         >
                           <TableCell className="relative">
-                            <div className="w-12 h-12 bg-muted/50 rounded flex items-center justify-center">
+                            <div className="w-12 h-12 bg-white dark:bg-background rounded flex items-center justify-center">
                               {symbolUrl ? (
                                 <img 
                                   src={symbolUrl} 
