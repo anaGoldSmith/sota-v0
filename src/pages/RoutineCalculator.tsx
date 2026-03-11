@@ -420,7 +420,7 @@ function SortableRow({
       <TableRow 
         ref={isMainRow ? setNodeRef : undefined} 
         style={isMainRow ? style : undefined}
-        className={!isMainRow ? "bg-muted/20" : ""}
+        className={!isMainRow ? "bg-white dark:bg-background" : ""}
       >
         <TableCell className="w-8 px-1">
           {isMainRow ? (
