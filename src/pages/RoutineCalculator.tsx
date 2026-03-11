@@ -498,11 +498,11 @@ function SortableRow({
       
       {/* Expanded Risk Details Table */}
       {(element.type === 'R' || element.type === 'R/DB') && element.isExpanded && element.riskData && (
-        <TableRow className="bg-muted/10">
+        <TableRow className="bg-white dark:bg-background">
           <TableCell colSpan={6} className="p-4">
             <div className="ml-8 border rounded-lg overflow-hidden">
               <table className="w-full">
-                 <thead className="bg-muted/30">
+                 <thead className="bg-muted/20">
                    <tr>
                      <th className="py-2 px-4 text-center text-sm font-semibold text-muted-foreground">Type</th>
                      <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Symbol</th>
