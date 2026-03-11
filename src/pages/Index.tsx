@@ -145,7 +145,7 @@ const Index = () => {
                 onClick={() => navigate("/routines")}
               >
                 <h3 className="text-lg font-semibold mb-2 text-foreground">My Routines</h3>
-                <p className="text-muted-foreground">Create routines with DA & DD calculation</p>
+                <p className="text-muted-foreground">Create routines with DA, DB & R calculation</p>
               </div>
               <div 
                 className="p-6 border-2 border-primary rounded-xl hover:bg-accent transition-colors cursor-pointer"
