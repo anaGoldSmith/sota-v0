@@ -2021,7 +2021,7 @@ const RoutineCalculator = () => {
                                 <TableCell colSpan={6} className="p-4">
                                   <div className="ml-8 border rounded-lg overflow-hidden">
                                     <table className="w-full">
-                                      <thead className="bg-muted/20">
+                                      <thead className="bg-white dark:bg-background">
                                         <tr>
                                           {isJumpSeriesBreakdown && (
                                             <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground w-16">Jump</th>
