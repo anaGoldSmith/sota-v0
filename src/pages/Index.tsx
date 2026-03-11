@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, MapPin, Calendar, ExternalLink } from "lucide-react";
+import { User, MapPin, Calendar, ExternalLink, Settings } from "lucide-react";
 import landingBottomBg from "@/assets/landing-bottom-bg.jpg";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
