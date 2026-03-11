@@ -538,7 +538,7 @@ function SortableRow({
                           ) : component.name.toLowerCase().includes('series') || (component.rotationTag && component.rotationCount && component.rotationCount >= 3) ? (
                             <span className="text-lg font-bold text-foreground">S</span>
                           ) : (
-                            <div className="h-6 w-6 bg-muted rounded" />
+                            <div className="h-6 w-6 bg-white dark:bg-background rounded border border-border/30" />
                           )}
                         </td>
                         <td className="py-2 px-4 font-medium">
