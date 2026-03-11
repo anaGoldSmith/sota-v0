@@ -420,7 +420,7 @@ function SortableRow({
       <TableRow 
         ref={isMainRow ? setNodeRef : undefined} 
         style={isMainRow ? style : undefined}
-        className={!isMainRow ? "bg-white dark:bg-background" : ""}
+        className="bg-white dark:bg-background"
       >
         <TableCell className="w-8 px-1">
           {isMainRow ? (
@@ -502,7 +502,7 @@ function SortableRow({
           <TableCell colSpan={6} className="p-4">
             <div className="ml-8 border rounded-lg overflow-hidden">
               <table className="w-full">
-                 <thead className="bg-muted/20">
+                 <thead className="bg-white dark:bg-background">
                    <tr>
                      <th className="py-2 px-4 text-center text-sm font-semibold text-muted-foreground">Type</th>
                      <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Symbol</th>
@@ -2021,7 +2021,7 @@ const RoutineCalculator = () => {
                                 <TableCell colSpan={6} className="p-4">
                                   <div className="ml-8 border rounded-lg overflow-hidden">
                                     <table className="w-full">
-                                      <thead className="bg-muted/20">
+                                      <thead className="bg-white dark:bg-background">
                                         <tr>
                                           {isJumpSeriesBreakdown && (
                                             <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground w-16">Jump</th>
@@ -2177,7 +2177,7 @@ const RoutineCalculator = () => {
                                                     {te.symbolImage ? (
                                                       <img src={te.symbolImage} alt={te.name} className="h-6 w-6 object-contain" />
                                                     ) : (
-                                                      <div className="h-6 w-6 bg-muted rounded" />
+                                                      <div className="h-6 w-6 bg-white dark:bg-background rounded border border-border/30" />
                                                     )}
                                                   </td>
                                                   <td className="py-2 px-4 font-medium">
@@ -2262,7 +2262,7 @@ const RoutineCalculator = () => {
                                                     {te.symbolImage ? (
                                                       <img src={te.symbolImage} alt={te.name} className="h-6 w-6 object-contain" />
                                                     ) : (
-                                                      <div className="h-6 w-6 bg-muted rounded" />
+                                                      <div className="h-6 w-6 bg-white dark:bg-background rounded border border-border/30" />
                                                     )}
                                                   </td>
                                                   <td className="py-2 px-4 font-medium">
