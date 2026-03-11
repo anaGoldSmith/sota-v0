@@ -583,7 +583,12 @@ const RoutineCalculator = () => {
   const [apparatusDialogOpen, setApparatusDialogOpen] = useState(false);
   const [technicalElementsDialogOpen, setTechnicalElementsDialogOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  // Only restore from localStorage when editing/viewing an existing routine or returning with risk data
+  const hasLocationState = !!(location.state as any)?.newRisk;
+  const shouldRestoreState = !!loadRoutineId || hasLocationState;
+
   const [selectedApparatus, setSelectedApparatus] = useState<ApparatusType | null>(() => {
+    if (!shouldRestoreState) return null;
     const saved = localStorage.getItem('selectedApparatus');
     if (saved) {
       try {
@@ -605,6 +610,7 @@ const RoutineCalculator = () => {
   }, [selectedApparatus]);
   // Initialize routineElements from localStorage to persist across navigation
   const [routineElements, setRoutineElements] = useState<RoutineElement[]>(() => {
+    if (!shouldRestoreState) return [];
     const saved = localStorage.getItem('routineElements');
     if (saved) {
       try {
