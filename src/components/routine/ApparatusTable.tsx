@@ -322,7 +322,7 @@ export const ApparatusTable = ({
                   onClick={isParent ? (e) => toggleParent(item.code, e) : () => onRowClick(item)}
                   className={`cursor-pointer transition-colors ${
                     isSelected ? 'bg-primary/10 hover:bg-primary/20' : 'hover:bg-muted/50'
-                  } ${isCollapsibleChild ? 'bg-muted/30' : ''}`}
+                  } ${isCollapsibleChild ? 'bg-white dark:bg-background border-l-2 border-primary/30' : ''}`}
                 >
                   <TableCell className="font-medium text-sm sticky left-0 z-10 bg-background border-r min-w-[200px]">
                     <div className="flex items-center gap-2">

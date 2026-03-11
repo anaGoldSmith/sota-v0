@@ -416,7 +416,7 @@ export const JumpSelectionDialog = ({
                                   </div>
                                 )}
                                 {/* Symbol image */}
-                                <div className="w-16 h-16 bg-muted/50 rounded flex items-center justify-center text-xs text-muted-foreground mb-1">
+                                <div className="w-16 h-16 bg-white dark:bg-background rounded flex items-center justify-center text-xs text-muted-foreground mb-1">
                                   {jump.symbol_image ? (
                                     <img src={jump.symbol_image} alt={jump.description} className="w-full h-full object-contain" />
                                   ) : (

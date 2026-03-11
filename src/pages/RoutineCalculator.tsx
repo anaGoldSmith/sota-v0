@@ -2290,7 +2290,7 @@ const RoutineCalculator = () => {
                                                 : null;
                                               
                                               return (
-                                                <tr key={da.id} className={rowIndex % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                <tr key={da.id} className="border-b border-border/30 last:border-b-0">
                                                   {isJumpSeriesBreakdown && (
                                                     <td className="py-2 px-4">
                                                       {jumpSymbol ? (
