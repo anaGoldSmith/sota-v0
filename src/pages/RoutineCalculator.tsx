@@ -2241,7 +2241,7 @@ const RoutineCalculator = () => {
                                                 : null;
                                               
                                               return (
-                                                <tr key={te.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                <tr key={te.id} className="border-b border-border/30 last:border-b-0">
                                                   {isJumpSeriesBreakdown && (
                                                     <td className="py-2 px-4">
                                                       {jumpSymbol ? (
