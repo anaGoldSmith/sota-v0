@@ -76,7 +76,13 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border">
-        <div className="w-10" />
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => navigate("/admin")}
+        >
+          <Settings className="h-6 w-6" />
+        </Button>
         <div className="flex flex-col items-center">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             Rhythm. Gymnastics. Score.
