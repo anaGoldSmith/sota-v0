@@ -512,7 +512,7 @@ function SortableRow({
                   </thead>
                   <tbody>
                     {element.riskData.components.map((component, idx) => (
-                      <tr key={idx} className={idx % 2 === 1 ? "bg-secondary/10" : ""}>
+                      <tr key={idx} className="border-b border-border/30 last:border-b-0">
                         <td className="py-2 px-4 text-center">
                           {component.rotationTag && (
                             <Badge 
