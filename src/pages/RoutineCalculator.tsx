@@ -2197,7 +2197,7 @@ const RoutineCalculator = () => {
                                               const da = element.daElements?.find(d => d.id === orderItem.id);
                                               if (!da) return null;
                                               return (
-                                                <tr key={da.id} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                                <tr key={da.id} className="border-b border-border/30 last:border-b-0">
                                                   {isJumpSeriesBreakdown && (
                                                     <td className="py-2 px-4">
                                                       {jumpSymbol ? (
