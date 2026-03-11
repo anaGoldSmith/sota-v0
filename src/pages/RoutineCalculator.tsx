@@ -2054,7 +2054,7 @@ const RoutineCalculator = () => {
                                           
                                           return (
                                             <>
-                                              <tr className="bg-secondary/10">
+                                              <tr className="border-b border-border/30">
                                                 {isJumpSeriesBreakdown && (
                                                   <td className="py-2 px-4"></td>
                                                 )}
