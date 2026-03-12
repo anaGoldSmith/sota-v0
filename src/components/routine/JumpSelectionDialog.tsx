@@ -338,7 +338,7 @@ export const JumpSelectionDialog = ({
     onOpenChange(isOpen);
   };
   return <Dialog open={open} onOpenChange={handleDialogChange}>
-        <DialogContent className="max-w-7xl max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-[95vw] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <JumpIcon className="!h-6 !w-6" />
