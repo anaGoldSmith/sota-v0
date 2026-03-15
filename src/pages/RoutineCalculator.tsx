@@ -1877,7 +1877,7 @@ const RoutineCalculator = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/routines")}
+            onClick={handleNavigateBack}
           >
             <ArrowLeft className="h-6 w-6" />
           </Button>
