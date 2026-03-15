@@ -185,7 +185,10 @@ function SortableRow({
   onRemove, 
   onModify,
   onToggleExpand,
-  isMainRow 
+  onAddAdjustment,
+  onUpdateAdjustment,
+  isMainRow,
+  isViewMode,
 }: { 
   element: RoutineElement; 
   index: number;
@@ -193,7 +196,10 @@ function SortableRow({
   onRemove: () => void;
   onModify?: () => void;
   onToggleExpand?: () => void;
+  onAddAdjustment?: () => void;
+  onUpdateAdjustment?: (name: string, value: number) => void;
   isMainRow: boolean;
+  isViewMode?: boolean;
 }) {
   const {
     attributes,
