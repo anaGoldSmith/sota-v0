@@ -713,6 +713,7 @@ const RoutineCalculator = () => {
   const [lastLoadedId, setLastLoadedId] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [unsavedChangesDialogOpen, setUnsavedChangesDialogOpen] = useState(false);
+  const [loadedRoutineName, setLoadedRoutineName] = useState<string | null>(null);
   
   // Load existing routine when editing or viewing
   useEffect(() => {
@@ -728,6 +729,7 @@ const RoutineCalculator = () => {
           setYear(data.year || '');
           setSelectedApparatus(data.apparatus as ApparatusType || null);
           setRoutineElements(data.elements || []);
+          setLoadedRoutineName(data.name || null);
           setRoutineLoaded(true);
           setLastLoadedId(loadRoutineId);
         }
@@ -2712,9 +2714,13 @@ const RoutineCalculator = () => {
               <Button
                 className="flex-1 h-12 text-base"
                 onClick={() => {
-                  const parts = [gymnastName, selectedApparatus, year].filter(Boolean);
-                  const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
-                  setRoutineSaveName(defaultName);
+                  if (editingRoutineId && loadedRoutineName) {
+                    setRoutineSaveName(loadedRoutineName);
+                  } else {
+                    const parts = [gymnastName, selectedApparatus, year].filter(Boolean);
+                    const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
+                    setRoutineSaveName(defaultName);
+                  }
                   setSaveDialogOpen(true);
                 }}
               >
@@ -2828,12 +2834,16 @@ const RoutineCalculator = () => {
             <Button
               onClick={() => {
                 setUnsavedChangesDialogOpen(false);
-                const parts = [];
-                if (gymnastName) parts.push(gymnastName);
-                if (selectedApparatus) parts.push(selectedApparatus.charAt(0).toUpperCase() + selectedApparatus.slice(1));
-                if (year) parts.push(year);
-                const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
-                setRoutineSaveName(defaultName);
+                if (editingRoutineId && loadedRoutineName) {
+                  setRoutineSaveName(loadedRoutineName);
+                } else {
+                  const parts = [];
+                  if (gymnastName) parts.push(gymnastName);
+                  if (selectedApparatus) parts.push(selectedApparatus.charAt(0).toUpperCase() + selectedApparatus.slice(1));
+                  if (year) parts.push(year);
+                  const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
+                  setRoutineSaveName(defaultName);
+                }
                 setSaveDialogOpen(true);
               }}
             >
