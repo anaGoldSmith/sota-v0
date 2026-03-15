@@ -729,6 +729,7 @@ const RoutineCalculator = () => {
           setYear(data.year || '');
           setSelectedApparatus(data.apparatus as ApparatusType || null);
           setRoutineElements(data.elements || []);
+          setLoadedRoutineName(data.name || null);
           setRoutineLoaded(true);
           setLastLoadedId(loadRoutineId);
         }
