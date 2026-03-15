@@ -2086,14 +2086,6 @@ const RoutineCalculator = () => {
                         <span className="text-muted-foreground">Total DA Value:</span>
                         <Badge variant="secondary" className="font-mono">{totalDA.toFixed(2)}</Badge>
                       </div>
-                      {adjCount > 0 && (
-                        <div className="flex items-center gap-3">
-                          <span className="text-muted-foreground">Adjustments:</span>
-                          <Badge variant="secondary" className="font-mono">{adjCount}</Badge>
-                          <span className="text-muted-foreground">ADJ Value:</span>
-                          <Badge variant="secondary" className="font-mono">{totalAdj.toFixed(2)}</Badge>
-                        </div>
-                      )}
                       <div className="flex items-center gap-3">
                         <span className="font-semibold">Total D-score:</span>
                         <Badge variant="default" className="font-mono">{totalScore.toFixed(2)}</Badge>
