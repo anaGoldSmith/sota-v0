@@ -2698,7 +2698,7 @@ const RoutineCalculator = () => {
               <Button
                 variant="outline"
                 className="flex-1 h-12 text-base"
-                onClick={() => navigate('/routines')}
+                onClick={handleNavigateBack}
               >
                 <X className="h-4 w-4 mr-2" /> Cancel
               </Button>
