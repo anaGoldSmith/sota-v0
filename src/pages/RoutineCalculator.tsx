@@ -2806,7 +2806,43 @@ const RoutineCalculator = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Jump Selection Dialog */}
+      {/* Unsaved Changes Dialog */}
+      <Dialog open={unsavedChangesDialogOpen} onOpenChange={setUnsavedChangesDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Unsaved Changes</DialogTitle>
+            <DialogDescription>
+              You have unsaved changes. Would you like to save them before leaving?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setUnsavedChangesDialogOpen(false);
+                navigate('/routines');
+              }}
+            >
+              Discard
+            </Button>
+            <Button
+              onClick={() => {
+                setUnsavedChangesDialogOpen(false);
+                const parts = [];
+                if (gymnastName) parts.push(gymnastName);
+                if (selectedApparatus) parts.push(selectedApparatus.charAt(0).toUpperCase() + selectedApparatus.slice(1));
+                if (year) parts.push(year);
+                const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
+                setRoutineSaveName(defaultName);
+                setSaveDialogOpen(true);
+              }}
+            >
+              <Save className="h-4 w-4 mr-2" /> Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <JumpSelectionDialog
         open={jumpDialogOpen}
         onOpenChange={setJumpDialogOpen}
