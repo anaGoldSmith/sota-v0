@@ -1330,12 +1330,22 @@ const RoutineCalculator = () => {
   const handleAddAdjustment = (elementIndex: number) => {
     setRoutineElements(prev => prev.map((el, idx) => {
       if (idx !== elementIndex) return el;
-      const newAdj = { id: `adj-${Date.now()}`, name: '', value: 0 };
+      const newAdj = { id: `adj-${Date.now()}`, name: '', value: 0, isEditing: true };
       return { 
         ...el, 
         adjustments: [...(el.adjustments || []), newAdj],
-        isExpanded: true, // Auto-expand to show the new adjustment
+        isExpanded: true,
       };
+    }));
+  };
+
+  const handleToggleAdjustmentEdit = (elementIndex: number, adjId: string, isEditing: boolean) => {
+    setRoutineElements(prev => prev.map((el, idx) => {
+      if (idx !== elementIndex) return el;
+      const updatedAdjs = (el.adjustments || []).map(adj => 
+        adj.id === adjId ? { ...adj, isEditing } : adj
+      );
+      return { ...el, adjustments: updatedAdjs };
     }));
   };
 
