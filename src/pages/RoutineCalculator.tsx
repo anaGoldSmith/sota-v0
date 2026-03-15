@@ -470,7 +470,11 @@ function SortableRow({
           ) : (element.type === 'R' || element.type === 'R/DB') ? renderRiskSymbols() : renderSymbols(element.symbolImages)}
         </TableCell>
         <TableCell className="w-16 px-2 text-right font-mono font-semibold">
-          {element.value.toFixed(1)}
+          {(() => {
+            const adjTotal = (element.adjustments || []).reduce((sum, adj) => sum + adj.value, 0);
+            const displayValue = element.value + adjTotal;
+            return displayValue.toFixed(1);
+          })()}
         </TableCell>
         <TableCell className="w-8 px-1">
           {isMainRow && (
