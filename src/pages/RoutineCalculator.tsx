@@ -1,3 +1,4 @@
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -2086,6 +2087,22 @@ const RoutineCalculator = () => {
                         <span className="text-muted-foreground">Total DA Value:</span>
                         <Badge variant="secondary" className="font-mono">{totalDA.toFixed(2)}</Badge>
                       </div>
+                      {adjCount > 0 && (
+                        <Collapsible>
+                          <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                            <ChevronDown className="h-3 w-3 transition-transform [&[data-state=open]>svg]:rotate-180" />
+                            <span>Adjustments ({adjCount})</span>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="pt-1 pl-4">
+                            <div className="flex items-center gap-3">
+                              <span className="text-muted-foreground">Count:</span>
+                              <Badge variant="secondary" className="font-mono">{adjCount}</Badge>
+                              <span className="text-muted-foreground">ADJ Value:</span>
+                              <Badge variant="secondary" className="font-mono">{totalAdj.toFixed(2)}</Badge>
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
                       <div className="flex items-center gap-3">
                         <span className="font-semibold">Total D-score:</span>
                         <Badge variant="default" className="font-mono">{totalScore.toFixed(2)}</Badge>
