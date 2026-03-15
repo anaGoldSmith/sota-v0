@@ -2143,6 +2143,7 @@ const RoutineCalculator = () => {
                               onAddAdjustment={() => handleAddAdjustment(index)}
                               onUpdateAdjustment={(adjId, name, value) => handleUpdateAdjustment(index, adjId, name, value)}
                               onRemoveAdjustment={(adjId) => handleRemoveAdjustment(index, adjId)}
+                              onToggleAdjustmentEdit={(adjId, isEditing) => handleToggleAdjustmentEdit(index, adjId, isEditing)}
                               isMainRow={true}
                               isViewMode={isViewMode}
                             />
