@@ -2115,6 +2115,8 @@ const RoutineCalculator = () => {
                                         (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB') ? () => handleModifyElement(element.id) : undefined}
                               onToggleExpand={(element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB' || (element.adjustments && element.adjustments.length > 0)) ? () => handleToggleExpand(index) : undefined}
                               onAddAdjustment={() => handleAddAdjustment(index)}
+                              onUpdateAdjustment={(adjId, name, value) => handleUpdateAdjustment(index, adjId, name, value)}
+                              onRemoveAdjustment={(adjId) => handleRemoveAdjustment(index, adjId)}
                               isMainRow={true}
                               isViewMode={isViewMode}
                             />
