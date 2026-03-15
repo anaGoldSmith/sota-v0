@@ -186,7 +186,6 @@ function SortableRow({
   onModify,
   onToggleExpand,
   onAddAdjustment,
-  onUpdateAdjustment,
   isMainRow,
   isViewMode,
 }: { 
@@ -197,7 +196,6 @@ function SortableRow({
   onModify?: () => void;
   onToggleExpand?: () => void;
   onAddAdjustment?: () => void;
-  onUpdateAdjustment?: (name: string, value: number) => void;
   isMainRow: boolean;
   isViewMode?: boolean;
 }) {
