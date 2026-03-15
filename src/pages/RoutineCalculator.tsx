@@ -739,6 +739,29 @@ const RoutineCalculator = () => {
       setRoutineLoaded(false);
     }
   }, [loadRoutineId]);
+
+  // Track unsaved changes after routine is loaded in edit mode
+  const initialRoutineRef = React.useRef<string | null>(null);
+  useEffect(() => {
+    if (editingRoutineId && routineLoaded && initialRoutineRef.current === null) {
+      initialRoutineRef.current = JSON.stringify({ gymnastName, year, selectedApparatus, routineElements });
+    }
+  }, [editingRoutineId, routineLoaded, gymnastName, year, selectedApparatus, routineElements]);
+
+  useEffect(() => {
+    if (editingRoutineId && routineLoaded && initialRoutineRef.current !== null) {
+      const current = JSON.stringify({ gymnastName, year, selectedApparatus, routineElements });
+      setHasUnsavedChanges(current !== initialRoutineRef.current);
+    }
+  }, [editingRoutineId, routineLoaded, gymnastName, year, selectedApparatus, routineElements]);
+
+  const handleNavigateBack = () => {
+    if (editingRoutineId && hasUnsavedChanges) {
+      setUnsavedChangesDialogOpen(true);
+    } else {
+      navigate('/routines');
+    }
+  };
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDBDASuccessDialog, setShowDBDASuccessDialog] = useState(false);
   const [showDBDAValidationDialog, setShowDBDAValidationDialog] = useState(false);
