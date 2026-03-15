@@ -1291,7 +1291,11 @@ const RoutineCalculator = () => {
   }, 0);
   const countDA = daElements.length;
 
-  const totalScore = totalDB + totalDA;
+  // Calculate adjustment totals
+  const adjElements = routineElements.filter(el => el.type === 'ADJ');
+  const totalAdj = adjElements.reduce((sum, el) => sum + el.value, 0);
+
+  const totalScore = totalDB + totalDA + totalAdj;
 
   const handleToggleExpand = (index: number) => {
     setRoutineElements(prev => prev.map((el, idx) => 
