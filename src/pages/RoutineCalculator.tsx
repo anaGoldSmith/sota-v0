@@ -21,7 +21,7 @@ import type { FouetteShape } from "@/components/routine/FouetteShapesSelector";
 import { DBSuccessDialog } from "@/components/routine/DBSuccessDialog";
 import { DBDASuccessDialog } from "@/components/routine/DBDASuccessDialog";
 import { DBDAValidationDialog } from "@/components/routine/DBDAValidationDialog";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ApparatusType, CombinedApparatusData } from "@/types/apparatus";
@@ -711,6 +711,8 @@ const RoutineCalculator = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [routineLoaded, setRoutineLoaded] = useState(false);
   const [lastLoadedId, setLastLoadedId] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [unsavedChangesDialogOpen, setUnsavedChangesDialogOpen] = useState(false);
   
   // Load existing routine when editing or viewing
   useEffect(() => {
@@ -737,6 +739,29 @@ const RoutineCalculator = () => {
       setRoutineLoaded(false);
     }
   }, [loadRoutineId]);
+
+  // Track unsaved changes after routine is loaded in edit mode
+  const initialRoutineRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (editingRoutineId && routineLoaded && initialRoutineRef.current === null) {
+      initialRoutineRef.current = JSON.stringify({ gymnastName, year, selectedApparatus, routineElements });
+    }
+  }, [editingRoutineId, routineLoaded, gymnastName, year, selectedApparatus, routineElements]);
+
+  useEffect(() => {
+    if (editingRoutineId && routineLoaded && initialRoutineRef.current !== null) {
+      const current = JSON.stringify({ gymnastName, year, selectedApparatus, routineElements });
+      setHasUnsavedChanges(current !== initialRoutineRef.current);
+    }
+  }, [editingRoutineId, routineLoaded, gymnastName, year, selectedApparatus, routineElements]);
+
+  const handleNavigateBack = () => {
+    if (editingRoutineId && hasUnsavedChanges) {
+      setUnsavedChangesDialogOpen(true);
+    } else {
+      navigate('/routines');
+    }
+  };
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showDBDASuccessDialog, setShowDBDASuccessDialog] = useState(false);
   const [showDBDAValidationDialog, setShowDBDAValidationDialog] = useState(false);
@@ -1852,7 +1877,7 @@ const RoutineCalculator = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/routines")}
+            onClick={handleNavigateBack}
           >
             <ArrowLeft className="h-6 w-6" />
           </Button>
@@ -2673,7 +2698,7 @@ const RoutineCalculator = () => {
               <Button
                 variant="outline"
                 className="flex-1 h-12 text-base"
-                onClick={() => navigate('/routines')}
+                onClick={handleNavigateBack}
               >
                 <X className="h-4 w-4 mr-2" /> Cancel
               </Button>
@@ -2781,7 +2806,43 @@ const RoutineCalculator = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Jump Selection Dialog */}
+      {/* Unsaved Changes Dialog */}
+      <Dialog open={unsavedChangesDialogOpen} onOpenChange={setUnsavedChangesDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Unsaved Changes</DialogTitle>
+            <DialogDescription>
+              You have unsaved changes. Would you like to save them before leaving?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setUnsavedChangesDialogOpen(false);
+                navigate('/routines');
+              }}
+            >
+              Discard
+            </Button>
+            <Button
+              onClick={() => {
+                setUnsavedChangesDialogOpen(false);
+                const parts = [];
+                if (gymnastName) parts.push(gymnastName);
+                if (selectedApparatus) parts.push(selectedApparatus.charAt(0).toUpperCase() + selectedApparatus.slice(1));
+                if (year) parts.push(year);
+                const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
+                setRoutineSaveName(defaultName);
+                setSaveDialogOpen(true);
+              }}
+            >
+              <Save className="h-4 w-4 mr-2" /> Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <JumpSelectionDialog
         open={jumpDialogOpen}
         onOpenChange={setJumpDialogOpen}
