@@ -174,7 +174,7 @@ interface RoutineElement {
   riskData?: RiskData;
   isExpanded?: boolean;
   // Adjustments attached to this element
-  adjustments?: Array<{ id: string; name: string; value: number }>;
+  adjustments?: Array<{ id: string; name: string; value: number; isEditing?: boolean }>;
 }
 
 // Sortable Row Component
@@ -188,6 +188,7 @@ function SortableRow({
   onAddAdjustment,
   onUpdateAdjustment,
   onRemoveAdjustment,
+  onToggleAdjustmentEdit,
   isMainRow,
   isViewMode,
 }: { 
@@ -200,6 +201,7 @@ function SortableRow({
   onAddAdjustment?: () => void;
   onUpdateAdjustment?: (adjId: string, name: string, value: number) => void;
   onRemoveAdjustment?: (adjId: string) => void;
+  onToggleAdjustmentEdit?: (adjId: string, isEditing: boolean) => void;
   isMainRow: boolean;
   isViewMode?: boolean;
 }) {
@@ -468,7 +470,11 @@ function SortableRow({
           ) : (element.type === 'R' || element.type === 'R/DB') ? renderRiskSymbols() : renderSymbols(element.symbolImages)}
         </TableCell>
         <TableCell className="w-16 px-2 text-right font-mono font-semibold">
-          {element.value.toFixed(1)}
+          {(() => {
+            const adjTotal = (element.adjustments || []).reduce((sum, adj) => sum + adj.value, 0);
+            const displayValue = element.value + adjTotal;
+            return displayValue.toFixed(1);
+          })()}
         </TableCell>
         <TableCell className="w-8 px-1">
           {isMainRow && (
@@ -581,9 +587,7 @@ function SortableRow({
                            <span className="text-sm font-bold text-amber-600 dark:text-amber-400">ADJ</span>
                          </td>
                          <td className="py-2 px-4">
-                           {isViewMode ? (
-                             <span className="text-sm font-medium">{adj.name || 'Adjustment'}</span>
-                           ) : (
+                           {adj.isEditing && !isViewMode ? (
                              <Input
                                className="h-7 text-sm max-w-[180px]"
                                placeholder="Description..."
@@ -591,13 +595,13 @@ function SortableRow({
                                onChange={(e) => onUpdateAdjustment?.(adj.id, e.target.value, adj.value)}
                                onClick={(e) => e.stopPropagation()}
                              />
+                           ) : (
+                             <span className="text-sm font-medium">{adj.name || 'Adjustment'}</span>
                            )}
                          </td>
                          <td className="py-2 px-4 text-right">
                            <div className="flex items-center justify-end gap-1">
-                             {isViewMode ? (
-                               <span className="font-mono">{adj.value.toFixed(1)}</span>
-                             ) : (
+                             {adj.isEditing && !isViewMode ? (
                                <Input
                                  className="h-7 text-sm text-right font-mono w-16"
                                  type="number"
@@ -606,9 +610,21 @@ function SortableRow({
                                  onChange={(e) => onUpdateAdjustment?.(adj.id, adj.name, parseFloat(e.target.value) || 0)}
                                  onClick={(e) => e.stopPropagation()}
                                />
+                             ) : (
+                               <span className={`font-mono ${adj.value < 0 ? 'text-destructive' : ''}`}>{adj.value.toFixed(1)}</span>
+                             )}
+                             {!isViewMode && adj.isEditing && (
+                               <Button variant="ghost" size="icon" className="h-6 w-6 text-green-600 hover:text-green-700" onClick={() => onToggleAdjustmentEdit?.(adj.id, false)}>
+                                 <Check className="h-3 w-3" />
+                               </Button>
+                             )}
+                             {!isViewMode && !adj.isEditing && (
+                               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onToggleAdjustmentEdit?.(adj.id, true)}>
+                                 <Pencil className="h-3 w-3" />
+                               </Button>
                              )}
                              {!isViewMode && (
-                               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onRemoveAdjustment?.(adj.id)}>
+                               <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => onRemoveAdjustment?.(adj.id)}>
                                  <X className="h-3 w-3" />
                                </Button>
                              )}
@@ -1324,12 +1340,22 @@ const RoutineCalculator = () => {
   const handleAddAdjustment = (elementIndex: number) => {
     setRoutineElements(prev => prev.map((el, idx) => {
       if (idx !== elementIndex) return el;
-      const newAdj = { id: `adj-${Date.now()}`, name: '', value: 0 };
+      const newAdj = { id: `adj-${Date.now()}`, name: '', value: 0, isEditing: true };
       return { 
         ...el, 
         adjustments: [...(el.adjustments || []), newAdj],
-        isExpanded: true, // Auto-expand to show the new adjustment
+        isExpanded: true,
       };
+    }));
+  };
+
+  const handleToggleAdjustmentEdit = (elementIndex: number, adjId: string, isEditing: boolean) => {
+    setRoutineElements(prev => prev.map((el, idx) => {
+      if (idx !== elementIndex) return el;
+      const updatedAdjs = (el.adjustments || []).map(adj => 
+        adj.id === adjId ? { ...adj, isEditing } : adj
+      );
+      return { ...el, adjustments: updatedAdjs };
     }));
   };
 
@@ -2117,6 +2143,7 @@ const RoutineCalculator = () => {
                               onAddAdjustment={() => handleAddAdjustment(index)}
                               onUpdateAdjustment={(adjId, name, value) => handleUpdateAdjustment(index, adjId, name, value)}
                               onRemoveAdjustment={(adjId) => handleRemoveAdjustment(index, adjId)}
+                              onToggleAdjustmentEdit={(adjId, isEditing) => handleToggleAdjustmentEdit(index, adjId, isEditing)}
                               isMainRow={true}
                               isViewMode={isViewMode}
                             />
@@ -2481,9 +2508,7 @@ const RoutineCalculator = () => {
                                               <span className="text-sm font-bold text-amber-600 dark:text-amber-400">ADJ</span>
                                             </td>
                                             <td className="py-2 px-4">
-                                              {isViewMode ? (
-                                                <span className="text-sm font-medium">{adj.name || 'Adjustment'}</span>
-                                              ) : (
+                                              {adj.isEditing && !isViewMode ? (
                                                 <Input
                                                   className="h-7 text-sm max-w-[180px]"
                                                   placeholder="Description..."
@@ -2491,13 +2516,13 @@ const RoutineCalculator = () => {
                                                   onChange={(e) => handleUpdateAdjustment(index, adj.id, e.target.value, adj.value)}
                                                   onClick={(e) => e.stopPropagation()}
                                                 />
+                                              ) : (
+                                                <span className="text-sm font-medium">{adj.name || 'Adjustment'}</span>
                                               )}
                                             </td>
                                             <td className="py-2 px-4 text-right">
                                               <div className="flex items-center justify-end gap-1">
-                                                {isViewMode ? (
-                                                  <span className="font-mono">{adj.value.toFixed(1)}</span>
-                                                ) : (
+                                                {adj.isEditing && !isViewMode ? (
                                                   <Input
                                                     className="h-7 text-sm text-right font-mono w-16"
                                                     type="number"
@@ -2506,9 +2531,21 @@ const RoutineCalculator = () => {
                                                     onChange={(e) => handleUpdateAdjustment(index, adj.id, adj.name, parseFloat(e.target.value) || 0)}
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
+                                                ) : (
+                                                  <span className={`font-mono ${adj.value < 0 ? 'text-destructive' : ''}`}>{adj.value.toFixed(1)}</span>
+                                                )}
+                                                {!isViewMode && adj.isEditing && (
+                                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-green-600 hover:text-green-700" onClick={() => handleToggleAdjustmentEdit(index, adj.id, false)}>
+                                                    <Check className="h-3 w-3" />
+                                                  </Button>
+                                                )}
+                                                {!isViewMode && !adj.isEditing && (
+                                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleToggleAdjustmentEdit(index, adj.id, true)}>
+                                                    <Pencil className="h-3 w-3" />
+                                                  </Button>
                                                 )}
                                                 {!isViewMode && (
-                                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveAdjustment(index, adj.id)}>
+                                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => handleRemoveAdjustment(index, adj.id)}>
                                                     <X className="h-3 w-3" />
                                                   </Button>
                                                 )}
@@ -2550,9 +2587,7 @@ const RoutineCalculator = () => {
                                               <span className="text-sm font-bold text-amber-600 dark:text-amber-400">ADJ</span>
                                             </td>
                                             <td className="py-2 px-4">
-                                              {isViewMode ? (
-                                                <span className="text-sm font-medium">{adj.name || 'Adjustment'}</span>
-                                              ) : (
+                                              {adj.isEditing && !isViewMode ? (
                                                 <Input
                                                   className="h-7 text-sm max-w-[180px]"
                                                   placeholder="Description..."
@@ -2560,13 +2595,13 @@ const RoutineCalculator = () => {
                                                   onChange={(e) => handleUpdateAdjustment(index, adj.id, e.target.value, adj.value)}
                                                   onClick={(e) => e.stopPropagation()}
                                                 />
+                                              ) : (
+                                                <span className="text-sm font-medium">{adj.name || 'Adjustment'}</span>
                                               )}
                                             </td>
                                             <td className="py-2 px-4 text-right">
                                               <div className="flex items-center justify-end gap-1">
-                                                {isViewMode ? (
-                                                  <span className="font-mono">{adj.value.toFixed(1)}</span>
-                                                ) : (
+                                                {adj.isEditing && !isViewMode ? (
                                                   <Input
                                                     className="h-7 text-sm text-right font-mono w-16"
                                                     type="number"
@@ -2575,9 +2610,21 @@ const RoutineCalculator = () => {
                                                     onChange={(e) => handleUpdateAdjustment(index, adj.id, adj.name, parseFloat(e.target.value) || 0)}
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
+                                                ) : (
+                                                  <span className={`font-mono ${adj.value < 0 ? 'text-destructive' : ''}`}>{adj.value.toFixed(1)}</span>
+                                                )}
+                                                {!isViewMode && adj.isEditing && (
+                                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-green-600 hover:text-green-700" onClick={() => handleToggleAdjustmentEdit(index, adj.id, false)}>
+                                                    <Check className="h-3 w-3" />
+                                                  </Button>
+                                                )}
+                                                {!isViewMode && !adj.isEditing && (
+                                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleToggleAdjustmentEdit(index, adj.id, true)}>
+                                                    <Pencil className="h-3 w-3" />
+                                                  </Button>
                                                 )}
                                                 {!isViewMode && (
-                                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveAdjustment(index, adj.id)}>
+                                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => handleRemoveAdjustment(index, adj.id)}>
                                                     <X className="h-3 w-3" />
                                                   </Button>
                                                 )}
