@@ -119,7 +119,7 @@ interface RiskData {
   };
 }
 
-type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'DB/TE' | 'DB/TE/DA' | 'TE' | 'R' | 'R/DB' | 'Steps' | 'ADJ';
+type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'DB/TE' | 'DB/TE/DA' | 'TE' | 'R' | 'R/DB' | 'Steps';
 
 interface RoutineElement {
   id: string;
@@ -173,8 +173,8 @@ interface RoutineElement {
   // For Risk elements
   riskData?: RiskData;
   isExpanded?: boolean;
-  // For ADJ (adjustment) elements
-  adjustmentName?: string;
+  // Adjustments attached to this element
+  adjustments?: Array<{ id: string; name: string; value: number }>;
 }
 
 // Sortable Row Component
@@ -187,6 +187,7 @@ function SortableRow({
   onToggleExpand,
   onAddAdjustment,
   onUpdateAdjustment,
+  onRemoveAdjustment,
   isMainRow,
   isViewMode,
 }: { 
@@ -197,7 +198,8 @@ function SortableRow({
   onModify?: () => void;
   onToggleExpand?: () => void;
   onAddAdjustment?: () => void;
-  onUpdateAdjustment?: (name: string, value: number) => void;
+  onUpdateAdjustment?: (adjId: string, name: string, value: number) => void;
+  onRemoveAdjustment?: (adjId: string) => void;
   isMainRow: boolean;
   isViewMode?: boolean;
 }) {
@@ -444,57 +446,29 @@ function SortableRow({
           )}
         </TableCell>
         <TableCell 
-          className={`w-12 px-2 font-mono ${!isMainRow ? 'pl-6 text-muted-foreground' : ''} ${isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB') ? 'cursor-pointer' : ''}`}
-          onClick={isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB') && onToggleExpand ? (e) => {
+          className={`w-12 px-2 font-mono ${!isMainRow ? 'pl-6 text-muted-foreground' : ''} ${isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB' || (element.adjustments && element.adjustments.length > 0)) ? 'cursor-pointer' : ''}`}
+          onClick={isMainRow && onToggleExpand ? (e) => {
             e.stopPropagation();
             onToggleExpand();
           } : undefined}
         >
           <div className="flex items-center gap-1">
             {itemNumber}
-            {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB') && (
+            {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB' || (element.adjustments && element.adjustments.length > 0)) && (
               <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${element.isExpanded ? '' : '-rotate-90'}`} />
             )}
           </div>
         </TableCell>
         <TableCell className="w-12 px-2 font-medium">
-          {element.type === 'Steps' ? 'S' : element.type === 'ADJ' ? (
-            <Badge variant="outline" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300">ADJ</Badge>
-          ) : element.type}
+          {element.type === 'Steps' ? 'S' : element.type}
         </TableCell>
         <TableCell className="px-2">
           {element.type === 'Steps' ? (
             <span className="text-sm font-medium text-foreground">Dance Steps</span>
-          ) : element.type === 'ADJ' ? (
-            <div className="flex items-center gap-3">
-              <span className="text-lg font-bold text-amber-600 dark:text-amber-400 flex-shrink-0">ADJ</span>
-              {isViewMode ? (
-                <span className="text-sm font-medium text-foreground">{element.adjustmentName || 'Adjustment'}</span>
-              ) : (
-                <Input
-                  className="h-8 text-sm max-w-[200px]"
-                  placeholder="Adjustment description..."
-                  value={element.adjustmentName || ''}
-                  onChange={(e) => onUpdateAdjustment?.(e.target.value, element.value)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              )}
-            </div>
           ) : (element.type === 'R' || element.type === 'R/DB') ? renderRiskSymbols() : renderSymbols(element.symbolImages)}
         </TableCell>
         <TableCell className="w-16 px-2 text-right font-mono font-semibold">
-          {element.type === 'ADJ' && !isViewMode ? (
-            <Input
-              className="h-8 text-sm text-right font-mono w-20 ml-auto"
-              type="number"
-              step="0.1"
-              value={element.value}
-              onChange={(e) => onUpdateAdjustment?.(element.adjustmentName || '', parseFloat(e.target.value) || 0)}
-              onClick={(e) => e.stopPropagation()}
-            />
-          ) : (
-            element.value.toFixed(1)
-          )}
+          {element.value.toFixed(1)}
         </TableCell>
         <TableCell className="w-8 px-1">
           {isMainRow && (
@@ -521,7 +495,7 @@ function SortableRow({
                 )}
                 {onAddAdjustment && !isViewMode && (
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAddAdjustment(); }}>
-                    <Pencil className="h-4 w-4 mr-2" />
+                    <AlertCircle className="h-4 w-4 mr-2" />
                     Add Adjustment
                   </DropdownMenuItem>
                 )}
@@ -597,7 +571,52 @@ function SortableRow({
                         <td className="py-2 px-4 text-right font-mono">{component.value}</td>
                       </tr>
                     ))}
-                 </tbody>
+                     {/* Adjustment rows within risk breakdown */}
+                     {element.adjustments && element.adjustments.length > 0 && element.adjustments.map((adj) => (
+                       <tr key={adj.id} className="border-b border-border/30 last:border-b-0 bg-amber-50/50 dark:bg-amber-900/10">
+                         <td className="py-2 px-4 text-center">
+                           <Badge variant="outline" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300 text-[10px]">ADJ</Badge>
+                         </td>
+                         <td className="py-2 px-4">
+                           <span className="text-sm font-bold text-amber-600 dark:text-amber-400">ADJ</span>
+                         </td>
+                         <td className="py-2 px-4">
+                           {isViewMode ? (
+                             <span className="text-sm font-medium">{adj.name || 'Adjustment'}</span>
+                           ) : (
+                             <Input
+                               className="h-7 text-sm max-w-[180px]"
+                               placeholder="Description..."
+                               value={adj.name}
+                               onChange={(e) => onUpdateAdjustment?.(adj.id, e.target.value, adj.value)}
+                               onClick={(e) => e.stopPropagation()}
+                             />
+                           )}
+                         </td>
+                         <td className="py-2 px-4 text-right">
+                           <div className="flex items-center justify-end gap-1">
+                             {isViewMode ? (
+                               <span className="font-mono">{adj.value.toFixed(1)}</span>
+                             ) : (
+                               <Input
+                                 className="h-7 text-sm text-right font-mono w-16"
+                                 type="number"
+                                 step="0.1"
+                                 value={adj.value}
+                                 onChange={(e) => onUpdateAdjustment?.(adj.id, adj.name, parseFloat(e.target.value) || 0)}
+                                 onClick={(e) => e.stopPropagation()}
+                               />
+                             )}
+                             {!isViewMode && (
+                               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onRemoveAdjustment?.(adj.id)}>
+                                 <X className="h-3 w-3" />
+                               </Button>
+                             )}
+                           </div>
+                         </td>
+                       </tr>
+                     ))}
+                  </tbody>
               </table>
             </div>
           </TableCell>
@@ -1291,32 +1310,44 @@ const RoutineCalculator = () => {
   }, 0);
   const countDA = daElements.length;
 
-  // Calculate adjustment totals
-  const adjElements = routineElements.filter(el => el.type === 'ADJ');
-  const totalAdj = adjElements.reduce((sum, el) => sum + el.value, 0);
+  // Calculate adjustment totals (adjustments embedded in elements)
+  const totalAdj = routineElements.reduce((sum, el) => {
+    if (el.adjustments && el.adjustments.length > 0) {
+      return sum + el.adjustments.reduce((adjSum, adj) => adjSum + adj.value, 0);
+    }
+    return sum;
+  }, 0);
+  const adjCount = routineElements.reduce((count, el) => count + (el.adjustments?.length || 0), 0);
 
   const totalScore = totalDB + totalDA + totalAdj;
 
-  const handleAddAdjustment = (afterIndex: number) => {
-    const newAdj: RoutineElement = {
-      id: `adj-${Date.now()}`,
-      type: 'ADJ',
-      symbolImages: [],
-      value: 0,
-      originalData: {} as any,
-      adjustmentName: '',
-    };
-    setRoutineElements(prev => {
-      const next = [...prev];
-      next.splice(afterIndex + 1, 0, newAdj);
-      return next;
-    });
+  const handleAddAdjustment = (elementIndex: number) => {
+    setRoutineElements(prev => prev.map((el, idx) => {
+      if (idx !== elementIndex) return el;
+      const newAdj = { id: `adj-${Date.now()}`, name: '', value: 0 };
+      return { 
+        ...el, 
+        adjustments: [...(el.adjustments || []), newAdj],
+        isExpanded: true, // Auto-expand to show the new adjustment
+      };
+    }));
   };
 
-  const handleUpdateAdjustment = (index: number, name: string, value: number) => {
-    setRoutineElements(prev => prev.map((el, idx) => 
-      idx === index ? { ...el, adjustmentName: name, value } : el
-    ));
+  const handleUpdateAdjustment = (elementIndex: number, adjId: string, name: string, value: number) => {
+    setRoutineElements(prev => prev.map((el, idx) => {
+      if (idx !== elementIndex) return el;
+      const updatedAdjs = (el.adjustments || []).map(adj => 
+        adj.id === adjId ? { ...adj, name, value } : adj
+      );
+      return { ...el, adjustments: updatedAdjs };
+    }));
+  };
+
+  const handleRemoveAdjustment = (elementIndex: number, adjId: string) => {
+    setRoutineElements(prev => prev.map((el, idx) => {
+      if (idx !== elementIndex) return el;
+      return { ...el, adjustments: (el.adjustments || []).filter(adj => adj.id !== adjId) };
+    }));
   };
 
   const handleToggleExpand = (index: number) => {
@@ -2029,10 +2060,10 @@ const RoutineCalculator = () => {
                         <span className="text-muted-foreground">Total DA Value:</span>
                         <Badge variant="secondary" className="font-mono">{totalDA.toFixed(2)}</Badge>
                       </div>
-                      {adjElements.length > 0 && (
+                      {adjCount > 0 && (
                         <div className="flex items-center gap-3">
                           <span className="text-muted-foreground">Adjustments:</span>
-                          <Badge variant="secondary" className="font-mono">{adjElements.length}</Badge>
+                          <Badge variant="secondary" className="font-mono">{adjCount}</Badge>
                           <span className="text-muted-foreground">ADJ Value:</span>
                           <Badge variant="secondary" className="font-mono">{totalAdj.toFixed(2)}</Badge>
                         </div>
@@ -2082,9 +2113,10 @@ const RoutineCalculator = () => {
                               onRemove={() => handleRemoveRoutineElement(index)}
                               onModify={(element.type === 'R' || element.type === 'R/DB') ? () => handleModifyRisk(element.id) : 
                                         (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB') ? () => handleModifyElement(element.id) : undefined}
-                              onToggleExpand={(element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB') ? () => handleToggleExpand(index) : undefined}
+                              onToggleExpand={(element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB' || (element.adjustments && element.adjustments.length > 0)) ? () => handleToggleExpand(index) : undefined}
                               onAddAdjustment={() => handleAddAdjustment(index)}
-                              onUpdateAdjustment={element.type === 'ADJ' ? (name, value) => handleUpdateAdjustment(index, name, value) : undefined}
+                              onUpdateAdjustment={(adjId, name, value) => handleUpdateAdjustment(index, adjId, name, value)}
+                              onRemoveAdjustment={(adjId) => handleRemoveAdjustment(index, adjId)}
                               isMainRow={true}
                               isViewMode={isViewMode}
                             />
@@ -2439,6 +2471,120 @@ const RoutineCalculator = () => {
                                             )}
                                           </>
                                         )}
+                                        {/* Adjustment rows within DB/DA/TE breakdown */}
+                                        {element.adjustments && element.adjustments.length > 0 && element.adjustments.map((adj) => (
+                                          <tr key={adj.id} className="border-b border-border/30 last:border-b-0 bg-amber-50/50 dark:bg-amber-900/10">
+                                            <td className="py-2 px-4">
+                                              <Badge variant="outline" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300 text-[10px]">ADJ</Badge>
+                                            </td>
+                                            <td className="py-2 px-4">
+                                              <span className="text-sm font-bold text-amber-600 dark:text-amber-400">ADJ</span>
+                                            </td>
+                                            <td className="py-2 px-4">
+                                              {isViewMode ? (
+                                                <span className="text-sm font-medium">{adj.name || 'Adjustment'}</span>
+                                              ) : (
+                                                <Input
+                                                  className="h-7 text-sm max-w-[180px]"
+                                                  placeholder="Description..."
+                                                  value={adj.name}
+                                                  onChange={(e) => handleUpdateAdjustment(index, adj.id, e.target.value, adj.value)}
+                                                  onClick={(e) => e.stopPropagation()}
+                                                />
+                                              )}
+                                            </td>
+                                            <td className="py-2 px-4 text-right">
+                                              <div className="flex items-center justify-end gap-1">
+                                                {isViewMode ? (
+                                                  <span className="font-mono">{adj.value.toFixed(1)}</span>
+                                                ) : (
+                                                  <Input
+                                                    className="h-7 text-sm text-right font-mono w-16"
+                                                    type="number"
+                                                    step="0.1"
+                                                    value={adj.value}
+                                                    onChange={(e) => handleUpdateAdjustment(index, adj.id, adj.name, parseFloat(e.target.value) || 0)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                  />
+                                                )}
+                                                {!isViewMode && (
+                                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveAdjustment(index, adj.id)}>
+                                                    <X className="h-3 w-3" />
+                                                  </Button>
+                                                )}
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          }
+                          
+                          // Standalone adjustment expansion for elements without DB/DA/TE or Risk breakdown
+                          const hasOwnBreakdown = (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB');
+                          if (!hasOwnBreakdown && element.isExpanded && element.adjustments && element.adjustments.length > 0) {
+                            rows.push(
+                              <TableRow key={`${element.id}-adj-expanded`} className="bg-white dark:bg-background">
+                                <TableCell colSpan={6} className="p-4">
+                                  <div className="ml-8 border rounded-lg overflow-hidden">
+                                    <table className="w-full">
+                                      <thead className="bg-white dark:bg-background">
+                                        <tr>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground w-16">Type</th>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Symbol</th>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Name</th>
+                                          <th className="py-2 px-4 text-right text-sm font-semibold text-muted-foreground">Value</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {element.adjustments.map((adj) => (
+                                          <tr key={adj.id} className="border-b border-border/30 last:border-b-0 bg-amber-50/50 dark:bg-amber-900/10">
+                                            <td className="py-2 px-4">
+                                              <Badge variant="outline" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300 text-[10px]">ADJ</Badge>
+                                            </td>
+                                            <td className="py-2 px-4">
+                                              <span className="text-sm font-bold text-amber-600 dark:text-amber-400">ADJ</span>
+                                            </td>
+                                            <td className="py-2 px-4">
+                                              {isViewMode ? (
+                                                <span className="text-sm font-medium">{adj.name || 'Adjustment'}</span>
+                                              ) : (
+                                                <Input
+                                                  className="h-7 text-sm max-w-[180px]"
+                                                  placeholder="Description..."
+                                                  value={adj.name}
+                                                  onChange={(e) => handleUpdateAdjustment(index, adj.id, e.target.value, adj.value)}
+                                                  onClick={(e) => e.stopPropagation()}
+                                                />
+                                              )}
+                                            </td>
+                                            <td className="py-2 px-4 text-right">
+                                              <div className="flex items-center justify-end gap-1">
+                                                {isViewMode ? (
+                                                  <span className="font-mono">{adj.value.toFixed(1)}</span>
+                                                ) : (
+                                                  <Input
+                                                    className="h-7 text-sm text-right font-mono w-16"
+                                                    type="number"
+                                                    step="0.1"
+                                                    value={adj.value}
+                                                    onChange={(e) => handleUpdateAdjustment(index, adj.id, adj.name, parseFloat(e.target.value) || 0)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                  />
+                                                )}
+                                                {!isViewMode && (
+                                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveAdjustment(index, adj.id)}>
+                                                    <X className="h-3 w-3" />
+                                                  </Button>
+                                                )}
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        ))}
                                       </tbody>
                                     </table>
                                   </div>
