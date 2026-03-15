@@ -173,6 +173,8 @@ interface RoutineElement {
   // For Risk elements
   riskData?: RiskData;
   isExpanded?: boolean;
+  // For ADJ (adjustment) elements
+  adjustmentName?: string;
 }
 
 // Sortable Row Component
