@@ -1297,6 +1297,28 @@ const RoutineCalculator = () => {
 
   const totalScore = totalDB + totalDA + totalAdj;
 
+  const handleAddAdjustment = (afterIndex: number) => {
+    const newAdj: RoutineElement = {
+      id: `adj-${Date.now()}`,
+      type: 'ADJ',
+      symbolImages: [],
+      value: 0,
+      originalData: {} as any,
+      adjustmentName: '',
+    };
+    setRoutineElements(prev => {
+      const next = [...prev];
+      next.splice(afterIndex + 1, 0, newAdj);
+      return next;
+    });
+  };
+
+  const handleUpdateAdjustment = (index: number, name: string, value: number) => {
+    setRoutineElements(prev => prev.map((el, idx) => 
+      idx === index ? { ...el, adjustmentName: name, value } : el
+    ));
+  };
+
   const handleToggleExpand = (index: number) => {
     setRoutineElements(prev => prev.map((el, idx) => 
       idx === index ? { ...el, isExpanded: !el.isExpanded } : el
