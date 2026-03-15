@@ -1261,32 +1261,44 @@ const RoutineCalculator = () => {
   }, 0);
   const countDA = daElements.length;
 
-  // Calculate adjustment totals
-  const adjElements = routineElements.filter(el => el.type === 'ADJ');
-  const totalAdj = adjElements.reduce((sum, el) => sum + el.value, 0);
+  // Calculate adjustment totals (adjustments embedded in elements)
+  const totalAdj = routineElements.reduce((sum, el) => {
+    if (el.adjustments && el.adjustments.length > 0) {
+      return sum + el.adjustments.reduce((adjSum, adj) => adjSum + adj.value, 0);
+    }
+    return sum;
+  }, 0);
+  const adjCount = routineElements.reduce((count, el) => count + (el.adjustments?.length || 0), 0);
 
   const totalScore = totalDB + totalDA + totalAdj;
 
-  const handleAddAdjustment = (afterIndex: number) => {
-    const newAdj: RoutineElement = {
-      id: `adj-${Date.now()}`,
-      type: 'ADJ',
-      symbolImages: [],
-      value: 0,
-      originalData: {} as any,
-      adjustmentName: '',
-    };
-    setRoutineElements(prev => {
-      const next = [...prev];
-      next.splice(afterIndex + 1, 0, newAdj);
-      return next;
-    });
+  const handleAddAdjustment = (elementIndex: number) => {
+    setRoutineElements(prev => prev.map((el, idx) => {
+      if (idx !== elementIndex) return el;
+      const newAdj = { id: `adj-${Date.now()}`, name: '', value: 0 };
+      return { 
+        ...el, 
+        adjustments: [...(el.adjustments || []), newAdj],
+        isExpanded: true, // Auto-expand to show the new adjustment
+      };
+    }));
   };
 
-  const handleUpdateAdjustment = (index: number, name: string, value: number) => {
-    setRoutineElements(prev => prev.map((el, idx) => 
-      idx === index ? { ...el, adjustmentName: name, value } : el
-    ));
+  const handleUpdateAdjustment = (elementIndex: number, adjId: string, name: string, value: number) => {
+    setRoutineElements(prev => prev.map((el, idx) => {
+      if (idx !== elementIndex) return el;
+      const updatedAdjs = (el.adjustments || []).map(adj => 
+        adj.id === adjId ? { ...adj, name, value } : adj
+      );
+      return { ...el, adjustments: updatedAdjs };
+    }));
+  };
+
+  const handleRemoveAdjustment = (elementIndex: number, adjId: string) => {
+    setRoutineElements(prev => prev.map((el, idx) => {
+      if (idx !== elementIndex) return el;
+      return { ...el, adjustments: (el.adjustments || []).filter(adj => adj.id !== adjId) };
+    }));
   };
 
   const handleToggleExpand = (index: number) => {
