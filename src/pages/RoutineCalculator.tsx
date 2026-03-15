@@ -2095,8 +2095,6 @@ const RoutineCalculator = () => {
                           </CollapsibleTrigger>
                           <CollapsibleContent className="pt-1 pl-4">
                             <div className="flex items-center gap-3">
-                              <span className="text-muted-foreground">Total ADJ:</span>
-                              <Badge variant="secondary" className="font-mono">{adjCount}</Badge>
                               <span className="text-muted-foreground">Total ADJ Value:</span>
                               <Badge variant="secondary" className="font-mono">{totalAdj.toFixed(2)}</Badge>
                             </div>
