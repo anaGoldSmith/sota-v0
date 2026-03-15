@@ -2714,9 +2714,13 @@ const RoutineCalculator = () => {
               <Button
                 className="flex-1 h-12 text-base"
                 onClick={() => {
-                  const parts = [gymnastName, selectedApparatus, year].filter(Boolean);
-                  const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
-                  setRoutineSaveName(defaultName);
+                  if (editingRoutineId && loadedRoutineName) {
+                    setRoutineSaveName(loadedRoutineName);
+                  } else {
+                    const parts = [gymnastName, selectedApparatus, year].filter(Boolean);
+                    const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
+                    setRoutineSaveName(defaultName);
+                  }
                   setSaveDialogOpen(true);
                 }}
               >
