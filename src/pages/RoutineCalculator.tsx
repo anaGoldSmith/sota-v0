@@ -2522,6 +2522,75 @@ const RoutineCalculator = () => {
                             );
                           }
                           
+                          // Standalone adjustment expansion for elements without DB/DA/TE or Risk breakdown
+                          const hasOwnBreakdown = (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB');
+                          if (!hasOwnBreakdown && element.isExpanded && element.adjustments && element.adjustments.length > 0) {
+                            rows.push(
+                              <TableRow key={`${element.id}-adj-expanded`} className="bg-white dark:bg-background">
+                                <TableCell colSpan={6} className="p-4">
+                                  <div className="ml-8 border rounded-lg overflow-hidden">
+                                    <table className="w-full">
+                                      <thead className="bg-white dark:bg-background">
+                                        <tr>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground w-16">Type</th>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Symbol</th>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Name</th>
+                                          <th className="py-2 px-4 text-right text-sm font-semibold text-muted-foreground">Value</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {element.adjustments.map((adj) => (
+                                          <tr key={adj.id} className="border-b border-border/30 last:border-b-0 bg-amber-50/50 dark:bg-amber-900/10">
+                                            <td className="py-2 px-4">
+                                              <Badge variant="outline" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300 text-[10px]">ADJ</Badge>
+                                            </td>
+                                            <td className="py-2 px-4">
+                                              <span className="text-sm font-bold text-amber-600 dark:text-amber-400">ADJ</span>
+                                            </td>
+                                            <td className="py-2 px-4">
+                                              {isViewMode ? (
+                                                <span className="text-sm font-medium">{adj.name || 'Adjustment'}</span>
+                                              ) : (
+                                                <Input
+                                                  className="h-7 text-sm max-w-[180px]"
+                                                  placeholder="Description..."
+                                                  value={adj.name}
+                                                  onChange={(e) => handleUpdateAdjustment(index, adj.id, e.target.value, adj.value)}
+                                                  onClick={(e) => e.stopPropagation()}
+                                                />
+                                              )}
+                                            </td>
+                                            <td className="py-2 px-4 text-right">
+                                              <div className="flex items-center justify-end gap-1">
+                                                {isViewMode ? (
+                                                  <span className="font-mono">{adj.value.toFixed(1)}</span>
+                                                ) : (
+                                                  <Input
+                                                    className="h-7 text-sm text-right font-mono w-16"
+                                                    type="number"
+                                                    step="0.1"
+                                                    value={adj.value}
+                                                    onChange={(e) => handleUpdateAdjustment(index, adj.id, adj.name, parseFloat(e.target.value) || 0)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                  />
+                                                )}
+                                                {!isViewMode && (
+                                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveAdjustment(index, adj.id)}>
+                                                    <X className="h-3 w-3" />
+                                                  </Button>
+                                                )}
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          }
+                          
                           return rows;
                         })}
                       </TableBody>
