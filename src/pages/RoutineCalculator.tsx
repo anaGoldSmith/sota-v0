@@ -741,7 +741,7 @@ const RoutineCalculator = () => {
   }, [loadRoutineId]);
 
   // Track unsaved changes after routine is loaded in edit mode
-  const initialRoutineRef = React.useRef<string | null>(null);
+  const initialRoutineRef = useRef<string | null>(null);
   useEffect(() => {
     if (editingRoutineId && routineLoaded && initialRoutineRef.current === null) {
       initialRoutineRef.current = JSON.stringify({ gymnastName, year, selectedApparatus, routineElements });
