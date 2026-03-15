@@ -587,9 +587,7 @@ function SortableRow({
                            <span className="text-sm font-bold text-amber-600 dark:text-amber-400">ADJ</span>
                          </td>
                          <td className="py-2 px-4">
-                           {isViewMode ? (
-                             <span className="text-sm font-medium">{adj.name || 'Adjustment'}</span>
-                           ) : (
+                           {adj.isEditing && !isViewMode ? (
                              <Input
                                className="h-7 text-sm max-w-[180px]"
                                placeholder="Description..."
@@ -597,13 +595,13 @@ function SortableRow({
                                onChange={(e) => onUpdateAdjustment?.(adj.id, e.target.value, adj.value)}
                                onClick={(e) => e.stopPropagation()}
                              />
+                           ) : (
+                             <span className="text-sm font-medium">{adj.name || 'Adjustment'}</span>
                            )}
                          </td>
                          <td className="py-2 px-4 text-right">
                            <div className="flex items-center justify-end gap-1">
-                             {isViewMode ? (
-                               <span className="font-mono">{adj.value.toFixed(1)}</span>
-                             ) : (
+                             {adj.isEditing && !isViewMode ? (
                                <Input
                                  className="h-7 text-sm text-right font-mono w-16"
                                  type="number"
@@ -612,9 +610,21 @@ function SortableRow({
                                  onChange={(e) => onUpdateAdjustment?.(adj.id, adj.name, parseFloat(e.target.value) || 0)}
                                  onClick={(e) => e.stopPropagation()}
                                />
+                             ) : (
+                               <span className={`font-mono ${adj.value < 0 ? 'text-destructive' : ''}`}>{adj.value.toFixed(1)}</span>
+                             )}
+                             {!isViewMode && adj.isEditing && (
+                               <Button variant="ghost" size="icon" className="h-6 w-6 text-green-600 hover:text-green-700" onClick={() => onToggleAdjustmentEdit?.(adj.id, false)}>
+                                 <Check className="h-3 w-3" />
+                               </Button>
+                             )}
+                             {!isViewMode && !adj.isEditing && (
+                               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onToggleAdjustmentEdit?.(adj.id, true)}>
+                                 <Pencil className="h-3 w-3" />
+                               </Button>
                              )}
                              {!isViewMode && (
-                               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onRemoveAdjustment?.(adj.id)}>
+                               <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => onRemoveAdjustment?.(adj.id)}>
                                  <X className="h-3 w-3" />
                                </Button>
                              )}
