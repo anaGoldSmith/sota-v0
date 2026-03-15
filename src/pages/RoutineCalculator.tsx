@@ -21,7 +21,7 @@ import type { FouetteShape } from "@/components/routine/FouetteShapesSelector";
 import { DBSuccessDialog } from "@/components/routine/DBSuccessDialog";
 import { DBDASuccessDialog } from "@/components/routine/DBDASuccessDialog";
 import { DBDAValidationDialog } from "@/components/routine/DBDAValidationDialog";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ApparatusType, CombinedApparatusData } from "@/types/apparatus";
