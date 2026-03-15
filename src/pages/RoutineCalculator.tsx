@@ -519,6 +519,12 @@ function SortableRow({
                     View / Edit
                   </DropdownMenuItem>
                 )}
+                {onAddAdjustment && !isViewMode && (
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAddAdjustment(); }}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Add Adjustment
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem 
                   onClick={(e) => { e.stopPropagation(); onRemove(); }}
                   className="text-destructive focus:text-destructive"
