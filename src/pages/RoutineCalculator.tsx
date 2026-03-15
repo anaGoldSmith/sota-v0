@@ -571,7 +571,52 @@ function SortableRow({
                         <td className="py-2 px-4 text-right font-mono">{component.value}</td>
                       </tr>
                     ))}
-                 </tbody>
+                     {/* Adjustment rows within risk breakdown */}
+                     {element.adjustments && element.adjustments.length > 0 && element.adjustments.map((adj) => (
+                       <tr key={adj.id} className="border-b border-border/30 last:border-b-0 bg-amber-50/50 dark:bg-amber-900/10">
+                         <td className="py-2 px-4 text-center">
+                           <Badge variant="outline" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300 text-[10px]">ADJ</Badge>
+                         </td>
+                         <td className="py-2 px-4">
+                           <span className="text-sm font-bold text-amber-600 dark:text-amber-400">ADJ</span>
+                         </td>
+                         <td className="py-2 px-4">
+                           {isViewMode ? (
+                             <span className="text-sm font-medium">{adj.name || 'Adjustment'}</span>
+                           ) : (
+                             <Input
+                               className="h-7 text-sm max-w-[180px]"
+                               placeholder="Description..."
+                               value={adj.name}
+                               onChange={(e) => onUpdateAdjustment?.(adj.id, e.target.value, adj.value)}
+                               onClick={(e) => e.stopPropagation()}
+                             />
+                           )}
+                         </td>
+                         <td className="py-2 px-4 text-right">
+                           <div className="flex items-center justify-end gap-1">
+                             {isViewMode ? (
+                               <span className="font-mono">{adj.value.toFixed(1)}</span>
+                             ) : (
+                               <Input
+                                 className="h-7 text-sm text-right font-mono w-16"
+                                 type="number"
+                                 step="0.1"
+                                 value={adj.value}
+                                 onChange={(e) => onUpdateAdjustment?.(adj.id, adj.name, parseFloat(e.target.value) || 0)}
+                                 onClick={(e) => e.stopPropagation()}
+                               />
+                             )}
+                             {!isViewMode && (
+                               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onRemoveAdjustment?.(adj.id)}>
+                                 <X className="h-3 w-3" />
+                               </Button>
+                             )}
+                           </div>
+                         </td>
+                       </tr>
+                     ))}
+                  </tbody>
               </table>
             </div>
           </TableCell>
