@@ -119,7 +119,7 @@ interface RiskData {
   };
 }
 
-type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'DB/TE' | 'DB/TE/DA' | 'TE' | 'R' | 'R/DB' | 'Steps';
+type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'DB/TE' | 'DB/TE/DA' | 'TE' | 'R' | 'R/DB' | 'Steps' | 'ADJ';
 
 interface RoutineElement {
   id: string;
@@ -173,6 +173,8 @@ interface RoutineElement {
   // For Risk elements
   riskData?: RiskData;
   isExpanded?: boolean;
+  // For ADJ (adjustment) elements
+  adjustmentName?: string;
 }
 
 // Sortable Row Component
@@ -183,7 +185,10 @@ function SortableRow({
   onRemove, 
   onModify,
   onToggleExpand,
-  isMainRow 
+  onAddAdjustment,
+  onUpdateAdjustment,
+  isMainRow,
+  isViewMode,
 }: { 
   element: RoutineElement; 
   index: number;
@@ -191,7 +196,10 @@ function SortableRow({
   onRemove: () => void;
   onModify?: () => void;
   onToggleExpand?: () => void;
+  onAddAdjustment?: () => void;
+  onUpdateAdjustment?: (name: string, value: number) => void;
   isMainRow: boolean;
+  isViewMode?: boolean;
 }) {
   const {
     attributes,
@@ -450,15 +458,43 @@ function SortableRow({
           </div>
         </TableCell>
         <TableCell className="w-12 px-2 font-medium">
-          {element.type === 'Steps' ? 'S' : element.type}
+          {element.type === 'Steps' ? 'S' : element.type === 'ADJ' ? (
+            <Badge variant="outline" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300">ADJ</Badge>
+          ) : element.type}
         </TableCell>
         <TableCell className="px-2">
           {element.type === 'Steps' ? (
             <span className="text-sm font-medium text-foreground">Dance Steps</span>
+          ) : element.type === 'ADJ' ? (
+            <div className="flex items-center gap-3">
+              <span className="text-lg font-bold text-amber-600 dark:text-amber-400 flex-shrink-0">ADJ</span>
+              {isViewMode ? (
+                <span className="text-sm font-medium text-foreground">{element.adjustmentName || 'Adjustment'}</span>
+              ) : (
+                <Input
+                  className="h-8 text-sm max-w-[200px]"
+                  placeholder="Adjustment description..."
+                  value={element.adjustmentName || ''}
+                  onChange={(e) => onUpdateAdjustment?.(e.target.value, element.value)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              )}
+            </div>
           ) : (element.type === 'R' || element.type === 'R/DB') ? renderRiskSymbols() : renderSymbols(element.symbolImages)}
         </TableCell>
         <TableCell className="w-16 px-2 text-right font-mono font-semibold">
-          {element.value.toFixed(1)}
+          {element.type === 'ADJ' && !isViewMode ? (
+            <Input
+              className="h-8 text-sm text-right font-mono w-20 ml-auto"
+              type="number"
+              step="0.1"
+              value={element.value}
+              onChange={(e) => onUpdateAdjustment?.(element.adjustmentName || '', parseFloat(e.target.value) || 0)}
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            element.value.toFixed(1)
+          )}
         </TableCell>
         <TableCell className="w-8 px-1">
           {isMainRow && (
@@ -481,6 +517,12 @@ function SortableRow({
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onModify(); }}>
                     <Pencil className="h-4 w-4 mr-2" />
                     View / Edit
+                  </DropdownMenuItem>
+                )}
+                {onAddAdjustment && !isViewMode && (
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAddAdjustment(); }}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Add Adjustment
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem 
@@ -1249,7 +1291,33 @@ const RoutineCalculator = () => {
   }, 0);
   const countDA = daElements.length;
 
-  const totalScore = totalDB + totalDA;
+  // Calculate adjustment totals
+  const adjElements = routineElements.filter(el => el.type === 'ADJ');
+  const totalAdj = adjElements.reduce((sum, el) => sum + el.value, 0);
+
+  const totalScore = totalDB + totalDA + totalAdj;
+
+  const handleAddAdjustment = (afterIndex: number) => {
+    const newAdj: RoutineElement = {
+      id: `adj-${Date.now()}`,
+      type: 'ADJ',
+      symbolImages: [],
+      value: 0,
+      originalData: {} as any,
+      adjustmentName: '',
+    };
+    setRoutineElements(prev => {
+      const next = [...prev];
+      next.splice(afterIndex + 1, 0, newAdj);
+      return next;
+    });
+  };
+
+  const handleUpdateAdjustment = (index: number, name: string, value: number) => {
+    setRoutineElements(prev => prev.map((el, idx) => 
+      idx === index ? { ...el, adjustmentName: name, value } : el
+    ));
+  };
 
   const handleToggleExpand = (index: number) => {
     setRoutineElements(prev => prev.map((el, idx) => 
@@ -1961,6 +2029,14 @@ const RoutineCalculator = () => {
                         <span className="text-muted-foreground">Total DA Value:</span>
                         <Badge variant="secondary" className="font-mono">{totalDA.toFixed(2)}</Badge>
                       </div>
+                      {adjElements.length > 0 && (
+                        <div className="flex items-center gap-3">
+                          <span className="text-muted-foreground">Adjustments:</span>
+                          <Badge variant="secondary" className="font-mono">{adjElements.length}</Badge>
+                          <span className="text-muted-foreground">ADJ Value:</span>
+                          <Badge variant="secondary" className="font-mono">{totalAdj.toFixed(2)}</Badge>
+                        </div>
+                      )}
                       <div className="flex items-center gap-3">
                         <span className="font-semibold">Total D-score:</span>
                         <Badge variant="default" className="font-mono">{totalScore.toFixed(2)}</Badge>
@@ -2007,7 +2083,10 @@ const RoutineCalculator = () => {
                               onModify={(element.type === 'R' || element.type === 'R/DB') ? () => handleModifyRisk(element.id) : 
                                         (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB') ? () => handleModifyElement(element.id) : undefined}
                               onToggleExpand={(element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB') ? () => handleToggleExpand(index) : undefined}
+                              onAddAdjustment={() => handleAddAdjustment(index)}
+                              onUpdateAdjustment={element.type === 'ADJ' ? (name, value) => handleUpdateAdjustment(index, name, value) : undefined}
                               isMainRow={true}
+                              isViewMode={isViewMode}
                             />
                           );
                           
