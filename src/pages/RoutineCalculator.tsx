@@ -174,7 +174,7 @@ interface RoutineElement {
   riskData?: RiskData;
   isExpanded?: boolean;
   // Adjustments attached to this element
-  adjustments?: Array<{ id: string; name: string; value: number }>;
+  adjustments?: Array<{ id: string; name: string; value: number; isEditing?: boolean }>;
 }
 
 // Sortable Row Component
