@@ -2834,12 +2834,16 @@ const RoutineCalculator = () => {
             <Button
               onClick={() => {
                 setUnsavedChangesDialogOpen(false);
-                const parts = [];
-                if (gymnastName) parts.push(gymnastName);
-                if (selectedApparatus) parts.push(selectedApparatus.charAt(0).toUpperCase() + selectedApparatus.slice(1));
-                if (year) parts.push(year);
-                const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
-                setRoutineSaveName(defaultName);
+                if (editingRoutineId && loadedRoutineName) {
+                  setRoutineSaveName(loadedRoutineName);
+                } else {
+                  const parts = [];
+                  if (gymnastName) parts.push(gymnastName);
+                  if (selectedApparatus) parts.push(selectedApparatus.charAt(0).toUpperCase() + selectedApparatus.slice(1));
+                  if (year) parts.push(year);
+                  const defaultName = parts.length > 0 ? parts.join(' - ') : 'Untitled Routine';
+                  setRoutineSaveName(defaultName);
+                }
                 setSaveDialogOpen(true);
               }}
             >
