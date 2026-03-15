@@ -442,57 +442,29 @@ function SortableRow({
           )}
         </TableCell>
         <TableCell 
-          className={`w-12 px-2 font-mono ${!isMainRow ? 'pl-6 text-muted-foreground' : ''} ${isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB') ? 'cursor-pointer' : ''}`}
-          onClick={isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB') && onToggleExpand ? (e) => {
+          className={`w-12 px-2 font-mono ${!isMainRow ? 'pl-6 text-muted-foreground' : ''} ${isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB' || (element.adjustments && element.adjustments.length > 0)) ? 'cursor-pointer' : ''}`}
+          onClick={isMainRow && onToggleExpand ? (e) => {
             e.stopPropagation();
             onToggleExpand();
           } : undefined}
         >
           <div className="flex items-center gap-1">
             {itemNumber}
-            {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB') && (
+            {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB' || (element.adjustments && element.adjustments.length > 0)) && (
               <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${element.isExpanded ? '' : '-rotate-90'}`} />
             )}
           </div>
         </TableCell>
         <TableCell className="w-12 px-2 font-medium">
-          {element.type === 'Steps' ? 'S' : element.type === 'ADJ' ? (
-            <Badge variant="outline" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300">ADJ</Badge>
-          ) : element.type}
+          {element.type === 'Steps' ? 'S' : element.type}
         </TableCell>
         <TableCell className="px-2">
           {element.type === 'Steps' ? (
             <span className="text-sm font-medium text-foreground">Dance Steps</span>
-          ) : element.type === 'ADJ' ? (
-            <div className="flex items-center gap-3">
-              <span className="text-lg font-bold text-amber-600 dark:text-amber-400 flex-shrink-0">ADJ</span>
-              {isViewMode ? (
-                <span className="text-sm font-medium text-foreground">{element.adjustmentName || 'Adjustment'}</span>
-              ) : (
-                <Input
-                  className="h-8 text-sm max-w-[200px]"
-                  placeholder="Adjustment description..."
-                  value={element.adjustmentName || ''}
-                  onChange={(e) => onUpdateAdjustment?.(e.target.value, element.value)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              )}
-            </div>
           ) : (element.type === 'R' || element.type === 'R/DB') ? renderRiskSymbols() : renderSymbols(element.symbolImages)}
         </TableCell>
         <TableCell className="w-16 px-2 text-right font-mono font-semibold">
-          {element.type === 'ADJ' && !isViewMode ? (
-            <Input
-              className="h-8 text-sm text-right font-mono w-20 ml-auto"
-              type="number"
-              step="0.1"
-              value={element.value}
-              onChange={(e) => onUpdateAdjustment?.(element.adjustmentName || '', parseFloat(e.target.value) || 0)}
-              onClick={(e) => e.stopPropagation()}
-            />
-          ) : (
-            element.value.toFixed(1)
-          )}
+          {element.value.toFixed(1)}
         </TableCell>
         <TableCell className="w-8 px-1">
           {isMainRow && (
