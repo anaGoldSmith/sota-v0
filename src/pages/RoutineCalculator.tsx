@@ -495,7 +495,7 @@ function SortableRow({
                 )}
                 {onAddAdjustment && !isViewMode && (
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAddAdjustment(); }}>
-                    <Pencil className="h-4 w-4 mr-2" />
+                    <AlertCircle className="h-4 w-4 mr-2" />
                     Add Adjustment
                   </DropdownMenuItem>
                 )}
