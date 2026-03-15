@@ -713,6 +713,7 @@ const RoutineCalculator = () => {
   const [lastLoadedId, setLastLoadedId] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [unsavedChangesDialogOpen, setUnsavedChangesDialogOpen] = useState(false);
+  const [loadedRoutineName, setLoadedRoutineName] = useState<string | null>(null);
   
   // Load existing routine when editing or viewing
   useEffect(() => {
