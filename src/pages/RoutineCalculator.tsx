@@ -2200,8 +2200,8 @@ const RoutineCalculator = () => {
                             />
                           );
                           
-                          // If expanded and has DB/DA or DB/TE or DB/TE/DA breakdown, show detailed sub-table
-                          if ((element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA') && element.isExpanded && element.dbData) {
+                          // If expanded, show detailed sub-table for all DB element types
+                          if ((element.type === 'DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA') && element.isExpanded && element.dbData) {
                             // Check if this is a jump series for special display
                             const isJumpSeriesBreakdown = element.dbData.isJumpSeries && element.dbData.jumpCount && element.dbData.jumpCount > 1;
                             
