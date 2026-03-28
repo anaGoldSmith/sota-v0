@@ -450,7 +450,7 @@ function SortableRow({
           )}
         </TableCell>
         <TableCell 
-          className={`w-12 px-2 font-mono ${!isMainRow ? 'pl-6 text-muted-foreground' : ''} ${isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB' || (element.adjustments && element.adjustments.length > 0)) ? 'cursor-pointer' : ''}`}
+          className={`w-12 px-2 font-mono ${!isMainRow ? 'pl-6 text-muted-foreground' : ''} ${isMainRow ? 'cursor-pointer' : ''}`}
           onClick={isMainRow && onToggleExpand ? (e) => {
             e.stopPropagation();
             onToggleExpand();
