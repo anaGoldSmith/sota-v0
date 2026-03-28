@@ -1239,8 +1239,8 @@ export const ElementInformationDialog = ({
                       className="flex-1 text-xs"
                     >
                       {(elementType === 'rotation' || elementType === 'balance' || (elementType === 'jump' && isJumpSeries))
-                        ? '+ Technical Elements' 
-                        : (selectedTechnicalElements.length > 0 ? 'Change TE' : '+ Technical Elements')
+                        ? '+ Technical Elements (TE)' 
+                        : (selectedTechnicalElements.length > 0 ? 'Change TE' : '+ Technical Elements (TE)')
                       }
                     </Button>
                     <Button
@@ -1251,8 +1251,8 @@ export const ElementInformationDialog = ({
                       className="flex-1 text-xs"
                     >
                       {(elementType === 'rotation' || elementType === 'balance' || (elementType === 'jump' && isJumpSeries))
-                        ? '+ Apparatus Difficulty' 
-                        : (selectedDaElements.length > 0 ? 'Change DA' : '+ Apparatus Difficulty')
+                        ? '+ Apparatus Difficulty (DA)' 
+                        : (selectedDaElements.length > 0 ? 'Change DA' : '+ Apparatus Difficulty (DA)')
                       }
                     </Button>
                   </div>
