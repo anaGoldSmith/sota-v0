@@ -2616,7 +2616,7 @@ const RoutineCalculator = () => {
                           }
                           
                           // Standalone adjustment expansion for elements without DB/DA/TE or Risk breakdown
-                          const hasOwnBreakdown = (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB');
+                          const hasOwnBreakdown = (element.type === 'DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB');
                           if (!hasOwnBreakdown && element.isExpanded && element.adjustments && element.adjustments.length > 0) {
                             rows.push(
                               <TableRow key={`${element.id}-adj-expanded`} className="bg-white dark:bg-background">
