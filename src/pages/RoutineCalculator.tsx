@@ -2615,6 +2615,168 @@ const RoutineCalculator = () => {
                             );
                           }
                           
+                          // Breakdown for standalone DA elements
+                          if (element.type === 'DA' && element.isExpanded) {
+                            const originalData = element.originalData as any;
+                            const isPaired = originalData?.isPaired;
+                            
+                            rows.push(
+                              <TableRow key={`${element.id}-expanded`} className="bg-white dark:bg-background">
+                                <TableCell colSpan={6} className="p-4">
+                                  <div className="ml-8 border rounded-lg overflow-hidden">
+                                    <table className="w-full">
+                                      <thead className="bg-white dark:bg-background">
+                                        <tr>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground w-16">Type</th>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Symbol</th>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Name</th>
+                                          <th className="py-2 px-4 text-right text-sm font-semibold text-muted-foreground">Value</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {isPaired ? (
+                                          <>
+                                            <tr className="border-b border-border/30">
+                                              <td className="py-2 px-4"><Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 text-[10px]">DA</Badge></td>
+                                              <td className="py-2 px-4">
+                                                <div className="flex items-center gap-1">
+                                                  {originalData.combo1?.element?.symbol_image && (
+                                                    <img src={getTechnicalElementSymbol(originalData.combo1.element.symbol_image, selectedApparatus!) || ''} className="h-6 w-6 object-contain" alt="" />
+                                                  )}
+                                                  {originalData.combo1?.selectedCriteria?.map((cr: string, idx: number) => (
+                                                    <img key={idx} src={getCriteriaSymbolUrl(cr)} className="h-5 w-5 object-contain" alt="" />
+                                                  ))}
+                                                </div>
+                                              </td>
+                                              <td className="py-2 px-4 text-sm">{originalData.combo1?.element?.name || originalData.combo1?.element?.description || 'DA Element'}</td>
+                                              <td className="py-2 px-4 text-right font-mono text-sm">-</td>
+                                            </tr>
+                                            <tr className="border-b border-border/30">
+                                              <td className="py-2 px-4"><Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 text-[10px]">DA</Badge></td>
+                                              <td className="py-2 px-4">
+                                                <div className="flex items-center gap-1">
+                                                  {originalData.combo2?.element?.symbol_image && (
+                                                    <img src={getTechnicalElementSymbol(originalData.combo2.element.symbol_image, selectedApparatus!) || ''} className="h-6 w-6 object-contain" alt="" />
+                                                  )}
+                                                  {originalData.combo2?.selectedCriteria?.map((cr: string, idx: number) => (
+                                                    <img key={idx} src={getCriteriaSymbolUrl(cr)} className="h-5 w-5 object-contain" alt="" />
+                                                  ))}
+                                                </div>
+                                              </td>
+                                              <td className="py-2 px-4 text-sm">{originalData.combo2?.element?.name || originalData.combo2?.element?.description || 'DA Element'}</td>
+                                              <td className="py-2 px-4 text-right font-mono text-sm">-</td>
+                                            </tr>
+                                            <tr className="border-t border-border bg-muted/30">
+                                              <td className="py-2 px-4"><Badge variant="outline" className="text-[10px]">Total</Badge></td>
+                                              <td className="py-2 px-4"></td>
+                                              <td className="py-2 px-4 text-sm font-medium">Combined DA</td>
+                                              <td className="py-2 px-4 text-right font-mono text-sm font-bold">{element.value.toFixed(1)}</td>
+                                            </tr>
+                                          </>
+                                        ) : (
+                                          <tr className="border-b border-border/30 last:border-b-0">
+                                            <td className="py-2 px-4"><Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 text-[10px]">DA</Badge></td>
+                                            <td className="py-2 px-4">
+                                              <div className="flex items-center gap-1">
+                                                {element.symbolImages.map((img, idx) => (
+                                                  <img key={idx} src={img} className="h-6 w-6 object-contain" alt="" />
+                                                ))}
+                                              </div>
+                                            </td>
+                                            <td className="py-2 px-4 text-sm">{originalData?.element?.name || originalData?.element?.description || 'Apparatus Difficulty'}</td>
+                                            <td className="py-2 px-4 text-right font-mono text-sm font-bold">{element.value.toFixed(1)}</td>
+                                          </tr>
+                                        )}
+                                        {/* Adjustments */}
+                                        {element.adjustments?.map((adj) => (
+                                          <tr key={adj.id} className="border-b border-border/30 last:border-b-0 bg-amber-50/50 dark:bg-amber-900/10">
+                                            <td className="py-2 px-4"><Badge variant="outline" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300 text-[10px]">ADJ</Badge></td>
+                                            <td className="py-2 px-4"><span className="text-sm font-bold text-amber-600 dark:text-amber-400">ADJ</span></td>
+                                            <td className="py-2 px-4">
+                                              {adj.isEditing && !isViewMode ? (
+                                                <Input className="h-7 text-sm max-w-[180px]" placeholder="Description..." value={adj.name} onChange={(e) => handleUpdateAdjustment(index, adj.id, e.target.value, adj.value)} onClick={(e) => e.stopPropagation()} />
+                                              ) : (
+                                                <span className="text-sm">{adj.name || 'Adjustment'}</span>
+                                              )}
+                                            </td>
+                                            <td className="py-2 px-4 text-right">
+                                              <div className="flex items-center justify-end gap-1">
+                                                {adj.isEditing && !isViewMode ? (
+                                                  <Input className="h-7 text-sm w-16 text-right font-mono" type="number" step="0.1" value={adj.value} onChange={(e) => handleUpdateAdjustment(index, adj.id, adj.name, parseFloat(e.target.value) || 0)} onClick={(e) => e.stopPropagation()} />
+                                                ) : (
+                                                  <span className={`text-sm font-mono font-bold ${adj.value < 0 ? 'text-destructive' : 'text-green-600 dark:text-green-400'}`}>{adj.value > 0 ? '+' : ''}{adj.value.toFixed(1)}</span>
+                                                )}
+                                                {!isViewMode && (
+                                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => handleRemoveAdjustment(index, adj.id)}><X className="h-3 w-3" /></Button>
+                                                )}
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          }
+
+                          // Breakdown for standalone Steps elements
+                          if (element.type === 'Steps' && element.isExpanded) {
+                            rows.push(
+                              <TableRow key={`${element.id}-expanded`} className="bg-white dark:bg-background">
+                                <TableCell colSpan={6} className="p-4">
+                                  <div className="ml-8 border rounded-lg overflow-hidden">
+                                    <table className="w-full">
+                                      <thead className="bg-white dark:bg-background">
+                                        <tr>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground w-16">Type</th>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Symbol</th>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Name</th>
+                                          <th className="py-2 px-4 text-right text-sm font-semibold text-muted-foreground">Value</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        <tr className="border-b border-border/30 last:border-b-0">
+                                          <td className="py-2 px-4"><Badge variant="outline" className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-300 text-[10px]">S</Badge></td>
+                                          <td className="py-2 px-4"><span className="text-sm text-muted-foreground">—</span></td>
+                                          <td className="py-2 px-4 text-sm">Dance Steps Combination</td>
+                                          <td className="py-2 px-4 text-right font-mono text-sm font-bold">{element.value.toFixed(1)}</td>
+                                        </tr>
+                                        {/* Adjustments */}
+                                        {element.adjustments?.map((adj) => (
+                                          <tr key={adj.id} className="border-b border-border/30 last:border-b-0 bg-amber-50/50 dark:bg-amber-900/10">
+                                            <td className="py-2 px-4"><Badge variant="outline" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300 text-[10px]">ADJ</Badge></td>
+                                            <td className="py-2 px-4"><span className="text-sm font-bold text-amber-600 dark:text-amber-400">ADJ</span></td>
+                                            <td className="py-2 px-4">
+                                              {adj.isEditing && !isViewMode ? (
+                                                <Input className="h-7 text-sm max-w-[180px]" placeholder="Description..." value={adj.name} onChange={(e) => handleUpdateAdjustment(index, adj.id, e.target.value, adj.value)} onClick={(e) => e.stopPropagation()} />
+                                              ) : (
+                                                <span className="text-sm">{adj.name || 'Adjustment'}</span>
+                                              )}
+                                            </td>
+                                            <td className="py-2 px-4 text-right">
+                                              <div className="flex items-center justify-end gap-1">
+                                                {adj.isEditing && !isViewMode ? (
+                                                  <Input className="h-7 text-sm w-16 text-right font-mono" type="number" step="0.1" value={adj.value} onChange={(e) => handleUpdateAdjustment(index, adj.id, adj.name, parseFloat(e.target.value) || 0)} onClick={(e) => e.stopPropagation()} />
+                                                ) : (
+                                                  <span className={`text-sm font-mono font-bold ${adj.value < 0 ? 'text-destructive' : 'text-green-600 dark:text-green-400'}`}>{adj.value > 0 ? '+' : ''}{adj.value.toFixed(1)}</span>
+                                                )}
+                                                {!isViewMode && (
+                                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => handleRemoveAdjustment(index, adj.id)}><X className="h-3 w-3" /></Button>
+                                                )}
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          }
+
                           // All element types now have breakdown support
                           const hasOwnBreakdown = true;
                           if (!hasOwnBreakdown && element.isExpanded && element.adjustments && element.adjustments.length > 0) {
