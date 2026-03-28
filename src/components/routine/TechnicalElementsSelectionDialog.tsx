@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Check, Search } from "lucide-react";
+import { Check, Search, Minus } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ApparatusType } from "@/types/apparatus";
 
@@ -393,6 +393,24 @@ export const TechnicalElementsSelectionDialog = ({
                                 <span className="text-[10px] font-bold">{totalCount}</span>
                               </div>
                             )}
+                            {isJumpSeries && newSelectionCount > 0 && (
+                              <button
+                                type="button"
+                                className="absolute -bottom-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 shadow-md z-10 border-2 border-background flex items-center justify-center min-w-[18px] min-h-[18px] hover:bg-destructive/80 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Remove last instance of this element from jumpSeriesSelections
+                                  setJumpSeriesSelections(prev => {
+                                    const lastIdx = prev.lastIndexOf(element.id);
+                                    if (lastIdx === -1) return prev;
+                                    return [...prev.slice(0, lastIdx), ...prev.slice(lastIdx + 1)];
+                                  });
+                                }}
+                                title="Remove one selection"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </button>
+                            )}
                             {!isJumpSeries && isAlreadyAdded && (
                               <div className="absolute -top-1 -right-1 bg-green-600 text-white rounded-full p-0.5 shadow-md z-10 border-2 border-background flex items-center justify-center min-w-[18px] min-h-[18px]">
                                 <Check className="h-3 w-3" />
@@ -410,7 +428,9 @@ export const TechnicalElementsSelectionDialog = ({
                               <span className="ml-2 text-xs text-green-600 dark:text-green-400 italic">(click to remove)</span>
                             )}
                             {isJumpSeries && totalCount > 0 && (
-                              <span className="ml-2 text-xs text-green-600 dark:text-green-400 italic">(selected {totalCount}× - click to add again)</span>
+                              <span className="ml-2 text-xs text-green-600 dark:text-green-400 italic">
+                                (selected {totalCount}× - click to add{newSelectionCount > 0 ? ', ⊖ to remove' : ''})
+                              </span>
                             )}
                             {isJumpSeries && totalCount === 0 && (
                               <span className="ml-2 text-xs text-muted-foreground italic">(click to add)</span>
