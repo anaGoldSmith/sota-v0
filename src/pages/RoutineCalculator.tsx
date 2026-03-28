@@ -1788,6 +1788,22 @@ const RoutineCalculator = () => {
         symbolImages: dbSymbolImages,
         value: totalValue,
         originalData: element as SelectedJump | SelectedBalance | SelectedRotation,
+        dbData: {
+          symbolImages: dbSymbolImages,
+          value: totalValue,
+          name: element.name || element.description || 'DB Element',
+          code: element.code,
+          elementType: elementType,
+          rotationCount: elementType === 'rotation' ? rotationCount : undefined,
+          fouetteComponents: fouetteComponents,
+          fouetteShapes: elementType === 'balance' ? fouetteShapes : undefined,
+          isSeries: isSeries,
+          isJumpSeries: elementType === 'jump' ? isJumpSeries : undefined,
+          jumpCount: elementType === 'jump' && isJumpSeries ? jumpCount : undefined,
+          isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
+          isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
+        },
+        isExpanded: false,
       };
       
       if (modifyingId) {
