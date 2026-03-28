@@ -295,6 +295,7 @@ function SortableRow({
     
     return (
       <div className="flex items-end gap-2 flex-nowrap">
+        <span className="text-sm font-bold flex-shrink-0">S<sub>{jumpCount}</sub></span>
         {stackedSymbols}
       </div>
     );
@@ -2235,6 +2236,9 @@ const RoutineCalculator = () => {
                                                 </td>
                                                 <td className="py-2 px-4">
                                                   <div className="flex items-center gap-1">
+                                                    {isJumpSeriesBreakdown && (
+                                                      <span className="text-sm font-bold flex-shrink-0">S<sub>{element.dbData.jumpCount}</sub></span>
+                                                    )}
                                                     {element.dbData.symbolImages.map((url, idx) => (
                                                       url.startsWith('TEXT:') ? (
                                                         <span key={idx} className="text-lg font-bold">{url.replace('TEXT:', '')}</span>
