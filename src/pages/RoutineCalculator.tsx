@@ -295,6 +295,7 @@ function SortableRow({
     
     return (
       <div className="flex items-end gap-2 flex-nowrap">
+        <span className="text-sm font-bold flex-shrink-0">S<sub>{jumpCount}</sub></span>
         {stackedSymbols}
       </div>
     );
