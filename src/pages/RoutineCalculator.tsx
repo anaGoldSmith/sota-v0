@@ -458,7 +458,7 @@ function SortableRow({
         >
           <div className="flex items-center gap-1">
             {itemNumber}
-            {isMainRow && (element.type === 'DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB' || (element.adjustments && element.adjustments.length > 0)) && (
+            {isMainRow && (
               <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${element.isExpanded ? '' : '-rotate-90'}`} />
             )}
           </div>
