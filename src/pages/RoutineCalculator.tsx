@@ -458,7 +458,7 @@ function SortableRow({
         >
           <div className="flex items-center gap-1">
             {itemNumber}
-            {isMainRow && (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB' || (element.adjustments && element.adjustments.length > 0)) && (
+            {isMainRow && (element.type === 'DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB' || (element.adjustments && element.adjustments.length > 0)) && (
               <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${element.isExpanded ? '' : '-rotate-90'}`} />
             )}
           </div>
@@ -1788,6 +1788,22 @@ const RoutineCalculator = () => {
         symbolImages: dbSymbolImages,
         value: totalValue,
         originalData: element as SelectedJump | SelectedBalance | SelectedRotation,
+        dbData: {
+          symbolImages: dbSymbolImages,
+          value: totalValue,
+          name: element.name || element.description || 'DB Element',
+          code: element.code,
+          elementType: elementType,
+          rotationCount: elementType === 'rotation' ? rotationCount : undefined,
+          fouetteComponents: fouetteComponents,
+          fouetteShapes: elementType === 'balance' ? fouetteShapes : undefined,
+          isSeries: isSeries,
+          isJumpSeries: elementType === 'jump' ? isJumpSeries : undefined,
+          jumpCount: elementType === 'jump' && isJumpSeries ? jumpCount : undefined,
+          isFlatFoot: elementType === 'balance' ? isFlatFoot : undefined,
+          isSlowTurn: elementType === 'balance' ? isSlowTurn : undefined,
+        },
+        isExpanded: false,
       };
       
       if (modifyingId) {
@@ -2174,7 +2190,7 @@ const RoutineCalculator = () => {
                               onRemove={() => handleRemoveRoutineElement(index)}
                               onModify={(element.type === 'R' || element.type === 'R/DB') ? () => handleModifyRisk(element.id) : 
                                         (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB') ? () => handleModifyElement(element.id) : undefined}
-                              onToggleExpand={(element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB' || (element.adjustments && element.adjustments.length > 0)) ? () => handleToggleExpand(index) : undefined}
+                              onToggleExpand={(element.type === 'DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB' || (element.adjustments && element.adjustments.length > 0)) ? () => handleToggleExpand(index) : undefined}
                               onAddAdjustment={() => handleAddAdjustment(index)}
                               onUpdateAdjustment={(adjId, name, value) => handleUpdateAdjustment(index, adjId, name, value)}
                               onRemoveAdjustment={(adjId) => handleRemoveAdjustment(index, adjId)}
@@ -2184,8 +2200,8 @@ const RoutineCalculator = () => {
                             />
                           );
                           
-                          // If expanded and has DB/DA or DB/TE or DB/TE/DA breakdown, show detailed sub-table
-                          if ((element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA') && element.isExpanded && element.dbData) {
+                          // If expanded, show detailed sub-table for all DB element types
+                          if ((element.type === 'DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA') && element.isExpanded && element.dbData) {
                             // Check if this is a jump series for special display
                             const isJumpSeriesBreakdown = element.dbData.isJumpSeries && element.dbData.jumpCount && element.dbData.jumpCount > 1;
                             
@@ -2600,7 +2616,7 @@ const RoutineCalculator = () => {
                           }
                           
                           // Standalone adjustment expansion for elements without DB/DA/TE or Risk breakdown
-                          const hasOwnBreakdown = (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB');
+                          const hasOwnBreakdown = (element.type === 'DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'R' || element.type === 'R/DB');
                           if (!hasOwnBreakdown && element.isExpanded && element.adjustments && element.adjustments.length > 0) {
                             rows.push(
                               <TableRow key={`${element.id}-adj-expanded`} className="bg-white dark:bg-background">
