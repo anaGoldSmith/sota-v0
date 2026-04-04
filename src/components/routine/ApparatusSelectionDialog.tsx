@@ -920,17 +920,11 @@ export const ApparatusSelectionDialog = ({
               daComments={daComments || []}
             />
 
-            <div className="flex justify-end gap-3 pt-3 pb-4 flex-shrink-0">
-              {isEditMode ? (
-                <>
-                  <Button variant="outline" onClick={handleCancel}>
-                    Cancel
-                  </Button>
             {/* Rotational element display for edit mode */}
             {isEditWithRotation && (
               <div className="flex items-center gap-3 rounded-lg border bg-muted/30 px-4 py-3">
                 <span className="text-sm font-medium text-foreground">Rotational Element:</span>
-                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-purple-100 text-purple-800 text-sm font-semibold border border-purple-200">
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-accent text-accent-foreground text-sm font-semibold border border-border">
                   {(editRotationalElement || editingDA?.rotationalElement)?.name || 'None'}
                 </span>
                 <Button
@@ -957,7 +951,6 @@ export const ApparatusSelectionDialog = ({
                       disabled={!editRotationalElement}
                       onClick={() => {
                         if (onConfirmEditDA && editingDA) {
-                          // Rebuild combinations from existing DA data with updated rotational element
                           const element = apparatusData.find(e => e.id === editingDA.rowId);
                           if (element && apparatus) {
                             const combinations: ApparatusCombination[] = [{
