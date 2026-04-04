@@ -26,17 +26,20 @@ const GROUP_OPTIONS = [
 ];
 
 export type AcroSelection = 
-  | { kind: 'pre-acrobatic'; data: PreAcrobaticElement }
-  | { kind: 'vertical-rotation'; data: VerticalRotation };
+  | { kind: 'pre-acrobatic'; data: PreAcrobaticElement; uid: string }
+  | { kind: 'vertical-rotation'; data: VerticalRotation; uid: string };
 
-const SortableChip = ({ sel, idx, onRemove }: { sel: AcroSelection; idx: number; onRemove: () => void }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `sel-${idx}` });
+let acroUidCounter = 0;
+const nextAcroUid = () => `acro-uid-${++acroUidCounter}`;
+
+const SortableChip = ({ sel, onRemove }: { sel: AcroSelection; onRemove: () => void }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sel.uid });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 10 : undefined };
   const name = sel.kind === 'pre-acrobatic' ? sel.data.name : (sel.data.name || sel.data.code);
   const kindLabel = sel.kind === 'pre-acrobatic' ? 'PA' : 'VR';
   return (
-    <span ref={setNodeRef} style={style} className="inline-flex items-center gap-1 bg-primary/10 border border-primary/20 text-foreground rounded-full px-3 py-1 text-sm cursor-grab active:cursor-grabbing">
-      <span {...attributes} {...listeners} className="flex-shrink-0 text-muted-foreground"><GripVertical className="h-3 w-3" /></span>
+    <span ref={setNodeRef} style={style} className="inline-flex items-center gap-1 bg-primary/10 border border-primary/20 text-foreground rounded-full px-3 py-1 text-sm">
+      <span {...attributes} {...listeners} className="flex-shrink-0 text-muted-foreground cursor-grab active:cursor-grabbing touch-none"><GripVertical className="h-3 w-3" /></span>
       <span className="text-xs font-semibold text-muted-foreground">{kindLabel}</span>
       {name}
       <button className="ml-1 text-muted-foreground hover:text-destructive" onClick={onRemove}><Minus className="h-3 w-3" /></button>
@@ -78,9 +81,13 @@ export const AcrobaticsDialog = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = parseInt(String(active.id).replace('sel-', ''));
-    const newIndex = parseInt(String(over.id).replace('sel-', ''));
-    setSelections(prev => arrayMove(prev, oldIndex, newIndex));
+    setSelections(prev => {
+      const oldIndex = prev.findIndex(s => s.uid === active.id);
+      const newIndex = prev.findIndex(s => s.uid === over.id);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      return arrayMove(prev, oldIndex, newIndex);
+    });
+  };
   };
 
   const resetAll = () => {
@@ -113,7 +120,7 @@ export const AcrobaticsDialog = ({
     selections.filter(s => s.kind === 'vertical-rotation' && s.data.id === id).length;
 
   const addPreAcrobatic = (element: PreAcrobaticElement) => {
-    setSelections(prev => [...prev, { kind: 'pre-acrobatic', data: element }]);
+    setSelections(prev => [...prev, { kind: 'pre-acrobatic' as const, data: element, uid: nextAcroUid() }]);
   };
 
   const removePreAcrobatic = (id: string) => {
@@ -125,7 +132,7 @@ export const AcrobaticsDialog = ({
   };
 
   const addVerticalRotation = (rotation: VerticalRotation) => {
-    setSelections(prev => [...prev, { kind: 'vertical-rotation', data: rotation }]);
+    setSelections(prev => [...prev, { kind: 'vertical-rotation' as const, data: rotation, uid: nextAcroUid() }]);
   };
 
   const removeVerticalRotation = (id: string) => {
@@ -465,14 +472,13 @@ export const AcrobaticsDialog = ({
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <div className="border border-border rounded-lg bg-muted/30 p-3 space-y-2">
               <div className="text-sm font-medium text-foreground">Selected Elements ({selections.length})</div>
-              <SortableContext items={selections.map((_, i) => `sel-${i}`)} strategy={horizontalListSortingStrategy}>
+              <SortableContext items={selections.map(s => s.uid)} strategy={horizontalListSortingStrategy}>
                 <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto">
-                  {selections.map((sel, idx) => (
+                  {selections.map((sel) => (
                     <SortableChip
-                      key={`sel-${idx}`}
+                      key={sel.uid}
                       sel={sel}
-                      idx={idx}
-                      onRemove={() => setSelections(prev => [...prev.slice(0, idx), ...prev.slice(idx + 1)])}
+                      onRemove={() => setSelections(prev => prev.filter(s => s.uid !== sel.uid))}
                     />
                   ))}
                 </div>
