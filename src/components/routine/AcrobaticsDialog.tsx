@@ -509,8 +509,8 @@ export const AcrobaticsDialog = ({
 
         {/* Save button */}
         <div className="flex justify-end pt-2">
-          <Button onClick={handleSave} disabled={selections.length === 0}>
-            Save ({selections.length})
+          <Button onClick={handleSave} disabled={!singleSelect && selections.length === 0}>
+            {singleSelect ? (selections.length === 0 ? 'Skip' : 'Confirm Selection') : `Save (${selections.length})`}
           </Button>
         </div>
       </DialogContent>
