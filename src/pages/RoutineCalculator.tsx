@@ -1966,7 +1966,7 @@ const RoutineCalculator = () => {
                   <SelectGroup>
                     <SelectLabel>FIG CoP 2025-2028</SelectLabel>
                     <SelectItem value="fig-cop-2025-2028-individual">Individual</SelectItem>
-                    <SelectItem value="fig-cop-2025-2028-group" disabled className="opacity-40 cursor-not-allowed">Group (coming soon)</SelectItem>
+                    <div className="relative flex w-full select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm opacity-40 cursor-not-allowed">Group (coming soon)</div>
                   </SelectGroup>
                   <SelectSeparator />
                   <SelectItem value="sky-grace" disabled className="opacity-40 cursor-not-allowed">Sky Grace (coming soon)</SelectItem>
