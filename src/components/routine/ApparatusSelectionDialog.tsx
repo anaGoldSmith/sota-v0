@@ -583,15 +583,6 @@ export const ApparatusSelectionDialog = ({
 
   // Handle cell deselection - unlock DA if any cell from completed DA is deselected
   const handleCriteriaChange = (newCriteria: SelectedCriterion[]) => {
-    // When editing a DA with a rotational element, criteria are locked — only the acro element can be changed
-    if (isEditWithRotation) {
-      toast({
-        title: "Criteria locked",
-        description: "For DAs with rotational elements, you can only change the acrobatic element.",
-        variant: "destructive",
-      });
-      return;
-    }
     if (newCriteria.length < selectedCriteria.length) {
       // User is deselecting - find which cell was removed
       const removed = selectedCriteria.find(sc => 
