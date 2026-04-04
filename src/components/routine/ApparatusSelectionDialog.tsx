@@ -242,13 +242,19 @@ export const ApparatusSelectionDialog = ({
   };
 
   // Cr7R prompt handlers
+  const cr7rHandledRef = useRef(false);
+  
   const handleCr7RYes = () => {
+    if (cr7rHandledRef.current) return;
+    cr7rHandledRef.current = true;
     setShowCr7RPrompt(false);
     acroSaveHandledRef.current = false;
     setShowAcroPickerForDA(true);
   };
 
   const handleCr7RNo = () => {
+    if (cr7rHandledRef.current) return;
+    cr7rHandledRef.current = true;
     setShowCr7RPrompt(false);
     if (isEditMode) {
       setPendingEditCombinations(pendingCr7RCombinations);
