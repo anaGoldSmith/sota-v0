@@ -81,6 +81,10 @@ export const ApparatusSelectionDialog = ({
   const editInitializedRef = useRef(false);
   const editModifiedRef = useRef(false);
   
+  // For editing DAs with rotational elements: track the current rotational element
+  const [editRotationalElement, setEditRotationalElement] = useState<ApparatusCombination['rotationalElement'] | null>(null);
+  const isEditWithRotation = isEditMode && !!editingDA?.rotationalElement;
+  
   useEffect(() => {
     if (!open) {
       // Clear state when dialog closes
@@ -92,16 +96,20 @@ export const ApparatusSelectionDialog = ({
       setDaCount(0);
       editInitializedRef.current = false;
       editModifiedRef.current = false;
+      setEditRotationalElement(null);
     } else if (open && editingDA && !editInitializedRef.current && apparatusData.length > 0) {
       // Edit mode: pre-populate with existing DA selection
       editInitializedRef.current = true;
       editModifiedRef.current = false;
-      // Edit mode: pre-populate with existing DA selection
-      editInitializedRef.current = true;
       setSelectedIds([]);
       setStagedDAs([]);
       setDaCount(0);
       setAvailableSlot(null);
+      
+      // Initialize rotational element for Cr7R DAs
+      if (editingDA.rotationalElement) {
+        setEditRotationalElement(editingDA.rotationalElement);
+      }
       
       if (editingDA.isPaired && editingDA.pairedRowId) {
         // Type 2 DA: two rows, same criterion
