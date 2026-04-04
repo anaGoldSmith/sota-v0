@@ -89,7 +89,6 @@ export const AcrobaticsDialog = ({
       return arrayMove(prev, oldIndex, newIndex);
     });
   };
-  };
 
   const resetAll = () => {
     setSearchQuery("");
