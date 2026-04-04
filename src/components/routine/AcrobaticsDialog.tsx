@@ -260,7 +260,7 @@ export const AcrobaticsDialog = ({
             </div>
           </div>
 
-          <div className="max-h-[40vh] overflow-y-auto">
+          <div className="max-h-[55vh] overflow-y-auto">
             {activeTab === 'pre-acrobatic' ? (
               filteredPreAcrobatic.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">No pre-acrobatic elements found</div>
