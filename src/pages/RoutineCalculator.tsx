@@ -660,6 +660,7 @@ const RoutineCalculator = () => {
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
   const [rotationDialogOpen, setRotationDialogOpen] = useState(false);
   const [apparatusDialogOpen, setApparatusDialogOpen] = useState(false);
+  const [preAcrobaticDialogOpen, setPreAcrobaticDialogOpen] = useState(false);
   const [technicalElementsDialogOpen, setTechnicalElementsDialogOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   // Only restore from localStorage when editing/viewing an existing routine or returning with risk data
