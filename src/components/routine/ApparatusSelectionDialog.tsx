@@ -580,8 +580,8 @@ export const ApparatusSelectionDialog = ({
   useEffect(() => {
     if (selectedCriteria.length !== 2) return;
     
-    // Check if we've reached the limit of 15 staged DAs
-    if (daCount >= 15) {
+    // Check if we've reached the limit of 15 staged DAs (skip in edit mode)
+    if (!isEditMode && daCount >= 15) {
       setSelectedCriteria(prev => prev.slice(0, -1));
       
       toast({
