@@ -1576,6 +1576,8 @@ const RoutineCalculator = () => {
       isSeries: element.dbData?.isSeries,
       isFlatFoot: element.dbData?.isFlatFoot,
       isSlowTurn: element.dbData?.isSlowTurn,
+      isJumpSeries: element.dbData?.isJumpSeries,
+      jumpCount: element.dbData?.jumpCount,
     });
     
     // Set pending DB element for apparatus handling
