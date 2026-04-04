@@ -2,7 +2,10 @@ import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Info, Search, AlertCircle, Plus, Minus } from "lucide-react";
+import { Info, Search, AlertCircle, Plus, Minus, GripVertical } from "lucide-react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { PreAcrobaticElement } from "./PreAcrobaticSelectionDialog";
@@ -25,6 +28,21 @@ const GROUP_OPTIONS = [
 export type AcroSelection = 
   | { kind: 'pre-acrobatic'; data: PreAcrobaticElement }
   | { kind: 'vertical-rotation'; data: VerticalRotation };
+
+const SortableChip = ({ sel, idx, onRemove }: { sel: AcroSelection; idx: number; onRemove: () => void }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `sel-${idx}` });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 10 : undefined };
+  const name = sel.kind === 'pre-acrobatic' ? sel.data.name : (sel.data.name || sel.data.code);
+  const kindLabel = sel.kind === 'pre-acrobatic' ? 'PA' : 'VR';
+  return (
+    <span ref={setNodeRef} style={style} className="inline-flex items-center gap-1 bg-primary/10 border border-primary/20 text-foreground rounded-full px-3 py-1 text-sm cursor-grab active:cursor-grabbing">
+      <span {...attributes} {...listeners} className="flex-shrink-0 text-muted-foreground"><GripVertical className="h-3 w-3" /></span>
+      <span className="text-xs font-semibold text-muted-foreground">{kindLabel}</span>
+      {name}
+      <button className="ml-1 text-muted-foreground hover:text-destructive" onClick={onRemove}><Minus className="h-3 w-3" /></button>
+    </span>
+  );
+};
 
 interface AcrobaticsDialogProps {
   open: boolean;
@@ -52,6 +70,18 @@ export const AcrobaticsDialog = ({
   const [customGroup, setCustomGroup] = useState("");
   // Multi-select: array of selections (allows duplicates)
   const [selections, setSelections] = useState<AcroSelection[]>([]);
+
+  const pointerSensor = useSensor(PointerSensor, { activationConstraint: { distance: 5 } });
+  const keyboardSensor = useSensor(KeyboardSensor);
+  const sensors = useSensors(pointerSensor, keyboardSensor);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = parseInt(String(active.id).replace('sel-', ''));
+    const newIndex = parseInt(String(over.id).replace('sel-', ''));
+    setSelections(prev => arrayMove(prev, oldIndex, newIndex));
+  };
 
   const resetAll = () => {
     setSearchQuery("");
@@ -432,32 +462,23 @@ export const AcrobaticsDialog = ({
 
         {/* Selected elements summary */}
         {selections.length > 0 && (
-          <div className="border border-border rounded-lg bg-muted/30 p-3 space-y-2">
-            <div className="text-sm font-medium text-foreground">Selected Elements ({selections.length})</div>
-            <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto">
-              {selections.map((sel, idx) => {
-                const name = sel.kind === 'pre-acrobatic' ? sel.data.name : (sel.data.name || sel.data.code);
-                const kindLabel = sel.kind === 'pre-acrobatic' ? 'PA' : 'VR';
-                return (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center gap-1 bg-primary/10 border border-primary/20 text-foreground rounded-full px-3 py-1 text-sm"
-                  >
-                    <span className="text-xs font-semibold text-muted-foreground">{kindLabel}</span>
-                    {name}
-                    <button
-                      className="ml-1 text-muted-foreground hover:text-destructive"
-                      onClick={() => {
-                        setSelections(prev => [...prev.slice(0, idx), ...prev.slice(idx + 1)]);
-                      }}
-                    >
-                      <Minus className="h-3 w-3" />
-                    </button>
-                  </span>
-                );
-              })}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <div className="border border-border rounded-lg bg-muted/30 p-3 space-y-2">
+              <div className="text-sm font-medium text-foreground">Selected Elements ({selections.length})</div>
+              <SortableContext items={selections.map((_, i) => `sel-${i}`)} strategy={horizontalListSortingStrategy}>
+                <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto">
+                  {selections.map((sel, idx) => (
+                    <SortableChip
+                      key={`sel-${idx}`}
+                      sel={sel}
+                      idx={idx}
+                      onRemove={() => setSelections(prev => [...prev.slice(0, idx), ...prev.slice(idx + 1)])}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
             </div>
-          </div>
+          </DndContext>
         )}
 
         {/* Save button */}
