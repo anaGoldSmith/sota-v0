@@ -933,11 +933,11 @@ export const ApparatusSelectionDialog = ({
             />
 
             {/* Rotational element display for edit mode */}
-            {isEditWithRotation && (
+            {isEditMode && (pendingEditCombinations?.some(c => c.rotationalElement) || (isEditWithRotation && !pendingEditCombinations)) && (
               <div className="flex items-center gap-3 rounded-lg border bg-muted/30 px-4 py-3">
                 <span className="text-sm font-medium text-foreground">Rotational Element:</span>
                 <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-accent text-accent-foreground text-sm font-semibold border border-border">
-                  {(editRotationalElement || editingDA?.rotationalElement)?.name || 'None'}
+                  {(pendingEditCombinations?.[0]?.rotationalElement?.name) || (editRotationalElement || editingDA?.rotationalElement)?.name || 'None'}
                 </span>
                 <Button
                   variant="outline"
@@ -958,41 +958,18 @@ export const ApparatusSelectionDialog = ({
                   <Button variant="outline" onClick={handleCancel}>
                     Cancel
                   </Button>
-                  {isEditWithRotation ? (
-                    <Button 
-                      disabled={!editRotationalElement}
-                      onClick={() => {
-                        if (onConfirmEditDA && editingDA) {
-                          const element = apparatusData.find(e => e.id === editingDA.rowId);
-                          if (element && apparatus) {
-                            const combinations: ApparatusCombination[] = [{
-                              element,
-                              selectedCriteria: editingDA.selectedCriteria,
-                              apparatus,
-                              rotationalElement: editRotationalElement || editingDA.rotationalElement,
-                            }];
-                            onConfirmEditDA(editingDA.elementId, combinations);
-                            onOpenChange(false);
-                          }
-                        }
-                      }}
-                    >
-                      Confirm
-                    </Button>
-                  ) : (
-                    <Button 
-                      disabled={!pendingEditCombinations}
-                      onClick={() => {
-                        if (pendingEditCombinations && onConfirmEditDA && editingDA) {
-                          onConfirmEditDA(editingDA.elementId, pendingEditCombinations);
-                          setPendingEditCombinations(null);
-                          onOpenChange(false);
-                        }
-                      }}
-                    >
-                      Confirm
-                    </Button>
-                  )}
+                  <Button 
+                    disabled={!pendingEditCombinations}
+                    onClick={() => {
+                      if (pendingEditCombinations && onConfirmEditDA && editingDA) {
+                        onConfirmEditDA(editingDA.elementId, pendingEditCombinations);
+                        setPendingEditCombinations(null);
+                        onOpenChange(false);
+                      }
+                    }}
+                  >
+                    Confirm
+                  </Button>
                 </>
               ) : isForDbElement ? (
                 <Button 
