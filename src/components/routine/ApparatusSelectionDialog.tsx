@@ -812,7 +812,7 @@ export const ApparatusSelectionDialog = ({
         </DialogHeader>
 
         {/* General Rules for DA creation */}
-        <Collapsible defaultOpen={!isForDbElement} className="rounded-lg border bg-muted/30 mx-6 mt-4 mb-2">
+        <Collapsible defaultOpen={false} className="rounded-lg border bg-muted/30 mx-6 mt-4 mb-2">
           <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
             <h3 className="font-semibold text-sm">General Rules for DA creation</h3>
             <ChevronDown className="h-4 w-4 transition-transform duration-200 [&[data-state=closed]]:rotate-[-90deg]" />
