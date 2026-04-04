@@ -8,6 +8,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import type { PreAcrobaticElement } from "./PreAcrobaticSelectionDialog";
+import type { VerticalRotation } from "./VerticalRotationSelectionDialog";
+import { AcrobaticsDialog, type AcroSelection } from "./AcrobaticsDialog";
 
 export interface ApparatusCombination {
   element: CombinedApparatusData;
