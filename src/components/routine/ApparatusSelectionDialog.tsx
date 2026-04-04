@@ -56,6 +56,7 @@ export const ApparatusSelectionDialog = ({
   const [daCount, setDaCount] = useState(0);
   const { toast } = useToast();
   const dialogContentRef = useRef<HTMLDivElement>(null);
+  const acroSaveHandledRef = useRef(false);
 
   // Cr7R rotational element prompt state
   const [showCr7RPrompt, setShowCr7RPrompt] = useState(false);
