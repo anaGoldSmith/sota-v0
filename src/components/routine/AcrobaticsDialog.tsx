@@ -26,17 +26,20 @@ const GROUP_OPTIONS = [
 ];
 
 export type AcroSelection = 
-  | { kind: 'pre-acrobatic'; data: PreAcrobaticElement }
-  | { kind: 'vertical-rotation'; data: VerticalRotation };
+  | { kind: 'pre-acrobatic'; data: PreAcrobaticElement; uid: string }
+  | { kind: 'vertical-rotation'; data: VerticalRotation; uid: string };
 
-const SortableChip = ({ sel, idx, onRemove }: { sel: AcroSelection; idx: number; onRemove: () => void }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `sel-${idx}` });
+let acroUidCounter = 0;
+const nextAcroUid = () => `acro-uid-${++acroUidCounter}`;
+
+const SortableChip = ({ sel, onRemove }: { sel: AcroSelection; onRemove: () => void }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sel.uid });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 10 : undefined };
   const name = sel.kind === 'pre-acrobatic' ? sel.data.name : (sel.data.name || sel.data.code);
   const kindLabel = sel.kind === 'pre-acrobatic' ? 'PA' : 'VR';
   return (
-    <span ref={setNodeRef} style={style} className="inline-flex items-center gap-1 bg-primary/10 border border-primary/20 text-foreground rounded-full px-3 py-1 text-sm cursor-grab active:cursor-grabbing">
-      <span {...attributes} {...listeners} className="flex-shrink-0 text-muted-foreground"><GripVertical className="h-3 w-3" /></span>
+    <span ref={setNodeRef} style={style} className="inline-flex items-center gap-1 bg-primary/10 border border-primary/20 text-foreground rounded-full px-3 py-1 text-sm">
+      <span {...attributes} {...listeners} className="flex-shrink-0 text-muted-foreground cursor-grab active:cursor-grabbing touch-none"><GripVertical className="h-3 w-3" /></span>
       <span className="text-xs font-semibold text-muted-foreground">{kindLabel}</span>
       {name}
       <button className="ml-1 text-muted-foreground hover:text-destructive" onClick={onRemove}><Minus className="h-3 w-3" /></button>
