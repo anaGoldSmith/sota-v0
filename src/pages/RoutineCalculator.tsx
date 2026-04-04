@@ -3527,7 +3527,7 @@ const RoutineCalculator = () => {
       {/* Acrobatics Dialog */}
       <AcrobaticsDialog
         open={acrobaticsDialogOpen}
-        onOpenChange={setAcrobaticsDialogOpen}
+        onOpenChange={(open) => { setAcrobaticsDialogOpen(open); if (!open) { setEditingAcroElementId(null); setEditingAcroSelections(undefined); } }}
         preAcrobaticElements={preAcrobaticElements}
         verticalRotations={verticalRotations}
         onSaveSelections={(selections) => {
