@@ -2835,7 +2835,39 @@ const RoutineCalculator = () => {
                             );
                           }
 
-                          // All element types now have breakdown support
+                          // Breakdown for Acro elements
+                          if (element.type === 'Acro' && element.isExpanded) {
+                            const acroDetails = (element.originalData as any)?.acroDetails as Array<{ order: number; kind: string; kindLabel: string; name: string }> | undefined;
+                            rows.push(
+                              <TableRow key={`${element.id}-expanded`} className="bg-white dark:bg-background">
+                                <TableCell colSpan={6} className="p-4">
+                                  <div className="ml-8 border rounded-lg overflow-hidden">
+                                    <table className="w-full">
+                                      <thead className="bg-white dark:bg-background">
+                                        <tr>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground w-12">#</th>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground w-16">Type</th>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Name</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {acroDetails?.map((detail, dIdx) => (
+                                          <tr key={dIdx} className="border-b border-border/30 last:border-b-0">
+                                            <td className="py-2 px-4 font-mono text-sm text-muted-foreground">{detail.order}</td>
+                                            <td className="py-2 px-4">
+                                              <Badge variant="outline" className={detail.kind === 'pre-acrobatic' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300 text-[10px]' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 text-[10px]'}>{detail.kindLabel}</Badge>
+                                            </td>
+                                            <td className="py-2 px-4 text-sm">{detail.name}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          }
+
                           const hasOwnBreakdown = true;
                           if (!hasOwnBreakdown && element.isExpanded && element.adjustments && element.adjustments.length > 0) {
                             rows.push(
