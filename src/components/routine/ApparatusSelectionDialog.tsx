@@ -844,11 +844,12 @@ export const ApparatusSelectionDialog = ({
       open={showAcroPickerForDA}
       onOpenChange={(open) => {
         if (!open && showAcroPickerForDA) {
-          // Only finalize if not already handled by onSaveSelections
-          if (pendingCr7RCombinations.length > 0) {
+          // Only finalize if save callback didn't already handle it
+          if (!acroSaveHandledRef.current && pendingCr7RCombinations.length > 0) {
             finalizeDACombinations(pendingCr7RCombinations);
             setPendingCr7RCombinations([]);
           }
+          acroSaveHandledRef.current = false;
           setShowAcroPickerForDA(false);
         }
       }}
