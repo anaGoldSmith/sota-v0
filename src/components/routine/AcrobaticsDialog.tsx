@@ -29,6 +29,21 @@ export type AcroSelection =
   | { kind: 'pre-acrobatic'; data: PreAcrobaticElement }
   | { kind: 'vertical-rotation'; data: VerticalRotation };
 
+const SortableChip = ({ sel, idx, onRemove }: { sel: AcroSelection; idx: number; onRemove: () => void }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `sel-${idx}` });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 10 : undefined };
+  const name = sel.kind === 'pre-acrobatic' ? sel.data.name : (sel.data.name || sel.data.code);
+  const kindLabel = sel.kind === 'pre-acrobatic' ? 'PA' : 'VR';
+  return (
+    <span ref={setNodeRef} style={style} className="inline-flex items-center gap-1 bg-primary/10 border border-primary/20 text-foreground rounded-full px-3 py-1 text-sm cursor-grab active:cursor-grabbing">
+      <span {...attributes} {...listeners} className="flex-shrink-0 text-muted-foreground"><GripVertical className="h-3 w-3" /></span>
+      <span className="text-xs font-semibold text-muted-foreground">{kindLabel}</span>
+      {name}
+      <button className="ml-1 text-muted-foreground hover:text-destructive" onClick={onRemove}><Minus className="h-3 w-3" /></button>
+    </span>
+  );
+};
+
 interface AcrobaticsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
