@@ -15,8 +15,9 @@ import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDia
 import { RotationSelectionDialog } from "@/components/routine/RotationSelectionDialog";
 import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/routine/ApparatusSelectionDialog";
 import { TechnicalElementsSelectionDialog } from "@/components/routine/TechnicalElementsSelectionDialog";
-import { PreAcrobaticSelectionDialog, type PreAcrobaticElement } from "@/components/routine/PreAcrobaticSelectionDialog";
-import { VerticalRotationSelectionDialog, type VerticalRotation } from "@/components/routine/VerticalRotationSelectionDialog";
+import type { PreAcrobaticElement } from "@/components/routine/PreAcrobaticSelectionDialog";
+import type { VerticalRotation } from "@/components/routine/VerticalRotationSelectionDialog";
+import { AcrobaticsDialog } from "@/components/routine/AcrobaticsDialog";
 import { ElementInformationDialog, type HandlingItem } from "@/components/routine/ElementInformationDialog";
 import type { FouetteComponent } from "@/components/routine/FouetteComponentsEditor";
 import type { FouetteShape } from "@/components/routine/FouetteShapesSelector";
@@ -664,8 +665,7 @@ const RoutineCalculator = () => {
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
   const [rotationDialogOpen, setRotationDialogOpen] = useState(false);
   const [apparatusDialogOpen, setApparatusDialogOpen] = useState(false);
-  const [preAcrobaticDialogOpen, setPreAcrobaticDialogOpen] = useState(false);
-  const [verticalRotationDialogOpen, setVerticalRotationDialogOpen] = useState(false);
+  const [acrobaticsDialogOpen, setAcrobaticsDialogOpen] = useState(false);
   const [preAcrobaticElements, setPreAcrobaticElements] = useState<PreAcrobaticElement[]>([]);
   const [verticalRotations, setVerticalRotations] = useState<VerticalRotation[]>([]);
   const [technicalElementsDialogOpen, setTechnicalElementsDialogOpen] = useState(false);
@@ -2142,37 +2142,14 @@ const RoutineCalculator = () => {
                       </TooltipProvider>
                     </div>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button 
-                          variant="outline"
-                          className={`h-16 text-base w-full ${elementsEnabled ? 'hover:scale-[1.02] transition-transform' : 'opacity-50 cursor-not-allowed'}`}
-                          disabled={!elementsEnabled}
-                        >
-                          <span className="text-lg font-semibold mr-2">+</span> Acrobatics
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-[300px] bg-background z-50" align="start">
-                        <DropdownMenuItem 
-                          className="h-14 text-lg cursor-pointer"
-                          onClick={() => setPreAcrobaticDialogOpen(true)}
-                        >
-                          <div className="flex items-center justify-between w-full">
-                            <span>Pre-acrobatic Elements</span>
-                            <span className="text-sm">+ Add</span>
-                          </div>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="h-14 text-lg cursor-pointer"
-                          onClick={() => setVerticalRotationDialogOpen(true)}
-                        >
-                          <div className="flex items-center justify-between w-full">
-                            <span>Vertical Rotations</span>
-                            <span className="text-sm">+ Add</span>
-                          </div>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button 
+                      variant="outline"
+                      className={`h-16 text-base ${elementsEnabled ? 'hover:scale-[1.02] transition-transform' : 'opacity-50 cursor-not-allowed'}`}
+                      disabled={!elementsEnabled}
+                      onClick={() => setAcrobaticsDialogOpen(true)}
+                    >
+                      <span className="text-lg font-semibold mr-2">+</span> Acrobatics
+                    </Button>
 
                     <Button 
                       variant="outline"
@@ -3493,12 +3470,13 @@ const RoutineCalculator = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Pre-Acrobatic Elements Dialog */}
-      <PreAcrobaticSelectionDialog
-        open={preAcrobaticDialogOpen}
-        onOpenChange={setPreAcrobaticDialogOpen}
-        elements={preAcrobaticElements}
-        onSelect={(element) => {
+      {/* Acrobatics Dialog */}
+      <AcrobaticsDialog
+        open={acrobaticsDialogOpen}
+        onOpenChange={setAcrobaticsDialogOpen}
+        preAcrobaticElements={preAcrobaticElements}
+        verticalRotations={verticalRotations}
+        onSelectPreAcrobatic={(element) => {
           const newElement: RoutineElement = {
             id: `preacro-${Date.now()}`,
             type: 'Acro',
@@ -3516,16 +3494,7 @@ const RoutineCalculator = () => {
           setRoutineElements(prev => [...prev, newElement]);
           toast({ title: "Pre-acrobatic Element Added", description: `"${element.name}" has been added to the routine.` });
         }}
-        rotationType="one"
-        isFirstRotation={true}
-      />
-
-      {/* Vertical Rotations Dialog */}
-      <VerticalRotationSelectionDialog
-        open={verticalRotationDialogOpen}
-        onOpenChange={setVerticalRotationDialogOpen}
-        rotations={verticalRotations}
-        onSelect={(rotation) => {
+        onSelectVerticalRotation={(rotation) => {
           const newElement: RoutineElement = {
             id: `vertrot-${Date.now()}`,
             type: 'Acro',
@@ -3543,6 +3512,8 @@ const RoutineCalculator = () => {
           setRoutineElements(prev => [...prev, newElement]);
           toast({ title: "Vertical Rotation Added", description: `"${rotation.name || rotation.code}" has been added to the routine.` });
         }}
+        rotationType="one"
+        isFirstRotation={true}
       />
     </div>
   );
