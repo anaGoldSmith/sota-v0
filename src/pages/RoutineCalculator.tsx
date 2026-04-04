@@ -2778,16 +2778,42 @@ const RoutineCalculator = () => {
                                           </>
                                         ) : (
                                           <>
+                                            {/* Base element row */}
                                             <tr className="border-b border-border/30">
-                                              <td className="py-2 px-4"><Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 text-[10px]">DA</Badge></td>
+                                              <td className="py-2 px-4"><Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 text-[10px]">Base</Badge></td>
                                               <td className="py-2 px-4">
-                                                <div className="flex items-center gap-1">
-                                                  {element.symbolImages.map((img, idx) => (
-                                                    <img key={idx} src={img} className="h-6 w-6 object-contain" alt="" />
-                                                  ))}
-                                                </div>
+                                                {originalData?.element?.symbol_image && selectedApparatus && (
+                                                  <img src={getTechnicalElementSymbol(originalData.element.symbol_image, selectedApparatus) || ''} className="h-6 w-6 object-contain" alt="" />
+                                                )}
                                               </td>
                                               <td className="py-2 px-4 text-sm">{originalData?.element?.name || originalData?.element?.description || 'Apparatus Difficulty'}</td>
+                                              <td className="py-2 px-4 text-right font-mono text-sm">—</td>
+                                            </tr>
+                                            {/* Criterion rows */}
+                                            {originalData?.selectedCriteria?.map((cr: string, crIdx: number) => (
+                                              <tr key={`cr-${crIdx}`} className="border-b border-border/30">
+                                                <td className="py-2 px-4"><Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300 text-[10px]">Cr</Badge></td>
+                                                <td className="py-2 px-4">
+                                                  {(() => {
+                                                    const url = getCriteriaSymbolUrl(cr);
+                                                    return url.startsWith('TEXT:') ? (
+                                                      <span className="text-sm font-bold">{url.replace('TEXT:', '')}</span>
+                                                    ) : (
+                                                      <img src={url} className="h-5 w-5 object-contain" alt="" />
+                                                    );
+                                                  })()}
+                                                </td>
+                                                <td className="py-2 px-4 text-sm">
+                                                  {cr === 'Cr1V' ? 'Vertical plane' : cr === 'Cr2H' ? 'Horizontal plane' : cr === 'Cr3L' ? 'Lateral plane' : cr === 'Cr4F' ? 'Figure 8/Circumduction' : cr === 'Cr5W' ? 'Use of whole body' : cr === 'Cr6DB' ? 'During body difficulty' : cr === 'Cr7R' ? 'Rotation' : cr}
+                                                </td>
+                                                <td className="py-2 px-4 text-right font-mono text-sm">—</td>
+                                              </tr>
+                                            ))}
+                                            {/* Total row */}
+                                            <tr className="border-t border-border bg-muted/30">
+                                              <td className="py-2 px-4"><Badge variant="outline" className="text-[10px]">Total</Badge></td>
+                                              <td className="py-2 px-4"></td>
+                                              <td className="py-2 px-4 text-sm font-medium">DA Value</td>
                                               <td className="py-2 px-4 text-right font-mono text-sm font-bold">{element.value.toFixed(1)}</td>
                                             </tr>
                                             {originalData?.rotationalElement && (
