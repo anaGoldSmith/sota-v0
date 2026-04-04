@@ -144,6 +144,59 @@ export const ApparatusSelectionDialog = ({
     onOpenChange(false);
   };
 
+  // Finalize DA combinations (stage or submit for DB element)
+  const finalizeDACombinations = (combinations: ApparatusCombination[]) => {
+    setStagedDAs(prev => [...prev, ...combinations]);
+    setDaCount(prev => prev + 1);
+    setSelectedCriteria([]);
+    setCompletedDaGroups([]);
+
+    if (isForDbElement && onSelectCombinations) {
+      onSelectCombinations(combinations);
+      setStagedDAs([]);
+      setDaCount(0);
+      setSelectedIds([]);
+      setAvailableSlot(null);
+      setSelectedCriteria([]);
+      setCompletedDaGroups([]);
+      onOpenChange(false);
+    } else {
+      toast({
+        title: "Valid DA was created",
+        description: "Continue selecting to create more DAs or click 'Add DAs' to finish.",
+      });
+    }
+  };
+
+  // Cr7R prompt handlers
+  const handleCr7RYes = () => {
+    setShowCr7RPrompt(false);
+    setShowAcroPickerForDA(true);
+  };
+
+  const handleCr7RNo = () => {
+    setShowCr7RPrompt(false);
+    finalizeDACombinations(pendingCr7RCombinations);
+    setPendingCr7RCombinations([]);
+  };
+
+  const handleAcroPickerSave = (selections: AcroSelection[]) => {
+    if (selections.length > 0) {
+      const sel = selections[0];
+      const rotationalElement = {
+        kind: sel.kind,
+        name: sel.kind === 'pre-acrobatic' ? sel.data.name : (sel.data.name || sel.data.code),
+        data: sel.data,
+      };
+      const enriched = pendingCr7RCombinations.map(c => ({ ...c, rotationalElement }));
+      finalizeDACombinations(enriched);
+    } else {
+      finalizeDACombinations(pendingCr7RCombinations);
+    }
+    setPendingCr7RCombinations([]);
+    setShowAcroPickerForDA(false);
+  };
+
   const scrollDialog = (direction: 'up' | 'down') => {
     if (dialogContentRef.current) {
       const scrollAmount = 300;
