@@ -183,6 +183,7 @@ export const ApparatusSelectionDialog = ({
   };
 
   const handleAcroPickerSave = (selections: AcroSelection[]) => {
+    acroSaveHandledRef.current = true;
     if (selections.length > 0) {
       const sel = selections[0];
       const rotationalElement = {
