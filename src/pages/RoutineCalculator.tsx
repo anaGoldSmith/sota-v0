@@ -2795,7 +2795,7 @@ const RoutineCalculator = () => {
                                                 )}
                                               </td>
                                               <td className="py-2 px-4 text-sm">{originalData?.element?.name || originalData?.element?.description || 'Apparatus Difficulty'}</td>
-                                              <td className="py-2 px-4 text-right font-mono text-sm">—</td>
+                                              <td className="py-2 px-4 text-right font-mono text-sm">{element.value.toFixed(1)}</td>
                                             </tr>
                                             {/* Criterion rows */}
                                             {originalData?.selectedCriteria?.map((cr: string, crIdx: number) => {
