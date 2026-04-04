@@ -120,7 +120,7 @@ export const AcrobaticsDialog = ({
     selections.filter(s => s.kind === 'vertical-rotation' && s.data.id === id).length;
 
   const addPreAcrobatic = (element: PreAcrobaticElement) => {
-    setSelections(prev => [...prev, { kind: 'pre-acrobatic', data: element }]);
+    setSelections(prev => [...prev, { kind: 'pre-acrobatic' as const, data: element, uid: nextAcroUid() }]);
   };
 
   const removePreAcrobatic = (id: string) => {
