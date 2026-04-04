@@ -2746,7 +2746,7 @@ const RoutineCalculator = () => {
                                                 )}
                                               </td>
                                               <td className="py-2 px-4 text-sm">{originalData.combo2?.element?.name || originalData.combo2?.element?.description || 'DA Element'}</td>
-                                              <td className="py-2 px-4 text-right font-mono text-sm">—</td>
+                                              <td className="py-2 px-4 text-right font-mono text-sm">{element.value.toFixed(1)}</td>
                                             </tr>
                                             {/* Shared criterion row */}
                                             {originalData.combo1?.selectedCriteria?.map((cr: string, crIdx: number) => {
