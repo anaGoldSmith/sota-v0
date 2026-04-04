@@ -240,7 +240,11 @@ export const ApparatusSelectionDialog = ({
 
   const handleCr7RNo = () => {
     setShowCr7RPrompt(false);
-    finalizeDACombinations(pendingCr7RCombinations);
+    if (isEditMode) {
+      setPendingEditCombinations(pendingCr7RCombinations);
+    } else {
+      finalizeDACombinations(pendingCr7RCombinations);
+    }
     setPendingCr7RCombinations([]);
   };
 
