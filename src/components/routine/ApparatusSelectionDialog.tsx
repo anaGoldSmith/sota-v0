@@ -934,19 +934,7 @@ export const ApparatusSelectionDialog = ({
           </div>
         ) : (
           <div className="flex flex-col gap-4 flex-1 min-h-0">
-            <ApparatusTable
-              data={apparatusData}
-              criteria={criteria}
-              selectedIds={selectedIds}
-              onRowClick={handleRowClick}
-              apparatus={apparatus!}
-              selectedCriteria={selectedCriteria}
-              onCriteriaChange={handleCriteriaChange}
-              daGroups={completedDaGroups}
-              daComments={daComments || []}
-            />
-
-            {/* Rotational element display for edit mode */}
+            {/* Rotational element display for edit mode - above table for visibility */}
             {isEditMode && (pendingEditCombinations?.some(c => c.rotationalElement) || (isEditWithRotation && !pendingEditCombinations)) && (
               <div className="flex items-center gap-3 rounded-lg border bg-muted/30 px-4 py-3">
                 <span className="text-sm font-medium text-foreground">Rotational Element:</span>
@@ -965,6 +953,18 @@ export const ApparatusSelectionDialog = ({
                 </Button>
               </div>
             )}
+
+            <ApparatusTable
+              data={apparatusData}
+              criteria={criteria}
+              selectedIds={selectedIds}
+              onRowClick={handleRowClick}
+              apparatus={apparatus!}
+              selectedCriteria={selectedCriteria}
+              onCriteriaChange={handleCriteriaChange}
+              daGroups={completedDaGroups}
+              daComments={daComments || []}
+            />
 
             <div className="flex justify-end gap-3 pt-3 pb-4 flex-shrink-0">
               {isEditMode ? (
