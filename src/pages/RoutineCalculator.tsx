@@ -2,7 +2,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ArrowLeft, Calculator, GripVertical, ChevronDown, ChevronRight, MoreVertical, Pencil, Trash2, Info, Save, X, BookOpen, ClipboardCheck, Check, AlertCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -1958,12 +1958,17 @@ const RoutineCalculator = () => {
 
             <div className="space-y-2">
               <Label htmlFor="rulebook">Rulebook</Label>
-              <Select defaultValue="fig-cop-2025-2028" disabled={isViewMode}>
+              <Select defaultValue="fig-cop-2025-2028-individual" disabled={isViewMode}>
                 <SelectTrigger id="rulebook">
                   <SelectValue placeholder="Select rulebook" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fig-cop-2025-2028">FIG CoP 2025-2028</SelectItem>
+                  <SelectGroup>
+                    <SelectLabel>FIG CoP 2025-2028</SelectLabel>
+                    <SelectItem value="fig-cop-2025-2028-individual">Individual</SelectItem>
+                    <SelectItem value="fig-cop-2025-2028-group">Group</SelectItem>
+                  </SelectGroup>
+                  <SelectSeparator />
                   <SelectItem value="sky-grace" disabled className="opacity-40 cursor-not-allowed">Sky Grace (coming soon)</SelectItem>
                   <SelectItem value="other" disabled className="opacity-40 cursor-not-allowed">Other (coming soon)</SelectItem>
                 </SelectContent>
