@@ -973,10 +973,28 @@ export const ApparatusSelectionDialog = ({
                     Cancel
                   </Button>
                   <Button 
-                    disabled={!pendingEditCombinations}
+                    disabled={!pendingEditCombinations && !editRotationalElement}
                     onClick={() => {
-                      if (pendingEditCombinations && onConfirmEditDA && editingDA) {
-                        onConfirmEditDA(editingDA.elementId, pendingEditCombinations);
+                      if (onConfirmEditDA && editingDA) {
+                        if (pendingEditCombinations) {
+                          // Criteria were changed — use pending combinations (may already have updated rotation)
+                          const final = editRotationalElement
+                            ? pendingEditCombinations.map(c => ({ ...c, rotationalElement: editRotationalElement }))
+                            : pendingEditCombinations;
+                          onConfirmEditDA(editingDA.elementId, final);
+                        } else if (editRotationalElement) {
+                          // Only rotation changed — rebuild from original DA data
+                          const element = apparatusData.find(e => e.id === editingDA.rowId);
+                          if (element && apparatus) {
+                            const combinations: ApparatusCombination[] = [{
+                              element,
+                              selectedCriteria: editingDA.selectedCriteria,
+                              apparatus,
+                              rotationalElement: editRotationalElement,
+                            }];
+                            onConfirmEditDA(editingDA.elementId, combinations);
+                          }
+                        }
                         setPendingEditCombinations(null);
                         onOpenChange(false);
                       }
