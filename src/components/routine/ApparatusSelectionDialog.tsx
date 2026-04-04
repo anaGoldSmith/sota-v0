@@ -826,7 +826,7 @@ export const ApparatusSelectionDialog = ({
         <DialogHeader>
           <DialogTitle>Specify Rotational Element?</DialogTitle>
           <DialogDescription>
-            This DA includes a rotation criterion (Cr7R). Would you like to specify which rotational element is performed?
+            This DA includes a rotation criterion. Would you like to specify which rotational element is performed?
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end gap-3 pt-2">
