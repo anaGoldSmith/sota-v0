@@ -77,6 +77,12 @@ export const AcrobaticsDialog = ({
   // Multi-select: array of selections (allows duplicates)
   const [selections, setSelections] = useState<AcroSelection[]>([]);
 
+  useEffect(() => {
+    if (open && initialSelections && initialSelections.length > 0) {
+      setSelections(initialSelections.map(s => ({ ...s, uid: s.uid || nextAcroUid() })));
+    }
+  }, [open]);
+
   const pointerSensor = useSensor(PointerSensor, { activationConstraint: { distance: 5 } });
   const keyboardSensor = useSensor(KeyboardSensor);
   const sensors = useSensors(pointerSensor, keyboardSensor);
