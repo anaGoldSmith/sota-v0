@@ -15,6 +15,8 @@ import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDia
 import { RotationSelectionDialog } from "@/components/routine/RotationSelectionDialog";
 import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/routine/ApparatusSelectionDialog";
 import { TechnicalElementsSelectionDialog } from "@/components/routine/TechnicalElementsSelectionDialog";
+import { PreAcrobaticSelectionDialog, type PreAcrobaticElement } from "@/components/routine/PreAcrobaticSelectionDialog";
+import { VerticalRotationSelectionDialog, type VerticalRotation } from "@/components/routine/VerticalRotationSelectionDialog";
 import { ElementInformationDialog, type HandlingItem } from "@/components/routine/ElementInformationDialog";
 import type { FouetteComponent } from "@/components/routine/FouetteComponentsEditor";
 import type { FouetteShape } from "@/components/routine/FouetteShapesSelector";
