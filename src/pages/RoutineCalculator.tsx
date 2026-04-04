@@ -3539,26 +3539,41 @@ const RoutineCalculator = () => {
             kindLabel: s.kind === 'pre-acrobatic' ? 'PA' : 'VR',
             name: s.kind === 'pre-acrobatic' ? s.data.name : (s.data.name || s.data.code || ''),
           }));
-          const newElement: RoutineElement = {
-            id: `acro-${Date.now()}`,
-            type: 'Acro' as const,
-            symbolImages: [],
-            value: 0,
-            originalData: { acroDetails } as any,
-            isExpanded: false,
-            dbData: {
+          if (editingAcroElementId) {
+            setRoutineElements(prev => prev.map(el => {
+              if (el.id !== editingAcroElementId) return el;
+              return {
+                ...el,
+                originalData: { acroDetails } as any,
+                dbData: { ...el.dbData!, name: combinedName },
+              };
+            }));
+            toast({ title: "Acrobatics Updated", description: combinedName });
+          } else {
+            const newElement: RoutineElement = {
+              id: `acro-${Date.now()}`,
+              type: 'Acro' as const,
               symbolImages: [],
               value: 0,
-              name: combinedName,
-              code: 'ACRO',
-              elementType: undefined,
-            },
-          };
-          setRoutineElements(prev => [...prev, newElement]);
-          toast({ title: "Acrobatics Added", description: combinedName });
+              originalData: { acroDetails } as any,
+              isExpanded: false,
+              dbData: {
+                symbolImages: [],
+                value: 0,
+                name: combinedName,
+                code: 'ACRO',
+                elementType: undefined,
+              },
+            };
+            setRoutineElements(prev => [...prev, newElement]);
+            toast({ title: "Acrobatics Added", description: combinedName });
+          }
+          setEditingAcroElementId(null);
+          setEditingAcroSelections(undefined);
         }}
         rotationType="one"
         isFirstRotation={true}
+        initialSelections={editingAcroSelections}
       />
     </div>
   );
