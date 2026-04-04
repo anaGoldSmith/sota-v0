@@ -685,18 +685,32 @@ export const ApparatusSelectionDialog = ({
         }
         
         if (newCombinations.length > 0) {
-          // Check if any criterion in this DA is Cr7R (rotation)
-          const hasCr7R = newCombinations.some(c => c.selectedCriteria.includes('Cr7R'));
-          
-          if (hasCr7R && (preAcrobaticElements.length > 0 || verticalRotations.length > 0)) {
-            // Pause and ask the user if they want to specify a rotational element
-            setPendingCr7RCombinations(newCombinations);
-            setSelectedCriteria([]);
-            setCompletedDaGroups([]);
-            setShowCr7RPrompt(true);
+          if (isEditMode) {
+            // In edit mode, don't auto-finalize — stage for user confirmation
+            // Check for Cr7R first
+            const hasCr7R = newCombinations.some(c => c.selectedCriteria.includes('Cr7R'));
+            if (hasCr7R && (preAcrobaticElements.length > 0 || verticalRotations.length > 0)) {
+              setPendingCr7RCombinations(newCombinations);
+              setShowCr7RPrompt(true);
+            } else {
+              setPendingEditCombinations(newCombinations);
+            }
+            // Lock the new selection as a completed group
+            setCompletedDaGroups([{ cells: [a, b], color: DA_COLORS[availableSlot ?? 0] }]);
           } else {
-            // Normal flow - stage the DA immediately
-            finalizeDACombinations(newCombinations);
+            // Check if any criterion in this DA is Cr7R (rotation)
+            const hasCr7R = newCombinations.some(c => c.selectedCriteria.includes('Cr7R'));
+            
+            if (hasCr7R && (preAcrobaticElements.length > 0 || verticalRotations.length > 0)) {
+              // Pause and ask the user if they want to specify a rotational element
+              setPendingCr7RCombinations(newCombinations);
+              setSelectedCriteria([]);
+              setCompletedDaGroups([]);
+              setShowCr7RPrompt(true);
+            } else {
+              // Normal flow - stage the DA immediately
+              finalizeDACombinations(newCombinations);
+            }
           }
         }
       } else {
