@@ -24,7 +24,8 @@ import type { FouetteShape } from "@/components/routine/FouetteShapesSelector";
 import { DBSuccessDialog } from "@/components/routine/DBSuccessDialog";
 import { DBDASuccessDialog } from "@/components/routine/DBDASuccessDialog";
 import { DBDAValidationDialog } from "@/components/routine/DBDAValidationDialog";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ApparatusType, CombinedApparatusData } from "@/types/apparatus";
@@ -663,6 +664,23 @@ const RoutineCalculator = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+
+  // Fetch criteria names from DB
+  const { data: criteriaList = [] } = useQuery({
+    queryKey: ["criteria-names"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("criteria")
+        .select("code, name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const getCriterionName = useCallback((code: string): string => {
+    const found = criteriaList.find(c => c.code === code);
+    return found?.name || code;
+  }, [criteriaList]);
   
   // Check if editing or viewing an existing routine
   const searchParams = new URLSearchParams(location.search);
@@ -2825,7 +2843,7 @@ const RoutineCalculator = () => {
                                                     })()}
                                                   </td>
                                                   <td className="py-2 px-4 text-sm">
-                                                    {cr === 'Cr7R' ? (rot ? `Rotation (${rot.name})` : 'Rotation') : cr === 'Cr1V' ? 'Vertical plane' : cr === 'Cr2H' ? 'Horizontal plane' : cr === 'Cr3L' ? 'Lateral plane' : cr === 'Cr4F' ? 'Figure 8/Circumduction' : cr === 'Cr5W' ? 'Use of whole body' : cr === 'Cr6DB' ? 'During body difficulty' : cr}
+                                                    {cr === 'Cr7R' ? (rot ? `Rotation (${rot.name})` : 'Rotation') : getCriterionName(cr)}
                                                   </td>
                                                   <td className="py-2 px-4 text-right font-mono text-sm">0.0</td>
                                                 </tr>
@@ -2874,7 +2892,7 @@ const RoutineCalculator = () => {
                                                     })()}
                                                   </td>
                                                   <td className="py-2 px-4 text-sm">
-                                                    {cr === 'Cr7R' ? (rot ? `Rotation (${rot.name})` : 'Rotation') : cr === 'Cr1V' ? 'Vertical plane' : cr === 'Cr2H' ? 'Horizontal plane' : cr === 'Cr3L' ? 'Lateral plane' : cr === 'Cr4F' ? 'Figure 8/Circumduction' : cr === 'Cr5W' ? 'Use of whole body' : cr === 'Cr6DB' ? 'During body difficulty' : cr}
+                                                    {cr === 'Cr7R' ? (rot ? `Rotation (${rot.name})` : 'Rotation') : getCriterionName(cr)}
                                                   </td>
                                                   <td className="py-2 px-4 text-right font-mono text-sm">0.0</td>
                                                 </tr>
