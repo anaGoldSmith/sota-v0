@@ -3237,10 +3237,10 @@ const RoutineCalculator = () => {
         onSelectElements={handleSelectApparatusElements}
         onSelectCombinations={handleSelectApparatusCombinations}
         isForDbElement={pendingDbElement !== null}
+        preAcrobaticElements={preAcrobaticElements}
+        verticalRotations={verticalRotations}
         onGoBackToApparatusHandling={() => {
-          // Close apparatus dialog
           setApparatusDialogOpen(false);
-          // Reopen appropriate element selection dialog with apparatus handling
           setShouldReopenApparatusHandling(true);
           if (pendingDbElement?.type === 'jump') {
             setJumpDialogOpen(true);

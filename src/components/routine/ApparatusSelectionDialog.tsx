@@ -8,12 +8,20 @@ import React, { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import type { PreAcrobaticElement } from "./PreAcrobaticSelectionDialog";
+import type { VerticalRotation } from "./VerticalRotationSelectionDialog";
+import { AcrobaticsDialog, type AcroSelection } from "./AcrobaticsDialog";
 
 export interface ApparatusCombination {
   element: CombinedApparatusData;
   selectedCriteria: string[];
   apparatus: ApparatusType;
   calculatedValue?: number; // Used for special pairing rule (max value + 0.1)
+  rotationalElement?: {
+    kind: 'pre-acrobatic' | 'vertical-rotation';
+    name: string;
+    data: any;
+  };
 }
 
 interface ApparatusSelectionDialogProps {
@@ -24,6 +32,8 @@ interface ApparatusSelectionDialogProps {
   onSelectCombinations?: (combinations: ApparatusCombination[]) => void;
   isForDbElement?: boolean; // Indicates if DA is being added to a DB element
   onGoBackToApparatusHandling?: () => void; // Callback to go back to Apparatus Handling dialog
+  preAcrobaticElements?: PreAcrobaticElement[];
+  verticalRotations?: VerticalRotation[];
 }
 
 export const ApparatusSelectionDialog = ({
@@ -34,6 +44,8 @@ export const ApparatusSelectionDialog = ({
   onSelectCombinations,
   isForDbElement = false,
   onGoBackToApparatusHandling,
+  preAcrobaticElements = [],
+  verticalRotations = [],
 }: ApparatusSelectionDialogProps) => {
   const { apparatusData, criteria, specialCodes, specialCodeElements, daComments, isLoading, error } = useApparatusData(apparatus);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -41,9 +53,14 @@ export const ApparatusSelectionDialog = ({
   const [completedDaGroups, setCompletedDaGroups] = useState<{ cells: SelectedCriterion[]; color: string }[]>([]);
   const [availableSlot, setAvailableSlot] = useState<number | null>(null);
   const [stagedDAs, setStagedDAs] = useState<ApparatusCombination[]>([]);
-  const [daCount, setDaCount] = useState(0); // Track actual number of DAs created (not combinations)
+  const [daCount, setDaCount] = useState(0);
   const { toast } = useToast();
   const dialogContentRef = useRef<HTMLDivElement>(null);
+
+  // Cr7R rotational element prompt state
+  const [showCr7RPrompt, setShowCr7RPrompt] = useState(false);
+  const [pendingCr7RCombinations, setPendingCr7RCombinations] = useState<ApparatusCombination[]>([]);
+  const [showAcroPickerForDA, setShowAcroPickerForDA] = useState(false);
 
   // Reset state when dialog opens/closes
   useEffect(() => {
@@ -125,6 +142,59 @@ export const ApparatusSelectionDialog = ({
     setStagedDAs([]);
     setDaCount(0);
     onOpenChange(false);
+  };
+
+  // Finalize DA combinations (stage or submit for DB element)
+  const finalizeDACombinations = (combinations: ApparatusCombination[]) => {
+    setStagedDAs(prev => [...prev, ...combinations]);
+    setDaCount(prev => prev + 1);
+    setSelectedCriteria([]);
+    setCompletedDaGroups([]);
+
+    if (isForDbElement && onSelectCombinations) {
+      onSelectCombinations(combinations);
+      setStagedDAs([]);
+      setDaCount(0);
+      setSelectedIds([]);
+      setAvailableSlot(null);
+      setSelectedCriteria([]);
+      setCompletedDaGroups([]);
+      onOpenChange(false);
+    } else {
+      toast({
+        title: "Valid DA was created",
+        description: "Continue selecting to create more DAs or click 'Add DAs' to finish.",
+      });
+    }
+  };
+
+  // Cr7R prompt handlers
+  const handleCr7RYes = () => {
+    setShowCr7RPrompt(false);
+    setShowAcroPickerForDA(true);
+  };
+
+  const handleCr7RNo = () => {
+    setShowCr7RPrompt(false);
+    finalizeDACombinations(pendingCr7RCombinations);
+    setPendingCr7RCombinations([]);
+  };
+
+  const handleAcroPickerSave = (selections: AcroSelection[]) => {
+    if (selections.length > 0) {
+      const sel = selections[0];
+      const rotationalElement = {
+        kind: sel.kind,
+        name: sel.kind === 'pre-acrobatic' ? sel.data.name : (sel.data.name || sel.data.code),
+        data: sel.data,
+      };
+      const enriched = pendingCr7RCombinations.map(c => ({ ...c, rotationalElement }));
+      finalizeDACombinations(enriched);
+    } else {
+      finalizeDACombinations(pendingCr7RCombinations);
+    }
+    setPendingCr7RCombinations([]);
+    setShowAcroPickerForDA(false);
   };
 
   const scrollDialog = (direction: 'up' | 'down') => {
@@ -537,33 +607,18 @@ export const ApparatusSelectionDialog = ({
         }
         
         if (newCombinations.length > 0) {
-          // Add to staged DAs
-          setStagedDAs(prev => [...prev, ...newCombinations]);
-          setDaCount(prev => prev + 1); // Increment DA count by 1 (regardless of how many combinations)
+          // Check if any criterion in this DA is Cr7R (rotation)
+          const hasCr7R = newCombinations.some(c => c.selectedCriteria.includes('Cr7R'));
           
-          // Clear the table for next DA
-          setSelectedCriteria([]);
-          setCompletedDaGroups([]);
-          
-          // If this is for a DB element, automatically submit the DA and close dialog
-          if (isForDbElement && onSelectCombinations) {
-            // Automatically submit this single DA for the DB element
-            onSelectCombinations(newCombinations);
-            // Reset state
-            setStagedDAs([]);
-            setDaCount(0);
-            setSelectedIds([]);
-            setAvailableSlot(null);
+          if (hasCr7R && (preAcrobaticElements.length > 0 || verticalRotations.length > 0)) {
+            // Pause and ask the user if they want to specify a rotational element
+            setPendingCr7RCombinations(newCombinations);
             setSelectedCriteria([]);
             setCompletedDaGroups([]);
-            // Close the dialog immediately
-            onOpenChange(false);
+            setShowCr7RPrompt(true);
           } else {
-            // Show success toast for normal flow
-            toast({
-              title: "Valid DA was created",
-              description: "Continue selecting to create more DAs or click 'Add DAs' to finish.",
-            });
+            // Normal flow - stage the DA immediately
+            finalizeDACombinations(newCombinations);
           }
         }
       } else {
@@ -582,6 +637,7 @@ export const ApparatusSelectionDialog = ({
   }, [selectedCriteria, apparatusData, specialCodes, apparatus, toast, isForDbElement, daCount, onSelectCombinations]);
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] max-h-[90vh] flex flex-col p-0">
         <div ref={dialogContentRef} className="flex flex-col overflow-y-auto p-6">
@@ -763,5 +819,39 @@ export const ApparatusSelectionDialog = ({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Cr7R Rotation Prompt Dialog */}
+    <Dialog open={showCr7RPrompt} onOpenChange={(open) => { if (!open) handleCr7RNo(); }}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Specify Rotational Element?</DialogTitle>
+          <DialogDescription>
+            This DA includes a rotation criterion (Cr7R). Would you like to specify which rotational element is performed?
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-3 pt-2">
+          <Button variant="outline" onClick={handleCr7RNo}>No</Button>
+          <Button onClick={handleCr7RYes}>Yes</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* Acrobatics Picker for DA (single-select) */}
+    <AcrobaticsDialog
+      open={showAcroPickerForDA}
+      onOpenChange={(open) => {
+        if (!open) {
+          // User closed without saving - finalize without rotational element
+          finalizeDACombinations(pendingCr7RCombinations);
+          setPendingCr7RCombinations([]);
+          setShowAcroPickerForDA(false);
+        }
+      }}
+      preAcrobaticElements={preAcrobaticElements}
+      verticalRotations={verticalRotations}
+      onSaveSelections={handleAcroPickerSave}
+      singleSelect
+    />
+    </>
   );
 };

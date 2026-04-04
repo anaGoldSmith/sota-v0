@@ -57,6 +57,7 @@ interface AcrobaticsDialogProps {
   rotationType?: 'one' | 'two' | 'series';
   isFirstRotation?: boolean;
   initialSelections?: AcroSelection[];
+  singleSelect?: boolean;
 }
 
 export const AcrobaticsDialog = ({
@@ -68,6 +69,7 @@ export const AcrobaticsDialog = ({
   rotationType = 'one',
   isFirstRotation = true,
   initialSelections,
+  singleSelect = false,
 }: AcrobaticsDialogProps) => {
   const [activeTab, setActiveTab] = useState<AcrobaticsTab>('pre-acrobatic');
   const [searchQuery, setSearchQuery] = useState("");
@@ -113,7 +115,7 @@ export const AcrobaticsDialog = ({
   };
 
   const handleSave = () => {
-    if (selections.length === 0) return;
+    if (selections.length === 0 && !singleSelect) return;
     onSaveSelections(selections);
     resetAll();
     onOpenChange(false);
@@ -128,7 +130,12 @@ export const AcrobaticsDialog = ({
     selections.filter(s => s.kind === 'vertical-rotation' && s.data.id === id).length;
 
   const addPreAcrobatic = (element: PreAcrobaticElement) => {
-    setSelections(prev => [...prev, { kind: 'pre-acrobatic' as const, data: element, uid: nextAcroUid() }]);
+    if (singleSelect) {
+      // In single-select mode, replace the current selection
+      setSelections([{ kind: 'pre-acrobatic' as const, data: element, uid: nextAcroUid() }]);
+    } else {
+      setSelections(prev => [...prev, { kind: 'pre-acrobatic' as const, data: element, uid: nextAcroUid() }]);
+    }
   };
 
   const removePreAcrobatic = (id: string) => {
@@ -140,7 +147,11 @@ export const AcrobaticsDialog = ({
   };
 
   const addVerticalRotation = (rotation: VerticalRotation) => {
-    setSelections(prev => [...prev, { kind: 'vertical-rotation' as const, data: rotation, uid: nextAcroUid() }]);
+    if (singleSelect) {
+      setSelections([{ kind: 'vertical-rotation' as const, data: rotation, uid: nextAcroUid() }]);
+    } else {
+      setSelections(prev => [...prev, { kind: 'vertical-rotation' as const, data: rotation, uid: nextAcroUid() }]);
+    }
   };
 
   const removeVerticalRotation = (id: string) => {
@@ -245,7 +256,7 @@ export const AcrobaticsDialog = ({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Acrobatics</DialogTitle>
+          <DialogTitle>{singleSelect ? 'Select Rotational Element' : 'Acrobatics'}</DialogTitle>
         </DialogHeader>
 
         {/* Tab Buttons */}
@@ -498,8 +509,8 @@ export const AcrobaticsDialog = ({
 
         {/* Save button */}
         <div className="flex justify-end pt-2">
-          <Button onClick={handleSave} disabled={selections.length === 0}>
-            Save ({selections.length})
+          <Button onClick={handleSave} disabled={!singleSelect && selections.length === 0}>
+            {singleSelect ? (selections.length === 0 ? 'Skip' : 'Confirm Selection') : `Save (${selections.length})`}
           </Button>
         </div>
       </DialogContent>
