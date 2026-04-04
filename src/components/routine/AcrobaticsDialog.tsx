@@ -473,12 +473,13 @@ export const AcrobaticsDialog = ({
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <div className="border border-border rounded-lg bg-muted/30 p-3 space-y-2">
               <div className="text-sm font-medium text-foreground">Selected Elements ({selections.length})</div>
-              <SortableContext items={selections.map(s => s.uid)} strategy={horizontalListSortingStrategy}>
-                <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto">
-                  {selections.map((sel) => (
+              <SortableContext items={selections.map(s => s.uid)} strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-1.5 max-h-[150px] overflow-y-auto">
+                  {selections.map((sel, idx) => (
                     <SortableChip
                       key={sel.uid}
                       sel={sel}
+                      index={idx + 1}
                       onRemove={() => setSelections(prev => prev.filter(s => s.uid !== sel.uid))}
                     />
                   ))}
