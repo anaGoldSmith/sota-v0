@@ -578,6 +578,7 @@ export const ApparatusSelectionDialog = ({
       }
     }
     
+    if (isEditMode) editModifiedRef.current = true;
     setSelectedCriteria(newCriteria);
   };
 
