@@ -2762,20 +2762,46 @@ const RoutineCalculator = () => {
                                               <td className="py-2 px-4 text-sm font-medium">Combined DA</td>
                                               <td className="py-2 px-4 text-right font-mono text-sm font-bold">{element.value.toFixed(1)}</td>
                                             </tr>
+                                            {(originalData.combo1?.rotationalElement || originalData.combo2?.rotationalElement) && (
+                                              <tr className="border-b border-border/30">
+                                                <td className="py-2 px-4"><Badge variant="outline" className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-300 text-[10px]">Acro</Badge></td>
+                                                <td className="py-2 px-4"></td>
+                                                <td className="py-2 px-4 text-sm italic">
+                                                  {(() => {
+                                                    const rot = originalData.combo1?.rotationalElement || originalData.combo2?.rotationalElement;
+                                                    return `${rot.kind === 'pre-acrobatic' ? 'Pre-acrobatic: ' : 'Vertical Rotation: '}${rot.name}`;
+                                                  })()}
+                                                </td>
+                                                <td className="py-2 px-4 text-right font-mono text-sm">—</td>
+                                              </tr>
+                                            )}
                                           </>
                                         ) : (
-                                          <tr className="border-b border-border/30 last:border-b-0">
-                                            <td className="py-2 px-4"><Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 text-[10px]">DA</Badge></td>
-                                            <td className="py-2 px-4">
-                                              <div className="flex items-center gap-1">
-                                                {element.symbolImages.map((img, idx) => (
-                                                  <img key={idx} src={img} className="h-6 w-6 object-contain" alt="" />
-                                                ))}
-                                              </div>
-                                            </td>
-                                            <td className="py-2 px-4 text-sm">{originalData?.element?.name || originalData?.element?.description || 'Apparatus Difficulty'}</td>
-                                            <td className="py-2 px-4 text-right font-mono text-sm font-bold">{element.value.toFixed(1)}</td>
-                                          </tr>
+                                          <>
+                                            <tr className="border-b border-border/30">
+                                              <td className="py-2 px-4"><Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 text-[10px]">DA</Badge></td>
+                                              <td className="py-2 px-4">
+                                                <div className="flex items-center gap-1">
+                                                  {element.symbolImages.map((img, idx) => (
+                                                    <img key={idx} src={img} className="h-6 w-6 object-contain" alt="" />
+                                                  ))}
+                                                </div>
+                                              </td>
+                                              <td className="py-2 px-4 text-sm">{originalData?.element?.name || originalData?.element?.description || 'Apparatus Difficulty'}</td>
+                                              <td className="py-2 px-4 text-right font-mono text-sm font-bold">{element.value.toFixed(1)}</td>
+                                            </tr>
+                                            {originalData?.rotationalElement && (
+                                              <tr className="border-b border-border/30">
+                                                <td className="py-2 px-4"><Badge variant="outline" className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-300 text-[10px]">Acro</Badge></td>
+                                                <td className="py-2 px-4"></td>
+                                                <td className="py-2 px-4 text-sm italic">
+                                                  {originalData.rotationalElement.kind === 'pre-acrobatic' ? 'Pre-acrobatic: ' : 'Vertical Rotation: '}
+                                                  {originalData.rotationalElement.name}
+                                                </td>
+                                                <td className="py-2 px-4 text-right font-mono text-sm">—</td>
+                                              </tr>
+                                            )}
+                                          </>
                                         )}
                                         {/* Adjustments */}
                                         {element.adjustments?.map((adj) => (
