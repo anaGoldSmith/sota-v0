@@ -2140,18 +2140,37 @@ const RoutineCalculator = () => {
                       </TooltipProvider>
                     </div>
 
-                    <Button 
-                      variant="outline"
-                      className={`h-16 text-base ${elementsEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
-                      disabled={!elementsEnabled}
-                      onClick={() => {
-                        if (elementsEnabled) {
-                          setPreAcrobaticDialogOpen(true);
-                        }
-                      }}
-                    >
-                      <span className="text-lg font-semibold mr-2">+</span> Acrobatics
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="outline"
+                          className={`h-16 text-base w-full ${elementsEnabled ? 'hover:scale-[1.02] transition-transform' : 'opacity-50 cursor-not-allowed'}`}
+                          disabled={!elementsEnabled}
+                        >
+                          <span className="text-lg font-semibold mr-2">+</span> Acrobatics
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-[300px] bg-background z-50" align="start">
+                        <DropdownMenuItem 
+                          className="h-14 text-lg cursor-pointer"
+                          onClick={() => setPreAcrobaticDialogOpen(true)}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <span>Pre-acrobatic Elements</span>
+                            <span className="text-sm">+ Add</span>
+                          </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="h-14 text-lg cursor-pointer"
+                          onClick={() => setVerticalRotationDialogOpen(true)}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <span>Vertical Rotations</span>
+                            <span className="text-sm">+ Add</span>
+                          </div>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
 
                     <Button 
                       variant="outline"
