@@ -2762,6 +2762,19 @@ const RoutineCalculator = () => {
                                               <td className="py-2 px-4 text-sm font-medium">Combined DA</td>
                                               <td className="py-2 px-4 text-right font-mono text-sm font-bold">{element.value.toFixed(1)}</td>
                                             </tr>
+                                            {(originalData.combo1?.rotationalElement || originalData.combo2?.rotationalElement) && (
+                                              <tr className="border-b border-border/30">
+                                                <td className="py-2 px-4"><Badge variant="outline" className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-300 text-[10px]">Acro</Badge></td>
+                                                <td className="py-2 px-4"></td>
+                                                <td className="py-2 px-4 text-sm italic">
+                                                  {(() => {
+                                                    const rot = originalData.combo1?.rotationalElement || originalData.combo2?.rotationalElement;
+                                                    return `${rot.kind === 'pre-acrobatic' ? 'Pre-acrobatic: ' : 'Vertical Rotation: '}${rot.name}`;
+                                                  })()}
+                                                </td>
+                                                <td className="py-2 px-4 text-right font-mono text-sm">—</td>
+                                              </tr>
+                                            )}
                                           </>
                                         ) : (
                                           <>
