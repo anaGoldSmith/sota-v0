@@ -44,6 +44,8 @@ export const ApparatusSelectionDialog = ({
   onSelectCombinations,
   isForDbElement = false,
   onGoBackToApparatusHandling,
+  preAcrobaticElements = [],
+  verticalRotations = [],
 }: ApparatusSelectionDialogProps) => {
   const { apparatusData, criteria, specialCodes, specialCodeElements, daComments, isLoading, error } = useApparatusData(apparatus);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -51,9 +53,14 @@ export const ApparatusSelectionDialog = ({
   const [completedDaGroups, setCompletedDaGroups] = useState<{ cells: SelectedCriterion[]; color: string }[]>([]);
   const [availableSlot, setAvailableSlot] = useState<number | null>(null);
   const [stagedDAs, setStagedDAs] = useState<ApparatusCombination[]>([]);
-  const [daCount, setDaCount] = useState(0); // Track actual number of DAs created (not combinations)
+  const [daCount, setDaCount] = useState(0);
   const { toast } = useToast();
   const dialogContentRef = useRef<HTMLDivElement>(null);
+
+  // Cr7R rotational element prompt state
+  const [showCr7RPrompt, setShowCr7RPrompt] = useState(false);
+  const [pendingCr7RCombinations, setPendingCr7RCombinations] = useState<ApparatusCombination[]>([]);
+  const [showAcroPickerForDA, setShowAcroPickerForDA] = useState(false);
 
   // Reset state when dialog opens/closes
   useEffect(() => {
