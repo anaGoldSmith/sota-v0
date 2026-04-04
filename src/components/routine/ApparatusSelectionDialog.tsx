@@ -745,8 +745,8 @@ export const ApparatusSelectionDialog = ({
             // In edit mode, don't auto-finalize — stage for user confirmation
             const hasCr7R = newCombinations.some(c => c.selectedCriteria.includes('Cr7R'));
             if (hasCr7R && (preAcrobaticElements.length > 0 || verticalRotations.length > 0)) {
-              // If we already have a rotational element from previous edit state, carry it forward
-              const existingRot = editRotationalElement || editingDA?.rotationalElement;
+              // If Cr7R was removed and re-added, always ask fresh
+              const existingRot = cr7rWasRemovedRef.current ? null : (editRotationalElement || editingDA?.rotationalElement);
               if (existingRot) {
                 const enriched = newCombinations.map(c => ({ ...c, rotationalElement: existingRot }));
                 setPendingEditCombinations(enriched);
