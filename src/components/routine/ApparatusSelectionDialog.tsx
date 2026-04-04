@@ -75,6 +75,7 @@ export const ApparatusSelectionDialog = ({
   const [showCr7RPrompt, setShowCr7RPrompt] = useState(false);
   const [pendingCr7RCombinations, setPendingCr7RCombinations] = useState<ApparatusCombination[]>([]);
   const [showAcroPickerForDA, setShowAcroPickerForDA] = useState(false);
+  const [pendingEditCombinations, setPendingEditCombinations] = useState<ApparatusCombination[] | null>(null);
 
   // Reset state when dialog opens/closes
   const editInitializedRef = useRef(false);
