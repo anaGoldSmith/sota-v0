@@ -1997,7 +1997,7 @@ const RoutineCalculator = () => {
               
               return (
                 <div className="grid grid-cols-2 gap-3">
-                  {/* Column 1: Apparatus Difficulty + Dynamic Element */}
+                  {/* Column 1: Apparatus Difficulty + Dynamic Element + Elements */}
                   <div className="flex flex-col gap-3">
                     <Button 
                       variant="outline"
@@ -2027,10 +2027,7 @@ const RoutineCalculator = () => {
                     >
                       <span className="text-lg font-semibold mr-2">+</span> Dynamic Element (R)
                     </Button>
-                  </div>
 
-                  {/* Column 2: Elements + Dance Steps + Acrobatics */}
-                  <div className="flex flex-col gap-3">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button 
@@ -2080,7 +2077,10 @@ const RoutineCalculator = () => {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                  </div>
 
+                  {/* Column 2: Dance Steps + Acrobatics */}
+                  <div className="flex flex-col gap-3">
                     <div className="relative">
                       <Button 
                         variant="outline"
@@ -2132,7 +2132,6 @@ const RoutineCalculator = () => {
                       <span className="text-lg font-semibold mr-2">+</span> Acrobatics
                     </Button>
                   </div>
-                </div>
               );
             })()}
           </div>}
