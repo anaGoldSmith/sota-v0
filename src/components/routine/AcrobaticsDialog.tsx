@@ -430,6 +430,36 @@ export const AcrobaticsDialog = ({
           </div>
         </div>
 
+        {/* Selected elements summary */}
+        {selections.length > 0 && (
+          <div className="border border-border rounded-lg bg-muted/30 p-3 space-y-2">
+            <div className="text-sm font-medium text-foreground">Selected Elements ({selections.length})</div>
+            <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto">
+              {selections.map((sel, idx) => {
+                const name = sel.kind === 'pre-acrobatic' ? sel.data.name : (sel.data.name || sel.data.code);
+                const kindLabel = sel.kind === 'pre-acrobatic' ? 'PA' : 'VR';
+                return (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center gap-1 bg-primary/10 border border-primary/20 text-foreground rounded-full px-3 py-1 text-sm"
+                  >
+                    <span className="text-xs font-semibold text-muted-foreground">{kindLabel}</span>
+                    {name}
+                    <button
+                      className="ml-1 text-muted-foreground hover:text-destructive"
+                      onClick={() => {
+                        setSelections(prev => [...prev.slice(0, idx), ...prev.slice(idx + 1)]);
+                      }}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Save button */}
         <div className="flex justify-end pt-2">
           <Button onClick={handleSave} disabled={selections.length === 0}>
