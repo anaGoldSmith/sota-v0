@@ -256,7 +256,7 @@ export const AcrobaticsDialog = ({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Acrobatics</DialogTitle>
+          <DialogTitle>{singleSelect ? 'Select Rotational Element' : 'Acrobatics'}</DialogTitle>
         </DialogHeader>
 
         {/* Tab Buttons */}
