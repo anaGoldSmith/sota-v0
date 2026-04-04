@@ -115,7 +115,7 @@ export const AcrobaticsDialog = ({
   };
 
   const handleSave = () => {
-    if (selections.length === 0) return;
+    if (selections.length === 0 && !singleSelect) return;
     onSaveSelections(selections);
     resetAll();
     onOpenChange(false);
