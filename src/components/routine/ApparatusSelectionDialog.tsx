@@ -268,8 +268,15 @@ export const ApparatusSelectionDialog = ({
         data: sel.data,
       };
       
-      // If editing a DA with rotation, just update the rotational element state
-      if (isEditWithRotation) {
+      // If editing a DA with rotation, update both the state and pending combinations
+      if (isEditMode && pendingEditCombinations) {
+        const updated = pendingEditCombinations.map(c => ({ ...c, rotationalElement }));
+        setPendingEditCombinations(updated);
+        setEditRotationalElement(rotationalElement);
+        setShowAcroPickerForDA(false);
+        return;
+      }
+      if (isEditMode && isEditWithRotation) {
         setEditRotationalElement(rotationalElement);
         setShowAcroPickerForDA(false);
         return;
