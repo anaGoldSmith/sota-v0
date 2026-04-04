@@ -1,30 +1,25 @@
 
 
-## Problem
+## Fix Type 2 DA Breakdown Values
 
-The "Routine Elements" column currently displays all acrobatic element names joined by " + " in a single string. With many elements, this creates an excessively long row that breaks the layout (as shown in the screenshot).
+**What changes**: In the routine calculator's DA breakdown table, for Type 2 (paired) DAs, update the Value column so each base row shows its individual contribution instead of the total DA value on both rows.
 
-## Approach: Truncate with count indicator
+### Current behavior
+- Base 1 row: shows total DA value (e.g., 0.4)
+- Base 2 row: shows total DA value (e.g., 0.4)
+- Total row: shows total DA value (e.g., 0.4)
 
-Display at most **2 element names** in the main row, followed by a "+N more" indicator if there are additional elements. The full list is already available in the expandable dropdown.
+### New behavior
+- Base 1 row (higher-value base): shows its base value (e.g., 0.3)
+- Base 2 row (lower-value base): shows the extra bonus (0.1)
+- Total row: shows total DA value (unchanged)
 
-**Example outputs:**
-- 1 element: `Chaine`
-- 2 elements: `Chaine + Walkover forward`
-- 3 elements: `Chaine + Walkover forward (+1 more)`
-- 5 elements: `Chaine + Walkover forward (+3 more)`
+### Technical details
 
-This keeps the row compact while still giving context about what's in it. The user can expand the row to see the full breakdown.
+**File**: `src/pages/RoutineCalculator.tsx` (lines ~2800-2857)
 
-## Technical changes
-
-**Single file: `src/pages/RoutineCalculator.tsx`**
-
-1. **Line ~476** — Replace the direct `element.dbData?.name` render for Acro type with truncation logic:
-   - Parse `acroDetails` from `originalData` to get element names
-   - Show first 2 names joined by " + "
-   - If more than 2, append a muted "(+N more)" text
-   - Fall back to `element.dbData?.name` if no `acroDetails` available
-
-No changes needed to the data model — `acroDetails` and full `combinedName` are still stored as-is for the dropdown breakdown and edit flow.
+1. Determine which combo has the higher base value and display them in order (higher first as Base 1).
+2. **Base 1 value**: `Math.max(combo1.element.value, combo2.element.value)` 
+3. **Base 2 value**: `0.1` (the fixed extra bonus)
+4. Swap combo1/combo2 display order if combo2 has the higher value, so Base 1 always shows the dominant element.
 
