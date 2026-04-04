@@ -450,32 +450,23 @@ export const AcrobaticsDialog = ({
 
         {/* Selected elements summary */}
         {selections.length > 0 && (
-          <div className="border border-border rounded-lg bg-muted/30 p-3 space-y-2">
-            <div className="text-sm font-medium text-foreground">Selected Elements ({selections.length})</div>
-            <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto">
-              {selections.map((sel, idx) => {
-                const name = sel.kind === 'pre-acrobatic' ? sel.data.name : (sel.data.name || sel.data.code);
-                const kindLabel = sel.kind === 'pre-acrobatic' ? 'PA' : 'VR';
-                return (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center gap-1 bg-primary/10 border border-primary/20 text-foreground rounded-full px-3 py-1 text-sm"
-                  >
-                    <span className="text-xs font-semibold text-muted-foreground">{kindLabel}</span>
-                    {name}
-                    <button
-                      className="ml-1 text-muted-foreground hover:text-destructive"
-                      onClick={() => {
-                        setSelections(prev => [...prev.slice(0, idx), ...prev.slice(idx + 1)]);
-                      }}
-                    >
-                      <Minus className="h-3 w-3" />
-                    </button>
-                  </span>
-                );
-              })}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <div className="border border-border rounded-lg bg-muted/30 p-3 space-y-2">
+              <div className="text-sm font-medium text-foreground">Selected Elements ({selections.length})</div>
+              <SortableContext items={selections.map((_, i) => `sel-${i}`)} strategy={horizontalListSortingStrategy}>
+                <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto">
+                  {selections.map((sel, idx) => (
+                    <SortableChip
+                      key={`sel-${idx}`}
+                      sel={sel}
+                      idx={idx}
+                      onRemove={() => setSelections(prev => [...prev.slice(0, idx), ...prev.slice(idx + 1)])}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
             </div>
-          </div>
+          </DndContext>
         )}
 
         {/* Save button */}
