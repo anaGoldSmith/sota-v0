@@ -56,6 +56,7 @@ interface AcrobaticsDialogProps {
   onSaveSelections: (selections: AcroSelection[]) => void;
   rotationType?: 'one' | 'two' | 'series';
   isFirstRotation?: boolean;
+  initialSelections?: AcroSelection[];
 }
 
 export const AcrobaticsDialog = ({
