@@ -554,33 +554,18 @@ export const ApparatusSelectionDialog = ({
         }
         
         if (newCombinations.length > 0) {
-          // Add to staged DAs
-          setStagedDAs(prev => [...prev, ...newCombinations]);
-          setDaCount(prev => prev + 1); // Increment DA count by 1 (regardless of how many combinations)
+          // Check if any criterion in this DA is Cr7R (rotation)
+          const hasCr7R = newCombinations.some(c => c.selectedCriteria.includes('Cr7R'));
           
-          // Clear the table for next DA
-          setSelectedCriteria([]);
-          setCompletedDaGroups([]);
-          
-          // If this is for a DB element, automatically submit the DA and close dialog
-          if (isForDbElement && onSelectCombinations) {
-            // Automatically submit this single DA for the DB element
-            onSelectCombinations(newCombinations);
-            // Reset state
-            setStagedDAs([]);
-            setDaCount(0);
-            setSelectedIds([]);
-            setAvailableSlot(null);
+          if (hasCr7R && (preAcrobaticElements.length > 0 || verticalRotations.length > 0)) {
+            // Pause and ask the user if they want to specify a rotational element
+            setPendingCr7RCombinations(newCombinations);
             setSelectedCriteria([]);
             setCompletedDaGroups([]);
-            // Close the dialog immediately
-            onOpenChange(false);
+            setShowCr7RPrompt(true);
           } else {
-            // Show success toast for normal flow
-            toast({
-              title: "Valid DA was created",
-              description: "Continue selecting to create more DAs or click 'Add DAs' to finish.",
-            });
+            // Normal flow - stage the DA immediately
+            finalizeDACombinations(newCombinations);
           }
         }
       } else {
