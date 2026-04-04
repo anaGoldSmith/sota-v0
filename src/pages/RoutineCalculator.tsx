@@ -2789,7 +2789,7 @@ const RoutineCalculator = () => {
                                     <table className="w-full">
                                       <thead className="bg-white dark:bg-background">
                                         <tr>
-                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground w-16">Type</th>
+                                          <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground w-20">Type</th>
                                           <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Symbol</th>
                                           <th className="py-2 px-4 text-left text-sm font-semibold text-muted-foreground">Name</th>
                                           <th className="py-2 px-4 text-right text-sm font-semibold text-muted-foreground">Value</th>
