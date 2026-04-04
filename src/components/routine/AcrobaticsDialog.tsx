@@ -81,9 +81,13 @@ export const AcrobaticsDialog = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = parseInt(String(active.id).replace('sel-', ''));
-    const newIndex = parseInt(String(over.id).replace('sel-', ''));
-    setSelections(prev => arrayMove(prev, oldIndex, newIndex));
+    setSelections(prev => {
+      const oldIndex = prev.findIndex(s => s.uid === active.id);
+      const newIndex = prev.findIndex(s => s.uid === over.id);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      return arrayMove(prev, oldIndex, newIndex);
+    });
+  };
   };
 
   const resetAll = () => {
