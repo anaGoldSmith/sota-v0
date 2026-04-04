@@ -1963,7 +1963,12 @@ const RoutineCalculator = () => {
                   <SelectValue placeholder="Select rulebook" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fig-cop-2025-2028">FIG CoP 2025-2028</SelectItem>
+                  <SelectGroup>
+                    <SelectLabel>FIG CoP 2025-2028</SelectLabel>
+                    <SelectItem value="fig-cop-2025-2028-individual">Individual</SelectItem>
+                    <SelectItem value="fig-cop-2025-2028-group">Group</SelectItem>
+                  </SelectGroup>
+                  <SelectSeparator />
                   <SelectItem value="sky-grace" disabled className="opacity-40 cursor-not-allowed">Sky Grace (coming soon)</SelectItem>
                   <SelectItem value="other" disabled className="opacity-40 cursor-not-allowed">Other (coming soon)</SelectItem>
                 </SelectContent>
