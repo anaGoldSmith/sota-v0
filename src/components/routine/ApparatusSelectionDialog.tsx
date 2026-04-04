@@ -605,6 +605,12 @@ export const ApparatusSelectionDialog = ({
       );
       
       if (removed) {
+        // If Cr7R was removed in edit mode, clear the rotational element
+        if (isEditMode && removed.criterionCode === 'Cr7R') {
+          cr7rWasRemovedRef.current = true;
+          setEditRotationalElement(null);
+        }
+        
         // Check if this cell belongs to a completed DA
         const affectedDaIndex = completedDaGroups.findIndex(group =>
           group.cells.some(cell => cell.rowId === removed.rowId && cell.criterionCode === removed.criterionCode)
