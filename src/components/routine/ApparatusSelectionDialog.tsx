@@ -744,6 +744,7 @@ export const ApparatusSelectionDialog = ({
                 setPendingEditCombinations(enriched);
               } else {
                 setPendingCr7RCombinations(newCombinations);
+                cr7rHandledRef.current = false;
                 setShowCr7RPrompt(true);
               }
             } else {
