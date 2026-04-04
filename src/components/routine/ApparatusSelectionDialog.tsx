@@ -56,6 +56,7 @@ export const ApparatusSelectionDialog = ({
   const [daCount, setDaCount] = useState(0);
   const { toast } = useToast();
   const dialogContentRef = useRef<HTMLDivElement>(null);
+  const acroSaveHandledRef = useRef(false);
 
   // Cr7R rotational element prompt state
   const [showCr7RPrompt, setShowCr7RPrompt] = useState(false);
@@ -171,6 +172,7 @@ export const ApparatusSelectionDialog = ({
   // Cr7R prompt handlers
   const handleCr7RYes = () => {
     setShowCr7RPrompt(false);
+    acroSaveHandledRef.current = false;
     setShowAcroPickerForDA(true);
   };
 
@@ -181,6 +183,7 @@ export const ApparatusSelectionDialog = ({
   };
 
   const handleAcroPickerSave = (selections: AcroSelection[]) => {
+    acroSaveHandledRef.current = true;
     if (selections.length > 0) {
       const sel = selections[0];
       const rotationalElement = {
@@ -841,11 +844,12 @@ export const ApparatusSelectionDialog = ({
       open={showAcroPickerForDA}
       onOpenChange={(open) => {
         if (!open && showAcroPickerForDA) {
-          // Only finalize if not already handled by onSaveSelections
-          if (pendingCr7RCombinations.length > 0) {
+          // Only finalize if save callback didn't already handle it
+          if (!acroSaveHandledRef.current && pendingCr7RCombinations.length > 0) {
             finalizeDACombinations(pendingCr7RCombinations);
             setPendingCr7RCombinations([]);
           }
+          acroSaveHandledRef.current = false;
           setShowAcroPickerForDA(false);
         }
       }}
