@@ -1557,7 +1557,26 @@ const RoutineCalculator = () => {
     }
   };
 
-  // Handle modifying a DB/DA/TE element
+  // Handle modifying an Acro element
+  const handleModifyAcro = (elementId: string) => {
+    const element = routineElements.find(el => el.id === elementId);
+    if (!element || element.type !== 'Acro') return;
+    const acroDetails = (element.originalData as any)?.acroDetails as Array<{ kind: string; name: string }> | undefined;
+    if (!acroDetails) return;
+    const restored: AcroSelection[] = acroDetails.map(d => {
+      if (d.kind === 'pre-acrobatic') {
+        const found = preAcrobaticElements.find(e => e.name === d.name);
+        return { kind: 'pre-acrobatic' as const, data: found || { id: `restored-${Date.now()}-${Math.random()}`, group_code: 'CUSTOM', group_name: 'Custom', name: d.name, level_change: false, two_bases_series: true, isCustom: true }, uid: '' };
+      } else {
+        const found = verticalRotations.find(r => (r.name || r.code) === d.name);
+        return { kind: 'vertical-rotation' as const, data: found || { id: `restored-${Date.now()}-${Math.random()}`, group: null, group_name: null, db: null, code: 'CUSTOM', name: d.name, description: null }, uid: '' };
+      }
+    });
+    setEditingAcroElementId(elementId);
+    setEditingAcroSelections(restored);
+    setAcrobaticsDialogOpen(true);
+  };
+
   const handleModifyElement = (elementId: string) => {
     const element = routineElements.find(el => el.id === elementId);
     if (!element || (element.type !== 'DB' && element.type !== 'DB/DA' && element.type !== 'DB/TE' && element.type !== 'DB/TE/DA')) return;
