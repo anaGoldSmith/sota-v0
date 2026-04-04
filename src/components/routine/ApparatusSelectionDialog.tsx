@@ -586,6 +586,9 @@ export const ApparatusSelectionDialog = ({
   useEffect(() => {
     if (selectedCriteria.length !== 2) return;
     
+    // In edit mode, don't auto-validate until the user has actually changed something
+    if (isEditMode && !editModifiedRef.current) return;
+    
     // Check if we've reached the limit of 15 staged DAs (skip in edit mode)
     if (!isEditMode && daCount >= 15) {
       setSelectedCriteria(prev => prev.slice(0, -1));
