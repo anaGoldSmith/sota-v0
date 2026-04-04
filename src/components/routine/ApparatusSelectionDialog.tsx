@@ -637,6 +637,7 @@ export const ApparatusSelectionDialog = ({
   }, [selectedCriteria, apparatusData, specialCodes, apparatus, toast, isForDbElement, daCount, onSelectCombinations]);
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] max-h-[90vh] flex flex-col p-0">
         <div ref={dialogContentRef} className="flex flex-col overflow-y-auto p-6">
