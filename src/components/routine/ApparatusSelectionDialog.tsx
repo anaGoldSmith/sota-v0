@@ -24,6 +24,15 @@ export interface ApparatusCombination {
   };
 }
 
+export interface EditingDAData {
+  elementId: string; // routine element id
+  rowId: string; // apparatus data row id (element.id from CombinedApparatusData)
+  selectedCriteria: string[]; // criterion codes e.g. ['Cr1V', 'Cr3L']
+  isPaired: boolean;
+  pairedRowId?: string; // second row id for type2 DAs
+  rotationalElement?: ApparatusCombination['rotationalElement'];
+}
+
 interface ApparatusSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -34,6 +43,8 @@ interface ApparatusSelectionDialogProps {
   onGoBackToApparatusHandling?: () => void; // Callback to go back to Apparatus Handling dialog
   preAcrobaticElements?: PreAcrobaticElement[];
   verticalRotations?: VerticalRotation[];
+  editingDA?: EditingDAData | null;
+  onConfirmEditDA?: (elementId: string, combinations: ApparatusCombination[]) => void;
 }
 
 export const ApparatusSelectionDialog = ({
@@ -46,6 +57,8 @@ export const ApparatusSelectionDialog = ({
   onGoBackToApparatusHandling,
   preAcrobaticElements = [],
   verticalRotations = [],
+  editingDA = null,
+  onConfirmEditDA,
 }: ApparatusSelectionDialogProps) => {
   const { apparatusData, criteria, specialCodes, specialCodeElements, daComments, isLoading, error } = useApparatusData(apparatus);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
