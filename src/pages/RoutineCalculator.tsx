@@ -3477,42 +3477,24 @@ const RoutineCalculator = () => {
         preAcrobaticElements={preAcrobaticElements}
         verticalRotations={verticalRotations}
         onSaveSelections={(selections) => {
-          const newElements: RoutineElement[] = selections.map((sel, i) => {
-            if (sel.kind === 'pre-acrobatic') {
-              return {
-                id: `preacro-${Date.now()}-${i}`,
-                type: 'Acro' as const,
-                symbolImages: [],
-                value: 0,
-                originalData: {} as any,
-                dbData: {
-                  symbolImages: [],
-                  value: 0,
-                  name: sel.data.name,
-                  code: sel.data.group_code,
-                  elementType: undefined,
-                },
-              };
-            } else {
-              return {
-                id: `vertrot-${Date.now()}-${i}`,
-                type: 'Acro' as const,
-                symbolImages: [],
-                value: 0,
-                originalData: {} as any,
-                dbData: {
-                  symbolImages: [],
-                  value: 0,
-                  name: sel.data.name || sel.data.code,
-                  code: sel.data.code,
-                  elementType: undefined,
-                },
-              };
-            }
-          });
-          setRoutineElements(prev => [...prev, ...newElements]);
-          const names = selections.map(s => s.kind === 'pre-acrobatic' ? s.data.name : (s.data.name || s.data.code)).join(', ');
-          toast({ title: "Acrobatics Added", description: `Added: ${names}` });
+          const names = selections.map(s => s.kind === 'pre-acrobatic' ? s.data.name : (s.data.name || s.data.code));
+          const combinedName = names.join(' + ');
+          const newElement: RoutineElement = {
+            id: `acro-${Date.now()}`,
+            type: 'Acro' as const,
+            symbolImages: [],
+            value: 0,
+            originalData: {} as any,
+            dbData: {
+              symbolImages: [],
+              value: 0,
+              name: combinedName,
+              code: 'ACRO',
+              elementType: undefined,
+            },
+          };
+          setRoutineElements(prev => [...prev, newElement]);
+          toast({ title: "Acrobatics Added", description: combinedName });
         }}
         rotationType="one"
         isFirstRotation={true}
