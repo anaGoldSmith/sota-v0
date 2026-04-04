@@ -2137,7 +2137,7 @@ const RoutineCalculator = () => {
                       className={`h-16 text-base ${elementsEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
                       disabled={!elementsEnabled}
                     >
-                      <span className="text-lg font-semibold mr-2">⭐</span> Favourites
+                      <span className="text-lg font-semibold mr-2">+</span> Favourites
                     </Button>
                   </div>
                 </div>
