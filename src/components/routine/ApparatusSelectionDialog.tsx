@@ -75,6 +75,7 @@ export const ApparatusSelectionDialog = ({
   const [showCr7RPrompt, setShowCr7RPrompt] = useState(false);
   const [pendingCr7RCombinations, setPendingCr7RCombinations] = useState<ApparatusCombination[]>([]);
   const [showAcroPickerForDA, setShowAcroPickerForDA] = useState(false);
+  const [pendingEditCombinations, setPendingEditCombinations] = useState<ApparatusCombination[] | null>(null);
 
   // Reset state when dialog opens/closes
   const editInitializedRef = useRef(false);
@@ -196,6 +197,7 @@ export const ApparatusSelectionDialog = ({
     setAvailableSlot(null);
     setStagedDAs([]);
     setDaCount(0);
+    setPendingEditCombinations(null);
     onOpenChange(false);
   };
 
@@ -239,7 +241,11 @@ export const ApparatusSelectionDialog = ({
 
   const handleCr7RNo = () => {
     setShowCr7RPrompt(false);
-    finalizeDACombinations(pendingCr7RCombinations);
+    if (isEditMode) {
+      setPendingEditCombinations(pendingCr7RCombinations);
+    } else {
+      finalizeDACombinations(pendingCr7RCombinations);
+    }
     setPendingCr7RCombinations([]);
   };
 
@@ -253,9 +259,17 @@ export const ApparatusSelectionDialog = ({
         data: sel.data,
       };
       const enriched = pendingCr7RCombinations.map(c => ({ ...c, rotationalElement }));
-      finalizeDACombinations(enriched);
+      if (isEditMode) {
+        setPendingEditCombinations(enriched);
+      } else {
+        finalizeDACombinations(enriched);
+      }
     } else {
-      finalizeDACombinations(pendingCr7RCombinations);
+      if (isEditMode) {
+        setPendingEditCombinations(pendingCr7RCombinations);
+      } else {
+        finalizeDACombinations(pendingCr7RCombinations);
+      }
     }
     setPendingCr7RCombinations([]);
     setShowAcroPickerForDA(false);
@@ -684,18 +698,32 @@ export const ApparatusSelectionDialog = ({
         }
         
         if (newCombinations.length > 0) {
-          // Check if any criterion in this DA is Cr7R (rotation)
-          const hasCr7R = newCombinations.some(c => c.selectedCriteria.includes('Cr7R'));
-          
-          if (hasCr7R && (preAcrobaticElements.length > 0 || verticalRotations.length > 0)) {
-            // Pause and ask the user if they want to specify a rotational element
-            setPendingCr7RCombinations(newCombinations);
-            setSelectedCriteria([]);
-            setCompletedDaGroups([]);
-            setShowCr7RPrompt(true);
+          if (isEditMode) {
+            // In edit mode, don't auto-finalize — stage for user confirmation
+            // Check for Cr7R first
+            const hasCr7R = newCombinations.some(c => c.selectedCriteria.includes('Cr7R'));
+            if (hasCr7R && (preAcrobaticElements.length > 0 || verticalRotations.length > 0)) {
+              setPendingCr7RCombinations(newCombinations);
+              setShowCr7RPrompt(true);
+            } else {
+              setPendingEditCombinations(newCombinations);
+            }
+            // Lock the new selection as a completed group
+            setCompletedDaGroups([{ cells: [a, b], color: DA_COLORS[availableSlot ?? 0] }]);
           } else {
-            // Normal flow - stage the DA immediately
-            finalizeDACombinations(newCombinations);
+            // Check if any criterion in this DA is Cr7R (rotation)
+            const hasCr7R = newCombinations.some(c => c.selectedCriteria.includes('Cr7R'));
+            
+            if (hasCr7R && (preAcrobaticElements.length > 0 || verticalRotations.length > 0)) {
+              // Pause and ask the user if they want to specify a rotational element
+              setPendingCr7RCombinations(newCombinations);
+              setSelectedCriteria([]);
+              setCompletedDaGroups([]);
+              setShowCr7RPrompt(true);
+            } else {
+              // Normal flow - stage the DA immediately
+              finalizeDACombinations(newCombinations);
+            }
           }
         }
       } else {
@@ -880,6 +908,18 @@ export const ApparatusSelectionDialog = ({
                   <Button variant="outline" onClick={handleCancel}>
                     Cancel
                   </Button>
+                  <Button 
+                    disabled={!pendingEditCombinations}
+                    onClick={() => {
+                      if (pendingEditCombinations && onConfirmEditDA && editingDA) {
+                        onConfirmEditDA(editingDA.elementId, pendingEditCombinations);
+                        setPendingEditCombinations(null);
+                        onOpenChange(false);
+                      }
+                    }}
+                  >
+                    Confirm
+                  </Button>
                 </>
               ) : isForDbElement ? (
                 <Button 
@@ -931,7 +971,11 @@ export const ApparatusSelectionDialog = ({
         if (!open && showAcroPickerForDA) {
           // Only finalize if save callback didn't already handle it
           if (!acroSaveHandledRef.current && pendingCr7RCombinations.length > 0) {
-            finalizeDACombinations(pendingCr7RCombinations);
+            if (isEditMode) {
+              setPendingEditCombinations(pendingCr7RCombinations);
+            } else {
+              finalizeDACombinations(pendingCr7RCombinations);
+            }
             setPendingCr7RCombinations([]);
           }
           acroSaveHandledRef.current = false;
