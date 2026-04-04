@@ -132,7 +132,7 @@ export const AcrobaticsDialog = ({
   };
 
   const addVerticalRotation = (rotation: VerticalRotation) => {
-    setSelections(prev => [...prev, { kind: 'vertical-rotation', data: rotation }]);
+    setSelections(prev => [...prev, { kind: 'vertical-rotation' as const, data: rotation, uid: nextAcroUid() }]);
   };
 
   const removeVerticalRotation = (id: string) => {
