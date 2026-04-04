@@ -2798,28 +2798,40 @@ const RoutineCalculator = () => {
                                       <tbody>
                                         {isPaired ? (
                                           <>
-                                            {/* First base element */}
-                                            <tr className="border-b border-border/30">
-                                              <td className="py-2 px-4 whitespace-nowrap"><Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 text-[10px]">Base 1</Badge></td>
-                                              <td className="py-2 px-4">
-                                                {originalData.combo1?.element?.symbol_image && (
-                                                  <img src={getTechnicalElementSymbol(originalData.combo1.element.symbol_image, selectedApparatus!) || ''} className="h-6 w-6 object-contain" alt="" />
-                                                )}
-                                              </td>
-                                              <td className="py-2 px-4 text-sm">{originalData.combo1?.element?.name || originalData.combo1?.element?.description || 'DA Element'}</td>
-                                              <td className="py-2 px-4 text-right font-mono text-sm">{element.value.toFixed(1)}</td>
-                                            </tr>
-                                            {/* Second base element */}
-                                            <tr className="border-b border-border/30">
-                                              <td className="py-2 px-4 whitespace-nowrap"><Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 text-[10px]">Base 2</Badge></td>
-                                              <td className="py-2 px-4">
-                                                {originalData.combo2?.element?.symbol_image && (
-                                                  <img src={getTechnicalElementSymbol(originalData.combo2.element.symbol_image, selectedApparatus!) || ''} className="h-6 w-6 object-contain" alt="" />
-                                                )}
-                                              </td>
-                                              <td className="py-2 px-4 text-sm">{originalData.combo2?.element?.name || originalData.combo2?.element?.description || 'DA Element'}</td>
-                                              <td className="py-2 px-4 text-right font-mono text-sm">{element.value.toFixed(1)}</td>
-                                            </tr>
+                                            {(() => {
+                                              const val1 = originalData.combo1?.element?.value ?? 0;
+                                              const val2 = originalData.combo2?.element?.value ?? 0;
+                                              const isCombo1Dominant = val1 >= val2;
+                                              const dominant = isCombo1Dominant ? originalData.combo1 : originalData.combo2;
+                                              const secondary = isCombo1Dominant ? originalData.combo2 : originalData.combo1;
+                                              const dominantValue = Math.max(val1, val2);
+                                              return (
+                                                <>
+                                                  {/* First base element (higher value) */}
+                                                  <tr className="border-b border-border/30">
+                                                    <td className="py-2 px-4 whitespace-nowrap"><Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 text-[10px]">Base 1</Badge></td>
+                                                    <td className="py-2 px-4">
+                                                      {dominant?.element?.symbol_image && (
+                                                        <img src={getTechnicalElementSymbol(dominant.element.symbol_image, selectedApparatus!) || ''} className="h-6 w-6 object-contain" alt="" />
+                                                      )}
+                                                    </td>
+                                                    <td className="py-2 px-4 text-sm">{dominant?.element?.name || dominant?.element?.description || 'DA Element'}</td>
+                                                    <td className="py-2 px-4 text-right font-mono text-sm">{dominantValue.toFixed(1)}</td>
+                                                  </tr>
+                                                  {/* Second base element (extra 0.1) */}
+                                                  <tr className="border-b border-border/30">
+                                                    <td className="py-2 px-4 whitespace-nowrap"><Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 text-[10px]">Base 2</Badge></td>
+                                                    <td className="py-2 px-4">
+                                                      {secondary?.element?.symbol_image && (
+                                                        <img src={getTechnicalElementSymbol(secondary.element.symbol_image, selectedApparatus!) || ''} className="h-6 w-6 object-contain" alt="" />
+                                                      )}
+                                                    </td>
+                                                    <td className="py-2 px-4 text-sm">{secondary?.element?.name || secondary?.element?.description || 'DA Element'}</td>
+                                                    <td className="py-2 px-4 text-right font-mono text-sm">0.1</td>
+                                                  </tr>
+                                                </>
+                                              );
+                                            })()}
                                             {/* Shared criterion row */}
                                             {originalData.combo1?.selectedCriteria?.map((cr: string, crIdx: number) => {
                                               const rot = cr === 'Cr7R' ? (originalData.combo1?.rotationalElement || originalData.combo2?.rotationalElement) : null;
