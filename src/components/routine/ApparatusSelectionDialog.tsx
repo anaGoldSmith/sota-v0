@@ -720,8 +720,13 @@ export const ApparatusSelectionDialog = ({
         </div>
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-2xl">
-            Select Difficulty of Apparatus for {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'}
+            {isEditMode ? 'Edit' : 'Select'} Difficulty of Apparatus for {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'}
           </DialogTitle>
+          {isEditMode && (
+            <DialogDescription className="text-sm text-muted-foreground">
+              Modify your criteria selection below. The current selection is highlighted. Deselect a criterion and select a new one, then the DA will be validated automatically.
+            </DialogDescription>
+          )}
         </DialogHeader>
 
         {/* General Rules for DA creation */}
