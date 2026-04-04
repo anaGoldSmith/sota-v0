@@ -78,6 +78,7 @@ export const ApparatusSelectionDialog = ({
 
   // Reset state when dialog opens/closes
   const editInitializedRef = useRef(false);
+  const editModifiedRef = useRef(false);
   
   useEffect(() => {
     if (!open) {
@@ -89,7 +90,11 @@ export const ApparatusSelectionDialog = ({
       setStagedDAs([]);
       setDaCount(0);
       editInitializedRef.current = false;
+      editModifiedRef.current = false;
     } else if (open && editingDA && !editInitializedRef.current && apparatusData.length > 0) {
+      // Edit mode: pre-populate with existing DA selection
+      editInitializedRef.current = true;
+      editModifiedRef.current = false;
       // Edit mode: pre-populate with existing DA selection
       editInitializedRef.current = true;
       setSelectedIds([]);
@@ -573,12 +578,16 @@ export const ApparatusSelectionDialog = ({
       }
     }
     
+    if (isEditMode) editModifiedRef.current = true;
     setSelectedCriteria(newCriteria);
   };
 
   // Detect when a valid DA is completed and stage it, or warn about invalid DA
   useEffect(() => {
     if (selectedCriteria.length !== 2) return;
+    
+    // In edit mode, don't auto-validate until the user has actually changed something
+    if (isEditMode && !editModifiedRef.current) return;
     
     // Check if we've reached the limit of 15 staged DAs (skip in edit mode)
     if (!isEditMode && daCount >= 15) {
