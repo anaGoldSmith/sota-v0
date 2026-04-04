@@ -172,6 +172,7 @@ export const ApparatusSelectionDialog = ({
   // Cr7R prompt handlers
   const handleCr7RYes = () => {
     setShowCr7RPrompt(false);
+    acroSaveHandledRef.current = false;
     setShowAcroPickerForDA(true);
   };
 
