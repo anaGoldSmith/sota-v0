@@ -466,7 +466,7 @@ function SortableRow({
           </div>
         </TableCell>
         <TableCell className="w-12 px-2 font-medium">
-          {element.type === 'Steps' ? 'S' : element.type}
+          {element.type === 'Steps' ? 'S' : element.type === 'Acro' ? 'Acro' : element.type}
         </TableCell>
         <TableCell className="px-2">
           {element.type === 'Steps' ? (
