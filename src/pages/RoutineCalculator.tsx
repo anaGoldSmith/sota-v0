@@ -3491,7 +3491,6 @@ const RoutineCalculator = () => {
               name: combinedName,
               code: 'ACRO',
               elementType: undefined,
-              acroSelections: selections,
             },
           };
           setRoutineElements(prev => [...prev, newElement]);
