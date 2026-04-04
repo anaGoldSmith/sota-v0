@@ -3344,13 +3344,18 @@ const RoutineCalculator = () => {
       {/* Apparatus Selection Dialog */}
       <ApparatusSelectionDialog
         open={apparatusDialogOpen}
-        onOpenChange={setApparatusDialogOpen}
+        onOpenChange={(open) => {
+          setApparatusDialogOpen(open);
+          if (!open) setEditingDAData(null);
+        }}
         apparatus={selectedApparatus}
         onSelectElements={handleSelectApparatusElements}
         onSelectCombinations={handleSelectApparatusCombinations}
         isForDbElement={pendingDbElement !== null}
         preAcrobaticElements={preAcrobaticElements}
         verticalRotations={verticalRotations}
+        editingDA={editingDAData}
+        onConfirmEditDA={handleConfirmEditDA}
         onGoBackToApparatusHandling={() => {
           setApparatusDialogOpen(false);
           setShouldReopenApparatusHandling(true);
