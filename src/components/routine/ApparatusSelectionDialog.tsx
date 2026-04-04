@@ -602,6 +602,7 @@ export const ApparatusSelectionDialog = ({
   // Handle cell deselection - unlock DA if any cell from completed DA is deselected
   const handleCriteriaChange = (newCriteria: SelectedCriterion[]) => {
     if (newCriteria.length < selectedCriteria.length) {
+      processedSelectionKeyRef.current = null;
       // User is deselecting - find which cell was removed
       const removed = selectedCriteria.find(sc => 
         !newCriteria.some(nc => nc.rowId === sc.rowId && nc.criterionCode === sc.criterionCode)
@@ -612,6 +613,8 @@ export const ApparatusSelectionDialog = ({
         if (isEditMode && removed.criterionCode === 'Cr7R') {
           cr7rWasRemovedRef.current = true;
           setEditRotationalElement(null);
+          setPendingEditCombinations(null);
+          setPendingCr7RCombinations([]);
         }
         
         // Check if this cell belongs to a completed DA
@@ -657,6 +660,13 @@ export const ApparatusSelectionDialog = ({
     
     // In edit mode, don't auto-validate until the user has actually changed something
     if (isEditMode && !editModifiedRef.current) return;
+
+    const selectionKey = [...selectedCriteria]
+      .map(c => `${c.rowId}:${c.criterionCode}`)
+      .sort()
+      .join('|');
+
+    if (processedSelectionKeyRef.current === selectionKey) return;
     
     // Check if we've reached the limit of 15 staged DAs (skip in edit mode)
     if (!isEditMode && daCount >= 15) {
@@ -706,6 +716,8 @@ export const ApparatusSelectionDialog = ({
       }
       
       if (isValidDA && daType && apparatus) {
+        processedSelectionKeyRef.current = selectionKey;
+
         // Create the DA combination(s)
         const newCombinations: ApparatusCombination[] = [];
         
@@ -748,7 +760,6 @@ export const ApparatusSelectionDialog = ({
             // In edit mode, don't auto-finalize — stage for user confirmation
             const hasCr7R = newCombinations.some(c => c.selectedCriteria.includes('Cr7R'));
             if (hasCr7R && (preAcrobaticElements.length > 0 || verticalRotations.length > 0)) {
-              // If Cr7R was removed and re-added, always ask fresh
               const existingRot = cr7rWasRemovedRef.current ? null : (editRotationalElement || editingDA?.rotationalElement);
               if (existingRot) {
                 const enriched = newCombinations.map(c => ({ ...c, rotationalElement: existingRot }));
@@ -781,6 +792,7 @@ export const ApparatusSelectionDialog = ({
           }
         }
       } else {
+        processedSelectionKeyRef.current = null;
         // Invalid DA - remove the last selected cell and show warning
         setSelectedCriteria(prev => prev.slice(0, -1));
         
@@ -793,7 +805,7 @@ export const ApparatusSelectionDialog = ({
     }, 300);
     
     return () => clearTimeout(timeoutId);
-  }, [selectedCriteria, apparatusData, specialCodes, apparatus, toast, isForDbElement, daCount, onSelectCombinations]);
+  }, [selectedCriteria, apparatusData, specialCodes, apparatus, toast, isForDbElement, daCount, onSelectCombinations, isEditMode, preAcrobaticElements.length, verticalRotations.length, editRotationalElement, editingDA, availableSlot, completedDaGroups.length]);
 
   return (
     <>
