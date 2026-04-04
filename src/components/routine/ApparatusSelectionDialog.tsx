@@ -268,8 +268,15 @@ export const ApparatusSelectionDialog = ({
         data: sel.data,
       };
       
-      // If editing a DA with rotation, just update the rotational element state
-      if (isEditWithRotation) {
+      // If editing a DA with rotation, update both the state and pending combinations
+      if (isEditMode && pendingEditCombinations) {
+        const updated = pendingEditCombinations.map(c => ({ ...c, rotationalElement }));
+        setPendingEditCombinations(updated);
+        setEditRotationalElement(rotationalElement);
+        setShowAcroPickerForDA(false);
+        return;
+      }
+      if (isEditMode && isEditWithRotation) {
         setEditRotationalElement(rotationalElement);
         setShowAcroPickerForDA(false);
         return;
@@ -583,15 +590,6 @@ export const ApparatusSelectionDialog = ({
 
   // Handle cell deselection - unlock DA if any cell from completed DA is deselected
   const handleCriteriaChange = (newCriteria: SelectedCriterion[]) => {
-    // When editing a DA with a rotational element, criteria are locked — only the acro element can be changed
-    if (isEditWithRotation) {
-      toast({
-        title: "Criteria locked",
-        description: "For DAs with rotational elements, you can only change the acrobatic element.",
-        variant: "destructive",
-      });
-      return;
-    }
     if (newCriteria.length < selectedCriteria.length) {
       // User is deselecting - find which cell was removed
       const removed = selectedCriteria.find(sc => 
@@ -731,11 +729,17 @@ export const ApparatusSelectionDialog = ({
         if (newCombinations.length > 0) {
           if (isEditMode) {
             // In edit mode, don't auto-finalize — stage for user confirmation
-            // Check for Cr7R first
             const hasCr7R = newCombinations.some(c => c.selectedCriteria.includes('Cr7R'));
             if (hasCr7R && (preAcrobaticElements.length > 0 || verticalRotations.length > 0)) {
-              setPendingCr7RCombinations(newCombinations);
-              setShowCr7RPrompt(true);
+              // If we already have a rotational element from previous edit state, carry it forward
+              const existingRot = editRotationalElement || editingDA?.rotationalElement;
+              if (existingRot) {
+                const enriched = newCombinations.map(c => ({ ...c, rotationalElement: existingRot }));
+                setPendingEditCombinations(enriched);
+              } else {
+                setPendingCr7RCombinations(newCombinations);
+                setShowCr7RPrompt(true);
+              }
             } else {
               setPendingEditCombinations(newCombinations);
             }
@@ -801,9 +805,8 @@ export const ApparatusSelectionDialog = ({
           </DialogTitle>
           {isEditMode && (
             <DialogDescription className="text-sm text-muted-foreground">
-              {isEditWithRotation 
-                ? 'The criteria are locked. You can change the rotational element using the "Change" button below the table.'
-                : 'Modify your criteria selection below. The current selection is highlighted. Deselect a criterion and select a new one, then the DA will be validated automatically.'}
+              Modify your criteria selection below. The current selection is highlighted. Deselect a criterion and select a new one, then the DA will be validated automatically.
+              {isEditWithRotation && ' You can also change the rotational element using the "Change" button below the table.'}
             </DialogDescription>
           )}
         </DialogHeader>
@@ -936,11 +939,11 @@ export const ApparatusSelectionDialog = ({
             />
 
             {/* Rotational element display for edit mode */}
-            {isEditWithRotation && (
+            {isEditMode && (pendingEditCombinations?.some(c => c.rotationalElement) || (isEditWithRotation && !pendingEditCombinations)) && (
               <div className="flex items-center gap-3 rounded-lg border bg-muted/30 px-4 py-3">
                 <span className="text-sm font-medium text-foreground">Rotational Element:</span>
                 <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-accent text-accent-foreground text-sm font-semibold border border-border">
-                  {(editRotationalElement || editingDA?.rotationalElement)?.name || 'None'}
+                  {(pendingEditCombinations?.[0]?.rotationalElement?.name) || (editRotationalElement || editingDA?.rotationalElement)?.name || 'None'}
                 </span>
                 <Button
                   variant="outline"
@@ -961,41 +964,18 @@ export const ApparatusSelectionDialog = ({
                   <Button variant="outline" onClick={handleCancel}>
                     Cancel
                   </Button>
-                  {isEditWithRotation ? (
-                    <Button 
-                      disabled={!editRotationalElement}
-                      onClick={() => {
-                        if (onConfirmEditDA && editingDA) {
-                          const element = apparatusData.find(e => e.id === editingDA.rowId);
-                          if (element && apparatus) {
-                            const combinations: ApparatusCombination[] = [{
-                              element,
-                              selectedCriteria: editingDA.selectedCriteria,
-                              apparatus,
-                              rotationalElement: editRotationalElement || editingDA.rotationalElement,
-                            }];
-                            onConfirmEditDA(editingDA.elementId, combinations);
-                            onOpenChange(false);
-                          }
-                        }
-                      }}
-                    >
-                      Confirm
-                    </Button>
-                  ) : (
-                    <Button 
-                      disabled={!pendingEditCombinations}
-                      onClick={() => {
-                        if (pendingEditCombinations && onConfirmEditDA && editingDA) {
-                          onConfirmEditDA(editingDA.elementId, pendingEditCombinations);
-                          setPendingEditCombinations(null);
-                          onOpenChange(false);
-                        }
-                      }}
-                    >
-                      Confirm
-                    </Button>
-                  )}
+                  <Button 
+                    disabled={!pendingEditCombinations}
+                    onClick={() => {
+                      if (pendingEditCombinations && onConfirmEditDA && editingDA) {
+                        onConfirmEditDA(editingDA.elementId, pendingEditCombinations);
+                        setPendingEditCombinations(null);
+                        onOpenChange(false);
+                      }
+                    }}
+                  >
+                    Confirm
+                  </Button>
                 </>
               ) : isForDbElement ? (
                 <Button 
