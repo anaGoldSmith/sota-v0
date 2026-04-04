@@ -678,6 +678,7 @@ const RoutineCalculator = () => {
   const [acrobaticsDialogOpen, setAcrobaticsDialogOpen] = useState(false);
   const [editingAcroElementId, setEditingAcroElementId] = useState<string | null>(null);
   const [editingAcroSelections, setEditingAcroSelections] = useState<AcroSelection[] | undefined>(undefined);
+  const [editingDAData, setEditingDAData] = useState<EditingDAData | null>(null);
   const [preAcrobaticElements, setPreAcrobaticElements] = useState<PreAcrobaticElement[]>([]);
   const [verticalRotations, setVerticalRotations] = useState<VerticalRotation[]>([]);
   const [technicalElementsDialogOpen, setTechnicalElementsDialogOpen] = useState(false);
