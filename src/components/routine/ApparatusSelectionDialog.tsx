@@ -98,6 +98,7 @@ export const ApparatusSelectionDialog = ({
       setDaCount(0);
       editInitializedRef.current = false;
       editModifiedRef.current = false;
+      cr7rWasRemovedRef.current = false;
       setEditRotationalElement(null);
     } else if (open && editingDA && !editInitializedRef.current && apparatusData.length > 0) {
       // Edit mode: pre-populate with existing DA selection
