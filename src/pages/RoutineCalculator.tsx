@@ -1958,9 +1958,9 @@ const RoutineCalculator = () => {
 
             <div className="space-y-2">
               <Label htmlFor="rulebook">Rulebook</Label>
-              <Select defaultValue="fig-cop-2025-2028-individual" disabled={isViewMode} onValueChange={() => {}}>
+              <Select defaultValue="fig-cop-2025-2028-individual" disabled={isViewMode}>
                 <SelectTrigger id="rulebook">
-                  <SelectValue>FIG CoP 2025-2028 - Individual</SelectValue>
+                  <SelectValue placeholder="Select rulebook">FIG CoP 2025-2028 - Individual</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
