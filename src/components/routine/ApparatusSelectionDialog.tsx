@@ -267,6 +267,14 @@ export const ApparatusSelectionDialog = ({
         name: sel.kind === 'pre-acrobatic' ? sel.data.name : (sel.data.name || sel.data.code),
         data: sel.data,
       };
+      
+      // If editing a DA with rotation, just update the rotational element state
+      if (isEditWithRotation) {
+        setEditRotationalElement(rotationalElement);
+        setShowAcroPickerForDA(false);
+        return;
+      }
+      
       const enriched = pendingCr7RCombinations.map(c => ({ ...c, rotationalElement }));
       if (isEditMode) {
         setPendingEditCombinations(enriched);
@@ -274,6 +282,11 @@ export const ApparatusSelectionDialog = ({
         finalizeDACombinations(enriched);
       }
     } else {
+      if (isEditWithRotation) {
+        // User skipped — keep existing
+        setShowAcroPickerForDA(false);
+        return;
+      }
       if (isEditMode) {
         setPendingEditCombinations(pendingCr7RCombinations);
       } else {
