@@ -14,6 +14,11 @@ export interface ApparatusCombination {
   selectedCriteria: string[];
   apparatus: ApparatusType;
   calculatedValue?: number; // Used for special pairing rule (max value + 0.1)
+  rotationalElement?: {
+    kind: 'pre-acrobatic' | 'vertical-rotation';
+    name: string;
+    data: any;
+  };
 }
 
 interface ApparatusSelectionDialogProps {
