@@ -971,7 +971,11 @@ export const ApparatusSelectionDialog = ({
         if (!open && showAcroPickerForDA) {
           // Only finalize if save callback didn't already handle it
           if (!acroSaveHandledRef.current && pendingCr7RCombinations.length > 0) {
-            finalizeDACombinations(pendingCr7RCombinations);
+            if (isEditMode) {
+              setPendingEditCombinations(pendingCr7RCombinations);
+            } else {
+              finalizeDACombinations(pendingCr7RCombinations);
+            }
             setPendingCr7RCombinations([]);
           }
           acroSaveHandledRef.current = false;
