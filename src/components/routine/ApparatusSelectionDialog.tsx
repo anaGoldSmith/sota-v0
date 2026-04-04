@@ -761,6 +761,7 @@ export const ApparatusSelectionDialog = ({
               setPendingCr7RCombinations(newCombinations);
               setSelectedCriteria([]);
               setCompletedDaGroups([]);
+              cr7rHandledRef.current = false;
               setShowCr7RPrompt(true);
             } else {
               // Normal flow - stage the DA immediately
