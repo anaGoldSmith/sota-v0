@@ -818,5 +818,39 @@ export const ApparatusSelectionDialog = ({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Cr7R Rotation Prompt Dialog */}
+    <Dialog open={showCr7RPrompt} onOpenChange={(open) => { if (!open) handleCr7RNo(); }}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Specify Rotational Element?</DialogTitle>
+          <DialogDescription>
+            This DA includes a rotation criterion (Cr7R). Would you like to specify which rotational element is performed?
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-3 pt-2">
+          <Button variant="outline" onClick={handleCr7RNo}>No</Button>
+          <Button onClick={handleCr7RYes}>Yes</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* Acrobatics Picker for DA (single-select) */}
+    <AcrobaticsDialog
+      open={showAcroPickerForDA}
+      onOpenChange={(open) => {
+        if (!open) {
+          // User closed without saving - finalize without rotational element
+          finalizeDACombinations(pendingCr7RCombinations);
+          setPendingCr7RCombinations([]);
+          setShowAcroPickerForDA(false);
+        }
+      }}
+      preAcrobaticElements={preAcrobaticElements}
+      verticalRotations={verticalRotations}
+      onSaveSelections={handleAcroPickerSave}
+      singleSelect
+    />
+    </>
   );
 };
