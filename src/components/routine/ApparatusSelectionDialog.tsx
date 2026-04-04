@@ -801,7 +801,9 @@ export const ApparatusSelectionDialog = ({
           </DialogTitle>
           {isEditMode && (
             <DialogDescription className="text-sm text-muted-foreground">
-              Modify your criteria selection below. The current selection is highlighted. Deselect a criterion and select a new one, then the DA will be validated automatically.
+              {isEditWithRotation 
+                ? 'The criteria are locked. You can change the rotational element using the "Change" button below the table.'
+                : 'Modify your criteria selection below. The current selection is highlighted. Deselect a criterion and select a new one, then the DA will be validated automatically.'}
             </DialogDescription>
           )}
         </DialogHeader>
