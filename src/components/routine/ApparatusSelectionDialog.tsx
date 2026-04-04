@@ -78,6 +78,7 @@ export const ApparatusSelectionDialog = ({
 
   // Reset state when dialog opens/closes
   const editInitializedRef = useRef(false);
+  const editModifiedRef = useRef(false);
   
   useEffect(() => {
     if (!open) {
