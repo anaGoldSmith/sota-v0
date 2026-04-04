@@ -80,6 +80,7 @@ export const ApparatusSelectionDialog = ({
   // Reset state when dialog opens/closes
   const editInitializedRef = useRef(false);
   const editModifiedRef = useRef(false);
+  const cr7rWasRemovedRef = useRef(false);
   
   // For editing DAs with rotational elements: track the current rotational element
   const [editRotationalElement, setEditRotationalElement] = useState<ApparatusCombination['rotationalElement'] | null>(null);
@@ -97,6 +98,7 @@ export const ApparatusSelectionDialog = ({
       setDaCount(0);
       editInitializedRef.current = false;
       editModifiedRef.current = false;
+      cr7rWasRemovedRef.current = false;
       setEditRotationalElement(null);
     } else if (open && editingDA && !editInitializedRef.current && apparatusData.length > 0) {
       // Edit mode: pre-populate with existing DA selection
@@ -603,6 +605,12 @@ export const ApparatusSelectionDialog = ({
       );
       
       if (removed) {
+        // If Cr7R was removed in edit mode, clear the rotational element
+        if (isEditMode && removed.criterionCode === 'Cr7R') {
+          cr7rWasRemovedRef.current = true;
+          setEditRotationalElement(null);
+        }
+        
         // Check if this cell belongs to a completed DA
         const affectedDaIndex = completedDaGroups.findIndex(group =>
           group.cells.some(cell => cell.rowId === removed.rowId && cell.criterionCode === removed.criterionCode)
@@ -737,8 +745,8 @@ export const ApparatusSelectionDialog = ({
             // In edit mode, don't auto-finalize — stage for user confirmation
             const hasCr7R = newCombinations.some(c => c.selectedCriteria.includes('Cr7R'));
             if (hasCr7R && (preAcrobaticElements.length > 0 || verticalRotations.length > 0)) {
-              // If we already have a rotational element from previous edit state, carry it forward
-              const existingRot = editRotationalElement || editingDA?.rotationalElement;
+              // If Cr7R was removed and re-added, always ask fresh
+              const existingRot = cr7rWasRemovedRef.current ? null : (editRotationalElement || editingDA?.rotationalElement);
               if (existingRot) {
                 const enriched = newCombinations.map(c => ({ ...c, rotationalElement: existingRot }));
                 setPendingEditCombinations(enriched);
