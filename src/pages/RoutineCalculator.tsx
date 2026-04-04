@@ -2735,7 +2735,7 @@ const RoutineCalculator = () => {
                                                 )}
                                               </td>
                                               <td className="py-2 px-4 text-sm">{originalData.combo1?.element?.name || originalData.combo1?.element?.description || 'DA Element'}</td>
-                                              <td className="py-2 px-4 text-right font-mono text-sm">—</td>
+                                              <td className="py-2 px-4 text-right font-mono text-sm">{element.value.toFixed(1)}</td>
                                             </tr>
                                             {/* Second base element */}
                                             <tr className="border-b border-border/30">
@@ -2746,7 +2746,7 @@ const RoutineCalculator = () => {
                                                 )}
                                               </td>
                                               <td className="py-2 px-4 text-sm">{originalData.combo2?.element?.name || originalData.combo2?.element?.description || 'DA Element'}</td>
-                                              <td className="py-2 px-4 text-right font-mono text-sm">—</td>
+                                              <td className="py-2 px-4 text-right font-mono text-sm">{element.value.toFixed(1)}</td>
                                             </tr>
                                             {/* Shared criterion row */}
                                             {originalData.combo1?.selectedCriteria?.map((cr: string, crIdx: number) => {
@@ -2773,7 +2773,7 @@ const RoutineCalculator = () => {
                                                   <td className="py-2 px-4 text-sm">
                                                     {cr === 'Cr7R' ? (rot ? `Rotation (${rot.name})` : 'Rotation') : cr === 'Cr1V' ? 'Vertical plane' : cr === 'Cr2H' ? 'Horizontal plane' : cr === 'Cr3L' ? 'Lateral plane' : cr === 'Cr4F' ? 'Figure 8/Circumduction' : cr === 'Cr5W' ? 'Use of whole body' : cr === 'Cr6DB' ? 'During body difficulty' : cr}
                                                   </td>
-                                                  <td className="py-2 px-4 text-right font-mono text-sm">—</td>
+                                                  <td className="py-2 px-4 text-right font-mono text-sm">0.0</td>
                                                 </tr>
                                               );
                                             })}
@@ -2795,7 +2795,7 @@ const RoutineCalculator = () => {
                                                 )}
                                               </td>
                                               <td className="py-2 px-4 text-sm">{originalData?.element?.name || originalData?.element?.description || 'Apparatus Difficulty'}</td>
-                                              <td className="py-2 px-4 text-right font-mono text-sm">—</td>
+                                              <td className="py-2 px-4 text-right font-mono text-sm">{element.value.toFixed(1)}</td>
                                             </tr>
                                             {/* Criterion rows */}
                                             {originalData?.selectedCriteria?.map((cr: string, crIdx: number) => {
@@ -2822,7 +2822,7 @@ const RoutineCalculator = () => {
                                                   <td className="py-2 px-4 text-sm">
                                                     {cr === 'Cr7R' ? (rot ? `Rotation (${rot.name})` : 'Rotation') : cr === 'Cr1V' ? 'Vertical plane' : cr === 'Cr2H' ? 'Horizontal plane' : cr === 'Cr3L' ? 'Lateral plane' : cr === 'Cr4F' ? 'Figure 8/Circumduction' : cr === 'Cr5W' ? 'Use of whole body' : cr === 'Cr6DB' ? 'During body difficulty' : cr}
                                                   </td>
-                                                  <td className="py-2 px-4 text-right font-mono text-sm">—</td>
+                                                  <td className="py-2 px-4 text-right font-mono text-sm">0.0</td>
                                                 </tr>
                                               );
                                             })}
