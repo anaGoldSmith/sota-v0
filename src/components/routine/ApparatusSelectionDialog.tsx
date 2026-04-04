@@ -567,6 +567,15 @@ export const ApparatusSelectionDialog = ({
         }
       }
     } else if (newCriteria.length > selectedCriteria.length) {
+      // In edit mode, block new selections until user deselects one first
+      if (isEditMode && completedDaGroups.length > 0) {
+        toast({
+          title: "Deselect first",
+          description: "Please deselect an existing criterion before selecting a new one.",
+          variant: "destructive",
+        });
+        return;
+      }
       // User is selecting - check if we've reached the limit
       if (completedDaGroups.length >= 15) {
         toast({
@@ -574,7 +583,7 @@ export const ApparatusSelectionDialog = ({
           description: "You've reached the limit for DAs creation. Save your current selections to add more later.",
           variant: "destructive",
         });
-        return; // Don't allow new selection
+        return;
       }
     }
     
