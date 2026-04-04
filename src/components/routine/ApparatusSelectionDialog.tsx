@@ -1043,6 +1043,12 @@ export const ApparatusSelectionDialog = ({
       open={showAcroPickerForDA}
       onOpenChange={(open) => {
         if (!open && showAcroPickerForDA) {
+          // For rotation-edit mode, just close — no finalization needed
+          if (isEditWithRotation) {
+            acroSaveHandledRef.current = false;
+            setShowAcroPickerForDA(false);
+            return;
+          }
           // Only finalize if save callback didn't already handle it
           if (!acroSaveHandledRef.current && pendingCr7RCombinations.length > 0) {
             if (isEditMode) {
