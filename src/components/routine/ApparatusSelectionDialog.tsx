@@ -196,6 +196,13 @@ export const ApparatusSelectionDialog = ({
 
   // Finalize DA combinations (stage or submit for DB element)
   const finalizeDACombinations = (combinations: ApparatusCombination[]) => {
+    if (isEditMode && onConfirmEditDA && editingDA) {
+      // Edit mode: confirm immediately
+      onConfirmEditDA(editingDA.elementId, combinations);
+      onOpenChange(false);
+      return;
+    }
+    
     setStagedDAs(prev => [...prev, ...combinations]);
     setDaCount(prev => prev + 1);
     setSelectedCriteria([]);
