@@ -2749,44 +2749,40 @@ const RoutineCalculator = () => {
                                               <td className="py-2 px-4 text-right font-mono text-sm">—</td>
                                             </tr>
                                             {/* Shared criterion row */}
-                                            {originalData.combo1?.selectedCriteria?.map((cr: string, crIdx: number) => (
-                                              <tr key={`cr-${crIdx}`} className="border-b border-border/30">
-                                                <td className="py-2 px-4"><Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300 text-[10px]">Cr</Badge></td>
-                                                <td className="py-2 px-4">
-                                                  {(() => {
-                                                    const url = getCriteriaSymbolUrl(cr);
-                                                    return url.startsWith('TEXT:') ? (
-                                                      <span className="text-sm font-bold">{url.replace('TEXT:', '')}</span>
+                                            {originalData.combo1?.selectedCriteria?.map((cr: string, crIdx: number) => {
+                                              const rot = cr === 'Cr7R' ? (originalData.combo1?.rotationalElement || originalData.combo2?.rotationalElement) : null;
+                                              return (
+                                                <tr key={`cr-${crIdx}`} className="border-b border-border/30">
+                                                  <td className="py-2 px-4">
+                                                    {cr === 'Cr7R' && rot ? (
+                                                      <Badge variant="outline" className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-300 text-[10px]">Cr/Acro</Badge>
                                                     ) : (
-                                                      <img src={url} className="h-5 w-5 object-contain" alt="" />
-                                                    );
-                                                  })()}
-                                                </td>
-                                                <td className="py-2 px-4 text-sm">
-                                                  {cr === 'Cr1V' ? 'Vertical plane' : cr === 'Cr2H' ? 'Horizontal plane' : cr === 'Cr3L' ? 'Lateral plane' : cr === 'Cr4F' ? 'Figure 8/Circumduction' : cr === 'Cr5W' ? 'Use of whole body' : cr === 'Cr6DB' ? 'During body difficulty' : cr === 'Cr7R' ? 'Rotation' : cr}
-                                                </td>
-                                                <td className="py-2 px-4 text-right font-mono text-sm">—</td>
-                                              </tr>
-                                            ))}
+                                                      <Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300 text-[10px]">Cr</Badge>
+                                                    )}
+                                                  </td>
+                                                  <td className="py-2 px-4">
+                                                    {(() => {
+                                                      const url = getCriteriaSymbolUrl(cr);
+                                                      return url.startsWith('TEXT:') ? (
+                                                        <span className="text-sm font-bold">{url.replace('TEXT:', '')}</span>
+                                                      ) : (
+                                                        <img src={url} className="h-5 w-5 object-contain" alt="" />
+                                                      );
+                                                    })()}
+                                                  </td>
+                                                  <td className="py-2 px-4 text-sm">
+                                                    {cr === 'Cr7R' ? (rot ? `Rotation (${rot.name})` : 'Rotation') : cr === 'Cr1V' ? 'Vertical plane' : cr === 'Cr2H' ? 'Horizontal plane' : cr === 'Cr3L' ? 'Lateral plane' : cr === 'Cr4F' ? 'Figure 8/Circumduction' : cr === 'Cr5W' ? 'Use of whole body' : cr === 'Cr6DB' ? 'During body difficulty' : cr}
+                                                  </td>
+                                                  <td className="py-2 px-4 text-right font-mono text-sm">—</td>
+                                                </tr>
+                                              );
+                                            })}
                                             <tr className="border-t border-border bg-muted/30">
                                               <td className="py-2 px-4"><Badge variant="outline" className="text-[10px]">Total</Badge></td>
                                               <td className="py-2 px-4"></td>
                                               <td className="py-2 px-4 text-sm font-medium">Combined DA</td>
                                               <td className="py-2 px-4 text-right font-mono text-sm font-bold">{element.value.toFixed(1)}</td>
                                             </tr>
-                                            {(originalData.combo1?.rotationalElement || originalData.combo2?.rotationalElement) && (
-                                              <tr className="border-b border-border/30">
-                                                <td className="py-2 px-4"><Badge variant="outline" className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-300 text-[10px]">Acro</Badge></td>
-                                                <td className="py-2 px-4"></td>
-                                                <td className="py-2 px-4 text-sm italic">
-                                                  {(() => {
-                                                    const rot = originalData.combo1?.rotationalElement || originalData.combo2?.rotationalElement;
-                                                    return `${rot.kind === 'pre-acrobatic' ? 'Pre-acrobatic: ' : 'Vertical Rotation: '}${rot.name}`;
-                                                  })()}
-                                                </td>
-                                                <td className="py-2 px-4 text-right font-mono text-sm">—</td>
-                                              </tr>
-                                            )}
                                           </>
                                         ) : (
                                           <>
@@ -2802,25 +2798,34 @@ const RoutineCalculator = () => {
                                               <td className="py-2 px-4 text-right font-mono text-sm">—</td>
                                             </tr>
                                             {/* Criterion rows */}
-                                            {originalData?.selectedCriteria?.map((cr: string, crIdx: number) => (
-                                              <tr key={`cr-${crIdx}`} className="border-b border-border/30">
-                                                <td className="py-2 px-4"><Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300 text-[10px]">Cr</Badge></td>
-                                                <td className="py-2 px-4">
-                                                  {(() => {
-                                                    const url = getCriteriaSymbolUrl(cr);
-                                                    return url.startsWith('TEXT:') ? (
-                                                      <span className="text-sm font-bold">{url.replace('TEXT:', '')}</span>
+                                            {originalData?.selectedCriteria?.map((cr: string, crIdx: number) => {
+                                              const rot = cr === 'Cr7R' ? originalData?.rotationalElement : null;
+                                              return (
+                                                <tr key={`cr-${crIdx}`} className="border-b border-border/30">
+                                                  <td className="py-2 px-4">
+                                                    {cr === 'Cr7R' && rot ? (
+                                                      <Badge variant="outline" className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-300 text-[10px]">Cr/Acro</Badge>
                                                     ) : (
-                                                      <img src={url} className="h-5 w-5 object-contain" alt="" />
-                                                    );
-                                                  })()}
-                                                </td>
-                                                <td className="py-2 px-4 text-sm">
-                                                  {cr === 'Cr1V' ? 'Vertical plane' : cr === 'Cr2H' ? 'Horizontal plane' : cr === 'Cr3L' ? 'Lateral plane' : cr === 'Cr4F' ? 'Figure 8/Circumduction' : cr === 'Cr5W' ? 'Use of whole body' : cr === 'Cr6DB' ? 'During body difficulty' : cr === 'Cr7R' ? 'Rotation' : cr}
-                                                </td>
-                                                <td className="py-2 px-4 text-right font-mono text-sm">—</td>
-                                              </tr>
-                                            ))}
+                                                      <Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300 text-[10px]">Cr</Badge>
+                                                    )}
+                                                  </td>
+                                                  <td className="py-2 px-4">
+                                                    {(() => {
+                                                      const url = getCriteriaSymbolUrl(cr);
+                                                      return url.startsWith('TEXT:') ? (
+                                                        <span className="text-sm font-bold">{url.replace('TEXT:', '')}</span>
+                                                      ) : (
+                                                        <img src={url} className="h-5 w-5 object-contain" alt="" />
+                                                      );
+                                                    })()}
+                                                  </td>
+                                                  <td className="py-2 px-4 text-sm">
+                                                    {cr === 'Cr7R' ? (rot ? `Rotation (${rot.name})` : 'Rotation') : cr === 'Cr1V' ? 'Vertical plane' : cr === 'Cr2H' ? 'Horizontal plane' : cr === 'Cr3L' ? 'Lateral plane' : cr === 'Cr4F' ? 'Figure 8/Circumduction' : cr === 'Cr5W' ? 'Use of whole body' : cr === 'Cr6DB' ? 'During body difficulty' : cr}
+                                                  </td>
+                                                  <td className="py-2 px-4 text-right font-mono text-sm">—</td>
+                                                </tr>
+                                              );
+                                            })}
                                             {/* Total row */}
                                             <tr className="border-t border-border bg-muted/30">
                                               <td className="py-2 px-4"><Badge variant="outline" className="text-[10px]">Total</Badge></td>
@@ -2828,17 +2833,6 @@ const RoutineCalculator = () => {
                                               <td className="py-2 px-4 text-sm font-medium">DA Value</td>
                                               <td className="py-2 px-4 text-right font-mono text-sm font-bold">{element.value.toFixed(1)}</td>
                                             </tr>
-                                            {originalData?.rotationalElement && (
-                                              <tr className="border-b border-border/30">
-                                                <td className="py-2 px-4"><Badge variant="outline" className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-300 text-[10px]">Acro</Badge></td>
-                                                <td className="py-2 px-4"></td>
-                                                <td className="py-2 px-4 text-sm italic">
-                                                  {originalData.rotationalElement.kind === 'pre-acrobatic' ? 'Pre-acrobatic: ' : 'Vertical Rotation: '}
-                                                  {originalData.rotationalElement.name}
-                                                </td>
-                                                <td className="py-2 px-4 text-right font-mono text-sm">—</td>
-                                              </tr>
-                                            )}
                                           </>
                                         )}
                                         {/* Adjustments */}
