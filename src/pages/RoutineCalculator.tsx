@@ -1216,7 +1216,59 @@ const RoutineCalculator = () => {
       });
       return;
     }
+    setEditingDAData(null);
     setApparatusDialogOpen(true);
+  };
+
+  const handleModifyDA = (elementId: string) => {
+    const element = routineElements.find(el => el.id === elementId);
+    if (!element || element.type !== 'DA') return;
+    
+    const originalData = element.originalData as any;
+    
+    if (originalData.isPaired) {
+      // Type 2 DA: two rows, same criterion
+      const combo1 = originalData.combo1 as ApparatusCombination;
+      const combo2 = originalData.combo2 as ApparatusCombination;
+      setEditingDAData({
+        elementId,
+        rowId: combo1.element.id,
+        selectedCriteria: combo1.selectedCriteria,
+        isPaired: true,
+        pairedRowId: combo2.element.id,
+        rotationalElement: combo1.rotationalElement || combo2.rotationalElement,
+      });
+    } else {
+      // Type 1 DA: one row, two criteria
+      const combo = originalData as ApparatusCombination;
+      setEditingDAData({
+        elementId,
+        rowId: combo.element.id,
+        selectedCriteria: combo.selectedCriteria,
+        isPaired: false,
+        rotationalElement: combo.rotationalElement,
+      });
+    }
+    
+    setApparatusDialogOpen(true);
+  };
+
+  const handleConfirmEditDA = (elementId: string, combinations: ApparatusCombination[]) => {
+    const newElements = processApparatusCombinationsToElements(combinations);
+    if (newElements.length > 0) {
+      setRoutineElements(prev => prev.map(el => {
+        if (el.id === elementId) {
+          const newEl = newElements[0];
+          return { ...newEl, id: elementId, adjustments: el.adjustments };
+        }
+        return el;
+      }));
+      toast({
+        title: "DA updated",
+        description: "The Difficulty of Apparatus has been updated successfully.",
+      });
+    }
+    setEditingDAData(null);
   };
 
   const getSymbolUrl = (symbolImage: string | null, bucketName: string) => {
