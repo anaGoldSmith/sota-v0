@@ -907,6 +907,18 @@ export const ApparatusSelectionDialog = ({
                   <Button variant="outline" onClick={handleCancel}>
                     Cancel
                   </Button>
+                  <Button 
+                    disabled={!pendingEditCombinations}
+                    onClick={() => {
+                      if (pendingEditCombinations && onConfirmEditDA && editingDA) {
+                        onConfirmEditDA(editingDA.elementId, pendingEditCombinations);
+                        setPendingEditCombinations(null);
+                        onOpenChange(false);
+                      }
+                    }}
+                  >
+                    Confirm
+                  </Button>
                 </>
               ) : isForDbElement ? (
                 <Button 
