@@ -852,7 +852,13 @@ export const ApparatusSelectionDialog = ({
             />
 
             <div className="flex justify-end gap-3 pt-3 pb-4 flex-shrink-0">
-              {isForDbElement ? (
+              {isEditMode ? (
+                <>
+                  <Button variant="outline" onClick={handleCancel}>
+                    Cancel
+                  </Button>
+                </>
+              ) : isForDbElement ? (
                 <Button 
                   variant="outline" 
                   onClick={() => {
