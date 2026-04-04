@@ -665,8 +665,7 @@ const RoutineCalculator = () => {
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
   const [rotationDialogOpen, setRotationDialogOpen] = useState(false);
   const [apparatusDialogOpen, setApparatusDialogOpen] = useState(false);
-  const [preAcrobaticDialogOpen, setPreAcrobaticDialogOpen] = useState(false);
-  const [verticalRotationDialogOpen, setVerticalRotationDialogOpen] = useState(false);
+  const [acrobaticsDialogOpen, setAcrobaticsDialogOpen] = useState(false);
   const [preAcrobaticElements, setPreAcrobaticElements] = useState<PreAcrobaticElement[]>([]);
   const [verticalRotations, setVerticalRotations] = useState<VerticalRotation[]>([]);
   const [technicalElementsDialogOpen, setTechnicalElementsDialogOpen] = useState(false);
