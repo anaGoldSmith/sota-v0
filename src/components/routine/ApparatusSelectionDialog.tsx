@@ -80,6 +80,7 @@ export const ApparatusSelectionDialog = ({
   // Reset state when dialog opens/closes
   const editInitializedRef = useRef(false);
   const editModifiedRef = useRef(false);
+  const cr7rWasRemovedRef = useRef(false);
   
   // For editing DAs with rotational elements: track the current rotational element
   const [editRotationalElement, setEditRotationalElement] = useState<ApparatusCombination['rotationalElement'] | null>(null);
