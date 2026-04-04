@@ -15,6 +15,8 @@ import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDia
 import { RotationSelectionDialog } from "@/components/routine/RotationSelectionDialog";
 import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/routine/ApparatusSelectionDialog";
 import { TechnicalElementsSelectionDialog } from "@/components/routine/TechnicalElementsSelectionDialog";
+import { PreAcrobaticSelectionDialog, type PreAcrobaticElement } from "@/components/routine/PreAcrobaticSelectionDialog";
+import { VerticalRotationSelectionDialog, type VerticalRotation } from "@/components/routine/VerticalRotationSelectionDialog";
 import { ElementInformationDialog, type HandlingItem } from "@/components/routine/ElementInformationDialog";
 import type { FouetteComponent } from "@/components/routine/FouetteComponentsEditor";
 import type { FouetteShape } from "@/components/routine/FouetteShapesSelector";
@@ -120,7 +122,7 @@ interface RiskData {
   };
 }
 
-type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'DB/TE' | 'DB/TE/DA' | 'TE' | 'R' | 'R/DB' | 'Steps';
+type RoutineElementType = 'DB' | 'DA' | 'DB/DA' | 'DB/TE' | 'DB/TE/DA' | 'TE' | 'R' | 'R/DB' | 'Steps' | 'Acro';
 
 interface RoutineElement {
   id: string;
@@ -464,11 +466,13 @@ function SortableRow({
           </div>
         </TableCell>
         <TableCell className="w-12 px-2 font-medium">
-          {element.type === 'Steps' ? 'S' : element.type}
+          {element.type === 'Steps' ? 'S' : element.type === 'Acro' ? 'Acro' : element.type}
         </TableCell>
         <TableCell className="px-2">
           {element.type === 'Steps' ? (
             <span className="text-sm font-medium text-foreground">Dance Steps</span>
+          ) : element.type === 'Acro' ? (
+            <span className="text-sm font-medium text-foreground">{element.dbData?.name || 'Acrobatic Element'}</span>
           ) : (element.type === 'R' || element.type === 'R/DB') ? renderRiskSymbols() : renderSymbols(element.symbolImages)}
         </TableCell>
         <TableCell className="w-16 px-2 text-right font-mono font-semibold">
@@ -661,6 +665,9 @@ const RoutineCalculator = () => {
   const [rotationDialogOpen, setRotationDialogOpen] = useState(false);
   const [apparatusDialogOpen, setApparatusDialogOpen] = useState(false);
   const [preAcrobaticDialogOpen, setPreAcrobaticDialogOpen] = useState(false);
+  const [verticalRotationDialogOpen, setVerticalRotationDialogOpen] = useState(false);
+  const [preAcrobaticElements, setPreAcrobaticElements] = useState<PreAcrobaticElement[]>([]);
+  const [verticalRotations, setVerticalRotations] = useState<VerticalRotation[]>([]);
   const [technicalElementsDialogOpen, setTechnicalElementsDialogOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   // Only restore from localStorage when editing/viewing an existing routine or returning with risk data
@@ -743,8 +750,24 @@ const RoutineCalculator = () => {
       setRoutineLoaded(false);
     }
   }, [loadRoutineId]);
+  // Load pre-acrobatic elements and vertical rotations
+  useEffect(() => {
+    const loadAcroData = async () => {
+      const [preAcroRes, vertRotRes] = await Promise.all([
+        supabase.from('pre_acrobatic_elements').select('*').order('group_code, name'),
+        supabase.from('vertical_rotations').select('*').order('group, name'),
+      ]);
+      if (preAcroRes.data && !preAcroRes.error) {
+        setPreAcrobaticElements(preAcroRes.data as PreAcrobaticElement[]);
+      }
+      if (vertRotRes.data && !vertRotRes.error) {
+        setVerticalRotations(vertRotRes.data as VerticalRotation[]);
+      }
+    };
+    loadAcroData();
+  }, []);
 
-  // Track unsaved changes after routine is loaded in edit mode
+
   const initialRoutineRef = useRef<string | null>(null);
   useEffect(() => {
     if (editingRoutineId && routineLoaded && initialRoutineRef.current === null) {
@@ -2119,18 +2142,37 @@ const RoutineCalculator = () => {
                       </TooltipProvider>
                     </div>
 
-                    <Button 
-                      variant="outline"
-                      className={`h-16 text-base ${elementsEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
-                      disabled={!elementsEnabled}
-                      onClick={() => {
-                        if (elementsEnabled) {
-                          setPreAcrobaticDialogOpen(true);
-                        }
-                      }}
-                    >
-                      <span className="text-lg font-semibold mr-2">+</span> Acrobatics
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="outline"
+                          className={`h-16 text-base w-full ${elementsEnabled ? 'hover:scale-[1.02] transition-transform' : 'opacity-50 cursor-not-allowed'}`}
+                          disabled={!elementsEnabled}
+                        >
+                          <span className="text-lg font-semibold mr-2">+</span> Acrobatics
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-[300px] bg-background z-50" align="start">
+                        <DropdownMenuItem 
+                          className="h-14 text-lg cursor-pointer"
+                          onClick={() => setPreAcrobaticDialogOpen(true)}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <span>Pre-acrobatic Elements</span>
+                            <span className="text-sm">+ Add</span>
+                          </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="h-14 text-lg cursor-pointer"
+                          onClick={() => setVerticalRotationDialogOpen(true)}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <span>Vertical Rotations</span>
+                            <span className="text-sm">+ Add</span>
+                          </div>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
 
                     <Button 
                       variant="outline"
@@ -3451,6 +3493,57 @@ const RoutineCalculator = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Pre-Acrobatic Elements Dialog */}
+      <PreAcrobaticSelectionDialog
+        open={preAcrobaticDialogOpen}
+        onOpenChange={setPreAcrobaticDialogOpen}
+        elements={preAcrobaticElements}
+        onSelect={(element) => {
+          const newElement: RoutineElement = {
+            id: `preacro-${Date.now()}`,
+            type: 'Acro',
+            symbolImages: [],
+            value: 0,
+            originalData: {} as any,
+            dbData: {
+              symbolImages: [],
+              value: 0,
+              name: element.name,
+              code: element.group_code,
+              elementType: undefined,
+            },
+          };
+          setRoutineElements(prev => [...prev, newElement]);
+          toast({ title: "Pre-acrobatic Element Added", description: `"${element.name}" has been added to the routine.` });
+        }}
+        rotationType="one"
+        isFirstRotation={true}
+      />
+
+      {/* Vertical Rotations Dialog */}
+      <VerticalRotationSelectionDialog
+        open={verticalRotationDialogOpen}
+        onOpenChange={setVerticalRotationDialogOpen}
+        rotations={verticalRotations}
+        onSelect={(rotation) => {
+          const newElement: RoutineElement = {
+            id: `vertrot-${Date.now()}`,
+            type: 'Acro',
+            symbolImages: [],
+            value: 0,
+            originalData: {} as any,
+            dbData: {
+              symbolImages: [],
+              value: 0,
+              name: rotation.name || rotation.code,
+              code: rotation.code,
+              elementType: undefined,
+            },
+          };
+          setRoutineElements(prev => [...prev, newElement]);
+          toast({ title: "Vertical Rotation Added", description: `"${rotation.name || rotation.code}" has been added to the routine.` });
+        }}
+      />
     </div>
   );
 };
