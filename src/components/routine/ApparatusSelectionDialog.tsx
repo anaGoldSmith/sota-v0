@@ -197,6 +197,7 @@ export const ApparatusSelectionDialog = ({
     setAvailableSlot(null);
     setStagedDAs([]);
     setDaCount(0);
+    setPendingEditCombinations(null);
     onOpenChange(false);
   };
 
