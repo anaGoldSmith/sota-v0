@@ -2132,6 +2132,7 @@ const RoutineCalculator = () => {
                       <span className="text-lg font-semibold mr-2">+</span> Acrobatics
                     </Button>
                   </div>
+                </div>
               );
             })()}
           </div>}
