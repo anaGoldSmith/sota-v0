@@ -71,6 +71,18 @@ export const AcrobaticsDialog = ({
   // Multi-select: array of selections (allows duplicates)
   const [selections, setSelections] = useState<AcroSelection[]>([]);
 
+  const pointerSensor = useSensor(PointerSensor, { activationConstraint: { distance: 5 } });
+  const keyboardSensor = useSensor(KeyboardSensor);
+  const sensors = useSensors(pointerSensor, keyboardSensor);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = parseInt(String(active.id).replace('sel-', ''));
+    const newIndex = parseInt(String(over.id).replace('sel-', ''));
+    setSelections(prev => arrayMove(prev, oldIndex, newIndex));
+  };
+
   const resetAll = () => {
     setSearchQuery("");
     setShowCustomInput(false);
