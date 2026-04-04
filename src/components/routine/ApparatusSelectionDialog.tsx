@@ -81,6 +81,11 @@ export const ApparatusSelectionDialog = ({
   const editInitializedRef = useRef(false);
   const editModifiedRef = useRef(false);
   
+  // For editing DAs with rotational elements: track the current rotational element
+  const [editRotationalElement, setEditRotationalElement] = useState<ApparatusCombination['rotationalElement'] | null>(null);
+  const isEditWithRotation = !!editingDA?.rotationalElement;
+  
+  
   useEffect(() => {
     if (!open) {
       // Clear state when dialog closes
@@ -92,16 +97,20 @@ export const ApparatusSelectionDialog = ({
       setDaCount(0);
       editInitializedRef.current = false;
       editModifiedRef.current = false;
+      setEditRotationalElement(null);
     } else if (open && editingDA && !editInitializedRef.current && apparatusData.length > 0) {
       // Edit mode: pre-populate with existing DA selection
       editInitializedRef.current = true;
       editModifiedRef.current = false;
-      // Edit mode: pre-populate with existing DA selection
-      editInitializedRef.current = true;
       setSelectedIds([]);
       setStagedDAs([]);
       setDaCount(0);
       setAvailableSlot(null);
+      
+      // Initialize rotational element for Cr7R DAs
+      if (editingDA.rotationalElement) {
+        setEditRotationalElement(editingDA.rotationalElement);
+      }
       
       if (editingDA.isPaired && editingDA.pairedRowId) {
         // Type 2 DA: two rows, same criterion
@@ -258,6 +267,14 @@ export const ApparatusSelectionDialog = ({
         name: sel.kind === 'pre-acrobatic' ? sel.data.name : (sel.data.name || sel.data.code),
         data: sel.data,
       };
+      
+      // If editing a DA with rotation, just update the rotational element state
+      if (isEditWithRotation) {
+        setEditRotationalElement(rotationalElement);
+        setShowAcroPickerForDA(false);
+        return;
+      }
+      
       const enriched = pendingCr7RCombinations.map(c => ({ ...c, rotationalElement }));
       if (isEditMode) {
         setPendingEditCombinations(enriched);
@@ -265,6 +282,11 @@ export const ApparatusSelectionDialog = ({
         finalizeDACombinations(enriched);
       }
     } else {
+      if (isEditWithRotation) {
+        // User skipped — keep existing
+        setShowAcroPickerForDA(false);
+        return;
+      }
       if (isEditMode) {
         setPendingEditCombinations(pendingCr7RCombinations);
       } else {
@@ -561,6 +583,15 @@ export const ApparatusSelectionDialog = ({
 
   // Handle cell deselection - unlock DA if any cell from completed DA is deselected
   const handleCriteriaChange = (newCriteria: SelectedCriterion[]) => {
+    // When editing a DA with a rotational element, criteria are locked — only the acro element can be changed
+    if (isEditWithRotation) {
+      toast({
+        title: "Criteria locked",
+        description: "For DAs with rotational elements, you can only change the acrobatic element.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (newCriteria.length < selectedCriteria.length) {
       // User is deselecting - find which cell was removed
       const removed = selectedCriteria.find(sc => 
@@ -770,7 +801,9 @@ export const ApparatusSelectionDialog = ({
           </DialogTitle>
           {isEditMode && (
             <DialogDescription className="text-sm text-muted-foreground">
-              Modify your criteria selection below. The current selection is highlighted. Deselect a criterion and select a new one, then the DA will be validated automatically.
+              {isEditWithRotation 
+                ? 'The criteria are locked. You can change the rotational element using the "Change" button below the table.'
+                : 'Modify your criteria selection below. The current selection is highlighted. Deselect a criterion and select a new one, then the DA will be validated automatically.'}
             </DialogDescription>
           )}
         </DialogHeader>
@@ -902,24 +935,67 @@ export const ApparatusSelectionDialog = ({
               daComments={daComments || []}
             />
 
+            {/* Rotational element display for edit mode */}
+            {isEditWithRotation && (
+              <div className="flex items-center gap-3 rounded-lg border bg-muted/30 px-4 py-3">
+                <span className="text-sm font-medium text-foreground">Rotational Element:</span>
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-accent text-accent-foreground text-sm font-semibold border border-border">
+                  {(editRotationalElement || editingDA?.rotationalElement)?.name || 'None'}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    acroSaveHandledRef.current = false;
+                    setShowAcroPickerForDA(true);
+                  }}
+                >
+                  Change
+                </Button>
+              </div>
+            )}
+
             <div className="flex justify-end gap-3 pt-3 pb-4 flex-shrink-0">
               {isEditMode ? (
                 <>
                   <Button variant="outline" onClick={handleCancel}>
                     Cancel
                   </Button>
-                  <Button 
-                    disabled={!pendingEditCombinations}
-                    onClick={() => {
-                      if (pendingEditCombinations && onConfirmEditDA && editingDA) {
-                        onConfirmEditDA(editingDA.elementId, pendingEditCombinations);
-                        setPendingEditCombinations(null);
-                        onOpenChange(false);
-                      }
-                    }}
-                  >
-                    Confirm
-                  </Button>
+                  {isEditWithRotation ? (
+                    <Button 
+                      disabled={!editRotationalElement}
+                      onClick={() => {
+                        if (onConfirmEditDA && editingDA) {
+                          const element = apparatusData.find(e => e.id === editingDA.rowId);
+                          if (element && apparatus) {
+                            const combinations: ApparatusCombination[] = [{
+                              element,
+                              selectedCriteria: editingDA.selectedCriteria,
+                              apparatus,
+                              rotationalElement: editRotationalElement || editingDA.rotationalElement,
+                            }];
+                            onConfirmEditDA(editingDA.elementId, combinations);
+                            onOpenChange(false);
+                          }
+                        }
+                      }}
+                    >
+                      Confirm
+                    </Button>
+                  ) : (
+                    <Button 
+                      disabled={!pendingEditCombinations}
+                      onClick={() => {
+                        if (pendingEditCombinations && onConfirmEditDA && editingDA) {
+                          onConfirmEditDA(editingDA.elementId, pendingEditCombinations);
+                          setPendingEditCombinations(null);
+                          onOpenChange(false);
+                        }
+                      }}
+                    >
+                      Confirm
+                    </Button>
+                  )}
                 </>
               ) : isForDbElement ? (
                 <Button 
@@ -969,6 +1045,12 @@ export const ApparatusSelectionDialog = ({
       open={showAcroPickerForDA}
       onOpenChange={(open) => {
         if (!open && showAcroPickerForDA) {
+          // For rotation-edit mode, just close — no finalization needed
+          if (isEditWithRotation) {
+            acroSaveHandledRef.current = false;
+            setShowAcroPickerForDA(false);
+            return;
+          }
           // Only finalize if save callback didn't already handle it
           if (!acroSaveHandledRef.current && pendingCr7RCombinations.length > 0) {
             if (isEditMode) {
