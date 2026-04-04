@@ -57,6 +57,7 @@ interface AcrobaticsDialogProps {
   rotationType?: 'one' | 'two' | 'series';
   isFirstRotation?: boolean;
   initialSelections?: AcroSelection[];
+  singleSelect?: boolean;
 }
 
 export const AcrobaticsDialog = ({
@@ -68,6 +69,7 @@ export const AcrobaticsDialog = ({
   rotationType = 'one',
   isFirstRotation = true,
   initialSelections,
+  singleSelect = false,
 }: AcrobaticsDialogProps) => {
   const [activeTab, setActiveTab] = useState<AcrobaticsTab>('pre-acrobatic');
   const [searchQuery, setSearchQuery] = useState("");
