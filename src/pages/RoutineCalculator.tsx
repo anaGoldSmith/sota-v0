@@ -13,7 +13,7 @@ import { NotesWithSymbols } from "@/components/routine/NotesWithSymbols";
 import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
 import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDialog";
 import { RotationSelectionDialog } from "@/components/routine/RotationSelectionDialog";
-import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/routine/ApparatusSelectionDialog";
+import { ApparatusSelectionDialog, ApparatusCombination, EditingDAData } from "@/components/routine/ApparatusSelectionDialog";
 import { TechnicalElementsSelectionDialog } from "@/components/routine/TechnicalElementsSelectionDialog";
 import type { PreAcrobaticElement } from "@/components/routine/PreAcrobaticSelectionDialog";
 import type { VerticalRotation } from "@/components/routine/VerticalRotationSelectionDialog";
