@@ -3470,12 +3470,13 @@ const RoutineCalculator = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Pre-Acrobatic Elements Dialog */}
-      <PreAcrobaticSelectionDialog
-        open={preAcrobaticDialogOpen}
-        onOpenChange={setPreAcrobaticDialogOpen}
-        elements={preAcrobaticElements}
-        onSelect={(element) => {
+      {/* Acrobatics Dialog */}
+      <AcrobaticsDialog
+        open={acrobaticsDialogOpen}
+        onOpenChange={setAcrobaticsDialogOpen}
+        preAcrobaticElements={preAcrobaticElements}
+        verticalRotations={verticalRotations}
+        onSelectPreAcrobatic={(element) => {
           const newElement: RoutineElement = {
             id: `preacro-${Date.now()}`,
             type: 'Acro',
@@ -3493,16 +3494,7 @@ const RoutineCalculator = () => {
           setRoutineElements(prev => [...prev, newElement]);
           toast({ title: "Pre-acrobatic Element Added", description: `"${element.name}" has been added to the routine.` });
         }}
-        rotationType="one"
-        isFirstRotation={true}
-      />
-
-      {/* Vertical Rotations Dialog */}
-      <VerticalRotationSelectionDialog
-        open={verticalRotationDialogOpen}
-        onOpenChange={setVerticalRotationDialogOpen}
-        rotations={verticalRotations}
-        onSelect={(rotation) => {
+        onSelectVerticalRotation={(rotation) => {
           const newElement: RoutineElement = {
             id: `vertrot-${Date.now()}`,
             type: 'Acro',
@@ -3520,6 +3512,8 @@ const RoutineCalculator = () => {
           setRoutineElements(prev => [...prev, newElement]);
           toast({ title: "Vertical Rotation Added", description: `"${rotation.name || rotation.code}" has been added to the routine.` });
         }}
+        rotationType="one"
+        isFirstRotation={true}
       />
     </div>
   );
