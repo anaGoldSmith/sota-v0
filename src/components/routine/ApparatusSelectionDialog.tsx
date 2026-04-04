@@ -840,10 +840,12 @@ export const ApparatusSelectionDialog = ({
     <AcrobaticsDialog
       open={showAcroPickerForDA}
       onOpenChange={(open) => {
-        if (!open) {
-          // User closed without saving - finalize without rotational element
-          finalizeDACombinations(pendingCr7RCombinations);
-          setPendingCr7RCombinations([]);
+        if (!open && showAcroPickerForDA) {
+          // Only finalize if not already handled by onSaveSelections
+          if (pendingCr7RCombinations.length > 0) {
+            finalizeDACombinations(pendingCr7RCombinations);
+            setPendingCr7RCombinations([]);
+          }
           setShowAcroPickerForDA(false);
         }
       }}
