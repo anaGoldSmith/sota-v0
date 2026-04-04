@@ -29,6 +29,8 @@ interface ApparatusSelectionDialogProps {
   onSelectCombinations?: (combinations: ApparatusCombination[]) => void;
   isForDbElement?: boolean; // Indicates if DA is being added to a DB element
   onGoBackToApparatusHandling?: () => void; // Callback to go back to Apparatus Handling dialog
+  preAcrobaticElements?: PreAcrobaticElement[];
+  verticalRotations?: VerticalRotation[];
 }
 
 export const ApparatusSelectionDialog = ({
