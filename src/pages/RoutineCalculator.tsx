@@ -1996,121 +1996,140 @@ const RoutineCalculator = () => {
               
               return (
                 <div className="grid grid-cols-2 gap-3">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="outline"
-                        className={`h-16 text-base ${elementsEnabled ? 'hover:scale-[1.02] transition-transform' : 'opacity-50 cursor-not-allowed'}`}
-                        disabled={!elementsEnabled}
-                      >
-                        <span className="text-lg font-semibold mr-2">+</span> Elements (DB)
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[300px] bg-background z-50" align="start">
-                      <DropdownMenuItem 
-                        className="h-14 text-lg cursor-pointer"
-                        onClick={() => setJumpDialogOpen(true)}
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center gap-1">
-                            <span>Jumps</span>
-                            <JumpIcon className="!h-7 !w-7" />
-                          </div>
-                          <span className="text-sm">+ Add</span>
-                        </div>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="h-14 text-lg cursor-pointer"
-                        onClick={() => setBalanceDialogOpen(true)}
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center gap-1">
-                            <span>Balances</span>
-                            <BalanceIcon className="!h-7 !w-7" />
-                          </div>
-                          <span className="text-sm">+ Add</span>
-                        </div>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="h-14 text-lg cursor-pointer"
-                        onClick={() => setRotationDialogOpen(true)}
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center gap-1">
-                            <span>Rotations</span>
-                            <RotationIcon className="!h-8 !w-8" />
-                          </div>
-                          <span className="text-sm">+ Add</span>
-                        </div>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  
-                  <Button 
-                    variant="outline"
-                    className={`h-16 text-base ${daEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
-                    disabled={!daEnabled}
-                    onClick={() => {
-                      if (daEnabled) {
-                        setActiveCategory(activeCategory === "apparatus" ? null : "apparatus");
-                        if (activeCategory !== "apparatus") {
-                          handleOpenApparatusDialog();
-                        }
-                      }
-                    }}
-                  >
-                    <span className="text-lg font-semibold mr-2">+</span> Apparatus Difficulty (DA)
-                  </Button>
-                  
-                  <Button 
-                    variant="outline"
-                    className={`h-16 text-base ${dynamicElementsEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
-                    disabled={!dynamicElementsEnabled}
-                    onClick={() => {
-                      if (dynamicElementsEnabled) {
-                        navigate("/dynamic-elements-risk", { state: { apparatus: selectedApparatus } });
-                      }
-                    }}
-                  >
-                    <span className="text-lg font-semibold mr-2">+</span> Dynamic Element (R)
-                  </Button>
-                  
-                  <div className="relative">
+                  {/* Column 1: Apparatus Difficulty + Dynamic Element */}
+                  <div className="flex flex-col gap-3">
                     <Button 
                       variant="outline"
-                      className={`h-16 text-base w-full ${danceStepsEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
-                      disabled={!danceStepsEnabled}
+                      className={`h-16 text-base ${daEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
+                      disabled={!daEnabled}
                       onClick={() => {
-                        if (danceStepsEnabled) {
-                          const newElement: RoutineElement = {
-                            id: `dance-steps-${Date.now()}`,
-                            type: 'Steps',
-                            symbolImages: [],
-                            value: 0,
-                            originalData: {} as any,
-                          };
-                          setRoutineElements(prev => [...prev, newElement]);
+                        if (daEnabled) {
+                          setActiveCategory(activeCategory === "apparatus" ? null : "apparatus");
+                          if (activeCategory !== "apparatus") {
+                            handleOpenApparatusDialog();
+                          }
                         }
                       }}
                     >
-                      <span className="text-lg font-semibold mr-2">+</span> Dance Steps
+                      <span className="text-lg font-semibold mr-2">+</span> Apparatus Difficulty (DA)
                     </Button>
-                    <TooltipProvider delayDuration={0}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            className="absolute top-1 right-1 p-1 rounded-full hover:bg-muted"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
-                          <p>Minimum 2 dance steps combinations, lasting 8 seconds each, must be performed in the routine. A 0.30 penalty will be applied for each missing combination of dance steps. Pre-acrobatic elements, high throws, DA, DB with value 0.20 or more are not allowed during dance steps combinations.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+
+                    <Button 
+                      variant="outline"
+                      className={`h-16 text-base ${dynamicElementsEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
+                      disabled={!dynamicElementsEnabled}
+                      onClick={() => {
+                        if (dynamicElementsEnabled) {
+                          navigate("/dynamic-elements-risk", { state: { apparatus: selectedApparatus } });
+                        }
+                      }}
+                    >
+                      <span className="text-lg font-semibold mr-2">+</span> Dynamic Element (R)
+                    </Button>
+                  </div>
+
+                  {/* Column 2: Elements + Dance Steps + Acrobatics */}
+                  <div className="flex flex-col gap-3">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="outline"
+                          className={`h-16 text-base w-full ${elementsEnabled ? 'hover:scale-[1.02] transition-transform' : 'opacity-50 cursor-not-allowed'}`}
+                          disabled={!elementsEnabled}
+                        >
+                          <span className="text-lg font-semibold mr-2">+</span> Elements (DB)
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-[300px] bg-background z-50" align="start">
+                        <DropdownMenuItem 
+                          className="h-14 text-lg cursor-pointer"
+                          onClick={() => setJumpDialogOpen(true)}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-1">
+                              <span>Jumps</span>
+                              <JumpIcon className="!h-7 !w-7" />
+                            </div>
+                            <span className="text-sm">+ Add</span>
+                          </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="h-14 text-lg cursor-pointer"
+                          onClick={() => setBalanceDialogOpen(true)}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-1">
+                              <span>Balances</span>
+                              <BalanceIcon className="!h-7 !w-7" />
+                            </div>
+                            <span className="text-sm">+ Add</span>
+                          </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="h-14 text-lg cursor-pointer"
+                          onClick={() => setRotationDialogOpen(true)}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-1">
+                              <span>Rotations</span>
+                              <RotationIcon className="!h-8 !w-8" />
+                            </div>
+                            <span className="text-sm">+ Add</span>
+                          </div>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <div className="relative">
+                      <Button 
+                        variant="outline"
+                        className={`h-16 text-base w-full ${danceStepsEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
+                        disabled={!danceStepsEnabled}
+                        onClick={() => {
+                          if (danceStepsEnabled) {
+                            const newElement: RoutineElement = {
+                              id: `dance-steps-${Date.now()}`,
+                              type: 'Steps',
+                              symbolImages: [],
+                              value: 0,
+                              originalData: {} as any,
+                            };
+                            setRoutineElements(prev => [...prev, newElement]);
+                          }
+                        }}
+                      >
+                        <span className="text-lg font-semibold mr-2">+</span> Dance Steps
+                      </Button>
+                      <TooltipProvider delayDuration={0}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="absolute top-1 right-1 p-1 rounded-full hover:bg-muted"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                            <p>Minimum 2 dance steps combinations, lasting 8 seconds each, must be performed in the routine. A 0.30 penalty will be applied for each missing combination of dance steps. Pre-acrobatic elements, high throws, DA, DB with value 0.20 or more are not allowed during dance steps combinations.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+
+                    <Button 
+                      variant="outline"
+                      className={`h-16 text-base ${elementsEnabled ? 'hover:scale-[1.02] transition-transform active:bg-purple-600 active:text-white active:border-purple-600' : 'opacity-50 cursor-not-allowed'}`}
+                      disabled={!elementsEnabled}
+                      onClick={() => {
+                        if (elementsEnabled) {
+                          setPreAcrobaticDialogOpen(true);
+                        }
+                      }}
+                    >
+                      <span className="text-lg font-semibold mr-2">+</span> Acrobatics
+                    </Button>
                   </div>
                 </div>
               );
