@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +56,7 @@ interface AcrobaticsDialogProps {
   onSaveSelections: (selections: AcroSelection[]) => void;
   rotationType?: 'one' | 'two' | 'series';
   isFirstRotation?: boolean;
+  initialSelections?: AcroSelection[];
 }
 
 export const AcrobaticsDialog = ({
@@ -66,6 +67,7 @@ export const AcrobaticsDialog = ({
   onSaveSelections,
   rotationType = 'one',
   isFirstRotation = true,
+  initialSelections,
 }: AcrobaticsDialogProps) => {
   const [activeTab, setActiveTab] = useState<AcrobaticsTab>('pre-acrobatic');
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,6 +76,12 @@ export const AcrobaticsDialog = ({
   const [customGroup, setCustomGroup] = useState("");
   // Multi-select: array of selections (allows duplicates)
   const [selections, setSelections] = useState<AcroSelection[]>([]);
+
+  useEffect(() => {
+    if (open && initialSelections && initialSelections.length > 0) {
+      setSelections(initialSelections.map(s => ({ ...s, uid: s.uid || nextAcroUid() })));
+    }
+  }, [open]);
 
   const pointerSensor = useSensor(PointerSensor, { activationConstraint: { distance: 5 } });
   const keyboardSensor = useSensor(KeyboardSensor);

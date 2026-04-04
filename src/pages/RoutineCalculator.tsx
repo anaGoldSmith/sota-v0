@@ -17,7 +17,7 @@ import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/rou
 import { TechnicalElementsSelectionDialog } from "@/components/routine/TechnicalElementsSelectionDialog";
 import type { PreAcrobaticElement } from "@/components/routine/PreAcrobaticSelectionDialog";
 import type { VerticalRotation } from "@/components/routine/VerticalRotationSelectionDialog";
-import { AcrobaticsDialog } from "@/components/routine/AcrobaticsDialog";
+import { AcrobaticsDialog, type AcroSelection } from "@/components/routine/AcrobaticsDialog";
 import { ElementInformationDialog, type HandlingItem } from "@/components/routine/ElementInformationDialog";
 import type { FouetteComponent } from "@/components/routine/FouetteComponentsEditor";
 import type { FouetteShape } from "@/components/routine/FouetteShapesSelector";
@@ -500,7 +500,7 @@ function SortableRow({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-background z-50">
-                {(element.type === 'R' || element.type === 'R/DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB') && onModify && (
+                {(element.type === 'R' || element.type === 'R/DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB' || element.type === 'Acro') && onModify && (
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onModify(); }}>
                     <Pencil className="h-4 w-4 mr-2" />
                     View / Edit
@@ -666,6 +666,8 @@ const RoutineCalculator = () => {
   const [rotationDialogOpen, setRotationDialogOpen] = useState(false);
   const [apparatusDialogOpen, setApparatusDialogOpen] = useState(false);
   const [acrobaticsDialogOpen, setAcrobaticsDialogOpen] = useState(false);
+  const [editingAcroElementId, setEditingAcroElementId] = useState<string | null>(null);
+  const [editingAcroSelections, setEditingAcroSelections] = useState<AcroSelection[] | undefined>(undefined);
   const [preAcrobaticElements, setPreAcrobaticElements] = useState<PreAcrobaticElement[]>([]);
   const [verticalRotations, setVerticalRotations] = useState<VerticalRotation[]>([]);
   const [technicalElementsDialogOpen, setTechnicalElementsDialogOpen] = useState(false);
@@ -1555,7 +1557,26 @@ const RoutineCalculator = () => {
     }
   };
 
-  // Handle modifying a DB/DA/TE element
+  // Handle modifying an Acro element
+  const handleModifyAcro = (elementId: string) => {
+    const element = routineElements.find(el => el.id === elementId);
+    if (!element || element.type !== 'Acro') return;
+    const acroDetails = (element.originalData as any)?.acroDetails as Array<{ kind: string; name: string }> | undefined;
+    if (!acroDetails) return;
+    const restored: AcroSelection[] = acroDetails.map(d => {
+      if (d.kind === 'pre-acrobatic') {
+        const found = preAcrobaticElements.find(e => e.name === d.name);
+        return { kind: 'pre-acrobatic' as const, data: found || { id: `restored-${Date.now()}-${Math.random()}`, group_code: 'CUSTOM', group_name: 'Custom', name: d.name, level_change: false, two_bases_series: true, isCustom: true }, uid: '' };
+      } else {
+        const found = verticalRotations.find(r => (r.name || r.code) === d.name);
+        return { kind: 'vertical-rotation' as const, data: found || { id: `restored-${Date.now()}-${Math.random()}`, group: null, group_name: null, db: null, code: 'CUSTOM', name: d.name, description: null }, uid: '' };
+      }
+    });
+    setEditingAcroElementId(elementId);
+    setEditingAcroSelections(restored);
+    setAcrobaticsDialogOpen(true);
+  };
+
   const handleModifyElement = (elementId: string) => {
     const element = routineElements.find(el => el.id === elementId);
     if (!element || (element.type !== 'DB' && element.type !== 'DB/DA' && element.type !== 'DB/TE' && element.type !== 'DB/TE/DA')) return;
@@ -2247,7 +2268,8 @@ const RoutineCalculator = () => {
                               itemNumber={itemNumber}
                               onRemove={() => handleRemoveRoutineElement(index)}
                               onModify={(element.type === 'R' || element.type === 'R/DB') ? () => handleModifyRisk(element.id) : 
-                                        (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB') ? () => handleModifyElement(element.id) : undefined}
+                                        (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB') ? () => handleModifyElement(element.id) :
+                                        element.type === 'Acro' ? () => handleModifyAcro(element.id) : undefined}
                               onToggleExpand={() => handleToggleExpand(index)}
                               onAddAdjustment={() => handleAddAdjustment(index)}
                               onUpdateAdjustment={(adjId, name, value) => handleUpdateAdjustment(index, adjId, name, value)}
@@ -3505,7 +3527,7 @@ const RoutineCalculator = () => {
       {/* Acrobatics Dialog */}
       <AcrobaticsDialog
         open={acrobaticsDialogOpen}
-        onOpenChange={setAcrobaticsDialogOpen}
+        onOpenChange={(open) => { setAcrobaticsDialogOpen(open); if (!open) { setEditingAcroElementId(null); setEditingAcroSelections(undefined); } }}
         preAcrobaticElements={preAcrobaticElements}
         verticalRotations={verticalRotations}
         onSaveSelections={(selections) => {
@@ -3517,26 +3539,41 @@ const RoutineCalculator = () => {
             kindLabel: s.kind === 'pre-acrobatic' ? 'PA' : 'VR',
             name: s.kind === 'pre-acrobatic' ? s.data.name : (s.data.name || s.data.code || ''),
           }));
-          const newElement: RoutineElement = {
-            id: `acro-${Date.now()}`,
-            type: 'Acro' as const,
-            symbolImages: [],
-            value: 0,
-            originalData: { acroDetails } as any,
-            isExpanded: false,
-            dbData: {
+          if (editingAcroElementId) {
+            setRoutineElements(prev => prev.map(el => {
+              if (el.id !== editingAcroElementId) return el;
+              return {
+                ...el,
+                originalData: { acroDetails } as any,
+                dbData: { ...el.dbData!, name: combinedName },
+              };
+            }));
+            toast({ title: "Acrobatics Updated", description: combinedName });
+          } else {
+            const newElement: RoutineElement = {
+              id: `acro-${Date.now()}`,
+              type: 'Acro' as const,
               symbolImages: [],
               value: 0,
-              name: combinedName,
-              code: 'ACRO',
-              elementType: undefined,
-            },
-          };
-          setRoutineElements(prev => [...prev, newElement]);
-          toast({ title: "Acrobatics Added", description: combinedName });
+              originalData: { acroDetails } as any,
+              isExpanded: false,
+              dbData: {
+                symbolImages: [],
+                value: 0,
+                name: combinedName,
+                code: 'ACRO',
+                elementType: undefined,
+              },
+            };
+            setRoutineElements(prev => [...prev, newElement]);
+            toast({ title: "Acrobatics Added", description: combinedName });
+          }
+          setEditingAcroElementId(null);
+          setEditingAcroSelections(undefined);
         }}
         rotationType="one"
         isFirstRotation={true}
+        initialSelections={editingAcroSelections}
       />
     </div>
   );
