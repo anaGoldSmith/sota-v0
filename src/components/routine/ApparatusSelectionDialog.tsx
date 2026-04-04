@@ -926,18 +926,68 @@ export const ApparatusSelectionDialog = ({
                   <Button variant="outline" onClick={handleCancel}>
                     Cancel
                   </Button>
-                  <Button 
-                    disabled={!pendingEditCombinations}
-                    onClick={() => {
-                      if (pendingEditCombinations && onConfirmEditDA && editingDA) {
-                        onConfirmEditDA(editingDA.elementId, pendingEditCombinations);
-                        setPendingEditCombinations(null);
-                        onOpenChange(false);
-                      }
-                    }}
-                  >
-                    Confirm
+            {/* Rotational element display for edit mode */}
+            {isEditWithRotation && (
+              <div className="flex items-center gap-3 rounded-lg border bg-muted/30 px-4 py-3">
+                <span className="text-sm font-medium text-foreground">Rotational Element:</span>
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-purple-100 text-purple-800 text-sm font-semibold border border-purple-200">
+                  {(editRotationalElement || editingDA?.rotationalElement)?.name || 'None'}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    acroSaveHandledRef.current = false;
+                    setShowAcroPickerForDA(true);
+                  }}
+                >
+                  Change
+                </Button>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-3 pb-4 flex-shrink-0">
+              {isEditMode ? (
+                <>
+                  <Button variant="outline" onClick={handleCancel}>
+                    Cancel
                   </Button>
+                  {isEditWithRotation ? (
+                    <Button 
+                      disabled={!editRotationalElement}
+                      onClick={() => {
+                        if (onConfirmEditDA && editingDA) {
+                          // Rebuild combinations from existing DA data with updated rotational element
+                          const element = apparatusData.find(e => e.id === editingDA.rowId);
+                          if (element && apparatus) {
+                            const combinations: ApparatusCombination[] = [{
+                              element,
+                              selectedCriteria: editingDA.selectedCriteria,
+                              apparatus,
+                              rotationalElement: editRotationalElement || editingDA.rotationalElement,
+                            }];
+                            onConfirmEditDA(editingDA.elementId, combinations);
+                            onOpenChange(false);
+                          }
+                        }
+                      }}
+                    >
+                      Confirm
+                    </Button>
+                  ) : (
+                    <Button 
+                      disabled={!pendingEditCombinations}
+                      onClick={() => {
+                        if (pendingEditCombinations && onConfirmEditDA && editingDA) {
+                          onConfirmEditDA(editingDA.elementId, pendingEditCombinations);
+                          setPendingEditCombinations(null);
+                          onOpenChange(false);
+                        }
+                      }}
+                    >
+                      Confirm
+                    </Button>
+                  )}
                 </>
               ) : isForDbElement ? (
                 <Button 
