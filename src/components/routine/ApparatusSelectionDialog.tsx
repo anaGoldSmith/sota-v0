@@ -258,9 +258,17 @@ export const ApparatusSelectionDialog = ({
         data: sel.data,
       };
       const enriched = pendingCr7RCombinations.map(c => ({ ...c, rotationalElement }));
-      finalizeDACombinations(enriched);
+      if (isEditMode) {
+        setPendingEditCombinations(enriched);
+      } else {
+        finalizeDACombinations(enriched);
+      }
     } else {
-      finalizeDACombinations(pendingCr7RCombinations);
+      if (isEditMode) {
+        setPendingEditCombinations(pendingCr7RCombinations);
+      } else {
+        finalizeDACombinations(pendingCr7RCombinations);
+      }
     }
     setPendingCr7RCombinations([]);
     setShowAcroPickerForDA(false);
