@@ -2268,7 +2268,8 @@ const RoutineCalculator = () => {
                               itemNumber={itemNumber}
                               onRemove={() => handleRemoveRoutineElement(index)}
                               onModify={(element.type === 'R' || element.type === 'R/DB') ? () => handleModifyRisk(element.id) : 
-                                        (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB') ? () => handleModifyElement(element.id) : undefined}
+                                        (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB') ? () => handleModifyElement(element.id) :
+                                        element.type === 'Acro' ? () => handleModifyAcro(element.id) : undefined}
                               onToggleExpand={() => handleToggleExpand(index)}
                               onAddAdjustment={() => handleAddAdjustment(index)}
                               onUpdateAdjustment={(adjId, name, value) => handleUpdateAdjustment(index, adjId, name, value)}
