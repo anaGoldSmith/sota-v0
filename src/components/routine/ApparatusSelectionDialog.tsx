@@ -24,6 +24,15 @@ export interface ApparatusCombination {
   };
 }
 
+export interface EditingDAData {
+  elementId: string; // routine element id
+  rowId: string; // apparatus data row id (element.id from CombinedApparatusData)
+  selectedCriteria: string[]; // criterion codes e.g. ['Cr1V', 'Cr3L']
+  isPaired: boolean;
+  pairedRowId?: string; // second row id for type2 DAs
+  rotationalElement?: ApparatusCombination['rotationalElement'];
+}
+
 interface ApparatusSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -34,6 +43,8 @@ interface ApparatusSelectionDialogProps {
   onGoBackToApparatusHandling?: () => void; // Callback to go back to Apparatus Handling dialog
   preAcrobaticElements?: PreAcrobaticElement[];
   verticalRotations?: VerticalRotation[];
+  editingDA?: EditingDAData | null;
+  onConfirmEditDA?: (elementId: string, combinations: ApparatusCombination[]) => void;
 }
 
 export const ApparatusSelectionDialog = ({
@@ -46,6 +57,8 @@ export const ApparatusSelectionDialog = ({
   onGoBackToApparatusHandling,
   preAcrobaticElements = [],
   verticalRotations = [],
+  editingDA = null,
+  onConfirmEditDA,
 }: ApparatusSelectionDialogProps) => {
   const { apparatusData, criteria, specialCodes, specialCodeElements, daComments, isLoading, error } = useApparatusData(apparatus);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -64,6 +77,8 @@ export const ApparatusSelectionDialog = ({
   const [showAcroPickerForDA, setShowAcroPickerForDA] = useState(false);
 
   // Reset state when dialog opens/closes
+  const editInitializedRef = useRef(false);
+  
   useEffect(() => {
     if (!open) {
       // Clear state when dialog closes
@@ -73,8 +88,39 @@ export const ApparatusSelectionDialog = ({
       setAvailableSlot(null);
       setStagedDAs([]);
       setDaCount(0);
-    } else if (open && !isForDbElement) {
-      // Fresh reset when opening for pure DA selection (not for DB element)
+      editInitializedRef.current = false;
+    } else if (open && editingDA && !editInitializedRef.current && apparatusData.length > 0) {
+      // Edit mode: pre-populate with existing DA selection
+      editInitializedRef.current = true;
+      setSelectedIds([]);
+      setStagedDAs([]);
+      setDaCount(0);
+      setAvailableSlot(null);
+      
+      if (editingDA.isPaired && editingDA.pairedRowId) {
+        // Type 2 DA: two rows, same criterion
+        const criterion = editingDA.selectedCriteria[0];
+        if (criterion) {
+          const initialCriteria: SelectedCriterion[] = [
+            { rowId: editingDA.rowId, criterionCode: criterion },
+            { rowId: editingDA.pairedRowId, criterionCode: criterion },
+          ];
+          setSelectedCriteria(initialCriteria);
+          setCompletedDaGroups([{ cells: initialCriteria, color: DA_COLORS[0] }]);
+        }
+      } else {
+        // Type 1 DA: one row, two criteria
+        const initialCriteria: SelectedCriterion[] = editingDA.selectedCriteria.map(cr => ({
+          rowId: editingDA.rowId,
+          criterionCode: cr,
+        }));
+        setSelectedCriteria(initialCriteria);
+        if (initialCriteria.length === 2) {
+          setCompletedDaGroups([{ cells: initialCriteria, color: DA_COLORS[0] }]);
+        }
+      }
+    } else if (open && !isForDbElement && !editingDA) {
+      // Fresh reset when opening for pure DA selection (not for DB element, not edit)
       setSelectedIds([]);
       setSelectedCriteria([]);
       setCompletedDaGroups([]);
@@ -82,7 +128,10 @@ export const ApparatusSelectionDialog = ({
       setStagedDAs([]);
       setDaCount(0);
     }
-  }, [open, isForDbElement]);
+  }, [open, isForDbElement, editingDA, apparatusData]);
+
+  // In edit mode, only allow exactly 1 DA
+  const isEditMode = !!editingDA;
 
   const handleRowClick = (item: CombinedApparatusData) => {
     setSelectedIds((prev) => {
@@ -147,6 +196,13 @@ export const ApparatusSelectionDialog = ({
 
   // Finalize DA combinations (stage or submit for DB element)
   const finalizeDACombinations = (combinations: ApparatusCombination[]) => {
+    if (isEditMode && onConfirmEditDA && editingDA) {
+      // Edit mode: confirm immediately
+      onConfirmEditDA(editingDA.elementId, combinations);
+      onOpenChange(false);
+      return;
+    }
+    
     setStagedDAs(prev => [...prev, ...combinations]);
     setDaCount(prev => prev + 1);
     setSelectedCriteria([]);
@@ -524,8 +580,8 @@ export const ApparatusSelectionDialog = ({
   useEffect(() => {
     if (selectedCriteria.length !== 2) return;
     
-    // Check if we've reached the limit of 15 staged DAs
-    if (daCount >= 15) {
+    // Check if we've reached the limit of 15 staged DAs (skip in edit mode)
+    if (!isEditMode && daCount >= 15) {
       setSelectedCriteria(prev => prev.slice(0, -1));
       
       toast({
@@ -664,8 +720,13 @@ export const ApparatusSelectionDialog = ({
         </div>
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-2xl">
-            Select Difficulty of Apparatus for {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'}
+            {isEditMode ? 'Edit' : 'Select'} Difficulty of Apparatus for {apparatus ? apparatus.charAt(0).toUpperCase() + apparatus.slice(1) : 'Apparatus'}
           </DialogTitle>
+          {isEditMode && (
+            <DialogDescription className="text-sm text-muted-foreground">
+              Modify your criteria selection below. The current selection is highlighted. Deselect a criterion and select a new one, then the DA will be validated automatically.
+            </DialogDescription>
+          )}
         </DialogHeader>
 
         {/* General Rules for DA creation */}
@@ -796,7 +857,13 @@ export const ApparatusSelectionDialog = ({
             />
 
             <div className="flex justify-end gap-3 pt-3 pb-4 flex-shrink-0">
-              {isForDbElement ? (
+              {isEditMode ? (
+                <>
+                  <Button variant="outline" onClick={handleCancel}>
+                    Cancel
+                  </Button>
+                </>
+              ) : isForDbElement ? (
                 <Button 
                   variant="outline" 
                   onClick={() => {

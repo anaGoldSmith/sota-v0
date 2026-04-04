@@ -13,7 +13,7 @@ import { NotesWithSymbols } from "@/components/routine/NotesWithSymbols";
 import { JumpSelectionDialog } from "@/components/routine/JumpSelectionDialog";
 import { BalanceSelectionDialog } from "@/components/routine/BalanceSelectionDialog";
 import { RotationSelectionDialog } from "@/components/routine/RotationSelectionDialog";
-import { ApparatusSelectionDialog, ApparatusCombination } from "@/components/routine/ApparatusSelectionDialog";
+import { ApparatusSelectionDialog, ApparatusCombination, EditingDAData } from "@/components/routine/ApparatusSelectionDialog";
 import { TechnicalElementsSelectionDialog } from "@/components/routine/TechnicalElementsSelectionDialog";
 import type { PreAcrobaticElement } from "@/components/routine/PreAcrobaticSelectionDialog";
 import type { VerticalRotation } from "@/components/routine/VerticalRotationSelectionDialog";
@@ -510,7 +510,7 @@ function SortableRow({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-background z-50">
-                {(element.type === 'R' || element.type === 'R/DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB' || element.type === 'Acro') && onModify && (
+                {(element.type === 'R' || element.type === 'R/DB' || element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB' || element.type === 'Acro' || element.type === 'DA') && onModify && (
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onModify(); }}>
                     <Pencil className="h-4 w-4 mr-2" />
                     View / Edit
@@ -678,6 +678,7 @@ const RoutineCalculator = () => {
   const [acrobaticsDialogOpen, setAcrobaticsDialogOpen] = useState(false);
   const [editingAcroElementId, setEditingAcroElementId] = useState<string | null>(null);
   const [editingAcroSelections, setEditingAcroSelections] = useState<AcroSelection[] | undefined>(undefined);
+  const [editingDAData, setEditingDAData] = useState<EditingDAData | null>(null);
   const [preAcrobaticElements, setPreAcrobaticElements] = useState<PreAcrobaticElement[]>([]);
   const [verticalRotations, setVerticalRotations] = useState<VerticalRotation[]>([]);
   const [technicalElementsDialogOpen, setTechnicalElementsDialogOpen] = useState(false);
@@ -1215,7 +1216,59 @@ const RoutineCalculator = () => {
       });
       return;
     }
+    setEditingDAData(null);
     setApparatusDialogOpen(true);
+  };
+
+  const handleModifyDA = (elementId: string) => {
+    const element = routineElements.find(el => el.id === elementId);
+    if (!element || element.type !== 'DA') return;
+    
+    const originalData = element.originalData as any;
+    
+    if (originalData.isPaired) {
+      // Type 2 DA: two rows, same criterion
+      const combo1 = originalData.combo1 as ApparatusCombination;
+      const combo2 = originalData.combo2 as ApparatusCombination;
+      setEditingDAData({
+        elementId,
+        rowId: combo1.element.id,
+        selectedCriteria: combo1.selectedCriteria,
+        isPaired: true,
+        pairedRowId: combo2.element.id,
+        rotationalElement: combo1.rotationalElement || combo2.rotationalElement,
+      });
+    } else {
+      // Type 1 DA: one row, two criteria
+      const combo = originalData as ApparatusCombination;
+      setEditingDAData({
+        elementId,
+        rowId: combo.element.id,
+        selectedCriteria: combo.selectedCriteria,
+        isPaired: false,
+        rotationalElement: combo.rotationalElement,
+      });
+    }
+    
+    setApparatusDialogOpen(true);
+  };
+
+  const handleConfirmEditDA = (elementId: string, combinations: ApparatusCombination[]) => {
+    const newElements = processApparatusCombinationsToElements(combinations);
+    if (newElements.length > 0) {
+      setRoutineElements(prev => prev.map(el => {
+        if (el.id === elementId) {
+          const newEl = newElements[0];
+          return { ...newEl, id: elementId, adjustments: el.adjustments };
+        }
+        return el;
+      }));
+      toast({
+        title: "DA updated",
+        description: "The Difficulty of Apparatus has been updated successfully.",
+      });
+    }
+    setEditingDAData(null);
   };
 
   const getSymbolUrl = (symbolImage: string | null, bucketName: string) => {
@@ -2279,7 +2332,8 @@ const RoutineCalculator = () => {
                               onRemove={() => handleRemoveRoutineElement(index)}
                               onModify={(element.type === 'R' || element.type === 'R/DB') ? () => handleModifyRisk(element.id) : 
                                         (element.type === 'DB/DA' || element.type === 'DB/TE' || element.type === 'DB/TE/DA' || element.type === 'DB') ? () => handleModifyElement(element.id) :
-                                        element.type === 'Acro' ? () => handleModifyAcro(element.id) : undefined}
+                                        element.type === 'Acro' ? () => handleModifyAcro(element.id) :
+                                        element.type === 'DA' ? () => handleModifyDA(element.id) : undefined}
                               onToggleExpand={() => handleToggleExpand(index)}
                               onAddAdjustment={() => handleAddAdjustment(index)}
                               onUpdateAdjustment={(adjId, name, value) => handleUpdateAdjustment(index, adjId, name, value)}
@@ -3290,13 +3344,18 @@ const RoutineCalculator = () => {
       {/* Apparatus Selection Dialog */}
       <ApparatusSelectionDialog
         open={apparatusDialogOpen}
-        onOpenChange={setApparatusDialogOpen}
+        onOpenChange={(open) => {
+          setApparatusDialogOpen(open);
+          if (!open) setEditingDAData(null);
+        }}
         apparatus={selectedApparatus}
         onSelectElements={handleSelectApparatusElements}
         onSelectCombinations={handleSelectApparatusCombinations}
         isForDbElement={pendingDbElement !== null}
         preAcrobaticElements={preAcrobaticElements}
         verticalRotations={verticalRotations}
+        editingDA={editingDAData}
+        onConfirmEditDA={handleConfirmEditDA}
         onGoBackToApparatusHandling={() => {
           setApparatusDialogOpen(false);
           setShouldReopenApparatusHandling(true);
