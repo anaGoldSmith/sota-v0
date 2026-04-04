@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Info, Search, AlertCircle, Plus } from "lucide-react";
+import { Info, Search, AlertCircle, Plus, Minus } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { PreAcrobaticElement } from "./PreAcrobaticSelectionDialog";
@@ -22,13 +22,16 @@ const GROUP_OPTIONS = [
   { value: 'Llying', label: 'Lying' },
 ];
 
+export type AcroSelection = 
+  | { kind: 'pre-acrobatic'; data: PreAcrobaticElement }
+  | { kind: 'vertical-rotation'; data: VerticalRotation };
+
 interface AcrobaticsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   preAcrobaticElements: PreAcrobaticElement[];
   verticalRotations: VerticalRotation[];
-  onSelectPreAcrobatic: (element: PreAcrobaticElement) => void;
-  onSelectVerticalRotation: (rotation: VerticalRotation) => void;
+  onSaveSelections: (selections: AcroSelection[]) => void;
   rotationType?: 'one' | 'two' | 'series';
   isFirstRotation?: boolean;
 }
@@ -38,8 +41,7 @@ export const AcrobaticsDialog = ({
   onOpenChange,
   preAcrobaticElements,
   verticalRotations,
-  onSelectPreAcrobatic,
-  onSelectVerticalRotation,
+  onSaveSelections,
   rotationType = 'one',
   isFirstRotation = true,
 }: AcrobaticsDialogProps) => {
@@ -48,20 +50,60 @@ export const AcrobaticsDialog = ({
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customGroup, setCustomGroup] = useState("");
+  // Multi-select: array of selections (allows duplicates)
+  const [selections, setSelections] = useState<AcroSelection[]>([]);
 
-  const handleClose = () => {
+  const resetAll = () => {
     setSearchQuery("");
     setShowCustomInput(false);
     setCustomName("");
     setCustomGroup("");
+    setSelections([]);
+    setActiveTab('pre-acrobatic');
+  };
+
+  const handleClose = () => {
+    resetAll();
     onOpenChange(false);
   };
 
-  const resetInputs = () => {
-    setSearchQuery("");
-    setShowCustomInput(false);
-    setCustomName("");
-    setCustomGroup("");
+  const handleSave = () => {
+    if (selections.length === 0) return;
+    onSaveSelections(selections);
+    resetAll();
+    onOpenChange(false);
+  };
+
+  // Count how many times a pre-acrobatic element is selected
+  const preAcroCount = (id: string) =>
+    selections.filter(s => s.kind === 'pre-acrobatic' && s.data.id === id).length;
+
+  // Count how many times a vertical rotation is selected
+  const vertRotCount = (id: string) =>
+    selections.filter(s => s.kind === 'vertical-rotation' && s.data.id === id).length;
+
+  const addPreAcrobatic = (element: PreAcrobaticElement) => {
+    setSelections(prev => [...prev, { kind: 'pre-acrobatic', data: element }]);
+  };
+
+  const removePreAcrobatic = (id: string) => {
+    setSelections(prev => {
+      const idx = prev.findIndex(s => s.kind === 'pre-acrobatic' && s.data.id === id);
+      if (idx === -1) return prev;
+      return [...prev.slice(0, idx), ...prev.slice(idx + 1)];
+    });
+  };
+
+  const addVerticalRotation = (rotation: VerticalRotation) => {
+    setSelections(prev => [...prev, { kind: 'vertical-rotation', data: rotation }]);
+  };
+
+  const removeVerticalRotation = (id: string) => {
+    setSelections(prev => {
+      const idx = prev.findIndex(s => s.kind === 'vertical-rotation' && s.data.id === id);
+      if (idx === -1) return prev;
+      return [...prev.slice(0, idx), ...prev.slice(idx + 1)];
+    });
   };
 
   // Pre-acrobatic filtering
@@ -106,16 +148,6 @@ export const AcrobaticsDialog = ({
     });
   }, [verticalRotations, searchQuery]);
 
-  const handleSelectPreAcrobatic = (element: PreAcrobaticElement) => {
-    onSelectPreAcrobatic(element);
-    resetInputs();
-  };
-
-  const handleSelectVerticalRotation = (rotation: VerticalRotation) => {
-    onSelectVerticalRotation(rotation);
-    resetInputs();
-  };
-
   const handleCustomSubmitPreAcrobatic = () => {
     if (!customName.trim()) return;
     const customElement: PreAcrobaticElement = {
@@ -127,7 +159,9 @@ export const AcrobaticsDialog = ({
       two_bases_series: true,
       isCustom: true,
     };
-    handleSelectPreAcrobatic(customElement);
+    addPreAcrobatic(customElement);
+    setCustomName("");
+    setShowCustomInput(false);
   };
 
   const handleCustomSubmitVerticalRotation = () => {
@@ -141,7 +175,10 @@ export const AcrobaticsDialog = ({
       name: customName.trim(),
       description: null,
     };
-    handleSelectVerticalRotation(customRotation);
+    addVerticalRotation(customRotation);
+    setCustomName("");
+    setCustomGroup("");
+    setShowCustomInput(false);
   };
 
   const getRestrictionInfo = () => {
@@ -156,6 +193,9 @@ export const AcrobaticsDialog = ({
 
   const restrictionInfo = activeTab === 'pre-acrobatic' ? getRestrictionInfo() : null;
 
+  const totalPreAcro = selections.filter(s => s.kind === 'pre-acrobatic').length;
+  const totalVertRot = selections.filter(s => s.kind === 'vertical-rotation').length;
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
@@ -168,18 +208,31 @@ export const AcrobaticsDialog = ({
           <Button
             variant={activeTab === 'pre-acrobatic' ? 'default' : 'outline'}
             className="flex-1"
-            onClick={() => { setActiveTab('pre-acrobatic'); resetInputs(); }}
+            onClick={() => { setActiveTab('pre-acrobatic'); setSearchQuery(""); setShowCustomInput(false); setCustomName(""); setCustomGroup(""); }}
           >
             Pre-acrobatic Elements
+            {totalPreAcro > 0 && (
+              <span className="ml-2 bg-primary-foreground text-primary rounded-full px-2 py-0.5 text-xs font-bold">{totalPreAcro}</span>
+            )}
           </Button>
           <Button
             variant={activeTab === 'vertical-rotations' ? 'default' : 'outline'}
             className="flex-1"
-            onClick={() => { setActiveTab('vertical-rotations'); resetInputs(); }}
+            onClick={() => { setActiveTab('vertical-rotations'); setSearchQuery(""); setShowCustomInput(false); setCustomName(""); setCustomGroup(""); }}
           >
             Vertical Rotations
+            {totalVertRot > 0 && (
+              <span className="ml-2 bg-primary-foreground text-primary rounded-full px-2 py-0.5 text-xs font-bold">{totalVertRot}</span>
+            )}
           </Button>
         </div>
+
+        {/* Selection summary */}
+        {selections.length > 0 && (
+          <div className="text-sm font-medium text-foreground">
+            {selections.length} element{selections.length !== 1 ? 's' : ''} selected
+          </div>
+        )}
 
         {/* Search */}
         <div className="relative">
@@ -253,7 +306,7 @@ export const AcrobaticsDialog = ({
         )}
 
         {/* Content */}
-        <div className="border border-border rounded-lg overflow-hidden">
+        <div className="border border-border rounded-lg overflow-hidden flex-1">
           <div className="flex items-center bg-muted border-b border-border">
             <div className="flex-1 px-4 py-2 font-medium text-sm text-foreground">
               {activeTab === 'pre-acrobatic' ? 'Name of Pre-acrobatic Element' : 'Name of Vertical Rotation'}
@@ -266,15 +319,19 @@ export const AcrobaticsDialog = ({
                 <div className="p-8 text-center text-muted-foreground">No pre-acrobatic elements found</div>
               ) : (
                 filteredPreAcrobatic.map((element) => {
+                  const count = preAcroCount(element.id);
                   const isDiveLeap = element.name?.toLowerCase() === 'dive leap';
                   return (
                     <div
                       key={element.id}
-                      className="flex items-center hover:bg-muted/50 cursor-pointer border-b border-border last:border-b-0"
-                      onClick={() => handleSelectPreAcrobatic(element)}
+                      className={`flex items-center cursor-pointer border-b border-border last:border-b-0 ${count > 0 ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
+                      onClick={() => addPreAcrobatic(element)}
                     >
                       <div className="flex-1 px-4 py-3 flex items-center gap-2">
                         <span className="font-medium text-foreground">{element.name}</span>
+                        {count > 0 && (
+                          <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs font-bold">{count}</span>
+                        )}
                         {isDiveLeap && (
                           <TooltipProvider>
                             <Tooltip>
@@ -312,6 +369,14 @@ export const AcrobaticsDialog = ({
                           </TooltipProvider>
                         )}
                       </div>
+                      {count > 0 && (
+                        <button
+                          className="px-3 py-2 text-muted-foreground hover:text-destructive"
+                          onClick={(e) => { e.stopPropagation(); removePreAcrobatic(element.id); }}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   );
                 })
@@ -320,35 +385,56 @@ export const AcrobaticsDialog = ({
               filteredVerticalRotations.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">No vertical rotations found</div>
               ) : (
-                filteredVerticalRotations.map((rotation) => (
-                  <div
-                    key={rotation.id}
-                    className="flex items-center hover:bg-muted/50 cursor-pointer border-b border-border last:border-b-0"
-                    onClick={() => handleSelectVerticalRotation(rotation)}
-                  >
-                    <div className="flex-1 px-4 py-3 flex items-center gap-2">
-                      <span className="font-medium text-foreground">{rotation.name || rotation.code}</span>
-                      {rotation.group_name && (
-                        <span className="text-xs text-muted-foreground">({rotation.group_name})</span>
-                      )}
-                      {rotation.description && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="inline-flex flex-shrink-0"><Info className="h-4 w-4 text-primary cursor-help" /></span>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-sm">
-                              <p>{rotation.description}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                filteredVerticalRotations.map((rotation) => {
+                  const count = vertRotCount(rotation.id);
+                  return (
+                    <div
+                      key={rotation.id}
+                      className={`flex items-center cursor-pointer border-b border-border last:border-b-0 ${count > 0 ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
+                      onClick={() => addVerticalRotation(rotation)}
+                    >
+                      <div className="flex-1 px-4 py-3 flex items-center gap-2">
+                        <span className="font-medium text-foreground">{rotation.name || rotation.code}</span>
+                        {count > 0 && (
+                          <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs font-bold">{count}</span>
+                        )}
+                        {rotation.group_name && (
+                          <span className="text-xs text-muted-foreground">({rotation.group_name})</span>
+                        )}
+                        {rotation.description && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex flex-shrink-0"><Info className="h-4 w-4 text-primary cursor-help" /></span>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-sm">
+                                <p>{rotation.description}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                      {count > 0 && (
+                        <button
+                          className="px-3 py-2 text-muted-foreground hover:text-destructive"
+                          onClick={(e) => { e.stopPropagation(); removeVerticalRotation(rotation.id); }}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
                       )}
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )
             )}
           </div>
+        </div>
+
+        {/* Save button */}
+        <div className="flex justify-end pt-2">
+          <Button onClick={handleSave} disabled={selections.length === 0}>
+            Save ({selections.length})
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

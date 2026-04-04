@@ -3476,41 +3476,43 @@ const RoutineCalculator = () => {
         onOpenChange={setAcrobaticsDialogOpen}
         preAcrobaticElements={preAcrobaticElements}
         verticalRotations={verticalRotations}
-        onSelectPreAcrobatic={(element) => {
-          const newElement: RoutineElement = {
-            id: `preacro-${Date.now()}`,
-            type: 'Acro',
-            symbolImages: [],
-            value: 0,
-            originalData: {} as any,
-            dbData: {
-              symbolImages: [],
-              value: 0,
-              name: element.name,
-              code: element.group_code,
-              elementType: undefined,
-            },
-          };
-          setRoutineElements(prev => [...prev, newElement]);
-          toast({ title: "Pre-acrobatic Element Added", description: `"${element.name}" has been added to the routine.` });
-        }}
-        onSelectVerticalRotation={(rotation) => {
-          const newElement: RoutineElement = {
-            id: `vertrot-${Date.now()}`,
-            type: 'Acro',
-            symbolImages: [],
-            value: 0,
-            originalData: {} as any,
-            dbData: {
-              symbolImages: [],
-              value: 0,
-              name: rotation.name || rotation.code,
-              code: rotation.code,
-              elementType: undefined,
-            },
-          };
-          setRoutineElements(prev => [...prev, newElement]);
-          toast({ title: "Vertical Rotation Added", description: `"${rotation.name || rotation.code}" has been added to the routine.` });
+        onSaveSelections={(selections) => {
+          const newElements: RoutineElement[] = selections.map((sel, i) => {
+            if (sel.kind === 'pre-acrobatic') {
+              return {
+                id: `preacro-${Date.now()}-${i}`,
+                type: 'Acro' as const,
+                symbolImages: [],
+                value: 0,
+                originalData: {} as any,
+                dbData: {
+                  symbolImages: [],
+                  value: 0,
+                  name: sel.data.name,
+                  code: sel.data.group_code,
+                  elementType: undefined,
+                },
+              };
+            } else {
+              return {
+                id: `vertrot-${Date.now()}-${i}`,
+                type: 'Acro' as const,
+                symbolImages: [],
+                value: 0,
+                originalData: {} as any,
+                dbData: {
+                  symbolImages: [],
+                  value: 0,
+                  name: sel.data.name || sel.data.code,
+                  code: sel.data.code,
+                  elementType: undefined,
+                },
+              };
+            }
+          });
+          setRoutineElements(prev => [...prev, ...newElements]);
+          const names = selections.map(s => s.kind === 'pre-acrobatic' ? s.data.name : (s.data.name || s.data.code)).join(', ');
+          toast({ title: "Acrobatics Added", description: `Added: ${names}` });
         }}
         rotationType="one"
         isFirstRotation={true}
