@@ -748,8 +748,24 @@ const RoutineCalculator = () => {
       setRoutineLoaded(false);
     }
   }, [loadRoutineId]);
+  // Load pre-acrobatic elements and vertical rotations
+  useEffect(() => {
+    const loadAcroData = async () => {
+      const [preAcroRes, vertRotRes] = await Promise.all([
+        supabase.from('pre_acrobatic_elements').select('*').order('group_code, name'),
+        supabase.from('vertical_rotations').select('*').order('group, name'),
+      ]);
+      if (preAcroRes.data && !preAcroRes.error) {
+        setPreAcrobaticElements(preAcroRes.data as PreAcrobaticElement[]);
+      }
+      if (vertRotRes.data && !vertRotRes.error) {
+        setVerticalRotations(vertRotRes.data as VerticalRotation[]);
+      }
+    };
+    loadAcroData();
+  }, []);
 
-  // Track unsaved changes after routine is loaded in edit mode
+
   const initialRoutineRef = useRef<string | null>(null);
   useEffect(() => {
     if (editingRoutineId && routineLoaded && initialRoutineRef.current === null) {
