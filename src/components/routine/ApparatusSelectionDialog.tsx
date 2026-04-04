@@ -82,6 +82,7 @@ export const ApparatusSelectionDialog = ({
   const editModifiedRef = useRef(false);
   
   // For editing DAs with rotational elements: track the current rotational element
+  const [editRotationalElement, setEditRotationalElement] = useState<ApparatusCombination['rotationalElement'] | null>(null);
   const isEditWithRotation = !!editingDA?.rotationalElement;
   
   
