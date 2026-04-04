@@ -3479,12 +3479,19 @@ const RoutineCalculator = () => {
         onSaveSelections={(selections) => {
           const names = selections.map(s => s.kind === 'pre-acrobatic' ? s.data.name : (s.data.name || s.data.code));
           const combinedName = names.join(' + ');
+          const acroDetails = selections.map((s, i) => ({
+            order: i + 1,
+            kind: s.kind,
+            kindLabel: s.kind === 'pre-acrobatic' ? 'PA' : 'VR',
+            name: s.kind === 'pre-acrobatic' ? s.data.name : (s.data.name || s.data.code || ''),
+          }));
           const newElement: RoutineElement = {
             id: `acro-${Date.now()}`,
             type: 'Acro' as const,
             symbolImages: [],
             value: 0,
-            originalData: {} as any,
+            originalData: { acroDetails } as any,
+            isExpanded: false,
             dbData: {
               symbolImages: [],
               value: 0,
