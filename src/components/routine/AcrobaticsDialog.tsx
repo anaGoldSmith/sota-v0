@@ -158,7 +158,7 @@ export const AcrobaticsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Acrobatics</DialogTitle>
         </DialogHeader>
@@ -260,7 +260,7 @@ export const AcrobaticsDialog = ({
             </div>
           </div>
 
-          <div className="max-h-[40vh] overflow-y-auto">
+          <div className="max-h-[55vh] overflow-y-auto">
             {activeTab === 'pre-acrobatic' ? (
               filteredPreAcrobatic.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">No pre-acrobatic elements found</div>
