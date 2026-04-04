@@ -130,7 +130,12 @@ export const AcrobaticsDialog = ({
     selections.filter(s => s.kind === 'vertical-rotation' && s.data.id === id).length;
 
   const addPreAcrobatic = (element: PreAcrobaticElement) => {
-    setSelections(prev => [...prev, { kind: 'pre-acrobatic' as const, data: element, uid: nextAcroUid() }]);
+    if (singleSelect) {
+      // In single-select mode, replace the current selection
+      setSelections([{ kind: 'pre-acrobatic' as const, data: element, uid: nextAcroUid() }]);
+    } else {
+      setSelections(prev => [...prev, { kind: 'pre-acrobatic' as const, data: element, uid: nextAcroUid() }]);
+    }
   };
 
   const removePreAcrobatic = (id: string) => {
@@ -142,7 +147,11 @@ export const AcrobaticsDialog = ({
   };
 
   const addVerticalRotation = (rotation: VerticalRotation) => {
-    setSelections(prev => [...prev, { kind: 'vertical-rotation' as const, data: rotation, uid: nextAcroUid() }]);
+    if (singleSelect) {
+      setSelections([{ kind: 'vertical-rotation' as const, data: rotation, uid: nextAcroUid() }]);
+    } else {
+      setSelections(prev => [...prev, { kind: 'vertical-rotation' as const, data: rotation, uid: nextAcroUid() }]);
+    }
   };
 
   const removeVerticalRotation = (id: string) => {
