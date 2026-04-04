@@ -132,7 +132,8 @@ export const ApparatusSelectionDialog = ({
 
   // In edit mode, only allow exactly 1 DA
   const isEditMode = !!editingDA;
-    setSelectedIds((prev) => {
+
+  const handleRowClick = (item: CombinedApparatusData) => {
       if (prev.includes(item.id)) {
         return prev.filter((id) => id !== item.id);
       }
