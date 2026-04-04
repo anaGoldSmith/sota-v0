@@ -77,6 +77,8 @@ export const ApparatusSelectionDialog = ({
   const [showAcroPickerForDA, setShowAcroPickerForDA] = useState(false);
 
   // Reset state when dialog opens/closes
+  const editInitializedRef = useRef(false);
+  
   useEffect(() => {
     if (!open) {
       // Clear state when dialog closes
@@ -86,8 +88,39 @@ export const ApparatusSelectionDialog = ({
       setAvailableSlot(null);
       setStagedDAs([]);
       setDaCount(0);
-    } else if (open && !isForDbElement) {
-      // Fresh reset when opening for pure DA selection (not for DB element)
+      editInitializedRef.current = false;
+    } else if (open && editingDA && !editInitializedRef.current && apparatusData.length > 0) {
+      // Edit mode: pre-populate with existing DA selection
+      editInitializedRef.current = true;
+      setSelectedIds([]);
+      setStagedDAs([]);
+      setDaCount(0);
+      setAvailableSlot(null);
+      
+      if (editingDA.isPaired && editingDA.pairedRowId) {
+        // Type 2 DA: two rows, same criterion
+        const criterion = editingDA.selectedCriteria[0];
+        if (criterion) {
+          const initialCriteria: SelectedCriterion[] = [
+            { rowId: editingDA.rowId, criterionCode: criterion },
+            { rowId: editingDA.pairedRowId, criterionCode: criterion },
+          ];
+          setSelectedCriteria(initialCriteria);
+          setCompletedDaGroups([{ cells: initialCriteria, color: DA_COLORS[0] }]);
+        }
+      } else {
+        // Type 1 DA: one row, two criteria
+        const initialCriteria: SelectedCriterion[] = editingDA.selectedCriteria.map(cr => ({
+          rowId: editingDA.rowId,
+          criterionCode: cr,
+        }));
+        setSelectedCriteria(initialCriteria);
+        if (initialCriteria.length === 2) {
+          setCompletedDaGroups([{ cells: initialCriteria, color: DA_COLORS[0] }]);
+        }
+      }
+    } else if (open && !isForDbElement && !editingDA) {
+      // Fresh reset when opening for pure DA selection (not for DB element, not edit)
       setSelectedIds([]);
       setSelectedCriteria([]);
       setCompletedDaGroups([]);
@@ -95,9 +128,10 @@ export const ApparatusSelectionDialog = ({
       setStagedDAs([]);
       setDaCount(0);
     }
-  }, [open, isForDbElement]);
+  }, [open, isForDbElement, editingDA, apparatusData]);
 
-  const handleRowClick = (item: CombinedApparatusData) => {
+  // In edit mode, only allow exactly 1 DA
+  const isEditMode = !!editingDA;
     setSelectedIds((prev) => {
       if (prev.includes(item.id)) {
         return prev.filter((id) => id !== item.id);
