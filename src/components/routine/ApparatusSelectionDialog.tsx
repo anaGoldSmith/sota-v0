@@ -81,6 +81,7 @@ export const ApparatusSelectionDialog = ({
   const editInitializedRef = useRef(false);
   const editModifiedRef = useRef(false);
   const cr7rWasRemovedRef = useRef(false);
+  const processedSelectionKeyRef = useRef<string | null>(null);
   
   // For editing DAs with rotational elements: track the current rotational element
   const [editRotationalElement, setEditRotationalElement] = useState<ApparatusCombination['rotationalElement'] | null>(null);
@@ -99,11 +100,13 @@ export const ApparatusSelectionDialog = ({
       editInitializedRef.current = false;
       editModifiedRef.current = false;
       cr7rWasRemovedRef.current = false;
+      processedSelectionKeyRef.current = null;
       setEditRotationalElement(null);
     } else if (open && editingDA && !editInitializedRef.current && apparatusData.length > 0) {
       // Edit mode: pre-populate with existing DA selection
       editInitializedRef.current = true;
       editModifiedRef.current = false;
+      processedSelectionKeyRef.current = null;
       setSelectedIds([]);
       setStagedDAs([]);
       setDaCount(0);
