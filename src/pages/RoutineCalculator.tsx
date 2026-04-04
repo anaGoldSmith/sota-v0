@@ -664,6 +664,23 @@ const RoutineCalculator = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+
+  // Fetch criteria names from DB
+  const { data: criteriaList = [] } = useQuery({
+    queryKey: ["criteria-names"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("criteria")
+        .select("code, name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const getCriterionName = useCallback((code: string): string => {
+    const found = criteriaList.find(c => c.code === code);
+    return found?.name || code;
+  }, [criteriaList]);
   
   // Check if editing or viewing an existing routine
   const searchParams = new URLSearchParams(location.search);
