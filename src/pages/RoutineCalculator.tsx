@@ -2860,7 +2860,7 @@ const RoutineCalculator = () => {
                                           <>
                                             {/* Base element row */}
                                             <tr className="border-b border-border/30">
-                                              <td className="py-2 px-4"><Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 text-[10px]">Base</Badge></td>
+                                              <td className="py-2 px-4 whitespace-nowrap"><Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 text-[10px]">Base</Badge></td>
                                               <td className="py-2 px-4">
                                                 {originalData?.element?.symbol_image && selectedApparatus && (
                                                   <img src={getTechnicalElementSymbol(originalData.element.symbol_image, selectedApparatus) || ''} className="h-6 w-6 object-contain" alt="" />
