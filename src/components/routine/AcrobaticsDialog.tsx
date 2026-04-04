@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Info, Search, AlertCircle, Plus, Minus, GripVertical } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -32,18 +32,19 @@ export type AcroSelection =
 let acroUidCounter = 0;
 const nextAcroUid = () => `acro-uid-${++acroUidCounter}`;
 
-const SortableChip = ({ sel, onRemove }: { sel: AcroSelection; onRemove: () => void }) => {
+const SortableChip = ({ sel, index, onRemove }: { sel: AcroSelection; index: number; onRemove: () => void }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sel.uid });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 10 : undefined };
   const name = sel.kind === 'pre-acrobatic' ? sel.data.name : (sel.data.name || sel.data.code);
   const kindLabel = sel.kind === 'pre-acrobatic' ? 'PA' : 'VR';
   return (
-    <span ref={setNodeRef} style={style} className="inline-flex items-center gap-1 bg-primary/10 border border-primary/20 text-foreground rounded-full px-3 py-1 text-sm">
-      <span {...attributes} {...listeners} className="flex-shrink-0 text-muted-foreground cursor-grab active:cursor-grabbing touch-none"><GripVertical className="h-3 w-3" /></span>
-      <span className="text-xs font-semibold text-muted-foreground">{kindLabel}</span>
-      {name}
-      <button className="ml-1 text-muted-foreground hover:text-destructive" onClick={onRemove}><Minus className="h-3 w-3" /></button>
-    </span>
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 bg-primary/10 border border-primary/20 text-foreground rounded-md px-3 py-2 text-sm">
+      <span {...attributes} {...listeners} className="flex-shrink-0 text-muted-foreground cursor-grab active:cursor-grabbing touch-none"><GripVertical className="h-4 w-4" /></span>
+      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">{index}</span>
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-xs font-semibold text-muted-foreground">{kindLabel}</span>
+      <span className="flex-1 truncate">{name}</span>
+      <button className="flex-shrink-0 text-muted-foreground hover:text-destructive" onClick={onRemove}><Minus className="h-4 w-4" /></button>
+    </div>
   );
 };
 
@@ -87,7 +88,6 @@ export const AcrobaticsDialog = ({
       if (oldIndex === -1 || newIndex === -1) return prev;
       return arrayMove(prev, oldIndex, newIndex);
     });
-  };
   };
 
   const resetAll = () => {
@@ -472,12 +472,13 @@ export const AcrobaticsDialog = ({
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <div className="border border-border rounded-lg bg-muted/30 p-3 space-y-2">
               <div className="text-sm font-medium text-foreground">Selected Elements ({selections.length})</div>
-              <SortableContext items={selections.map(s => s.uid)} strategy={horizontalListSortingStrategy}>
-                <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto">
-                  {selections.map((sel) => (
+              <SortableContext items={selections.map(s => s.uid)} strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-1.5 max-h-[150px] overflow-y-auto">
+                  {selections.map((sel, idx) => (
                     <SortableChip
                       key={sel.uid}
                       sel={sel}
+                      index={idx + 1}
                       onRemove={() => setSelections(prev => prev.filter(s => s.uid !== sel.uid))}
                     />
                   ))}
@@ -497,3 +498,4 @@ export const AcrobaticsDialog = ({
     </Dialog>
   );
 };
+
