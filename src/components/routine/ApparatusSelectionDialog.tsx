@@ -90,7 +90,11 @@ export const ApparatusSelectionDialog = ({
       setStagedDAs([]);
       setDaCount(0);
       editInitializedRef.current = false;
+      editModifiedRef.current = false;
     } else if (open && editingDA && !editInitializedRef.current && apparatusData.length > 0) {
+      // Edit mode: pre-populate with existing DA selection
+      editInitializedRef.current = true;
+      editModifiedRef.current = false;
       // Edit mode: pre-populate with existing DA selection
       editInitializedRef.current = true;
       setSelectedIds([]);
