@@ -67,6 +67,7 @@ export const AcrobaticsDialog = ({
   onSaveSelections,
   rotationType = 'one',
   isFirstRotation = true,
+  initialSelections,
 }: AcrobaticsDialogProps) => {
   const [activeTab, setActiveTab] = useState<AcrobaticsTab>('pre-acrobatic');
   const [searchQuery, setSearchQuery] = useState("");
