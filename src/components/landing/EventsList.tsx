@@ -49,7 +49,11 @@ const EventsList = () => {
         .from("events")
         .select("id, event_id, title, dates, city, link");
       if (data) {
-        const sorted = [...data].sort((a, b) => {
+        const filtered = data.filter((e) => {
+          const d = parseDateStart(e.dates);
+          return !d || daysUntil(d) >= 0;
+        });
+        const sorted = filtered.sort((a, b) => {
           const dateA = parseDateStart(a.dates);
           const dateB = parseDateStart(b.dates);
           if (!dateA && !dateB) return 0;
