@@ -41,7 +41,7 @@ const HowItWorks = () => (
           key={step.title}
           className="relative p-6 rounded-xl border border-border bg-card flex flex-col items-center text-center"
         >
-          <div className="absolute top-3 right-4 text-xs font-semibold text-muted-foreground">
+          <div className="absolute top-2 right-2 text-xs font-semibold text-muted-foreground">
             Step {idx + 1}
           </div>
           {step.type === "apparatus" ? (
