@@ -45,7 +45,7 @@ const HowItWorks = () => (
             Step {idx + 1}
           </div>
           {step.type === "apparatus" ? (
-            <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="flex items-center justify-center gap-2 mb-3 mt-1 h-12">
               {apparatusSymbols.map((item) => (
                 <div
                   key={item.file}
