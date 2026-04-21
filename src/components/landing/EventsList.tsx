@@ -22,6 +22,16 @@ const parseDateStart = (dates: string | null): Date | null => {
   return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 };
 
+const parseDateEnd = (dates: string | null): Date | null => {
+  if (!dates) return null;
+  const endMatch = dates.trim().match(/(\d{2})\/(\d{2})\/(\d{4})\s*$/);
+  if (endMatch) {
+    const [, day, month, year] = endMatch;
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  }
+  return parseDateStart(dates);
+};
+
 const daysUntil = (d: Date): number => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -50,8 +60,8 @@ const EventsList = () => {
         .select("id, event_id, title, dates, city, link");
       if (data) {
         const filtered = data.filter((e) => {
-          const d = parseDateStart(e.dates);
-          return !d || daysUntil(d) >= 0;
+          const end = parseDateEnd(e.dates);
+          return !end || daysUntil(end) >= 0;
         });
         const sorted = filtered.sort((a, b) => {
           const dateA = parseDateStart(a.dates);
