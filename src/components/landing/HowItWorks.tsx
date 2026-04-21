@@ -30,7 +30,7 @@ const HowItWorks = () => (
             className="relative p-6 rounded-xl border border-border bg-card flex flex-col items-center text-center"
           >
             <div className="absolute top-3 right-4 text-xs font-semibold text-muted-foreground">
-              0{idx + 1}
+              Step {idx + 1}
             </div>
             <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3">
               <Icon className="h-6 w-6" />
