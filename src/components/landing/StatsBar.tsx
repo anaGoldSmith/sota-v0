@@ -5,6 +5,7 @@ const items = [
   "All 4 apparatus (Hoop, Ball, Clubs, Ribbon)",
   "Real-time D-score calculation",
   "Save & re-edit routines",
+  "Customize rules for routine evaluation against national CoPs",
 ];
 
 const StatsBar = () => (
