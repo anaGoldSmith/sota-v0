@@ -44,6 +44,7 @@ const DYNAMIC_ELEMENTS_CATEGORIES = [
   { name: 'Prerecorded Risk Components', bucket: 'dynamic-element-symbols', table: 'prerecorded_risk_components' as string | null, folder: 'prerecorded_risks' },
   { name: 'Prerecorded Risks', bucket: 'dynamic-element-symbols', table: 'prerecorded_risks' as string | null, folder: 'prerecorded_risks_main' },
   { name: 'Other Risks Symbols', bucket: 'dynamic-element-symbols', table: null as string | null, folder: 'other_risks' },
+  { name: 'Gymnast Icons', bucket: 'gymnast-icons', table: null as string | null, folder: '' },
 ];
 
 export default function SymbolManagement() {
