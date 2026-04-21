@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ClipboardList, BookOpen, ShieldAlert, Zap } from "lucide-react";
+import { ClipboardList, BookOpen } from "lucide-react";
 
 const tools = [
   {
@@ -13,18 +13,6 @@ const tools = [
     description: "Search & access COP 2025–2028",
     path: "/code-of-points",
     icon: BookOpen,
-  },
-  {
-    title: "Standard Risks",
-    description: "Browse pre-recorded risk combinations",
-    path: "/standard-risks",
-    icon: ShieldAlert,
-  },
-  {
-    title: "Dynamic Elements Risk",
-    description: "Build dynamic throws & catches with risk",
-    path: "/dynamic-elements-risk",
-    icon: Zap,
   },
 ];
 
