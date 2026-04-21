@@ -54,7 +54,7 @@ const HeroCarousel = () => {
         {/* Hero content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-4 max-w-3xl text-white [text-shadow:_0_2px_16px_rgb(0_0_0_/_70%)]">
-            Master Your D-score with <span className="text-primary-foreground bg-primary px-3 py-1 rounded-md">Confidence</span>
+            Master Your D-score with <span className="text-primary">Confidence</span>
           </h1>
           <p className="text-base md:text-lg text-white/95 max-w-2xl mb-6 [text-shadow:_0_1px_8px_rgb(0_0_0_/_60%)]">
             Build FIG-compliant rhythmic gymnastics routines in minutes — DA, DB, and R calculated for you.
