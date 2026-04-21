@@ -60,8 +60,8 @@ const EventsList = () => {
         .select("id, event_id, title, dates, city, link");
       if (data) {
         const filtered = data.filter((e) => {
-          const d = parseDateStart(e.dates);
-          return !d || daysUntil(d) >= 0;
+          const end = parseDateEnd(e.dates);
+          return !end || daysUntil(end) >= 0;
         });
         const sorted = filtered.sort((a, b) => {
           const dateA = parseDateStart(a.dates);
