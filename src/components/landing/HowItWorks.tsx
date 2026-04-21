@@ -45,15 +45,20 @@ const HowItWorks = () => (
             Step {idx + 1}
           </div>
           {step.type === "apparatus" ? (
-            <div className="flex items-center justify-center gap-1.5 mb-3 h-12 px-3 rounded-full bg-white border border-border">
-              {apparatusSymbols.map((url) => (
-                <img
-                  key={url}
-                  src={url}
-                  alt="Apparatus symbol"
-                  className="h-8 w-8 object-contain"
-                  loading="lazy"
-                />
+            <div className="flex items-center justify-center gap-2 mb-3">
+              {apparatusSymbols.map((item) => (
+                <div
+                  key={item.file}
+                  className={`h-10 w-10 rounded-full ${item.bg} flex items-center justify-center`}
+                  title={item.label}
+                >
+                  <img
+                    src={item.url}
+                    alt={item.label}
+                    className="h-6 w-6 object-contain"
+                    loading="lazy"
+                  />
+                </div>
               ))}
             </div>
           ) : (
