@@ -1,9 +1,16 @@
 import { ListPlus, Calculator } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const apparatusSymbols = ["Rope.png", "H.png", "B.png", "CL.png", "RIB.png"].map(
-  (file) => supabase.storage.from("apparatus-symbols").getPublicUrl(file).data.publicUrl
-);
+const apparatusSymbols = [
+  { file: "Rope.png", bg: "bg-pink-100", label: "Rope" },
+  { file: "H.png", bg: "bg-amber-100", label: "Hoop" },
+  { file: "B.png", bg: "bg-sky-100", label: "Ball" },
+  { file: "CL.png", bg: "bg-emerald-100", label: "Clubs" },
+  { file: "RIB.png", bg: "bg-violet-100", label: "Ribbon" },
+].map((item) => ({
+  ...item,
+  url: supabase.storage.from("apparatus-symbols").getPublicUrl(item.file).data.publicUrl,
+}));
 
 const steps = [
   {
